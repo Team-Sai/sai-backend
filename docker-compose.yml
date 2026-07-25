@@ -1,0 +1,57 @@
+services:
+  sai-backend-db:
+    image: mariadb:11.4
+    container_name: sai-backend-db
+    restart: unless-stopped
+
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+
+    ports:
+      - "3308:3306"
+
+    volumes:
+      - sai-backend-db-data:/var/lib/mysql
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "healthcheck.sh",
+          "--connect",
+          "--innodb_initialized"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  sai-backend-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: sai-backend-app
+    restart: unless-stopped
+
+    depends_on:
+      sai-backend-db:
+        condition: service_healthy
+
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SERVER_PORT: ${SERVER_PORT}
+
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      MOCK_BANK_BASE_URL: ${MOCK_BANK_BASE_URL}
+
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+
+volumes:
+  sai-backend-db-data:
