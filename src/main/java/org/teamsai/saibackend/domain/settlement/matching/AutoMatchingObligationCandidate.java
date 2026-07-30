@@ -18,7 +18,7 @@ public record AutoMatchingObligationCandidate(
 
         Objects.requireNonNull(
                 participantId,
-                "participantId은 null일 수 없습니다.."
+                "participantId은 null일 수 없습니다."
         );
 
         Objects.requireNonNull(
@@ -33,7 +33,7 @@ public record AutoMatchingObligationCandidate(
 
         if (participantName.isBlank()) {
             throw new IllegalArgumentException(
-                    "participantName must은 null일 수 없습니다."
+                    "participantName은 빈 값일 수 없습니다."
             );
         }
 

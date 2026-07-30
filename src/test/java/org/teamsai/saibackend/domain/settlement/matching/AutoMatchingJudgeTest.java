@@ -97,6 +97,31 @@ class AutoMatchingJudgeTest {
         assertThat(result.matchedCandidates()).isEmpty();
     }
 
+    @Test
+    void depositWithDifferentAmountIsUnmatched() {
+        AutoMatchingTransaction transaction = transaction(
+                AutoMatchingTransactionType.DEPOSIT,
+                "홍길동",
+                "10000"
+        );
+
+        AutoMatchingObligationCandidate candidate = candidate(
+                1L,
+                "홍길동",
+                "9000"
+        );
+
+        AutoMatchingResult result = judge.judge(
+                transaction,
+                List.of(candidate)
+        );
+
+        assertThat(result.decisionType())
+                .isEqualTo(AutoMatchingDecisionType.UNMATCHED);
+
+        assertThat(result.matchedCandidates()).isEmpty();
+    }
+
     private AutoMatchingTransaction transaction(
             AutoMatchingTransactionType type,
             String counterpartyName,

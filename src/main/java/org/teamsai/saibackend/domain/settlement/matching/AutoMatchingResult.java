@@ -16,7 +16,7 @@ public record AutoMatchingResult(
 
         Objects.requireNonNull(
                 matchedCandidates,
-                "matchedCandidates은 null일 수 없습니다."
+                "matchedCandidates는 null일 수 없습니다."
         );
 
         matchedCandidates = List.copyOf(matchedCandidates);
