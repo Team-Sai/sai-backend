@@ -35,7 +35,7 @@ jobs:
       github.event.pull_request.draft == false
 
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: PR 코드 체크아웃
@@ -76,6 +76,8 @@ jobs:
             - 기존 코드에 이미 존재하던 문제는 지적하지 마세요.
             - 단순 포맷, 취향, 사소한 네이밍은 지적하지 마세요.
             - 실제 수정 가치가 있는 문제만 게시하세요.
+            - 중복되거나 같은 원인에서 발생한 문제는 하나로 묶으세요.
+            - 인라인 코멘트는 중요한 문제를 우선하여 최대 10개까지만 게시하세요.
             - 문제 발생 상황과 수정 방향을 함께 설명하세요.
             - 특정 줄의 문제는 반드시 해당 줄에 인라인 코멘트로 게시하세요.
             - 인라인 코멘트 도구를 사용할 때 confirmed: true를 지정하세요.
@@ -91,8 +93,8 @@ jobs:
             - [LOW]&#58; 수정 가치가 명확한 작은 개선
 
           claude_args: |
-            --max-turns 15
-            --allowedTools "Read,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --max-turns 25
+            --allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git status:*),Bash(git log:*),Bash(git show:*)"
 
   # --------------------------------------------------
   # 2. @claude review 댓글 재리뷰
@@ -110,7 +112,7 @@ jobs:
       )
 
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: PR 최신 코드 체크아웃
@@ -127,6 +129,6 @@ jobs:
           include_fix_links: false
 
           claude_args: |
-            --max-turns 15
-            --append-system-prompt "현재 Pull Request의 최신 변경사항을 코드 리뷰하라. 모든 코멘트는 한국어로 작성하고, 이번 PR에서 변경된 코드만 검토하라. 단순 스타일이나 취향 차이는 지적하지 말고 실제 버그, 잘못된 로직, 데이터 정합성, 트랜잭션, 보안, 예외 처리, 테스트 누락을 우선 검토하라. 특정 코드 문제는 mcp__github_inline_comment__create_inline_comment를 사용해 해당 줄에 게시하고 confirmed: true를 지정하라. 문제가 없으면 중대한 문제를 발견하지 못했다고 짧게 작성하라."
-            --allowedTools "Read,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --max-turns 25
+            --append-system-prompt "현재 Pull Request의 최신 변경사항을 코드 리뷰하라. 저장소 루트에 CLAUDE.md가 있다면 먼저 읽고 프로젝트 규칙을 리뷰 기준으로 사용하라. 모든 코멘트는 한국어로 작성하고, 이번 PR에서 변경된 코드만 검토하라. 기존 코드 문제와 단순 스타일, 포맷, 취향 차이는 지적하지 말라. 실제 실행 오류, 잘못된 비즈니스 로직, Null 처리, 데이터 정합성, 트랜잭션, 인증·인가, 민감정보 노출, 멱등성, 예외 처리, HTTP 상태 코드, 핵심 테스트 누락을 우선 검토하라. 중복되거나 같은 원인의 문제는 하나로 묶고, 인라인 코멘트는 중요한 문제를 우선하여 최대 10개까지만 게시하라. 문제 발생 상황과 수정 방향을 함께 설명하라. 특정 코드 문제는 mcp__github_inline_comment__create_inline_comment를 사용해 해당 줄에 게시하고 confirmed: true를 지정하라. 전체적인 내용만 gh pr comment로 게시하라. 리뷰 결과는 반드시 GitHub PR에 게시하고, 문제가 없으면 중대한 문제를 발견하지 못했다고 짧게 작성하라."
+            --allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git status:*),Bash(git log:*),Bash(git show:*)"
