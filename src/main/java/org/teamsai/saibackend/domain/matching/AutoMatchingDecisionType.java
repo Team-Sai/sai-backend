@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.settlement.matching;
+package org.teamsai.saibackend.domain.matching;
 
 public enum AutoMatchingDecisionType {
     UNMATCHED,

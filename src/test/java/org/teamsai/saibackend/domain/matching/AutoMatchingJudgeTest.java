@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.settlement.matching;
+package org.teamsai.saibackend.domain.matching;
 
 import org.junit.jupiter.api.Test;
 
@@ -13,21 +13,22 @@ class AutoMatchingJudgeTest {
 
     @Test
     void withdrawalTransactionIsUnmatched() {
-        AutoMatchingTransaction transaction = transaction(
+        MatchingTransaction transaction = transaction(
                 AutoMatchingTransactionType.WITHDRAWAL,
-                "홍길동",
+                "HongGilDong",
                 "10000"
         );
 
-        AutoMatchingObligationCandidate candidate = candidate(
+        MatchingCandidate candidate = candidate(
                 1L,
-                "홍길동",
+                "HongGilDong",
                 "10000"
         );
 
-        AutoMatchingResult result = judge.judge(transaction,
-                List.of(candidate));
-
+        AutoMatchingResult result = judge.judge(
+                transaction,
+                List.of(candidate)
+        );
 
         assertThat(result.decisionType()).isEqualTo(AutoMatchingDecisionType.UNMATCHED);
         assertThat(result.matchedCandidates()).isEmpty();
@@ -35,41 +36,42 @@ class AutoMatchingJudgeTest {
 
     @Test
     void depositWithOneMatchedCandidateIsMatchable() {
-        AutoMatchingTransaction transaction = transaction(
+        MatchingTransaction transaction = transaction(
                 AutoMatchingTransactionType.DEPOSIT,
-                "홍 길동",
+                "Hong GilDong",
                 "10000.0"
         );
 
-        AutoMatchingObligationCandidate candidate = candidate(
+        MatchingCandidate candidate = candidate(
                 1L,
-                "홍길동",
+                "HongGilDong",
                 "10000.00"
         );
 
-        AutoMatchingResult result = judge.judge(transaction,
-                List.of(candidate));
-
+        AutoMatchingResult result = judge.judge(
+                transaction,
+                List.of(candidate)
+        );
 
         assertThat(result.decisionType()).isEqualTo(AutoMatchingDecisionType.MATCHABLE);
-
         assertThat(result.matchedCandidates()).containsExactly(candidate);
     }
 
     @Test
     void depositWithMultipleMatchedCandidatesNeedsCheck() {
-        AutoMatchingTransaction transaction = transaction(
+        MatchingTransaction transaction = transaction(
                 AutoMatchingTransactionType.DEPOSIT,
-                "홍길동",
+                "HongGilDong",
                 "10000"
         );
 
-        AutoMatchingObligationCandidate first = candidate(1L, "홍길 동", "10000");
-                AutoMatchingObligationCandidate second = candidate(2L, "홍 길 동", "10000");
+        MatchingCandidate first = candidate(1L, "Hong GilDong", "10000");
+        MatchingCandidate second = candidate(2L, "HongGil Dong", "10000");
 
-                        AutoMatchingResult result = judge.judge(transaction,
-                                List.of(first, second));
-
+        AutoMatchingResult result = judge.judge(
+                transaction,
+                List.of(first, second)
+        );
 
         assertThat(result.decisionType()).isEqualTo(AutoMatchingDecisionType.NEEDS_CHECK);
         assertThat(result.matchedCandidates()).containsExactly(first, second);
@@ -77,21 +79,22 @@ class AutoMatchingJudgeTest {
 
     @Test
     void depositWithoutMatchedCandidateIsUnmatched() {
-        AutoMatchingTransaction transaction = transaction(
+        MatchingTransaction transaction = transaction(
                 AutoMatchingTransactionType.DEPOSIT,
-                "홍길동",
+                "HongGilDong",
                 "10000"
         );
 
-        AutoMatchingObligationCandidate candidate = candidate(
+        MatchingCandidate candidate = candidate(
                 1L,
-                "김철수",
+                "KimChulSoo",
                 "10000"
         );
 
-        AutoMatchingResult result = judge.judge(transaction,
-                List.of(candidate));
-
+        AutoMatchingResult result = judge.judge(
+                transaction,
+                List.of(candidate)
+        );
 
         assertThat(result.decisionType()).isEqualTo(AutoMatchingDecisionType.UNMATCHED);
         assertThat(result.matchedCandidates()).isEmpty();
@@ -99,15 +102,15 @@ class AutoMatchingJudgeTest {
 
     @Test
     void depositWithDifferentAmountIsUnmatched() {
-        AutoMatchingTransaction transaction = transaction(
+        MatchingTransaction transaction = transaction(
                 AutoMatchingTransactionType.DEPOSIT,
-                "홍길동",
+                "HongGilDong",
                 "10000"
         );
 
-        AutoMatchingObligationCandidate candidate = candidate(
+        MatchingCandidate candidate = candidate(
                 1L,
-                "홍길동",
+                "HongGilDong",
                 "9000"
         );
 
@@ -116,18 +119,16 @@ class AutoMatchingJudgeTest {
                 List.of(candidate)
         );
 
-        assertThat(result.decisionType())
-                .isEqualTo(AutoMatchingDecisionType.UNMATCHED);
-
+        assertThat(result.decisionType()).isEqualTo(AutoMatchingDecisionType.UNMATCHED);
         assertThat(result.matchedCandidates()).isEmpty();
     }
 
-    private AutoMatchingTransaction transaction(
+    private MatchingTransaction transaction(
             AutoMatchingTransactionType type,
             String counterpartyName,
             String amount
     ) {
-        return new AutoMatchingTransaction(
+        return new MatchingTransaction(
                 1L,
                 type,
                 new BigDecimal(amount),
@@ -135,12 +136,12 @@ class AutoMatchingJudgeTest {
         );
     }
 
-    private AutoMatchingObligationCandidate candidate(
+    private MatchingCandidate candidate(
             Long obligationId,
             String participantName,
             String remainingAmount
     ) {
-        return new AutoMatchingObligationCandidate(
+        return new MatchingCandidate(
                 obligationId,
                 obligationId,
                 participantName,
