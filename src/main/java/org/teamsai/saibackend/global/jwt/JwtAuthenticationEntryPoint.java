@@ -1,30 +1,41 @@
 package org.teamsai.saibackend.global.jwt;
 
-import jakarta.servlet.ServletException;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
+import org.teamsai.saibackend.global.exception.ErrorResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationEntryPoint
         implements AuthenticationEntryPoint {
+
+    private final ObjectMapper objectMapper;
 
     @Override
     public void commence(
             HttpServletRequest request,
             HttpServletResponse response,
             AuthenticationException authException
-    ) throws IOException, ServletException {
+    ) throws IOException {
 
         UserErrorCode errorCode =
                 UserErrorCode.UNAUTHORIZED;
+
+        ErrorResponse errorResponse =
+                ErrorResponse.of(
+                        errorCode.getHttpStatus().value(),
+                        errorCode.getMessage()
+                );
 
         response.setStatus(
                 errorCode.getHttpStatus().value()
@@ -38,12 +49,9 @@ public class JwtAuthenticationEntryPoint
                 StandardCharsets.UTF_8.name()
         );
 
-        String responseBody = String.format(
-                "{\"status\":%d,\"message\":\"%s\"}",
-                errorCode.getHttpStatus().value(),
-                errorCode.getMessage()
+        objectMapper.writeValue(
+                response.getWriter(),
+                errorResponse
         );
-
-        response.getWriter().write(responseBody);
     }
 }

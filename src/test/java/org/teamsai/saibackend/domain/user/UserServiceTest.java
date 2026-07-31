@@ -7,7 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
-import org.teamsai.saibackend.domain.user.entity.User;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.domain.user.service.UserService;
@@ -110,8 +110,8 @@ class UserServiceTest {
                 );
     }
 
-    private User createUser() {
-        return User.builder()
+    private UserDTO createUser() {
+        return UserDTO.builder()
                 .userId(1L)
                 .userKey(USER_KEY)
                 .email("user@example.com")

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
-import org.teamsai.saibackend.domain.user.entity.User;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 
@@ -16,14 +16,14 @@ public class UserService {
     private final UserMapper userMapper;
 
     public UserResponse getMyInfo(String userKey) {
-        User user = getUser(userKey);
+        UserDTO user = getUser(userKey);
 
         return UserResponse.from(user);
     }
 
     @Transactional
     public void withdraw(String userKey) {
-        User user = getUser(userKey);
+        UserDTO user = getUser(userKey);
 
         int deletedCount = userMapper.deleteById(user.getUserId());
 
@@ -32,7 +32,7 @@ public class UserService {
         }
     }
 
-    private User getUser(String userKey) {
+    private UserDTO getUser(String userKey) {
         return userMapper.findByUserKey(userKey)
                 .orElseThrow(
                         UserErrorCode.USER_NOT_FOUND::toException

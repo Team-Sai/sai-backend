@@ -1,6 +1,7 @@
 package org.teamsai.saibackend.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,7 +9,7 @@ import org.teamsai.saibackend.domain.user.dto.request.UserLoginRequest;
 import org.teamsai.saibackend.domain.user.dto.request.UserSignUpRequest;
 import org.teamsai.saibackend.domain.user.dto.response.UserLoginResponse;
 import org.teamsai.saibackend.domain.user.dto.response.UserSignUpResponse;
-import org.teamsai.saibackend.domain.user.entity.User;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
@@ -22,28 +23,39 @@ import java.util.Locale;
 public class AuthService {
 
     private final UserMapper userMapper;
-    private final UserValidator userValidator;
+    private final AuthValidator authValidator;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
-    public UserSignUpResponse signUp(UserSignUpRequest request) {
+    public UserSignUpResponse signUp(
+            UserSignUpRequest request
+    ) {
         String email = normalizeEmail(request.getEmail());
 
+        authValidator.validateSignUp(email);
 
-        userValidator.validateSignUp(email);
-
-        User user = User.builder()
+        UserDTO user = UserDTO.builder()
                 .userKey(createUserKey())
                 .email(email)
                 .password(
-                        passwordEncoder.encode(request.getPassword())
+                        passwordEncoder.encode(
+                                request.getPassword()
+                        )
                 )
                 .name(request.getName().trim())
                 .birthDate(request.getBirthDate())
                 .build();
 
-        userMapper.insert(user);
+        try {
+            userMapper.insert(user);
+        } catch (DataIntegrityViolationException exception) {
+            if (isEmailUniqueConstraintViolation(exception)) {
+                throw UserErrorCode.DUPLICATE_EMAIL.toException();
+            }
+
+            throw exception;
+        }
 
         return UserSignUpResponse.from(user);
     }
@@ -51,11 +63,11 @@ public class AuthService {
     public UserLoginResponse login(UserLoginRequest request) {
         String email = normalizeEmail(request.getEmail());
 
-        User user = userMapper.findByEmail(email)
+        UserDTO user = userMapper.findByEmail(email)
                 .orElseThrow(
                         UserErrorCode.INVALID_LOGIN_CREDENTIALS::toException
                 );
-        userValidator.validateLoginPassword(
+        authValidator.validateLoginPassword(
                 request.getPassword(),
                 user.getPassword()
         );
@@ -100,6 +112,21 @@ public class AuthService {
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+    private boolean isEmailUniqueConstraintViolation(
+            Throwable exception
+    ) {
+        Throwable cause = exception;
+        while (cause != null) {
+            String message = cause.getMessage();
+            if (message != null && message.contains("uk_users_email")
+            ) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+
+        return false;
     }
 
 }

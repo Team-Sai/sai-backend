@@ -2,7 +2,7 @@ package org.teamsai.saibackend.domain.user.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;
-import org.teamsai.saibackend.domain.user.entity.User;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
 
 @Getter
 @Builder
@@ -13,7 +13,7 @@ public class UserLoginResponse {
     private String name;
 
     public static UserLoginResponse of(
-            User user,
+            UserDTO user,
             String accessToken
     ) {
         return UserLoginResponse.builder()

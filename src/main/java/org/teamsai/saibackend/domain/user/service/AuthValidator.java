@@ -9,7 +9,7 @@ import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 
 @Component
 @RequiredArgsConstructor
-public class UserValidator {
+public class AuthValidator {
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;

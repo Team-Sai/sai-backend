@@ -13,7 +13,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.teamsai.saibackend.domain.user.entity.User;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 
 import java.io.IOException;
@@ -59,14 +59,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String userKey = userKeyOptional.get();
 
-        Optional<User> userOptional =
+        Optional<UserDTO> userOptional =
                 userMapper.findByUserKey(userKey);
 
         if (userOptional.isEmpty()) {
             return;
         }
 
-        User user = userOptional.get();
+        UserDTO user = userOptional.get();
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(

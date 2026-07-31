@@ -6,7 +6,7 @@
 <mapper namespace="org.teamsai.saibackend.domain.user.mapper.UserMapper">
 
     <resultMap id="userResultMap"
-               type="org.teamsai.saibackend.domain.user.entity.User">
+               type="org.teamsai.saibackend.domain.user.dto.UserDTO">
 
         <id property="userId" column="user_id"/>
 
@@ -30,7 +30,7 @@
 
     <!-- 회원가입 -->
     <insert id="insert"
-            parameterType="org.teamsai.saibackend.domain.user.entity.User"
+            parameterType="org.teamsai.saibackend.domain.user.dto.UserDTO"
             useGeneratedKeys="true"
             keyProperty="userId"
             keyColumn="user_id">

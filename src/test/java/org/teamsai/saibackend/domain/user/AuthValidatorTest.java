@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
-import org.teamsai.saibackend.domain.user.service.UserValidator;
+import org.teamsai.saibackend.domain.user.service.AuthValidator;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +19,7 @@ import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserValidator 단위 테스트")
-class UserValidatorTest {
+class AuthValidatorTest {
 
     @Mock
     private UserMapper userMapper;
@@ -28,7 +28,7 @@ class UserValidatorTest {
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private UserValidator userValidator;
+    private AuthValidator authValidator;
 
     @Nested
     @DisplayName("회원가입 검증")
@@ -41,7 +41,7 @@ class UserValidatorTest {
                     .willReturn(false);
 
             assertThatCode(
-                    () -> userValidator.validateSignUp("user@example.com")
+                    () -> authValidator.validateSignUp("user@example.com")
             ).doesNotThrowAnyException();
         }
 
@@ -52,7 +52,7 @@ class UserValidatorTest {
                     .willReturn(true);
 
             assertThatThrownBy(
-                    () -> userValidator.validateSignUp("user@example.com")
+                    () -> authValidator.validateSignUp("user@example.com")
             ).isInstanceOfSatisfying(
                     DomainException.class,
                     exception -> assertThat(exception.getErrorCode())
@@ -72,7 +72,7 @@ class UserValidatorTest {
                     .willReturn(true);
 
             assertThatCode(
-                    () -> userValidator.validateLoginPassword(
+                    () -> authValidator.validateLoginPassword(
                             "Password1!",
                             "encoded-password"
                     )
@@ -86,7 +86,7 @@ class UserValidatorTest {
                     .willReturn(false);
 
             assertThatThrownBy(
-                    () -> userValidator.validateLoginPassword(
+                    () -> authValidator.validateLoginPassword(
                             "WrongPassword1!",
                             "encoded-password"
                     )
