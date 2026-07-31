@@ -68,8 +68,7 @@
     </select>
 
 
-    <!-- 차용증 내용입력. previous_contract_id는 self join 조건으로만 사용:
-         일치하는 이전 계약(prev)이 있으면 그 데이터를 그대로 쓰고, 없으면(prev.* 전부 NULL) 입력값을 사용 -->
+    <!-- 차용증 내용입력. previous_contract_id는 self join 조건으로만 사용-->
     <insert id="insertContract" useGeneratedKeys="true" keyProperty="contractId" keyColumn="contract_id">
         INSERT INTO loan_contract (
             previous_contract_id, creditor_id, debtor_id,
@@ -98,5 +97,13 @@
         FROM DUAL
         LEFT JOIN loan_contract prev ON prev.contract_id = #{previousContractId}
     </insert>
+
+    <!-- 차용증 상태 변경-->
+    <update id="updateContractStatus">
+        UPDATE loan_contract
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE contract_id = #{contractId}
+    </update>
 
 </mapper>

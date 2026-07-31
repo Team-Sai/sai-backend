@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사이원장 | 회원가입</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+          th:href="@{/css/user/signup.css}"
+          href="/css/user/signup.css">
+</head>
+<script th:src="@{/js/user/signup.js}"
+        src="/js/user/signup.js"
+        defer></script>
+<body>
+<div class="page">
+    <header class="site-header">
+        <a class="logo" data-route="main" href="/">사이원장</a>
+        <a class="header-link" data-route="login" href="/login">로그인</a>
+    </header>
+
+    <main class="auth-main">
+        <section class="auth-wrap">
+            <div class="page-heading">
+                <h1>회원가입</h1>
+                <p>사이원장과 함께 거래 관리를 시작하세요.</p>
+            </div>
+
+            <div class="auth-card">
+                <form id="signup-form" novalidate>
+                    <div class="form-field">
+                        <label for="email">이메일 주소</label>
+                        <input id="email" name="email" type="email"
+                               placeholder="example@email.com"
+                               autocomplete="email" required>
+                        <p class="help-text">
+                            본인 확인 및 알림 수신을 위해 정확한 이메일을 입력해 주세요.
+                        </p>
+                        <p id="email-error" class="field-error" hidden>
+                            이메일 주소를 확인해 주세요.
+                        </p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="password">비밀번호 설정</label>
+                        <div class="password-wrap">
+                            <input id="password" name="password" type="password"
+                                   placeholder="비밀번호 입력"
+                                   autocomplete="new-password" required>
+
+                            <button id="toggle-password"
+                                    class="password-toggle"
+                                    type="button"
+                                    aria-label="비밀번호 보기">
+                                <svg id="password-eye-icon"
+                                     width="20" height="20"
+                                     viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="2"
+                                     stroke-linecap="round"
+                                     stroke-linejoin="round"
+                                     aria-hidden="true">
+                                    <path d="M2.062 12.348a1 1 0 0 1 0-.696C3.574 7.884 7.269 5.5 12 5.5s8.426 2.384 9.938 6.152a1 1 0 0 1 0 .696C20.426 16.116 16.731 18.5 12 18.5S3.574 16.116 2.062 12.348Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <p class="help-text">
+                            영문, 숫자, 특수문자를 포함해 8자 이상 입력해 주세요.
+                        </p>
+                        <p id="password-error" class="field-error" hidden>
+                            비밀번호 형식을 확인해 주세요.
+                        </p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="full-name">이름</label>
+                        <input id="full-name" name="name" type="text"
+                               placeholder="실명을 입력하세요"
+                               autocomplete="name" required>
+                        <p id="name-error" class="field-error" hidden>
+                            이름을 입력해 주세요.
+                        </p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="dob">생년월일</label>
+                        <input id="dob" name="birthDate" type="text"
+                               inputmode="numeric"
+                               maxlength="8"
+                               placeholder="예: 19900101" required>
+                        <p class="help-text">숫자 8자리를 입력해 주세요.</p>
+                        <p id="dob-error" class="field-error" hidden>
+                            생년월일 8자리를 확인해 주세요.
+                        </p>
+                    </div>
+
+                    <p id="signup-error" class="submit-error" hidden></p>
+
+                    <button id="signup-button" class="primary-button" type="submit">
+                        가입하기
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="/terms">이용약관</a>
+            <span>|</span>
+            <a href="/privacy"><strong>개인정보 처리방침</strong></a>
+        </div>
+        <p class="copyright">© 2026 Sai-Wonjang. All rights reserved.</p>
+    </footer>
+</div>
+
+<script src="./signup.js"></script>
+</body>
+</html>

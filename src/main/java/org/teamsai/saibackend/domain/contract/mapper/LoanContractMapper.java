@@ -17,7 +17,7 @@ public interface LoanContractMapper {
     //계약서 입력 시 채무자 user_id로 사용자 정보(이름, 생년월일)만 조회
     LoanContractDTO selectDebtorInfoById(Long debtorId);
 
-    //차용증 상태 변경 (임시저장 -> 대기중 -> 완료)
+    //차용증 상태 변경 (임시저장 -> 대기중 -> 완료). 임시저장 클릭 시 status=DRAFT로 호출
     int updateContractStatus(Long contractId, LoanContractStatus status);
 
     //임시저장된 차용증 내용 수정
