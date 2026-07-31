@@ -85,11 +85,10 @@
     </select>
 
     <!-- 회원 탈퇴: 실제 데이터 삭제 -->
-    <delete id="deleteById">
 
+    <delete id="deleteByUserKey">
         DELETE FROM users
-        WHERE user_id = #{userId}
-
+        WHERE user_key = #{userKey}
     </delete>
 
     <select id="existsByUserKey"

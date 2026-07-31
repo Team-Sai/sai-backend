@@ -23,9 +23,7 @@ public class UserService {
 
     @Transactional
     public void withdraw(String userKey) {
-        UserDTO user = getUser(userKey);
-
-        int deletedCount = userMapper.deleteById(user.getUserId());
+        int deletedCount = userMapper.deleteByUserKey(userKey);
 
         if (deletedCount == 0) {
             throw UserErrorCode.USER_NOT_FOUND.toException();

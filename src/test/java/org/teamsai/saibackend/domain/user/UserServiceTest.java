@@ -6,8 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
+import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.domain.user.service.UserService;
@@ -19,7 +19,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -68,36 +67,23 @@ class UserServiceTest {
     class Withdraw {
 
         @Test
-        @DisplayName("사용자 키로 회원을 찾은 뒤 회원 ID로 삭제한다")
+        @DisplayName("사용자 키로 회원을 바로 삭제한다")
         void withdrawSuccess() {
-            given(userMapper.findByUserKey(USER_KEY))
-                    .willReturn(Optional.of(createUser()));
-            given(userMapper.deleteById(1L)).willReturn(1);
+            given(userMapper.deleteByUserKey(USER_KEY)).willReturn(1);
 
             userService.withdraw(USER_KEY);
 
-            verify(userMapper).deleteById(1L);
-        }
-
-        @Test
-        @DisplayName("탈퇴할 회원이 존재하지 않으면 삭제하지 않는다")
-        void withdrawFailsWhenUserDoesNotExist() {
-            given(userMapper.findByUserKey(USER_KEY))
-                    .willReturn(Optional.empty());
-
-            assertUserNotFound(() -> userService.withdraw(USER_KEY));
-
-            verify(userMapper, never()).deleteById(1L);
+            verify(userMapper).deleteByUserKey(USER_KEY);
         }
 
         @Test
         @DisplayName("삭제된 행이 0개이면 회원 없음 예외가 발생한다")
-        void withdrawFailsWhenDeleteCountIsZero() {
-            given(userMapper.findByUserKey(USER_KEY))
-                    .willReturn(Optional.of(createUser()));
-            given(userMapper.deleteById(1L)).willReturn(0);
+        void withdrawFailsWhenUserDoesNotExist() {
+            given(userMapper.deleteByUserKey(USER_KEY)).willReturn(0);
 
             assertUserNotFound(() -> userService.withdraw(USER_KEY));
+
+            verify(userMapper).deleteByUserKey(USER_KEY);
         }
     }
 

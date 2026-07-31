@@ -24,9 +24,7 @@ public interface UserMapper {
             @Param("userKey") String userKey
     );
 
-    int deleteById(
-            @Param("userId") Long userId
-    );
+    int deleteByUserKey(String userKey);
 
     boolean existsByUserKey(
             @Param("userKey") String userKey

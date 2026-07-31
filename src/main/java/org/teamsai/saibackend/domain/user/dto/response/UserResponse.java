@@ -3,10 +3,13 @@ package org.teamsai.saibackend.domain.user.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
-
 import java.time.LocalDate;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 @Getter
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class UserResponse {
 
@@ -16,11 +19,11 @@ public class UserResponse {
     private LocalDate birthDate;
 
     public static UserResponse from(UserDTO user) {
-        return new UserResponse(
-                user.getUserKey(),
-                user.getEmail(),
-                user.getName(),
-                user.getBirthDate()
-        );
+        return UserResponse.builder()
+                .userKey(user.getUserKey())
+                .email(user.getEmail())
+                .name(user.getName())
+                .birthDate(user.getBirthDate())
+                .build();
     }
 }
