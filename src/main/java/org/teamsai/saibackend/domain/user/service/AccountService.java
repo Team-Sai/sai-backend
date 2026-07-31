@@ -20,6 +20,7 @@ public class AccountService {
             return new UserKeyResponse(user.getUserKey());
         }
         String newKey = mockBankClient.requestUserKey(name, email);
+        user.setUserKey(newKey);
         userMapper.updateUserKey(userId,newKey);
         return new UserKeyResponse(newKey);
     }
