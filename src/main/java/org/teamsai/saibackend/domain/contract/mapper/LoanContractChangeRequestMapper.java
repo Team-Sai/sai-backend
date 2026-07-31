@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.contract.mapper;
+package org.teamsai.saibackend.domain.contract.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 

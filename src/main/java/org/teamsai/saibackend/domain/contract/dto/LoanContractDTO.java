@@ -1,10 +1,11 @@
-package org.teamsai.saibackend.contract.dto;
+package org.teamsai.saibackend.domain.contract.dto;
 
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -36,4 +37,13 @@ public class LoanContractDTO {
 
     private String creditorSignature;   // 전자서명(채권자)
     private String debtorSignature;     // 전자서명(채무자)
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    // 아래는 UserDTO가 아직 없어 user 테이블 join 결과를 담기 위한 임시 컬럼
+    private String creditorName;            // 채권자 이름 (user join)
+    private LocalDate creditorBirthDate;    // 채권자 생년월일 (user join)
+    private String debtorName;              // 채무자 이름 (user join)
+    private LocalDate debtorBirthDate;      // 채무자 생년월일 (user join)
 }
