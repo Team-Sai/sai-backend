@@ -1,7 +1,8 @@
 package org.teamsai.saibackend.domain.matching;
 
+import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+
 import java.util.List;
-import java.util.Objects;
 
 public record AutoMatchingResult(
         AutoMatchingDecisionType decisionType,
@@ -9,8 +10,9 @@ public record AutoMatchingResult(
 ) {
 
     public AutoMatchingResult {
-        Objects.requireNonNull(decisionType, "decisionType은 null일 수 없습니다.");
-        Objects.requireNonNull(matchedCandidates, "matchedCandidates는 null일 수 없습니다.");
+        if (decisionType == null || matchedCandidates == null) {
+            throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
+        }
 
         matchedCandidates = List.copyOf(matchedCandidates);
     }

@@ -1,7 +1,8 @@
 package org.teamsai.saibackend.domain.matching;
 
+import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+
 import java.util.List;
-import java.util.Objects;
 
 public class AutoMatchingJudge {
 
@@ -66,7 +67,6 @@ public class AutoMatchingJudge {
                 .equals(normalizeName(candidate.participantName()));
     }
 
-    //입금자 명은 추가 확인 필요
     private String normalizeName(String name) {
         return name.replaceAll("\\s+", "");
     }
@@ -75,11 +75,12 @@ public class AutoMatchingJudge {
             MatchingTransaction transaction,
             List<MatchingCandidate> candidates
     ) {
-        Objects.requireNonNull(transaction, "transaction은 null일 수 없습니다.");
-        Objects.requireNonNull(candidates, "candidates는 null일 수 없습니다.");
+        if (transaction == null || candidates == null) {
+            throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
+        }
 
-        if (candidates.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("candidates에는 null 요소가 포함될 수 없습니다.");
+        if (candidates.stream().anyMatch(candidate -> candidate == null)) {
+            throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
         }
     }
 }

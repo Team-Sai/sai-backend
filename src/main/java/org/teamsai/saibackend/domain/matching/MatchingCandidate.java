@@ -1,7 +1,8 @@
 package org.teamsai.saibackend.domain.matching;
 
+import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+
 import java.math.BigDecimal;
-import java.util.Objects;
 
 public record MatchingCandidate(
         Long obligationId,
@@ -11,17 +12,13 @@ public record MatchingCandidate(
 ) {
 
     public MatchingCandidate {
-        Objects.requireNonNull(obligationId, "obligationId는 null일 수 없습니다.");
-        Objects.requireNonNull(participantId, "participantId는 null일 수 없습니다.");
-        Objects.requireNonNull(participantName, "participantName은 null일 수 없습니다.");
-        Objects.requireNonNull(remainingAmount, "remainingAmount는 null일 수 없습니다.");
-
-        if (participantName.isBlank()) {
-            throw new IllegalArgumentException("participantName은 빈 값일 수 없습니다.");
-        }
-
-        if (remainingAmount.signum() <= 0) {
-            throw new IllegalArgumentException("remainingAmount는 0보다 커야 합니다.");
+        if (obligationId == null
+                || participantId == null
+                || participantName == null
+                || remainingAmount == null
+                || participantName.isBlank()
+                || remainingAmount.signum() <= 0) {
+            throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
         }
     }
 }
