@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사이원장 | 로그인</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+          th:href="@{/css/user/login.css}"
+          href="/css/user/login.css">
+</head>
+<script th:src="@{/js/user/login.js}"
+        src="/js/user/login.js"
+        defer></script>
+<body>
+<div class="page">
+    <header class="site-header">
+        <a class="logo" data-route="main" href="/">사이원장</a>
+        <a class="header-link" data-route="signup" href="/signup">회원가입</a>
+    </header>
+
+    <main class="auth-main">
+        <section class="auth-wrap">
+            <div class="page-heading">
+                <h1>로그인</h1>
+                <p>개인 간 거래와 정산 내역을 안전하게 관리하세요.</p>
+            </div>
+
+            <div id="page-message" class="page-message" hidden></div>
+
+            <div class="auth-card">
+                <form id="login-form" novalidate>
+                    <div class="form-field">
+                        <label for="email">이메일 주소</label>
+                        <input id="email" name="email" type="email"
+                               placeholder="example@email.com"
+                               autocomplete="email" required>
+                        <p id="email-error" class="field-error" hidden>
+                            이메일 주소를 확인해 주세요.
+                        </p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="password">비밀번호</label>
+                        <div class="password-wrap">
+                            <input id="password" name="password" type="password"
+                                   placeholder="비밀번호 입력"
+                                   autocomplete="current-password" required>
+
+                            <button id="toggle-password"
+                                    class="password-toggle"
+                                    type="button"
+                                    aria-label="비밀번호 보기">
+                                <svg id="password-eye-icon"
+                                     width="20" height="20"
+                                     viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="2"
+                                     stroke-linecap="round"
+                                     stroke-linejoin="round"
+                                     aria-hidden="true">
+                                    <path d="M2.062 12.348a1 1 0 0 1 0-.696C3.574 7.884 7.269 5.5 12 5.5s8.426 2.384 9.938 6.152a1 1 0 0 1 0 .696C20.426 16.116 16.731 18.5 12 18.5S3.574 16.116 2.062 12.348Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <p id="password-error" class="field-error" hidden>
+                            비밀번호를 입력해 주세요.
+                        </p>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="remember-label">
+                            <input id="remember-email" type="checkbox">
+                            <span>이메일 저장</span>
+                        </label>
+
+                        <a href="/find-password">비밀번호 찾기</a>
+                    </div>
+
+                    <p id="login-error" class="submit-error" hidden></p>
+
+                    <button id="login-button" class="primary-button" type="submit">
+                        로그인
+                    </button>
+
+                    <div class="sub-link">
+                        아직 사이원장 회원이 아니신가요?
+                        <a data-route="signup" href="/signup">회원가입</a>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="/terms">이용약관</a>
+            <span>|</span>
+            <a href="/privacy"><strong>개인정보 처리방침</strong></a>
+        </div>
+        <p class="copyright">© 2026 Sai-Wonjang. All rights reserved.</p>
+    </footer>
+</div>
+
+<script src="./login.js"></script>
+</body>
+</html>

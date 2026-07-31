@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사이원장 | 내 정보</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+          th:href="@{/css/user/mypage.css}"
+          href="/css/user/mypage.css">
+</head>
+<script th:src="@{/js/user/mypage.js}"
+        src="/js/user/mypage.js"
+        defer></script>
+<body>
+<header class="top-header">
+    <nav class="breadcrumb">
+        <a data-route="main" href="/">메인</a>
+        <span>›</span>
+        <strong>내 정보</strong>
+    </nav>
+
+    <div class="header-tools">
+        <label class="search-box">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+            </svg>
+            <input type="search" placeholder="검색어 입력">
+        </label>
+
+        <button class="icon-button notification-button"
+                type="button"
+                aria-label="알림">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span></span>
+        </button>
+
+        <strong id="header-user-name" class="header-user-name"></strong>
+
+        <div class="header-profile">
+            <img id="header-profile-image" alt="프로필 이미지" hidden>
+            <svg id="header-profile-placeholder"
+                 viewBox="0 0 24 24"
+                 aria-hidden="true">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21a8 8 0 0 1 16 0"></path>
+            </svg>
+        </div>
+    </div>
+</header>
+
+<main class="mypage-main">
+    <section class="page-title">
+        <h1>내 정보</h1>
+        <p>회원 정보와 연결 계좌를 관리할 수 있습니다.</p>
+    </section>
+
+    <div id="mypage-error" class="mypage-error" hidden></div>
+
+    <section class="profile-card">
+        <div class="profile-image-wrap">
+            <div class="profile-image">
+                <img id="profile-image" alt="프로필 이미지" hidden>
+                <svg id="profile-placeholder"
+                     viewBox="0 0 24 24"
+                     aria-hidden="true">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21a8 8 0 0 1 16 0"></path>
+                </svg>
+            </div>
+
+            <button class="camera-button"
+                    type="button"
+                    aria-label="프로필 이미지 변경">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14.5 4h-5L7.8 6H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.8z"></path>
+                    <circle cx="12" cy="13" r="3"></circle>
+                </svg>
+            </button>
+        </div>
+
+        <div class="profile-content">
+            <div class="profile-name-row">
+                <strong id="member-name" class="empty-value profile-name"></strong>
+                <span id="verification-status"
+                      class="empty-value verification-status"></span>
+            </div>
+
+            <div id="member-email"
+                 class="empty-value member-email"></div>
+
+            <div class="profile-actions">
+                <button type="button">프로필 수정</button>
+                <button type="button">비밀번호 변경</button>
+                <button id="logout-button" type="button">로그아웃</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="info-grid">
+        <article class="info-card">
+            <div class="card-header">
+                <h2>상세 정보</h2>
+
+                <button class="icon-button"
+                        type="button"
+                        aria-label="상세 정보 안내">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 11v5"></path>
+                        <path d="M12 8h.01"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="detail-list">
+                <div class="detail-row">
+                    <span>가입일</span>
+                    <strong id="joined-at" class="empty-value"></strong>
+                </div>
+
+                <div class="detail-row">
+                    <span>마케팅 수신</span>
+                    <strong id="marketing-consent"
+                            class="empty-value"></strong>
+                </div>
+            </div>
+        </article>
+
+        <article class="info-card">
+            <div class="card-header">
+                <h2>연결된 계좌</h2>
+
+                <button class="add-account-button" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 8v8"></path>
+                        <path d="M8 12h8"></path>
+                    </svg>
+                    계좌 추가
+                </button>
+            </div>
+
+            <div id="account-list" class="account-list"></div>
+        </article>
+    </section>
+
+    <section class="security-banner">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+            <path d="m9 12 2 2 4-4"></path>
+        </svg>
+
+        <span>
+            사용자의 금융 정보는 암호화되어 안전하게 보호됩니다.
+            계좌 연결 시 본인 확인 절차가 진행됩니다.
+        </span>
+    </section>
+</main>
+
+<script src="./mypage.js"></script>
+</body>
+</html>
