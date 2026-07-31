@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.user.mapper.UserMapper">
+
+    <resultMap id="userResultMap"
+               type="org.teamsai.saibackend.domain.user.dto.UserDTO">
+
+        <id property="userId" column="user_id"/>
+
+        <result property="userKey" column="user_key"/>
+        <result property="email" column="email"/>
+        <result property="password" column="password"/>
+        <result property="name" column="name"/>
+        <result property="birthDate" column="birth_date"/>
+
+    </resultMap>
+
+    <!-- 이메일 중복 확인 -->
+    <select id="existsByEmail"
+            resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM users
+        WHERE email = #{email}
+        )
+    </select>
+
+    <!-- 회원가입 -->
+    <insert id="insert"
+            parameterType="org.teamsai.saibackend.domain.user.dto.UserDTO"
+            useGeneratedKeys="true"
+            keyProperty="userId"
+            keyColumn="user_id">
+
+        INSERT INTO users (
+        user_key,
+        email,
+        password,
+        name,
+        birth_date
+        )
+        VALUES (
+        #{userKey},
+        #{email},
+        #{password},
+        #{name},
+        #{birthDate}
+        )
+
+    </insert>
+
+    <!-- 로그인용 회원 조회 -->
+    <select id="findByEmail"
+            resultMap="userResultMap">
+
+        SELECT
+        user_id,
+        user_key,
+        email,
+        password,
+        name,
+        birth_date
+        FROM users
+        WHERE email = #{email}
+
+    </select>
+
+    <!-- JWT 인증 및 내 정보 조회 -->
+    <select id="findByUserKey"
+            resultMap="userResultMap">
+
+        SELECT
+        user_id,
+        user_key,
+        email,
+        password,
+        name,
+        birth_date
+        FROM users
+        WHERE user_key = #{userKey}
+
+    </select>
+
+    <!-- 회원 탈퇴: 실제 데이터 삭제 -->
+
+    <delete id="deleteByUserKey">
+        DELETE FROM users
+        WHERE user_key = #{userKey}
+    </delete>
+
+    <select id="existsByUserKey"
+            resultType="boolean">
+
+        SELECT EXISTS (
+        SELECT 1
+        FROM users
+        WHERE user_key = #{userKey}
+        )
+
+    </select>
+
+</mapper>
