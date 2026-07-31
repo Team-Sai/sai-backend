@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.contract.dto;
+package org.teamsai.saibackend.domain.contract.dto;
 
 import lombok.*;
 
@@ -16,6 +16,6 @@ public class LoanContractFileDTO {
 
     private String originalFilename; // 원본 파일명 (예: 홍길동_차용증.pdf)
     private String savedFilename;    // UUID 저장 파일명 (예: uuid-abcd-1234.pdf)
-    private Long fileSize;           // 파일 크기 (Bytes -> Long 사용)
+    private Long fileSize;           // 파일 크기
     private String fileType;         // 파일 타입 (pdf)
 }
