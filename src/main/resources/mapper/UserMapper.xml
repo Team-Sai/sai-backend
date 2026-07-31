@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.teamsai.saibackend.domain.user.mapper.UserMapper">
+    <select id="findById" resultType="org.teamsai.saibackend.domain.user.entity.User">
+        SELECT user_id, name, email, user_key
+        FROM user
+        WHERE user_id = #{userId}
+    </select>
+
+    <update id="updateUserKey">
+        UPDATE user
+        SET user_key = #{userKey}
+        WHERE user_id = #{userId}
+    </update>
+</mapper>
