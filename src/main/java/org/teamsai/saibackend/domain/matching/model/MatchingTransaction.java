@@ -1,6 +1,7 @@
-package org.teamsai.saibackend.domain.matching;
+package org.teamsai.saibackend.domain.matching.model;
 
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 
 import java.math.BigDecimal;
 
