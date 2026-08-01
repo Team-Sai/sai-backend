@@ -12,6 +12,7 @@ import org.teamsai.saibackend.domain.matching.reader.MatchingCandidateReader;
 import org.teamsai.saibackend.domain.matching.reader.MatchingTransactionReader;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.service.PaymentService;
+import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -46,7 +47,7 @@ public class AutoMatchingService {
                     excludeAppliedCandidates(candidates, appliedObligationIds);
 
             AutoMatchingProcessResult processResult =
-                    processTransaction(transaction, availableCandidates);
+                    processTransactionSafely(transaction, availableCandidates);
 
             switch (processResult.status()) {
                 case APPLIED -> {
@@ -68,10 +69,23 @@ public class AutoMatchingService {
         );
     }
 
+    private AutoMatchingProcessResult processTransactionSafely(
+            MatchingTransaction transaction,
+            List<MatchingCandidate> candidates
+    ) {
+        try {
+            return processTransaction(transaction, candidates);
+        } catch (DomainException exception) {
+            // 개별 납부 반영 실패가 전체 자동매칭 실행을 중단하지 않도록 한다.
+            return AutoMatchingProcessResult.needsCheck();
+        }
+    }
+
     private List<MatchingCandidate> excludeAppliedCandidates(
             List<MatchingCandidate> candidates,
             Set<Long> appliedObligationIds
     ) {
+        // MVP에서는 한 정산 납부의무를 같은 실행 안에서 한 번만 자동 반영한다.
         return candidates.stream()
                 .filter(candidate -> !appliedObligationIds.contains(
                         candidate.obligationId()

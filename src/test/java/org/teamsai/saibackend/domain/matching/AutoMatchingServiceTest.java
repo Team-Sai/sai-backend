@@ -16,6 +16,7 @@ import org.teamsai.saibackend.domain.matching.reader.MatchingTransactionReader;
 import org.teamsai.saibackend.domain.matching.service.AutoMatchingService;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
+import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.service.PaymentService;
 
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -248,6 +250,67 @@ class AutoMatchingServiceTest {
             assertThat(result.appliedCount()).isEqualTo(1);
             assertThat(result.needsCheckCount()).isZero();
             assertThat(result.unmatchedCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("납부 반영 중 예외가 발생해도 해당 거래만 확인 필요로 처리하고 다음 거래를 계속 처리한다")
+        void executeContinuesWhenApplyPaymentThrowsException() {
+            MatchingTransaction firstTransaction = transaction(
+                    101L,
+                    AutoMatchingTransactionType.DEPOSIT,
+                    "HongGilDong",
+                    "10000"
+            );
+            MatchingTransaction secondTransaction = transaction(
+                    102L,
+                    AutoMatchingTransactionType.DEPOSIT,
+                    "KimChulSoo",
+                    "20000"
+            );
+
+            MatchingCandidate firstCandidate = candidate(
+                    MatchingTargetType.SETTLEMENT,
+                    1L,
+                    "HongGilDong",
+                    "10000"
+            );
+            MatchingCandidate secondCandidate = candidate(
+                    MatchingTargetType.SETTLEMENT,
+                    2L,
+                    "KimChulSoo",
+                    "20000"
+            );
+
+            given(matchingTransactionReader.readPendingTransactions())
+                    .willReturn(List.of(firstTransaction, secondTransaction));
+            given(matchingCandidateReader.readCandidates())
+                    .willReturn(List.of(firstCandidate, secondCandidate));
+
+            doThrow(PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException())
+                    .when(paymentService)
+                    .applyAutoMatchedPayment(
+                            1L,
+                            101L,
+                            new BigDecimal("10000")
+                    );
+
+            AutoMatchingExecutionResult result = autoMatchingService.execute();
+
+            verify(paymentService).applyAutoMatchedPayment(
+                    1L,
+                    101L,
+                    new BigDecimal("10000")
+            );
+            verify(paymentService).applyAutoMatchedPayment(
+                    2L,
+                    102L,
+                    new BigDecimal("20000")
+            );
+
+            assertThat(result.totalTransactionCount()).isEqualTo(2);
+            assertThat(result.appliedCount()).isEqualTo(1);
+            assertThat(result.needsCheckCount()).isEqualTo(1);
+            assertThat(result.unmatchedCount()).isZero();
         }
     }
 
