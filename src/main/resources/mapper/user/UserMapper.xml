@@ -10,6 +10,7 @@
 
         <id property="userId" column="user_id"/>
 
+        <result property="userToken" column="user_token"/>
         <result property="userKey" column="user_key"/>
         <result property="email" column="email"/>
         <result property="password" column="password"/>
@@ -36,14 +37,14 @@
             keyColumn="user_id">
 
         INSERT INTO users (
-        user_key,
+        user_token,
         email,
         password,
         name,
         birth_date
         )
         VALUES (
-        #{userKey},
+        #{userToken},
         #{email},
         #{password},
         #{name},
@@ -58,7 +59,7 @@
 
         SELECT
         user_id,
-        user_key,
+        user_token,
         email,
         password,
         name,
@@ -69,37 +70,41 @@
     </select>
 
     <!-- JWT 인증 및 내 정보 조회 -->
-    <select id="findByUserKey"
+    <select id="findByUserToken"
             resultMap="userResultMap">
 
         SELECT
         user_id,
-        user_key,
+        user_token,
         email,
         password,
         name,
         birth_date
         FROM users
-        WHERE user_key = #{userKey}
+        WHERE user_token = #{userToken}
 
     </select>
 
     <!-- 회원 탈퇴: 실제 데이터 삭제 -->
 
-    <delete id="deleteByUserKey">
+    <delete id="deleteByUserToken">
         DELETE FROM users
-        WHERE user_key = #{userKey}
+        WHERE user_token = #{userToken}
     </delete>
 
-    <select id="existsByUserKey"
+    <select id="existsByUserToken"
             resultType="boolean">
 
         SELECT EXISTS (
         SELECT 1
         FROM users
-        WHERE user_key = #{userKey}
+        WHERE user_token = #{userToken}
         )
 
     </select>
-
+    <select id="findById" resultType="org.teamsai.saibackend.domain.user.dto.UserDTO">
+        SELECT user_id, name, email, user_key
+        FROM users
+        WHERE user_id = #{userId}
+    </select>
 </mapper>

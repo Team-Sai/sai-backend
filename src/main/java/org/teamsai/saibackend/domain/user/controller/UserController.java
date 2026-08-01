@@ -55,9 +55,9 @@ public class UserController {
             @Parameter(hidden = true)
             Authentication authentication
     ) {
-        String userKey = authentication.getName();
+        String userToken = authentication.getName();
 
-        return userService.getMyInfo(userKey);
+        return userService.getMyInfo(userToken);
     }
 
     @Operation(
@@ -81,8 +81,8 @@ public class UserController {
             @Parameter(hidden = true)
             Authentication authentication
     ) {
-        String userKey = authentication.getName();
+        String userToken = authentication.getName();
 
-        userService.withdraw(userKey);
+        userService.withdraw(userToken);
     }
 }

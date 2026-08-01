@@ -36,7 +36,8 @@ public class AuthService {
         authValidator.validateSignUp(email);
 
         UserDTO user = UserDTO.builder()
-                .userKey(createUserKey())
+                .userToken(createUserKToken())
+                .userKey(null)
                 .email(email)
                 .password(
                         passwordEncoder.encode(
@@ -73,7 +74,7 @@ public class AuthService {
         );
 
         String accessToken =
-                jwtTokenProvider.createAccessToken(user.getUserKey());
+                jwtTokenProvider.createAccessToken(user.getUserToken());
 
         return UserLoginResponse.of(
                 user,
@@ -81,33 +82,33 @@ public class AuthService {
         );
     }
 
-    private static final String USER_KEY_PREFIX = "SAI-";
+    private static final String USER_TOKEN_PREFIX = "SAI-";
 
-    private static final String USER_KEY_CHARACTERS =
+    private static final String USER_TOKEN_CHARACTERS =
             "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-    private static final int USER_KEY_LENGTH = 8;
+    private static final int USER_TOKEN_LENGTH = 8;
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
 
-    private String createUserKey() {
+    private String createUserKToken() {
         for (int attempt = 0; attempt < 10; attempt++) {
-            StringBuilder key = new StringBuilder(USER_KEY_PREFIX);
+            StringBuilder token = new StringBuilder(USER_TOKEN_PREFIX);
 
-            for (int i = 0; i < USER_KEY_LENGTH; i++) {
-                int index = RANDOM.nextInt(USER_KEY_CHARACTERS.length());
-                key.append(USER_KEY_CHARACTERS.charAt(index));
+            for (int i = 0; i < USER_TOKEN_LENGTH; i++) {
+                int index = RANDOM.nextInt(USER_TOKEN_CHARACTERS.length());
+                token.append(USER_TOKEN_CHARACTERS.charAt(index));
             }
 
-            String userKey = key.toString();
+            String userToken = token.toString();
 
-            if (!userMapper.existsByUserKey(userKey)) {
-                return userKey;
+            if (!userMapper.existsByUserToken(userToken)) {
+                return userToken;
             }
         }
 
-        throw UserErrorCode.USER_KEY_GENERATION_FAILED.toException();
+        throw UserErrorCode.USER_TOKEN_GENERATION_FAILED.toException();
     }
 
     private String normalizeEmail(String email) {

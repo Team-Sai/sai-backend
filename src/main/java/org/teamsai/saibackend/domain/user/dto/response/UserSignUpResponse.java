@@ -12,13 +12,13 @@ import org.teamsai.saibackend.domain.user.dto.UserDTO;
 @AllArgsConstructor
 public class UserSignUpResponse {
 
-    private String userKey;
+    private String userToken;
     private String email;
     private String name;
 
     public static UserSignUpResponse from(UserDTO user) {
         return new UserSignUpResponse(
-                user.getUserKey(),
+                user.getUserToken(),
                 user.getEmail(),
                 user.getName()
         );

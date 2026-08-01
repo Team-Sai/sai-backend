@@ -15,23 +15,23 @@ public class UserService {
 
     private final UserMapper userMapper;
 
-    public UserResponse getMyInfo(String userKey) {
-        UserDTO user = getUser(userKey);
+    public UserResponse getMyInfo(String userToken) {
+        UserDTO user = getUser(userToken);
 
         return UserResponse.from(user);
     }
 
     @Transactional
-    public void withdraw(String userKey) {
-        int deletedCount = userMapper.deleteByUserKey(userKey);
+    public void withdraw(String userToken) {
+        int deletedCount = userMapper.deleteByUserToken(userToken);
 
         if (deletedCount == 0) {
             throw UserErrorCode.USER_NOT_FOUND.toException();
         }
     }
 
-    private UserDTO getUser(String userKey) {
-        return userMapper.findByUserKey(userKey)
+    private UserDTO getUser(String userToken) {
+        return userMapper.findByUserToken(userToken)
                 .orElseThrow(
                         UserErrorCode.USER_NOT_FOUND::toException
                 );

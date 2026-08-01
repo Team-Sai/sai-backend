@@ -36,7 +36,7 @@ public enum UserErrorCode
             "로그인이 필요하거나 토큰이 유효하지 않습니다."
     ),
 
-    USER_KEY_GENERATION_FAILED(
+    USER_TOKEN_GENERATION_FAILED(
             HttpStatus.INTERNAL_SERVER_ERROR,
         "회원 초대 코드 생성에 실패했습니다."
     );

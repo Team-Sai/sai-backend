@@ -8,26 +8,25 @@ import java.util.Optional;
 
 @Mapper
 public interface UserMapper {
-    Optional<UserDTO> findById(@Param("userId") Long userId);
-    void updateUserKey(@Param("userId")Long userId, @Param("userKey") String userKey);
-
     int insert(UserDTO user);
 
     boolean existsByEmail(
             @Param("email") String email
     );
 
+    Optional<UserDTO> findById(@Param("userId") Long userId);
+
     Optional<UserDTO> findByEmail(
             @Param("email") String email
     );
 
-    Optional<UserDTO> findByUserKey(
-            @Param("userKey") String userKey
+    Optional<UserDTO> findByUserToken(
+            @Param("userToken") String userToken
     );
 
-    int deleteByUserKey(String userKey);
+    int deleteByUserToken(String userKey);
 
-    boolean existsByUserKey(
-            @Param("userKey") String userKey
+    boolean existsByUserToken(
+            @Param("userToken") String userToken
     );
 }
