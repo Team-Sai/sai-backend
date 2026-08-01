@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS payment_obligation (
     payment_obligation_id BIGINT NOT NULL AUTO_INCREMENT,
     participant_id BIGINT NOT NULL,
-    expected_amount DECIMAL(15, 2) NOT NULL,
+    expected_amount DECIMAL(15, 2) NOT NULL CHECK (expected_amount > 0),
     payment_status VARCHAR(30) NOT NULL CHECK (
         payment_status IN ('UNPAID', 'PARTIALLY_PAID', 'PAID')
     ),
@@ -13,29 +13,29 @@ CREATE TABLE IF NOT EXISTS payment_obligation (
     ),
 
     PRIMARY KEY (payment_obligation_id)
-    ) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS payment_record (
     payment_record_id BIGINT NOT NULL AUTO_INCREMENT,
-    settlement_bank_transaction_id BIGINT NOT NULL,
+    bank_transaction_id BIGINT NOT NULL,
     obligation_id BIGINT NOT NULL,
-    amount DECIMAL(15, 2) NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL CHECK (amount > 0),
     source_type VARCHAR(30) NOT NULL CHECK (
         source_type IN ('AUTO_MATCH', 'MANUAL')
     ),
     record_status VARCHAR(30) NOT NULL CHECK (
-        record_status IN ('CONFIRMED', 'CANCELED')
+        record_status IN ('CONFIRMED', 'CANCELLED')
     ),
     recorded_at DATETIME NOT NULL,
-    canceled_by_id BIGINT NULL,
-    canceled_at DATETIME NULL,
+    cancelled_by_id BIGINT NULL,
+    cancelled_at DATETIME NULL,
     memo VARCHAR(500) NULL,
 
     PRIMARY KEY (payment_record_id),
-    CONSTRAINT uk_payment_record_transaction
-    UNIQUE (settlement_bank_transaction_id)
-    ) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_unicode_ci;
+    CONSTRAINT uk_payment_record_bank_transaction
+        UNIQUE (bank_transaction_id)
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;

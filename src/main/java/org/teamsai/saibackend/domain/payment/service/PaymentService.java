@@ -25,22 +25,34 @@ public class PaymentService {
     private final PaymentRecordMapper paymentRecordMapper;
 
     @Transactional
-    public void applyPayment(
+    public void applyAutoMatchedPayment(
             Long paymentObligationId,
-            Long settlementBankTransactionId,
+            Long bankTransactionId,
+            BigDecimal amount
+    ) {
+        applyPayment(
+                paymentObligationId,
+                bankTransactionId,
+                amount,
+                SourceType.AUTO_MATCH
+        );
+    }
+
+    private void applyPayment(
+            Long paymentObligationId,
+            Long bankTransactionId,
             BigDecimal amount,
             SourceType sourceType
     ) {
         validatePaymentAmount(amount);
-        validateSourceType(sourceType);
-        validateSettlementBankTransactionId(settlementBankTransactionId);
+        validateBankTransactionId(bankTransactionId);
 
         PaymentObligationDTO obligation =
                 paymentObligationMapper.findByIdForUpdate(paymentObligationId)
                         .orElseThrow(PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND::toException);
 
         validateActiveObligation(obligation);
-        validateNotDuplicatePaymentRecord(settlementBankTransactionId);
+        validateNotDuplicatePaymentRecord(bankTransactionId);
 
         BigDecimal paidAmount = paymentRecordMapper
                 .sumConfirmedAmountByObligationId(paymentObligationId);
@@ -53,7 +65,7 @@ public class PaymentService {
         }
 
         PaymentRecordDTO paymentRecord = PaymentRecordDTO.builder()
-                .settlementBankTransactionId(settlementBankTransactionId)
+                .bankTransactionId(bankTransactionId)
                 .obligationId(paymentObligationId)
                 .amount(amount)
                 .sourceType(sourceType)
@@ -98,25 +110,19 @@ public class PaymentService {
         }
     }
 
-    private void validateSourceType(SourceType sourceType) {
-        if (sourceType == null) {
-            throw PaymentErrorCode.INVALID_PAYMENT_SOURCE_TYPE.toException();
-        }
-    }
-
-    private void validateSettlementBankTransactionId(
-            Long settlementBankTransactionId
+    private void validateBankTransactionId(
+            Long bankTransactionId
     ) {
-        if (settlementBankTransactionId == null) {
-            throw PaymentErrorCode.INVALID_SETTLEMENT_BANK_TRANSACTION_ID.toException();
+        if (bankTransactionId == null) {
+            throw PaymentErrorCode.INVALID_BANK_TRANSACTION_ID.toException();
         }
     }
 
     private void validateNotDuplicatePaymentRecord(
-            Long settlementBankTransactionId
+            Long bankTransactionId
     ) {
-        if (paymentRecordMapper.existsBySettlementBankTransactionId(
-                settlementBankTransactionId
+        if (paymentRecordMapper.existsByBankTransactionId(
+                bankTransactionId
         )) {
             throw PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException();
         }

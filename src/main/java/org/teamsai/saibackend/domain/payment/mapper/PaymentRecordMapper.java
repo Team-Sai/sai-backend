@@ -15,8 +15,8 @@ public interface PaymentRecordMapper {
 
     // MVP에서는 은행 거래 1건을 여러 납부의무로 분할 반영하지 않는다.
     // 추후 분할 반영을 지원할 경우 거래별 반영 합계 검증으로 확장한다.
-    boolean existsBySettlementBankTransactionId(
-            @Param("settlementBankTransactionId") Long settlementBankTransactionId
+    boolean existsByBankTransactionId(
+            @Param("bankTransactionId") Long bankTransactionId
     );
 
     int insert(PaymentRecordDTO paymentRecord);

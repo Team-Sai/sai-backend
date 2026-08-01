@@ -13,12 +13,12 @@
         AND record_status = 'CONFIRMED'
     </select>
 
-    <select id="existsBySettlementBankTransactionId"
+    <select id="existsByBankTransactionId"
             resultType="boolean">
         SELECT EXISTS (
         SELECT 1
         FROM payment_record
-        WHERE settlement_bank_transaction_id = #{settlementBankTransactionId}
+        WHERE bank_transaction_id = #{bankTransactionId}
         )
     </select>
 
@@ -28,7 +28,7 @@
             keyProperty="paymentRecordId"
             keyColumn="payment_record_id">
         INSERT INTO payment_record (
-        settlement_bank_transaction_id,
+        bank_transaction_id,
         obligation_id,
         amount,
         source_type,
@@ -36,7 +36,7 @@
         recorded_at
         )
         VALUES (
-        #{settlementBankTransactionId},
+        #{bankTransactionId},
         #{obligationId},
         #{amount},
         #{sourceType},

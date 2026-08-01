@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 class PaymentServiceTest {
 
     private static final Long PAYMENT_OBLIGATION_ID = 1L;
-    private static final Long SETTLEMENT_BANK_TRANSACTION_ID = 101L;
+    private static final Long BANK_TRANSACTION_ID = 101L;
 
     @Mock
     private PaymentObligationMapper paymentObligationMapper;
@@ -72,11 +72,10 @@ class PaymentServiceTest {
                     PaymentStatus.PAID
             )).willReturn(1);
 
-            paymentService.applyPayment(
+            paymentService.applyAutoMatchedPayment(
                     PAYMENT_OBLIGATION_ID,
-                    SETTLEMENT_BANK_TRANSACTION_ID,
-                    amount,
-                    SourceType.AUTO_MATCH
+                    BANK_TRANSACTION_ID,
+                    amount
             );
 
             ArgumentCaptor<PaymentRecordDTO> paymentRecordCaptor =
@@ -90,8 +89,8 @@ class PaymentServiceTest {
 
             assertThat(paymentRecord.getObligationId())
                     .isEqualTo(PAYMENT_OBLIGATION_ID);
-            assertThat(paymentRecord.getSettlementBankTransactionId())
-                    .isEqualTo(SETTLEMENT_BANK_TRANSACTION_ID);
+            assertThat(paymentRecord.getBankTransactionId())
+                    .isEqualTo(BANK_TRANSACTION_ID);
             assertThat(paymentRecord.getAmount())
                     .isEqualByComparingTo(amount);
             assertThat(paymentRecord.getSourceType())
@@ -127,12 +126,10 @@ class PaymentServiceTest {
                     PaymentStatus.PARTIALLY_PAID
             )).willReturn(1);
 
-            // sourceType과 관계없이 납부 상태 계산은 동일하게 동작해야 한다.
-            paymentService.applyPayment(
+            paymentService.applyAutoMatchedPayment(
                     PAYMENT_OBLIGATION_ID,
-                    SETTLEMENT_BANK_TRANSACTION_ID,
-                    amount,
-                    SourceType.MANUAL
+                    BANK_TRANSACTION_ID,
+                    amount
             );
 
             verify(paymentObligationMapper).updatePaymentStatus(
@@ -153,11 +150,10 @@ class PaymentServiceTest {
                     .willReturn(Optional.empty());
 
             assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
+                    () -> paymentService.applyAutoMatchedPayment(
                             PAYMENT_OBLIGATION_ID,
-                            SETTLEMENT_BANK_TRANSACTION_ID,
-                            new BigDecimal("10000"),
-                            SourceType.AUTO_MATCH
+                            BANK_TRANSACTION_ID,
+                            new BigDecimal("10000")
                     ),
                     PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND
             );
@@ -175,11 +171,10 @@ class PaymentServiceTest {
                     ));
 
             assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
+                    () -> paymentService.applyAutoMatchedPayment(
                             PAYMENT_OBLIGATION_ID,
-                            SETTLEMENT_BANK_TRANSACTION_ID,
-                            new BigDecimal("10000"),
-                            SourceType.AUTO_MATCH
+                            BANK_TRANSACTION_ID,
+                            new BigDecimal("10000")
                     ),
                     PaymentErrorCode.PAYMENT_OBLIGATION_NOT_ACTIVE
             );
@@ -192,11 +187,10 @@ class PaymentServiceTest {
         @DisplayName("납부 금액이 0 이하이면 예외가 발생한다")
         void applyPaymentFailsWhenAmountIsInvalid() {
             assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
+                    () -> paymentService.applyAutoMatchedPayment(
                             PAYMENT_OBLIGATION_ID,
-                            SETTLEMENT_BANK_TRANSACTION_ID,
-                            BigDecimal.ZERO,
-                            SourceType.AUTO_MATCH
+                            BANK_TRANSACTION_ID,
+                            BigDecimal.ZERO
                     ),
                     PaymentErrorCode.INVALID_PAYMENT_AMOUNT
             );
@@ -208,35 +202,15 @@ class PaymentServiceTest {
         }
 
         @Test
-        @DisplayName("납부 출처가 없으면 예외가 발생한다")
-        void applyPaymentFailsWhenSourceTypeIsNull() {
-            assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
-                            PAYMENT_OBLIGATION_ID,
-                            SETTLEMENT_BANK_TRANSACTION_ID,
-                            new BigDecimal("10000"),
-                            null
-                    ),
-                    PaymentErrorCode.INVALID_PAYMENT_SOURCE_TYPE
-            );
-
-            verify(paymentRecordMapper, never())
-                    .insert(any(PaymentRecordDTO.class));
-            verify(paymentObligationMapper, never())
-                    .findByIdForUpdate(PAYMENT_OBLIGATION_ID);
-        }
-
-        @Test
         @DisplayName("은행 거래 ID가 없으면 예외가 발생한다")
-        void applyPaymentFailsWhenSettlementBankTransactionIdIsNull() {
+        void applyPaymentFailsWhenBankTransactionIdIsNull() {
             assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
+                    () -> paymentService.applyAutoMatchedPayment(
                             PAYMENT_OBLIGATION_ID,
                             null,
-                            new BigDecimal("10000"),
-                            SourceType.AUTO_MATCH
+                            new BigDecimal("10000")
                     ),
-                    PaymentErrorCode.INVALID_SETTLEMENT_BANK_TRANSACTION_ID
+                    PaymentErrorCode.INVALID_BANK_TRANSACTION_ID
             );
 
             verify(paymentRecordMapper, never())
@@ -247,20 +221,19 @@ class PaymentServiceTest {
 
         @Test
         @DisplayName("같은 은행 거래 ID로 이미 반영된 납부기록이 있으면 예외가 발생한다")
-        void applyPaymentFailsWhenSettlementBankTransactionIsAlreadyApplied() {
+        void applyPaymentFailsWhenBankTransactionIsAlreadyApplied() {
             given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
-            given(paymentRecordMapper.existsBySettlementBankTransactionId(
-                    SETTLEMENT_BANK_TRANSACTION_ID
+            given(paymentRecordMapper.existsByBankTransactionId(
+                    BANK_TRANSACTION_ID
             )).willReturn(true);
 
             assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
+                    () -> paymentService.applyAutoMatchedPayment(
                             PAYMENT_OBLIGATION_ID,
-                            SETTLEMENT_BANK_TRANSACTION_ID,
-                            new BigDecimal("10000"),
-                            SourceType.AUTO_MATCH
+                            BANK_TRANSACTION_ID,
+                            new BigDecimal("10000")
                     ),
                     PaymentErrorCode.DUPLICATE_PAYMENT_RECORD
             );
@@ -280,11 +253,10 @@ class PaymentServiceTest {
             )).willReturn(new BigDecimal("30000"));
 
             assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
+                    () -> paymentService.applyAutoMatchedPayment(
                             PAYMENT_OBLIGATION_ID,
-                            SETTLEMENT_BANK_TRANSACTION_ID,
-                            new BigDecimal("80000"),
-                            SourceType.AUTO_MATCH
+                            BANK_TRANSACTION_ID,
+                            new BigDecimal("80000")
                     ),
                     PaymentErrorCode.PAYMENT_AMOUNT_EXCEEDS_REMAINING_AMOUNT
             );
@@ -307,11 +279,10 @@ class PaymentServiceTest {
                     .willReturn(0);
 
             assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
+                    () -> paymentService.applyAutoMatchedPayment(
                             PAYMENT_OBLIGATION_ID,
-                            SETTLEMENT_BANK_TRANSACTION_ID,
-                            new BigDecimal("10000"),
-                            SourceType.AUTO_MATCH
+                            BANK_TRANSACTION_ID,
+                            new BigDecimal("10000")
                     ),
                     PaymentErrorCode.PAYMENT_RECORD_CREATE_FAILED
             );
@@ -337,11 +308,10 @@ class PaymentServiceTest {
                     .willThrow(new DuplicateKeyException("duplicate payment record"));
 
             assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
+                    () -> paymentService.applyAutoMatchedPayment(
                             PAYMENT_OBLIGATION_ID,
-                            SETTLEMENT_BANK_TRANSACTION_ID,
-                            new BigDecimal("10000"),
-                            SourceType.AUTO_MATCH
+                            BANK_TRANSACTION_ID,
+                            new BigDecimal("10000")
                     ),
                     PaymentErrorCode.DUPLICATE_PAYMENT_RECORD
             );
@@ -369,11 +339,10 @@ class PaymentServiceTest {
             )).willReturn(0);
 
             assertPaymentExceptionThrownBy(
-                    () -> paymentService.applyPayment(
+                    () -> paymentService.applyAutoMatchedPayment(
                             PAYMENT_OBLIGATION_ID,
-                            SETTLEMENT_BANK_TRANSACTION_ID,
-                            new BigDecimal("10000"),
-                            SourceType.AUTO_MATCH
+                            BANK_TRANSACTION_ID,
+                            new BigDecimal("10000")
                     ),
                     PaymentErrorCode.PAYMENT_STATUS_UPDATE_FAILED
             );

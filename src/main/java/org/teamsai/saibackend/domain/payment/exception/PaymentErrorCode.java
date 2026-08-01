@@ -20,7 +20,7 @@ public enum PaymentErrorCode implements BaseErrorCode<DomainException> {
             "활성 상태의 납부의무가 아닙니다."
     ),
 
-    INVALID_SETTLEMENT_BANK_TRANSACTION_ID(
+    INVALID_BANK_TRANSACTION_ID(
             HttpStatus.BAD_REQUEST,
             "은행 거래 ID가 올바르지 않습니다."
     ),
@@ -33,11 +33,6 @@ public enum PaymentErrorCode implements BaseErrorCode<DomainException> {
     INVALID_PAYMENT_AMOUNT(
             HttpStatus.BAD_REQUEST,
             "납부 금액이 올바르지 않습니다."
-    ),
-
-    INVALID_PAYMENT_SOURCE_TYPE(
-            HttpStatus.BAD_REQUEST,
-            "납부 출처가 올바르지 않습니다."
     ),
 
     PAYMENT_AMOUNT_EXCEEDS_REMAINING_AMOUNT(

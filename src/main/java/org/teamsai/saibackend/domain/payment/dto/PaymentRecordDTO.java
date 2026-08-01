@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 public class PaymentRecordDTO {
     private Long paymentRecordId;
 
-    private Long settlementBankTransactionId;
+    private Long bankTransactionId;
     private Long obligationId;
 
     private BigDecimal amount;
@@ -27,8 +27,8 @@ public class PaymentRecordDTO {
 
     private LocalDateTime recordedAt;
 
-    private Long canceledById;
-    private LocalDateTime canceledAt;
+    private Long cancelledById;
+    private LocalDateTime cancelledAt;
 
     private String memo;
 }
