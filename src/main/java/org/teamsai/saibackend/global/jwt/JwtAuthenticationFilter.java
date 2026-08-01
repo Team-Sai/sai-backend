@@ -50,17 +50,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token,
             HttpServletRequest request
     ) {
-        Optional<String> userKeyOptional =
+        Optional<String> userTokenOptional =
                 jwtTokenProvider.getUserKeyIfValid(token);
 
-        if (userKeyOptional.isEmpty()) {
+        if (userTokenOptional.isEmpty()) {
             return;
         }
 
-        String userKey = userKeyOptional.get();
+        String userToken = userTokenOptional.get();
 
         Optional<UserDTO> userOptional =
-                userMapper.findByUserKey(userKey);
+                userMapper.findByUserToken(userToken);
 
         if (userOptional.isEmpty()) {
             return;
@@ -70,7 +70,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        user.getUserKey(),
+                        user.getUserToken(),
                         null,
                         Collections.emptyList()
                 );

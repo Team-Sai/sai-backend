@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
-                                     user_id BIGINT NOT NULL AUTO_INCREMENT,
-                                     user_key VARCHAR(36) NOT NULL,
+    user_id BIGINT NOT NULL AUTO_INCREMENT,
+    user_key VARCHAR(36),
+    user_token VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(50) NOT NULL,
@@ -11,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 
     PRIMARY KEY (user_id),
     UNIQUE KEY uk_users_user_key (user_key),
+    UNIQUE KEY uk_users_user_token (user_token),
     UNIQUE KEY uk_users_email (email)
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
