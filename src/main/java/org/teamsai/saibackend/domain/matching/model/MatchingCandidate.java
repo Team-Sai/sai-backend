@@ -1,10 +1,12 @@
-package org.teamsai.saibackend.domain.matching;
+package org.teamsai.saibackend.domain.matching.model;
 
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 
 import java.math.BigDecimal;
 
 public record MatchingCandidate(
+        MatchingTargetType targetType,
         Long obligationId,
         Long participantId,
         String participantName,
@@ -12,7 +14,8 @@ public record MatchingCandidate(
 ) {
 
     public MatchingCandidate {
-        if (obligationId == null
+        if (targetType == null
+                || obligationId == null
                 || participantId == null
                 || participantName == null
                 || remainingAmount == null

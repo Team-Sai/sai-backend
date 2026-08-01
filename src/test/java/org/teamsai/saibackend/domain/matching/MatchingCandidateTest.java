@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
+import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
@@ -20,10 +22,25 @@ class MatchingCandidateTest {
     class Construct {
 
         @Test
-        @DisplayName("채무 ID가 null이면 잘못된 매칭 요청 예외가 발생한다")
+        @DisplayName("매칭 대상 유형이 null이면 잘못된 매칭 요청 예외가 발생한다")
+        void failsWhenTargetTypeIsNull() {
+            assertInvalidMatchingRequestThrownBy(
+                    () -> new MatchingCandidate(
+                            null,
+                            1L,
+                            1L,
+                            "HongGilDong",
+                            new BigDecimal("10000")
+                    )
+            );
+        }
+
+        @Test
+        @DisplayName("납부의무 ID가 null이면 잘못된 매칭 요청 예외가 발생한다")
         void failsWhenObligationIdIsNull() {
             assertInvalidMatchingRequestThrownBy(
                     () -> new MatchingCandidate(
+                            MatchingTargetType.SETTLEMENT,
                             null,
                             1L,
                             "HongGilDong",
@@ -37,6 +54,7 @@ class MatchingCandidateTest {
         void failsWhenParticipantIdIsNull() {
             assertInvalidMatchingRequestThrownBy(
                     () -> new MatchingCandidate(
+                            MatchingTargetType.SETTLEMENT,
                             1L,
                             null,
                             "HongGilDong",
@@ -50,6 +68,7 @@ class MatchingCandidateTest {
         void failsWhenParticipantNameIsNull() {
             assertInvalidMatchingRequestThrownBy(
                     () -> new MatchingCandidate(
+                            MatchingTargetType.SETTLEMENT,
                             1L,
                             1L,
                             null,
@@ -63,6 +82,7 @@ class MatchingCandidateTest {
         void failsWhenParticipantNameIsBlank() {
             assertInvalidMatchingRequestThrownBy(
                     () -> new MatchingCandidate(
+                            MatchingTargetType.SETTLEMENT,
                             1L,
                             1L,
                             " ",
@@ -76,6 +96,7 @@ class MatchingCandidateTest {
         void failsWhenRemainingAmountIsNull() {
             assertInvalidMatchingRequestThrownBy(
                     () -> new MatchingCandidate(
+                            MatchingTargetType.SETTLEMENT,
                             1L,
                             1L,
                             "HongGilDong",
@@ -89,6 +110,7 @@ class MatchingCandidateTest {
         void failsWhenRemainingAmountIsNotPositive() {
             assertInvalidMatchingRequestThrownBy(
                     () -> new MatchingCandidate(
+                            MatchingTargetType.SETTLEMENT,
                             1L,
                             1L,
                             "HongGilDong",

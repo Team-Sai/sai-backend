@@ -1,9 +1,15 @@
-package org.teamsai.saibackend.domain.matching;
+package org.teamsai.saibackend.domain.matching.policy;
 
+import org.springframework.stereotype.Component;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+import org.teamsai.saibackend.domain.matching.model.AutoMatchingResult;
+import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
+import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
+import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 
 import java.util.List;
 
+@Component
 public class AutoMatchingJudge {
 
     public AutoMatchingResult judge(
@@ -13,34 +19,14 @@ public class AutoMatchingJudge {
         validateInput(transaction, candidates);
 
         if (transaction.transactionType() != AutoMatchingTransactionType.DEPOSIT) {
-            return new AutoMatchingResult(
-                    AutoMatchingDecisionType.UNMATCHED,
-                    List.of()
-            );
+            return new AutoMatchingResult(List.of());
         }
 
         List<MatchingCandidate> matchedCandidates = candidates.stream()
                 .filter(candidate -> isMatched(transaction, candidate))
                 .toList();
 
-        return new AutoMatchingResult(
-                determineDecisionType(matchedCandidates.size()),
-                matchedCandidates
-        );
-    }
-
-    private AutoMatchingDecisionType determineDecisionType(
-            int matchedCandidateCount
-    ) {
-        if (matchedCandidateCount == 0) {
-            return AutoMatchingDecisionType.UNMATCHED;
-        }
-
-        if (matchedCandidateCount == 1) {
-            return AutoMatchingDecisionType.MATCHABLE;
-        }
-
-        return AutoMatchingDecisionType.NEEDS_CHECK;
+        return new AutoMatchingResult(matchedCandidates);
     }
 
     private boolean isMatched(
@@ -55,6 +41,7 @@ public class AutoMatchingJudge {
             MatchingTransaction transaction,
             MatchingCandidate candidate
     ) {
+        // MVP 자동매칭은 입금액과 남은 납부금액이 정확히 같은 경우만 허용한다.
         return transaction.amount()
                 .compareTo(candidate.remainingAmount()) == 0;
     }
@@ -63,6 +50,7 @@ public class AutoMatchingJudge {
             MatchingTransaction transaction,
             MatchingCandidate candidate
     ) {
+        // MVP 이후 실제 은행 연동 시 계좌 ID나 연결 키 기반 식별로 리팩터링한다.
         return normalizeName(transaction.counterpartyName())
                 .equals(normalizeName(candidate.participantName()));
     }
