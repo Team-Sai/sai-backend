@@ -13,6 +13,15 @@
         AND record_status = 'CONFIRMED'
     </select>
 
+    <select id="existsBySettlementBankTransactionId"
+            resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM payment_record
+        WHERE settlement_bank_transaction_id = #{settlementBankTransactionId}
+        )
+    </select>
+
     <insert id="insert"
             parameterType="org.teamsai.saibackend.domain.payment.dto.PaymentRecordDTO"
             useGeneratedKeys="true"

@@ -9,6 +9,7 @@ import org.teamsai.saibackend.global.exception.DomainException;
 @Getter
 @RequiredArgsConstructor
 public enum PaymentErrorCode implements BaseErrorCode<DomainException> {
+
     PAYMENT_OBLIGATION_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "납부의무를 찾을 수 없습니다."
@@ -17,6 +18,16 @@ public enum PaymentErrorCode implements BaseErrorCode<DomainException> {
     PAYMENT_OBLIGATION_NOT_ACTIVE(
             HttpStatus.CONFLICT,
             "활성 상태의 납부의무가 아닙니다."
+    ),
+
+    INVALID_SETTLEMENT_BANK_TRANSACTION_ID(
+            HttpStatus.BAD_REQUEST,
+            "은행 거래 ID가 올바르지 않습니다."
+    ),
+
+    DUPLICATE_PAYMENT_RECORD(
+            HttpStatus.CONFLICT,
+            "이미 반영된 은행 거래입니다."
     ),
 
     INVALID_PAYMENT_AMOUNT(

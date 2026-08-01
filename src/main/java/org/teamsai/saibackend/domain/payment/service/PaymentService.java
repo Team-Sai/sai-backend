@@ -1,6 +1,7 @@
 package org.teamsai.saibackend.domain.payment.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO;
@@ -30,13 +31,16 @@ public class PaymentService {
             BigDecimal amount,
             SourceType sourceType
     ) {
+        validatePaymentAmount(amount);
+        validateSourceType(sourceType);
+        validateSettlementBankTransactionId(settlementBankTransactionId);
+
         PaymentObligationDTO obligation =
-                paymentObligationMapper.findById(paymentObligationId)
+                paymentObligationMapper.findByIdForUpdate(paymentObligationId)
                         .orElseThrow(PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND::toException);
 
         validateActiveObligation(obligation);
-        validatePaymentAmount(amount);
-        validateSourceType(sourceType);
+        validateNotDuplicatePaymentRecord(settlementBankTransactionId);
 
         BigDecimal paidAmount = paymentRecordMapper
                 .sumConfirmedAmountByObligationId(paymentObligationId);
@@ -57,9 +61,13 @@ public class PaymentService {
                 .recordedAt(LocalDateTime.now())
                 .build();
 
-        int insertedCount = paymentRecordMapper.insert(paymentRecord);
-        if (insertedCount != 1) {
-            throw PaymentErrorCode.PAYMENT_RECORD_CREATE_FAILED.toException();
+        try {
+            int insertedCount = paymentRecordMapper.insert(paymentRecord);
+            if (insertedCount != 1) {
+                throw PaymentErrorCode.PAYMENT_RECORD_CREATE_FAILED.toException();
+            }
+        } catch (DuplicateKeyException exception) {
+            throw PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException();
         }
 
         BigDecimal newPaidAmount = paidAmount.add(amount);
@@ -93,6 +101,24 @@ public class PaymentService {
     private void validateSourceType(SourceType sourceType) {
         if (sourceType == null) {
             throw PaymentErrorCode.INVALID_PAYMENT_SOURCE_TYPE.toException();
+        }
+    }
+
+    private void validateSettlementBankTransactionId(
+            Long settlementBankTransactionId
+    ) {
+        if (settlementBankTransactionId == null) {
+            throw PaymentErrorCode.INVALID_SETTLEMENT_BANK_TRANSACTION_ID.toException();
+        }
+    }
+
+    private void validateNotDuplicatePaymentRecord(
+            Long settlementBankTransactionId
+    ) {
+        if (paymentRecordMapper.existsBySettlementBankTransactionId(
+                settlementBankTransactionId
+        )) {
+            throw PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException();
         }
     }
 

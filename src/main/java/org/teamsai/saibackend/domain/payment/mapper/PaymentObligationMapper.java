@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Mapper
 public interface PaymentObligationMapper {
-    Optional<PaymentObligationDTO> findById(
+    Optional<PaymentObligationDTO> findByIdForUpdate(
             @Param("paymentObligationId") Long paymentObligationId
     );
 

@@ -8,6 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 import org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO;
 import org.teamsai.saibackend.domain.payment.dto.PaymentRecordDTO;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
@@ -56,7 +57,7 @@ class PaymentServiceTest {
         void applyPaymentFullyPaid() {
             BigDecimal amount = new BigDecimal("70000");
 
-            given(paymentObligationMapper.findById(PAYMENT_OBLIGATION_ID))
+            given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
             given(paymentRecordMapper.sumConfirmedAmountByObligationId(
@@ -111,7 +112,7 @@ class PaymentServiceTest {
         void applyPaymentPartiallyPaid() {
             BigDecimal amount = new BigDecimal("50000");
 
-            given(paymentObligationMapper.findById(PAYMENT_OBLIGATION_ID))
+            given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
             given(paymentRecordMapper.sumConfirmedAmountByObligationId(
@@ -148,7 +149,7 @@ class PaymentServiceTest {
         @Test
         @DisplayName("납부의무가 없으면 예외가 발생한다")
         void applyPaymentFailsWhenObligationDoesNotExist() {
-            given(paymentObligationMapper.findById(PAYMENT_OBLIGATION_ID))
+            given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.empty());
 
             assertPaymentExceptionThrownBy(
@@ -168,7 +169,7 @@ class PaymentServiceTest {
         @Test
         @DisplayName("활성 상태가 아닌 납부의무면 예외가 발생한다")
         void applyPaymentFailsWhenObligationIsNotActive() {
-            given(paymentObligationMapper.findById(PAYMENT_OBLIGATION_ID))
+            given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(
                             createObligation(ObligationStatus.CANCELLED)
                     ));
@@ -190,9 +191,6 @@ class PaymentServiceTest {
         @Test
         @DisplayName("납부 금액이 0 이하이면 예외가 발생한다")
         void applyPaymentFailsWhenAmountIsInvalid() {
-            given(paymentObligationMapper.findById(PAYMENT_OBLIGATION_ID))
-                    .willReturn(Optional.of(createActiveObligation()));
-
             assertPaymentExceptionThrownBy(
                     () -> paymentService.applyPayment(
                             PAYMENT_OBLIGATION_ID,
@@ -205,14 +203,13 @@ class PaymentServiceTest {
 
             verify(paymentRecordMapper, never())
                     .insert(any(PaymentRecordDTO.class));
+            verify(paymentObligationMapper, never())
+                    .findByIdForUpdate(PAYMENT_OBLIGATION_ID);
         }
 
         @Test
         @DisplayName("납부 출처가 없으면 예외가 발생한다")
         void applyPaymentFailsWhenSourceTypeIsNull() {
-            given(paymentObligationMapper.findById(PAYMENT_OBLIGATION_ID))
-                    .willReturn(Optional.of(createActiveObligation()));
-
             assertPaymentExceptionThrownBy(
                     () -> paymentService.applyPayment(
                             PAYMENT_OBLIGATION_ID,
@@ -225,12 +222,57 @@ class PaymentServiceTest {
 
             verify(paymentRecordMapper, never())
                     .insert(any(PaymentRecordDTO.class));
+            verify(paymentObligationMapper, never())
+                    .findByIdForUpdate(PAYMENT_OBLIGATION_ID);
+        }
+
+        @Test
+        @DisplayName("은행 거래 ID가 없으면 예외가 발생한다")
+        void applyPaymentFailsWhenSettlementBankTransactionIdIsNull() {
+            assertPaymentExceptionThrownBy(
+                    () -> paymentService.applyPayment(
+                            PAYMENT_OBLIGATION_ID,
+                            null,
+                            new BigDecimal("10000"),
+                            SourceType.AUTO_MATCH
+                    ),
+                    PaymentErrorCode.INVALID_SETTLEMENT_BANK_TRANSACTION_ID
+            );
+
+            verify(paymentRecordMapper, never())
+                    .insert(any(PaymentRecordDTO.class));
+            verify(paymentObligationMapper, never())
+                    .findByIdForUpdate(PAYMENT_OBLIGATION_ID);
+        }
+
+        @Test
+        @DisplayName("같은 은행 거래 ID로 이미 반영된 납부기록이 있으면 예외가 발생한다")
+        void applyPaymentFailsWhenSettlementBankTransactionIsAlreadyApplied() {
+            given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
+                    .willReturn(Optional.of(createActiveObligation()));
+
+            given(paymentRecordMapper.existsBySettlementBankTransactionId(
+                    SETTLEMENT_BANK_TRANSACTION_ID
+            )).willReturn(true);
+
+            assertPaymentExceptionThrownBy(
+                    () -> paymentService.applyPayment(
+                            PAYMENT_OBLIGATION_ID,
+                            SETTLEMENT_BANK_TRANSACTION_ID,
+                            new BigDecimal("10000"),
+                            SourceType.AUTO_MATCH
+                    ),
+                    PaymentErrorCode.DUPLICATE_PAYMENT_RECORD
+            );
+
+            verify(paymentRecordMapper, never())
+                    .insert(any(PaymentRecordDTO.class));
         }
 
         @Test
         @DisplayName("납부 금액이 남은 금액을 초과하면 예외가 발생한다")
         void applyPaymentFailsWhenAmountExceedsRemainingAmount() {
-            given(paymentObligationMapper.findById(PAYMENT_OBLIGATION_ID))
+            given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
             given(paymentRecordMapper.sumConfirmedAmountByObligationId(
@@ -254,7 +296,7 @@ class PaymentServiceTest {
         @Test
         @DisplayName("납부기록 생성에 실패하면 예외가 발생한다")
         void applyPaymentFailsWhenPaymentRecordCreateFails() {
-            given(paymentObligationMapper.findById(PAYMENT_OBLIGATION_ID))
+            given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
             given(paymentRecordMapper.sumConfirmedAmountByObligationId(
@@ -282,9 +324,36 @@ class PaymentServiceTest {
         }
 
         @Test
+        @DisplayName("납부기록 생성 중 중복 오류가 발생하면 중복 반영 예외로 변환한다")
+        void applyPaymentFailsWhenDuplicateKeyExceptionOccursOnInsert() {
+            given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
+                    .willReturn(Optional.of(createActiveObligation()));
+
+            given(paymentRecordMapper.sumConfirmedAmountByObligationId(
+                    PAYMENT_OBLIGATION_ID
+            )).willReturn(BigDecimal.ZERO);
+
+            given(paymentRecordMapper.insert(any(PaymentRecordDTO.class)))
+                    .willThrow(new DuplicateKeyException("duplicate payment record"));
+
+            assertPaymentExceptionThrownBy(
+                    () -> paymentService.applyPayment(
+                            PAYMENT_OBLIGATION_ID,
+                            SETTLEMENT_BANK_TRANSACTION_ID,
+                            new BigDecimal("10000"),
+                            SourceType.AUTO_MATCH
+                    ),
+                    PaymentErrorCode.DUPLICATE_PAYMENT_RECORD
+            );
+
+            verify(paymentObligationMapper, never())
+                    .updatePaymentStatus(any(), any());
+        }
+
+        @Test
         @DisplayName("납부 상태 변경에 실패하면 예외가 발생한다")
         void applyPaymentFailsWhenPaymentStatusUpdateFails() {
-            given(paymentObligationMapper.findById(PAYMENT_OBLIGATION_ID))
+            given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
             given(paymentRecordMapper.sumConfirmedAmountByObligationId(

@@ -14,7 +14,7 @@
         <result property="reviewStatus" column="review_status"/>
         <result property="obligationStatus" column="obligation_status"/>
     </resultMap>
-    <select id="findById"
+    <select id="findByIdForUpdate"
             resultMap="PaymentObligationResultMap">
         SELECT
         payment_obligation_id,
@@ -25,6 +25,7 @@
         obligation_status
         FROM payment_obligation
         WHERE payment_obligation_id = #{paymentObligationId}
+        FOR UPDATE
     </select>
 
     <update id="updatePaymentStatus">
