@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+        namespace="org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper">
+    <resultMap id="PaymentObligationResultMap"
+               type="org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO">
+        <id property="paymentObligationId" column="payment_obligation_id"/>
+        <result property="participantId" column="participant_id"/>
+        <result property="expectedAmount" column="expected_amount"/>
+        <result property="paymentStatus" column="payment_status"/>
+        <result property="reviewStatus" column="review_status"/>
+        <result property="obligationStatus" column="obligation_status"/>
+    </resultMap>
+    <select id="findById"
+            resultMap="PaymentObligationResultMap">
+        SELECT
+        payment_obligation_id,
+        participant_id,
+        expected_amount,
+        payment_status,
+        review_status,
+        obligation_status
+        FROM payment_obligation
+        WHERE payment_obligation_id = #{paymentObligationId}
+    </select>
+
+    <update id="updatePaymentStatus">
+        UPDATE payment_obligation
+        SET
+        payment_status = #{paymentStatus}
+        WHERE payment_obligation_id = #{paymentObligationId}
+    </update>
+
+</mapper>

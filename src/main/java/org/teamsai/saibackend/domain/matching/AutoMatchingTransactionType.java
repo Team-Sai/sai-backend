@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.matching.type;
+package org.teamsai.saibackend.domain.matching;
 
 public enum AutoMatchingTransactionType {
     DEPOSIT,
