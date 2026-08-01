@@ -16,8 +16,8 @@ public class MockBankClient {
         this.restClient = RestClient.builder().baseUrl(baseUrl).build();
     }
 
-    public String requestUserKey(String name, String email) {
-        MockBankLinkRequest request = new MockBankLinkRequest(name, email);
+    public String requestUserKey(String name, String userToken) {
+        MockBankLinkRequest request = new MockBankLinkRequest(name, userToken);
 
         MockBankLinkResponse response = restClient.post()
                 .uri("/api/mock-bank/link")
@@ -29,6 +29,6 @@ public class MockBankClient {
         return Objects.requireNonNull(response).userKey();
     }
 
-    private record MockBankLinkRequest(String name, String email) {}
+    private record MockBankLinkRequest(String name, String userToken) {}
     private record MockBankLinkResponse(String userKey, String issuedAt) {}
 }
