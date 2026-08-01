@@ -1,4 +1,5 @@
 package org.teamsai.saibackend.domain.matching.model;
+
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingDecisionType;
 
@@ -24,6 +25,14 @@ public class AutoMatchingResult {
 
     public List<MatchingCandidate> matchedCandidates() {
         return matchedCandidates;
+    }
+
+    public MatchingCandidate matchedCandidate() {
+        if (!isMatchable()) {
+            throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
+        }
+
+        return matchedCandidates.get(0);
     }
 
     public boolean isMatchable() {
