@@ -24,7 +24,7 @@ public class BankLinkController {
     @PostMapping("/link")
     public ResponseEntity<UserKeyResponse> createUserKey(@RequestBody LinkAccountRequest request) {
         UserKeyResponse response = accountService.issueOrGetUserKey(
-                request.userId(), request.name(), request.email()
+                request.userId(), request.name(), request.userToken()
         );
         return ResponseEntity.ok(response);
     }

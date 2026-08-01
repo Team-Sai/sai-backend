@@ -16,12 +16,12 @@ public class AccountService {
     private final LinkMapper linkMapper;
     private final MockBankClient mockBankClient;
 
-    public UserKeyResponse issueOrGetUserKey(Long userId, String name, String email) {
+    public UserKeyResponse issueOrGetUserKey(Long userId, String name, String userToken) {
         UserDTO user = userMapper.findById(userId).orElseThrow();
         if (user.getUserKey() != null) {
             return new UserKeyResponse(user.getUserKey());
         }
-        String newKey = mockBankClient.requestUserKey(name, email);
+        String newKey = mockBankClient.requestUserKey(name, userToken);
         user.setUserKey(newKey);
         linkMapper.updateUserKey(userId,newKey);
         return new UserKeyResponse(newKey);
