@@ -1,6 +1,7 @@
 package org.teamsai.saibackend.domain.matching.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
@@ -11,6 +12,7 @@ import org.teamsai.saibackend.domain.matching.policy.AutoMatchingJudge;
 import org.teamsai.saibackend.domain.matching.reader.MatchingCandidateReader;
 import org.teamsai.saibackend.domain.matching.reader.MatchingTransactionReader;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
+import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.service.PaymentService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
@@ -24,6 +26,7 @@ import java.util.Set;
         MatchingCandidateReader.class
 })
 @RequiredArgsConstructor
+@Slf4j
 public class AutoMatchingService {
 
     private final MatchingTransactionReader matchingTransactionReader;
@@ -40,6 +43,7 @@ public class AutoMatchingService {
         int appliedCount = 0;
         int needsCheckCount = 0;
         int unmatchedCount = 0;
+        int duplicateCount = 0;
         Set<Long> appliedObligationIds = new HashSet<>();
 
         for (MatchingTransaction transaction : transactions) {
@@ -58,6 +62,7 @@ public class AutoMatchingService {
                 }
                 case NEEDS_CHECK -> needsCheckCount++;
                 case UNMATCHED -> unmatchedCount++;
+                case DUPLICATE -> duplicateCount++;
             }
         }
 
@@ -65,7 +70,8 @@ public class AutoMatchingService {
                 transactions.size(),
                 appliedCount,
                 needsCheckCount,
-                unmatchedCount
+                unmatchedCount,
+                duplicateCount
         );
     }
 
@@ -76,6 +82,18 @@ public class AutoMatchingService {
         try {
             return processTransaction(transaction, candidates);
         } catch (DomainException exception) {
+            log.warn(
+                    "Auto matching transaction failed. " +
+                            "transactionId={}, errorCode={}",
+                    transaction.transactionId(),
+                    exception.getErrorCode()
+            );
+
+            if (exception.getErrorCode()
+                    == PaymentErrorCode.DUPLICATE_PAYMENT_RECORD) {
+                return AutoMatchingProcessResult.duplicate();
+            }
+
             // 개별 납부 반영 실패가 전체 자동매칭 실행을 중단하지 않도록 한다.
             return AutoMatchingProcessResult.needsCheck();
         }
@@ -128,6 +146,22 @@ public class AutoMatchingService {
             Long appliedObligationId
     ) {
 
+        private AutoMatchingProcessResult {
+            if (status == AutoMatchingProcessStatus.APPLIED
+                    && appliedObligationId == null) {
+                throw new IllegalArgumentException(
+                        "appliedObligationId is required when status is APPLIED"
+                );
+            }
+
+            if (status != AutoMatchingProcessStatus.APPLIED
+                    && appliedObligationId != null) {
+                throw new IllegalArgumentException(
+                        "appliedObligationId is only allowed when status is APPLIED"
+                );
+            }
+        }
+
         private static AutoMatchingProcessResult applied(
                 Long obligationId
         ) {
@@ -150,11 +184,19 @@ public class AutoMatchingService {
                     null
             );
         }
+
+        private static AutoMatchingProcessResult duplicate() {
+            return new AutoMatchingProcessResult(
+                    AutoMatchingProcessStatus.DUPLICATE,
+                    null
+            );
+        }
     }
 
     private enum AutoMatchingProcessStatus {
         APPLIED,
         NEEDS_CHECK,
-        UNMATCHED
+        UNMATCHED,
+        DUPLICATE
     }
 }

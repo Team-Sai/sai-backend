@@ -286,7 +286,7 @@ class AutoMatchingServiceTest {
             given(matchingCandidateReader.readCandidates())
                     .willReturn(List.of(firstCandidate, secondCandidate));
 
-            doThrow(PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException())
+            doThrow(PaymentErrorCode.PAYMENT_STATUS_UPDATE_FAILED.toException())
                     .when(paymentService)
                     .applyAutoMatchedPayment(
                             1L,
@@ -311,6 +311,52 @@ class AutoMatchingServiceTest {
             assertThat(result.appliedCount()).isEqualTo(1);
             assertThat(result.needsCheckCount()).isEqualTo(1);
             assertThat(result.unmatchedCount()).isZero();
+            assertThat(result.duplicateCount()).isZero();
+        }
+
+        @Test
+        @DisplayName("이미 반영된 은행 거래이면 중복으로 분류하고 확인 필요로 집계하지 않는다")
+        void executeClassifiesDuplicatePaymentRecordSeparately() {
+            MatchingTransaction transaction = transaction(
+                    101L,
+                    AutoMatchingTransactionType.DEPOSIT,
+                    "HongGilDong",
+                    "10000"
+            );
+
+            MatchingCandidate candidate = candidate(
+                    MatchingTargetType.SETTLEMENT,
+                    1L,
+                    "HongGilDong",
+                    "10000"
+            );
+
+            given(matchingTransactionReader.readPendingTransactions())
+                    .willReturn(List.of(transaction));
+            given(matchingCandidateReader.readCandidates())
+                    .willReturn(List.of(candidate));
+
+            doThrow(PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException())
+                    .when(paymentService)
+                    .applyAutoMatchedPayment(
+                            1L,
+                            101L,
+                            new BigDecimal("10000")
+                    );
+
+            AutoMatchingExecutionResult result = autoMatchingService.execute();
+
+            verify(paymentService).applyAutoMatchedPayment(
+                    1L,
+                    101L,
+                    new BigDecimal("10000")
+            );
+
+            assertThat(result.totalTransactionCount()).isEqualTo(1);
+            assertThat(result.appliedCount()).isZero();
+            assertThat(result.needsCheckCount()).isZero();
+            assertThat(result.unmatchedCount()).isZero();
+            assertThat(result.duplicateCount()).isEqualTo(1);
         }
     }
 
