@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>본인인증 테스트</title>
+
+    <link rel="stylesheet"
+          href="/css/identity/identity-test.css"
+          th:href="@{/css/identity/identity-test.css}">
+
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+
+    <script defer
+            src="/js/identity/identity-test.js"
+            th:src="@{/js/identity/identity-test.js}">
+    </script>
+</head>
+
+<body>
+<main class="identity-container">
+
+    <section class="identity-card">
+
+        <header class="identity-header">
+            <span class="identity-badge">
+                PortOne Test
+            </span>
+
+            <h1>본인인증 테스트</h1>
+
+            <p>
+                본인인증 목적을 선택한 후 인증을 진행해 주세요.
+            </p>
+        </header>
+
+        <div class="identity-form">
+            <label for="purpose">
+                본인인증 목적
+            </label>
+
+            <select id="purpose">
+                <option value="LOAN_CONTRACT">
+                    금전소비대차 계약
+                </option>
+
+                <option value="SETTLEMENT">
+                    정산
+                </option>
+            </select>
+
+            <button id="verification-button"
+                    type="button">
+                본인인증 시작
+            </button>
+        </div>
+
+        <div class="identity-result">
+            <strong>처리 결과</strong>
+            <pre id="result">대기 중</pre>
+        </div>
+
+    </section>
+
+</main>
+</body>
+</html>
