@@ -1,6 +1,7 @@
 package org.teamsai.saibackend.domain.contractchange.controller;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class ContractChangeController {
     @PostMapping("/{contractId}/change-requests")
     public LoanContractChangeDTO requestChange(
             @PathVariable Long contractId,
-            @RequestBody ContractChangeRequest request
+            @Valid @RequestBody ContractChangeRequest request
     ){
         return contractChangeService.requestChange(contractId, request);
     }

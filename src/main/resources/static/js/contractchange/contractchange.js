@@ -1,14 +1,23 @@
 const contractId = document.getElementById('contractId').value;
 
 fetch(`/api/contracts/${contractId}`)
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(('계약 조회 실패'));
+        }
+        return response.json();
+    })
     .then(contract => {
         document.getElementById('principalAmount').textContent = contract.principalAmount;
         document.getElementById('interestRate').textContent = contract.interestRate;
         document.getElementById('maturityDate').textContent = contract.maturityDate;
         document.getElementById('repaymentType').textContent = contract.repaymentType;
         document.getElementById('repaymentDay').textContent = contract.repaymentDay;
+    })
+    .catch(() => {
+        alert('계약 정보를 불러오는 중 오류가 발생했습니다.');
     });
+
 
 document.getElementById('changeRequestForm').addEventListener('submit', function (event) {
     event.preventDefault();
