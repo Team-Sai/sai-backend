@@ -25,8 +25,8 @@ public class LoanContractService {
     private final UserMapper userMapper;
 
     @Transactional
-    public Long createContract(LoanContractRequest request, String userKey) {
-        UserDTO currentUser = userMapper.findByUserKey(userKey)
+    public Long createContract(LoanContractRequest request, Long userId) {
+        UserDTO currentUser = userMapper.findById(userId)
                 .orElseThrow(UserErrorCode.USER_NOT_FOUND::toException);
 
         UserDTO debtor = userMapper.findByEmail(request.getDebtorEmail())

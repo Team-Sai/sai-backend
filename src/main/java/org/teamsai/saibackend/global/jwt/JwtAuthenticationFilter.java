@@ -67,7 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         CustomUserDetails userDetails = new CustomUserDetails(
-                        userOptional.get()
+                userOptional.get()
         );
 
         UsernamePasswordAuthenticationToken authentication =

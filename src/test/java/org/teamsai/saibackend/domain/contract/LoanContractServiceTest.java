@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
 @DisplayName("LoanContractService 단위 테스트")
 class LoanContractServiceTest {
 
-    private static final String CREDITOR_KEY = "SAI-CREDITOR1";
+    private static final Long CREDITOR_ID = 1L;
     private static final String DEBTOR_EMAIL = "debtor@example.com";
     private static final Long CONTRACT_ID = 1L;
 
@@ -62,10 +62,10 @@ class LoanContractServiceTest {
             UserDTO creditor = createUser(1L);
             UserDTO debtor = createUser(2L);
 
-            given(userMapper.findByUserKey(CREDITOR_KEY)).willReturn(Optional.of(creditor));
+            given(userMapper.findById(CREDITOR_ID)).willReturn(Optional.of(creditor));
             given(userMapper.findByEmail(DEBTOR_EMAIL)).willReturn(Optional.of(debtor));
 
-            loanContractService.createContract(request, CREDITOR_KEY);
+            loanContractService.createContract(request, CREDITOR_ID);
 
             verify(contractMapper).insertByContract(request, creditor, debtor);
         }
@@ -74,12 +74,12 @@ class LoanContractServiceTest {
         @DisplayName("생성된 계약서의 contractId를 그대로 반환한다")
         void createContractReturnsGeneratedId() {
             LoanContractRequest request = createRequest();
-            given(userMapper.findByUserKey(CREDITOR_KEY)).willReturn(Optional.of(createUser(1L)));
+            given(userMapper.findById(CREDITOR_ID)).willReturn(Optional.of(createUser(1L)));
             given(userMapper.findByEmail(DEBTOR_EMAIL)).willReturn(Optional.of(createUser(2L)));
 
             request.setContractId(100L);
 
-            Long contractId = loanContractService.createContract(request, CREDITOR_KEY);
+            Long contractId = loanContractService.createContract(request, CREDITOR_ID);
 
             assertThat(contractId).isEqualTo(100L);
         }
@@ -88,9 +88,9 @@ class LoanContractServiceTest {
         @DisplayName("채권자를 찾을 수 없으면 예외가 발생하고 계약서를 생성하지 않는다")
         void createContractFailsWhenCreditorNotFound() {
             LoanContractRequest request = createRequest();
-            given(userMapper.findByUserKey(CREDITOR_KEY)).willReturn(Optional.empty());
+            given(userMapper.findById(CREDITOR_ID)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> loanContractService.createContract(request, CREDITOR_KEY))
+            assertThatThrownBy(() -> loanContractService.createContract(request, CREDITOR_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
@@ -104,10 +104,10 @@ class LoanContractServiceTest {
         @DisplayName("채무자 이메일로 가입된 회원을 찾을 수 없으면 예외가 발생하고 계약서를 생성하지 않는다")
         void createContractFailsWhenDebtorNotFound() {
             LoanContractRequest request = createRequest();
-            given(userMapper.findByUserKey(CREDITOR_KEY)).willReturn(Optional.of(createUser(1L)));
+            given(userMapper.findById(CREDITOR_ID)).willReturn(Optional.of(createUser(1L)));
             given(userMapper.findByEmail(DEBTOR_EMAIL)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> loanContractService.createContract(request, CREDITOR_KEY))
+            assertThatThrownBy(() -> loanContractService.createContract(request, CREDITOR_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
@@ -233,7 +233,7 @@ class LoanContractServiceTest {
     private UserDTO createUser(Long userId) {
         return UserDTO.builder()
                 .userId(userId)
-                .userKey(CREDITOR_KEY)
+                .userToken("token-" + userId)
                 .email("user" + userId + "@example.com")
                 .password("encoded-password")
                 .name("김사이")

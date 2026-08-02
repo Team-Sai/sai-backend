@@ -18,6 +18,7 @@ import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.service.UserService;
+import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 
 @Tag(
@@ -29,6 +30,18 @@ import org.teamsai.saibackend.domain.user.service.UserService;
 public class LoanContractController {
 
     private final LoanContractService contractService;
+
+    @Operation(hidden = true)
+    @GetMapping("/api/contracts")
+    public String contractFormPage() {
+        return "contract/contract-form";
+    }
+
+    @Operation(hidden = true)
+    @GetMapping("/api/contracts/signature")
+    public String contractSignaturePage() {
+        return "contract/contract-signature";
+    }
 
 
     @Operation(
@@ -58,8 +71,8 @@ public class LoanContractController {
             @Valid @RequestBody LoanContractRequest request,
             @Parameter(hidden = true) Authentication authentication
     ) {
-        String userKey = authentication.getName();
-        return contractService.createContract(request, userKey);
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return contractService.createContract(request, userDetails.getUserId());
     }
 
     @Operation(

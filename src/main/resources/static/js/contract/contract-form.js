@@ -140,7 +140,7 @@
       return;
     }
 
-    window.location.href = "contract-signature.html";
+    window.location.href = "/api/contracts/signature";
   });
 
   const principalInput = document.getElementById("principalAmount");
