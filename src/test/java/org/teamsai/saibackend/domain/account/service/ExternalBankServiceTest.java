@@ -47,10 +47,10 @@ public class ExternalBankServiceTest {
         void returnsAccountsFromBank() {
             // given
             LinkableAccountResponse account1 = new LinkableAccountResponse(
-                    1L, "1111111111", "테스트계좌1", 10000L, "홍길동", false
+                    1L, "1111111111", "테스트계좌1","088", 10000L, "홍길동", false
             );
             LinkableAccountResponse account2 = new LinkableAccountResponse(
-                    2L, "2222222222", "테스트계좌2", 20000L, "홍길동", true
+                    2L, "2222222222", "테스트계좌2", "004",20000L, "홍길동", true
             );
 
             given(userService.getUserKeyByUserToken(USER_TOKEN)).willReturn(USER_KEY);

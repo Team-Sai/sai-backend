@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사이 뱅크 | 계좌 연결</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+          th:href="@{/css/accounts/link-select.css}"
+          href="/css/accounts/link-select.css">
+</head>
+<body>
+<header class="bank-header">
+    <div class="bank-brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m3 10 9-6 9 6"></path>
+            <path d="M5 10v8"></path>
+            <path d="M9 10v8"></path>
+            <path d="M15 10v8"></path>
+            <path d="M19 10v8"></path>
+            <path d="M3 18h18"></path>
+            <path d="M2 21h20"></path>
+        </svg>
+        사이 뱅크
+    </div>
+
+    <div class="bank-user">
+        <strong id="bank-user-name"></strong>
+        <div class="bank-user-avatar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21a8 8 0 0 1 16 0"></path>
+            </svg>
+        </div>
+    </div>
+</header>
+
+<main class="link-select-main">
+    <div class="request-badge">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+            <path d="m9 12 2 2 4-4"></path>
+        </svg>
+        사이원장에서 계좌 연결을 요청했습니다
+    </div>
+
+    <h1 class="link-select-title">연결할 계좌를 선택해주세요</h1>
+    <p class="link-select-subtitle">본인 확인이 완료된 계좌만 표시됩니다.</p>
+
+    <div id="account-select-error" class="link-select-error" hidden></div>
+
+    <div id="account-select-list" class="account-select-list">
+        <!-- JS가 계좌 카드를 채웁니다 -->
+    </div>
+
+    <section class="permission-box">
+        <h2 class="permission-title">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+            </svg>
+            사이원장에 다음 조회를 허용합니다
+        </h2>
+
+        <ul class="permission-list">
+            <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="m8 12 3 3 5-6"></path>
+                </svg>
+                <div>
+                    <strong>계좌 기본정보 조회</strong>
+                    <span>은행명, 계좌번호, 예금주 성명 등</span>
+                </div>
+            </li>
+
+            <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="m8 12 3 3 5-6"></path>
+                </svg>
+                <div>
+                    <strong>현재 잔액 조회</strong>
+                    <span>실시간 출금 가능 잔액 정보</span>
+                </div>
+            </li>
+
+            <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="m8 12 3 3 5-6"></path>
+                </svg>
+                <div>
+                    <strong>입출금 거래내역 조회</strong>
+                    <span>최근 1년간의 거래 일시 및 금액</span>
+                </div>
+            </li>
+        </ul>
+
+        <div class="permission-divider"></div>
+
+        <div class="permission-purpose">
+            <span class="permission-purpose-label">사용 목적</span>
+            <div class="permission-purpose-tags">
+                <span class="tag">정산 입금 확인</span>
+                <span class="tag">차용금 지급 및 상환 확인</span>
+            </div>
+        </div>
+    </section>
+
+    <label class="link-select-agree">
+        <input type="checkbox" id="link-select-agree-checkbox">
+        <span>선택한 계좌의 조회 권한 제공에 동의합니다.</span>
+    </label>
+
+    <div class="link-select-actions">
+        <button type="button" class="link-select-btn link-select-btn-secondary" id="link-select-cancel">
+            취소
+        </button>
+
+        <button type="button" class="link-select-btn link-select-btn-primary" id="link-select-confirm" disabled>
+            동의하고 연결
+        </button>
+    </div>
+</main>
+
+<footer class="bank-footer">
+    <div class="bank-footer-brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m3 10 9-6 9 6"></path>
+            <path d="M5 10v8"></path>
+            <path d="M19 10v8"></path>
+            <path d="M3 18h18"></path>
+        </svg>
+        가상 금융연동 서비스
+    </div>
+
+    <nav class="bank-footer-links">
+        <a href="#">이용약관</a>
+        <a href="#">개인정보처리방침</a>
+        <a href="#">고객센터</a>
+    </nav>
+
+    <span class="bank-footer-copy">© 2024 사이 뱅크. 사이 원장.</span>
+</footer>
+
+<script th:src="@{/js/accounts/link-select.js}" src="/js/accounts/link-select.js" defer></script>
+</body>
+</html>

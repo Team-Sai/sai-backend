@@ -19,7 +19,7 @@ public class LinkedBankAccountService {
 
     private final LinkedBankAccountMapper linkedBankAccountMapper;
 
-    private static final String DEFAULT_BANK_CODE = "SAI_001";
+    //private static final String DEFAULT_BANK_CODE = "SAI_001";
 
     @Transactional
     public List<LinkedBankAccountResponse> linkSelectedAccounts(Long userId, LinkAccountRequest request) {
@@ -34,10 +34,12 @@ public class LinkedBankAccountService {
 
             LinkedBankAccountDTO dto = LinkedBankAccountDTO.builder()
                     .userId(userId)
-                    .bankCode(DEFAULT_BANK_CODE)
+                    .accountId(selected.accountId())
+                    .bankCode(selected.bankCode())
                     .accountNumber(selected.accountNumber())
                     .accountAlias(selected.accountAlias())
                     .accountHolderName(selected.accountHolderName())
+                    .balance(selected.balance())
                     .connectionStatus(ConnectionStatus.AVAILABLE)
                     .createdAt(now)
                     .updatedAt(now)

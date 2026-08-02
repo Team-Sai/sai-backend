@@ -6,14 +6,8 @@ public record LinkableAccountResponse(
         Long accountId,
         String accountNumber,
         String accountName,
+        String bankCode,
         Long balance,
-        @JsonProperty("accountHolderName")
-        String ownerName,
-        Boolean isSelected
+        String accountHolderName
 ) {
-    public LinkableAccountResponse {
-        if (isSelected == null) {
-            isSelected = false;
-        }
-    }
 }
