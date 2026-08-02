@@ -2,15 +2,13 @@ package org.teamsai.saibackend.domain.matching.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
+import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingResult;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.policy.AutoMatchingJudge;
-import org.teamsai.saibackend.domain.matching.reader.MatchingCandidateReader;
-import org.teamsai.saibackend.domain.matching.reader.MatchingTransactionReader;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.service.PaymentService;
@@ -21,34 +19,29 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-@ConditionalOnBean({
-        MatchingTransactionReader.class,
-        MatchingCandidateReader.class
-})
 @RequiredArgsConstructor
 @Slf4j
 public class AutoMatchingService {
 
-    private final MatchingTransactionReader matchingTransactionReader;
-    private final MatchingCandidateReader matchingCandidateReader;
     private final AutoMatchingJudge autoMatchingJudge;
     private final PaymentService paymentService;
 
-    public AutoMatchingExecutionResult execute() {
-        List<MatchingTransaction> transactions =
-                matchingTransactionReader.readPendingTransactions();
-        List<MatchingCandidate> candidates =
-                matchingCandidateReader.readCandidates();
+    public AutoMatchingExecutionResult execute(
+            List<MatchingTransaction> transactions,
+            List<MatchingCandidate> candidates
+    ) {
+        validateExecuteInput(transactions, candidates);
 
         int appliedCount = 0;
         int needsCheckCount = 0;
         int unmatchedCount = 0;
         int duplicateCount = 0;
-        Set<Long> appliedObligationIds = new HashSet<>();
+        int failedCount = 0;
+        Set<AppliedCandidateKey> appliedCandidateKeys = new HashSet<>();
 
         for (MatchingTransaction transaction : transactions) {
             List<MatchingCandidate> availableCandidates =
-                    excludeAppliedCandidates(candidates, appliedObligationIds);
+                    excludeAppliedCandidates(candidates, appliedCandidateKeys);
 
             AutoMatchingProcessResult processResult =
                     processTransactionSafely(transaction, availableCandidates);
@@ -56,13 +49,14 @@ public class AutoMatchingService {
             switch (processResult.status()) {
                 case APPLIED -> {
                     appliedCount++;
-                    appliedObligationIds.add(
-                            processResult.appliedObligationId()
+                    appliedCandidateKeys.add(
+                            processResult.appliedCandidateKey()
                     );
                 }
                 case NEEDS_CHECK -> needsCheckCount++;
                 case UNMATCHED -> unmatchedCount++;
                 case DUPLICATE -> duplicateCount++;
+                case FAILED -> failedCount++;
             }
         }
 
@@ -71,8 +65,23 @@ public class AutoMatchingService {
                 appliedCount,
                 needsCheckCount,
                 unmatchedCount,
-                duplicateCount
+                duplicateCount,
+                failedCount
         );
+    }
+
+    private void validateExecuteInput(
+            List<MatchingTransaction> transactions,
+            List<MatchingCandidate> candidates
+    ) {
+        if (transactions == null
+                || candidates == null
+                || transactions.stream()
+                        .anyMatch(transaction -> transaction == null)
+                || candidates.stream()
+                        .anyMatch(candidate -> candidate == null)) {
+            throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
+        }
     }
 
     private AutoMatchingProcessResult processTransactionSafely(
@@ -82,31 +91,55 @@ public class AutoMatchingService {
         try {
             return processTransaction(transaction, candidates);
         } catch (DomainException exception) {
+            return classifyPaymentException(transaction, exception);
+        }
+    }
+
+    private AutoMatchingProcessResult classifyPaymentException(
+            MatchingTransaction transaction,
+            DomainException exception
+    ) {
+        if (exception.getErrorCode()
+                == PaymentErrorCode.DUPLICATE_PAYMENT_RECORD) {
             log.warn(
-                    "Auto matching transaction failed. " +
+                    "Auto matching transaction duplicated. " +
                             "transactionId={}, errorCode={}",
                     transaction.transactionId(),
                     exception.getErrorCode()
             );
-
-            if (exception.getErrorCode()
-                    == PaymentErrorCode.DUPLICATE_PAYMENT_RECORD) {
-                return AutoMatchingProcessResult.duplicate();
-            }
-
-            // 개별 납부 반영 실패가 전체 자동매칭 실행을 중단하지 않도록 한다.
-            return AutoMatchingProcessResult.needsCheck();
+            return AutoMatchingProcessResult.duplicate();
         }
+
+        if (exception.getHttpStatus().is5xxServerError()) {
+            log.error(
+                    "Auto matching transaction failed. " +
+                            "transactionId={}, errorCode={}",
+                    transaction.transactionId(),
+                    exception.getErrorCode(),
+                    exception
+            );
+            return AutoMatchingProcessResult.failed();
+        }
+
+        log.warn(
+                "Auto matching transaction needs check. " +
+                        "transactionId={}, errorCode={}",
+                transaction.transactionId(),
+                exception.getErrorCode()
+        );
+
+        // 개별 납부 반영 실패가 전체 자동매칭 실행을 중단하지 않도록 한다.
+        return AutoMatchingProcessResult.needsCheck();
     }
 
     private List<MatchingCandidate> excludeAppliedCandidates(
             List<MatchingCandidate> candidates,
-            Set<Long> appliedObligationIds
+            Set<AppliedCandidateKey> appliedCandidateKeys
     ) {
-        // MVP에서는 한 정산 납부의무를 같은 실행 안에서 한 번만 자동 반영한다.
+        // MVP에서는 같은 매칭 후보를 같은 실행 안에서 한 번만 자동 반영한다.
         return candidates.stream()
-                .filter(candidate -> !appliedObligationIds.contains(
-                        candidate.obligationId()
+                .filter(candidate -> !appliedCandidateKeys.contains(
+                        AppliedCandidateKey.from(candidate)
                 ))
                 .toList();
     }
@@ -138,36 +171,53 @@ public class AutoMatchingService {
                 transaction.amount()
         );
 
-        return AutoMatchingProcessResult.applied(candidate.obligationId());
+        return AutoMatchingProcessResult.applied(
+                AppliedCandidateKey.from(candidate)
+        );
+    }
+
+    private record AppliedCandidateKey(
+            MatchingTargetType targetType,
+            Long obligationId
+    ) {
+
+        private static AppliedCandidateKey from(
+                MatchingCandidate candidate
+        ) {
+            return new AppliedCandidateKey(
+                    candidate.targetType(),
+                    candidate.obligationId()
+            );
+        }
     }
 
     private record AutoMatchingProcessResult(
             AutoMatchingProcessStatus status,
-            Long appliedObligationId
+            AppliedCandidateKey appliedCandidateKey
     ) {
 
         private AutoMatchingProcessResult {
             if (status == AutoMatchingProcessStatus.APPLIED
-                    && appliedObligationId == null) {
+                    && appliedCandidateKey == null) {
                 throw new IllegalArgumentException(
-                        "appliedObligationId is required when status is APPLIED"
+                        "appliedCandidateKey is required when status is APPLIED"
                 );
             }
 
             if (status != AutoMatchingProcessStatus.APPLIED
-                    && appliedObligationId != null) {
+                    && appliedCandidateKey != null) {
                 throw new IllegalArgumentException(
-                        "appliedObligationId is only allowed when status is APPLIED"
+                        "appliedCandidateKey is only allowed when status is APPLIED"
                 );
             }
         }
 
         private static AutoMatchingProcessResult applied(
-                Long obligationId
+                AppliedCandidateKey appliedCandidateKey
         ) {
             return new AutoMatchingProcessResult(
                     AutoMatchingProcessStatus.APPLIED,
-                    obligationId
+                    appliedCandidateKey
             );
         }
 
@@ -191,12 +241,20 @@ public class AutoMatchingService {
                     null
             );
         }
+
+        private static AutoMatchingProcessResult failed() {
+            return new AutoMatchingProcessResult(
+                    AutoMatchingProcessStatus.FAILED,
+                    null
+            );
+        }
     }
 
     private enum AutoMatchingProcessStatus {
         APPLIED,
         NEEDS_CHECK,
         UNMATCHED,
-        DUPLICATE
+        DUPLICATE,
+        FAILED
     }
 }

@@ -5,6 +5,7 @@ public record AutoMatchingExecutionResult(
         int appliedCount,
         int needsCheckCount,
         int unmatchedCount,
-        int duplicateCount
+        int duplicateCount,
+        int failedCount
 ) {
 }
