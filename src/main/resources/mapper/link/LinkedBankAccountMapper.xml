@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.teamsai.saibackend.domain.account.mapper.LinkedBankAccountMapper">
+
+    <select id="selectLinkedAccountsByUserId" resultType="org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO">
+        SELECT
+        linked_account_id,
+        user_id AS userId,
+        account_number AS accountNumber,
+        bank_code AS bankCode,
+        account_holder_name AS accountHolderName,
+        connection_status AS connectionStatus,
+        created_at AS createdAt
+        FROM linked_bank_account
+        WHERE user_id = #{userId}
+    </select>
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="linkedAccountId">
+        INSERT INTO linked_bank_account (
+        user_id,
+        bank_code,
+        account_number,
+        account_alias,
+        account_holder_name,
+        connection_status,
+        created_at,
+        updated_at
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.userId},
+            #{item.bankCode},
+            #{item.accountNumber},
+            #{item.accountAlias},
+            #{item.accountHolderName},
+            #{item.connectionStatus},
+            #{item.createdAt},
+            #{item.updatedAt}
+            )
+        </foreach>
+    </insert>
+
+    <select id="findByUserId" resultType="org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO">
+        SELECT
+        linked_account_id,
+        user_id,
+        bank_code,
+        account_number,
+        account_alias,
+        account_holder_name,
+        connection_status,
+        created_at,
+        updated_at
+        FROM linked_bank_account
+        WHERE user_id = #{userId}
+        AND connection_status = 'CONNECTED'
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

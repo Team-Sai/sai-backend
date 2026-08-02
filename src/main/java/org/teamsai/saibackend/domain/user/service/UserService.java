@@ -23,7 +23,7 @@ public class UserService {
 
     @Transactional
     public void withdraw(String userToken) {
-        int deletedCount = userMapper.deleteByUserToken(userToken);
+        int deletedCount = userMapper.deleteByUserKey(userToken);
 
         if (deletedCount == 0) {
             throw UserErrorCode.USER_NOT_FOUND.toException();
@@ -35,5 +35,11 @@ public class UserService {
                 .orElseThrow(
                         UserErrorCode.USER_NOT_FOUND::toException
                 );
+    }
+
+    @Transactional(readOnly = true)
+    public String getUserKeyByUserToken(String userToken) {
+        // user 테이블에서 userId로 userKey(연동키) 조회
+        return userMapper.findUserKeyByUserToken(userToken);
     }
 }

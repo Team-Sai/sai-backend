@@ -40,12 +40,12 @@ class UserServiceTest {
         @Test
         @DisplayName("사용자 키로 회원을 조회해 응답 DTO로 반환한다")
         void getMyInfoSuccess() {
-            given(userMapper.findByUserKey(USER_KEY))
+            given(userMapper.findByUserToken(USER_KEY))
                     .willReturn(Optional.of(createUser()));
 
             UserResponse response = userService.getMyInfo(USER_KEY);
 
-            assertThat(response.getUserKey()).isEqualTo(USER_KEY);
+            assertThat(response.getUserToken()).isEqualTo(USER_KEY);
             assertThat(response.getEmail()).isEqualTo("user@example.com");
             assertThat(response.getName()).isEqualTo("김사이");
             assertThat(response.getBirthDate())
@@ -55,7 +55,7 @@ class UserServiceTest {
         @Test
         @DisplayName("사용자 키에 해당하는 회원이 없으면 예외가 발생한다")
         void getMyInfoFailsWhenUserDoesNotExist() {
-            given(userMapper.findByUserKey(USER_KEY))
+            given(userMapper.findByUserToken(USER_KEY))
                     .willReturn(Optional.empty());
 
             assertUserNotFound(() -> userService.getMyInfo(USER_KEY));

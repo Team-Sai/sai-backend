@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
@@ -15,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
+import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -22,6 +24,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
@@ -67,10 +70,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         UserDTO user = userOptional.get();
+        //log.info("[Filter] DB에서 조회된 userToken: {}, userKey: {}", user.getUserToken(), user.getUserKey());
+        CustomUserDetails userDetails = new CustomUserDetails(user);
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        user.getUserToken(),
+                        userDetails,
                         null,
                         Collections.emptyList()
                 );
