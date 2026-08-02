@@ -41,6 +41,15 @@ WHERE user_token IS NOT NULL
   AND user_key = user_token
   AND user_token LIKE 'SAI-%';
 
+UPDATE users
+SET user_token = CONCAT(
+        'MIG-',
+        user_id,
+        '-',
+    LEFT(REPLACE(UUID(), '-', ''), 11)
+    )
+WHERE user_token IS NULL;
+
 ALTER TABLE users
     MODIFY COLUMN user_token VARCHAR(36) NOT NULL;
 
