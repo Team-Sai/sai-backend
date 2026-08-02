@@ -8,16 +8,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.teamsai.saibackend.domain.account.dto.ConnectionStatus;
-import org.teamsai.saibackend.domain.account.dto.LinkAccountRequest;
-import org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO;
-import org.teamsai.saibackend.domain.account.dto.LinkedBankAccountResponse;
+import org.springframework.web.client.RestClientException;
+import org.teamsai.saibackend.domain.account.dto.*;
 import org.teamsai.saibackend.domain.account.mapper.LinkedBankAccountMapper;
+import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.client.MockBankClient;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -31,38 +32,54 @@ public class LinkedBankAccountServiceTest {
     @Mock
     private MockBankClient mockBankClient;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private LinkedBankAccountService linkedBankAccountService;
 
     private static final Long USER_ID = 1L;
+    private static final String USER_KEY = "userKey";
 
     @Nested
     @DisplayName("linkSelectedAccounts(userId, request)")
     class LinkSelectedAccounts {
 
         @Test
-        @DisplayName("선택된 계좌들을 DEFAULT_BANK_CODE로 일괄 저장하고 응답으로 매핑해 반환한다")
+        @DisplayName("선택된 계좌들의 상세 정보를 조회해 저장하고 응답으로 매핑해 반환한다")
         void savesSelectedAccountsAndReturnsResponses() {
-            // given
-            LinkAccountRequest.SelectedAccount selected1 = new LinkAccountRequest.SelectedAccount(
-                    1L, "088", "1111111111", "계좌1", "홍길동", "생활비통장", 10000L
-            );
-            LinkAccountRequest.SelectedAccount selected2 = new LinkAccountRequest.SelectedAccount(
-                    2L, "004", "2222222222", "계좌2", "홍길동", "비상금통장", 20000L
-            );
+            LinkAccountRequest.SelectedAccount selected1 =
+                    new LinkAccountRequest.SelectedAccount(1L, "생활비통장");
+            LinkAccountRequest.SelectedAccount selected2 =
+                    new LinkAccountRequest.SelectedAccount(2L, "비상금통장");
             LinkAccountRequest request = new LinkAccountRequest(List.of(selected1, selected2));
 
-            // when
+            AccountDetailResponse detail1 = new AccountDetailResponse(
+                    1L, 10L, "088", "1111111111", "사이 입출금통장",
+                    "홍길동", BigDecimal.valueOf(100_000), "ACTIVE",
+                    LocalDateTime.now(), LocalDateTime.now()
+            );
+            AccountDetailResponse detail2 = new AccountDetailResponse(
+                    2L, 10L, "004", "2222222222", "사이 저축통장",
+                    "홍길동", BigDecimal.valueOf(500_000), "ACTIVE",
+                    LocalDateTime.now(), LocalDateTime.now()
+            );
+
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
+            given(mockBankClient.getAccountDetail(1L, USER_KEY)).willReturn(detail1);
+            given(mockBankClient.getAccountDetail(2L, USER_KEY)).willReturn(detail2);
+
             List<LinkedBankAccountResponse> result =
                     linkedBankAccountService.linkSelectedAccounts(USER_ID, request);
 
-            // then
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).bankCode()).isEqualTo("SAI_001"); // DEFAULT_BANK_CODE
-            assertThat(result.get(0).maskedAccountNumber()).isEqualTo("1111111111");
+            assertThat(result.get(0).bankCode()).isEqualTo("088");
             assertThat(result.get(0).accountAlias()).isEqualTo("생활비통장");
             assertThat(result.get(0).accountHolderName()).isEqualTo("홍길동");
             assertThat(result.get(0).connectionStatus()).isEqualTo("AVAILABLE");
+
+            assertThat(result.get(1).bankCode()).isEqualTo("004");
+            assertThat(result.get(1).accountAlias()).isEqualTo("비상금통장");
 
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<LinkedBankAccountDTO>> captor = ArgumentCaptor.forClass(List.class);
@@ -72,35 +89,46 @@ public class LinkedBankAccountServiceTest {
             assertThat(savedList).hasSize(2);
             assertThat(savedList)
                     .allMatch(dto -> dto.getUserId().equals(USER_ID))
-                    .allMatch(dto -> dto.getBankCode().equals("SAI_001"))
                     .allMatch(dto -> dto.getConnectionStatus() == ConnectionStatus.AVAILABLE)
                     .allMatch(dto -> dto.getCreatedAt() != null)
                     .allMatch(dto -> dto.getUpdatedAt() != null);
+
+            verify(userService).getUserKeyByUserId(USER_ID);
+            verify(mockBankClient).getAccountDetail(1L, USER_KEY);
+            verify(mockBankClient).getAccountDetail(2L, USER_KEY);
         }
 
         @Test
-        @DisplayName("선택된 계좌가 없으면 빈 목록으로 저장을 시도하고 빈 응답을 반환한다")
+        @DisplayName("선택된 계좌가 없으면 계좌 상세 조회 없이 빈 목록을 저장하고 빈 응답을 반환한다")
         void returnsEmptyListWhenNoAccountsSelected() {
             LinkAccountRequest request = new LinkAccountRequest(List.of());
+
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
 
             List<LinkedBankAccountResponse> result =
                     linkedBankAccountService.linkSelectedAccounts(USER_ID, request);
 
             assertThat(result).isEmpty();
             verify(linkedBankAccountMapper).insertBatch(List.of());
+            verifyNoInteractions(mockBankClient);
         }
 
         @Test
-        @DisplayName("MockBankClient는 사용하지 않는다")
-        void doesNotInteractWithMockBankClient() {
-            LinkAccountRequest.SelectedAccount selected = new LinkAccountRequest.SelectedAccount(
-                    1L, "088", "1111111111", "계좌1", "홍길동", "생활비통장", 10000L
-            );
+        @DisplayName("계좌 상세 조회 실패 시 BANK_SERVER_UNAVAILABLE 예외를 던지고 저장하지 않는다")
+        void throwsExceptionWhenBankServerUnavailable() {
+            LinkAccountRequest.SelectedAccount selected =
+                    new LinkAccountRequest.SelectedAccount(1L, "생활비통장");
             LinkAccountRequest request = new LinkAccountRequest(List.of(selected));
 
-            linkedBankAccountService.linkSelectedAccounts(USER_ID, request);
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
+            given(mockBankClient.getAccountDetail(1L, USER_KEY))
+                    .willThrow(new RestClientException("연결 실패"));
 
-            verifyNoInteractions(mockBankClient);
+            assertThatThrownBy(() ->
+                    linkedBankAccountService.linkSelectedAccounts(USER_ID, request)
+            ).isInstanceOf(RuntimeException.class);
+
+            verify(linkedBankAccountMapper, never()).insertBatch(any());
         }
     }
 
