@@ -2,9 +2,10 @@ package org.teamsai.saibackend.domain.contractchange.service;
 
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.teamsai.saibackend.domain.contractchange.dto.ContractChangeRequest;
+import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractReadDTO;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
@@ -12,6 +13,7 @@ import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -53,7 +55,11 @@ public class ContractChangeService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
+
         contractChangeMapper.insert(changeDTO);
+
+        log.info("계약 변경 요청 생성: contractId={}, userId={}, changeReason={}",
+                contractId, userId, request.getChangeReason());
         return changeDTO;
     }
 }

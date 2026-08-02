@@ -6,7 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.teamsai.saibackend.domain.contractchange.dto.ContractChangeRequest;
+import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
+import org.teamsai.saibackend.domain.contractchange.dto.response.ContractSummaryResponse;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractReadDTO;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
@@ -19,10 +20,12 @@ public class ContractChangeController {
     private final ContractChangeService contractChangeService;
 
     @GetMapping("/{contractId}")
-    public LoanContractReadDTO getContract(
+    public ContractSummaryResponse getContract(
             @PathVariable Long contractId,
-            @AuthenticationPrincipal(expression = "userId") Long userID) {
-        return contractChangeService.getContract(contractId, userID);
+            @AuthenticationPrincipal(expression = "userId") Long userID
+    ) {
+        LoanContractReadDTO contract = contractChangeService.getContract(contractId, userID);
+        return ContractSummaryResponse.from(contract);
 
 
     }

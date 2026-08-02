@@ -1,9 +1,6 @@
-package org.teamsai.saibackend.domain.contractchange.dto;
+package org.teamsai.saibackend.domain.contractchange.dto.request;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,6 +23,8 @@ public class ContractChangeRequest {
 
     @NotNull(message = "변경 이율은 필수입니다.")
     @DecimalMin(value = "0", message = "이율은 0 이상이어야 합니다.")
+    @DecimalMax(value = "20", message = "이율은 20% 이하여야 합니다.")
+    @Digits(integer = 2, fraction = 2, message = "이율은 소수점 둘째 자리까지만 입력 가능합니다.")
     private BigDecimal newInterestRate;
 
     @NotBlank(message = "상환 방식은 필수입니다.")
