@@ -15,9 +15,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
+import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Optional;
 
 @Component
@@ -50,29 +50,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token,
             HttpServletRequest request
     ) {
-        Optional<String> userKeyOptional =
-                jwtTokenProvider.getUserKeyIfValid(token);
+        Optional<Long> userIdOptional =
+                jwtTokenProvider.getUserIdIfValid(token);
 
-        if (userKeyOptional.isEmpty()) {
+        if (userIdOptional.isEmpty()) {
             return;
         }
 
-        String userKey = userKeyOptional.get();
+        Long userId = userIdOptional.get();
 
         Optional<UserDTO> userOptional =
-                userMapper.findByUserKey(userKey);
+                userMapper.findById(userId);
 
         if (userOptional.isEmpty()) {
             return;
         }
 
-        UserDTO user = userOptional.get();
+        CustomUserDetails userDetails = new CustomUserDetails(
+                        userOptional.get()
+        );
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        user.getUserKey(),
+                        userDetails,
                         null,
-                        Collections.emptyList()
+                        userDetails.getAuthorities()
                 );
 
         authentication.setDetails(

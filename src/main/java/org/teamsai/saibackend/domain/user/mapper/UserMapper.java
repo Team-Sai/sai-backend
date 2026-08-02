@@ -16,17 +16,27 @@ public interface UserMapper {
             @Param("email") String email
     );
 
+    Optional<UserDTO> findById(
+            @Param("userId") Long userId
+    );
+
     Optional<UserDTO> findByEmail(
             @Param("email") String email
     );
 
-    Optional<UserDTO> findByUserKey(
-            @Param("userKey") String userKey
+    Optional<UserDTO> findByUserToken(
+            @Param("userToken") String userToken
     );
 
-    int deleteByUserKey(String userKey);
+    int deleteById(
+            @Param("userId") Long userId
+    );
 
-    boolean existsByUserKey(
-            @Param("userKey") String userKey
+    boolean existsByUserToken(
+            @Param("userToken") String userToken
+    );
+
+    String findUserKeyById(
+            @Param("userId") Long userId
     );
 }
