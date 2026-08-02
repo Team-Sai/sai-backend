@@ -6,8 +6,6 @@ import java.time.LocalDateTime;
 public record AccountDetailResponse(
         Long accountId,
         Long identityId,
-        String userKey,
-        String userToken,
         String bankCode,
         String accountNumber,
         String accountName,
