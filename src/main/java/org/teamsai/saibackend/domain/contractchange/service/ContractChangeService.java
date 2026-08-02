@@ -30,6 +30,13 @@ public class ContractChangeService {
 
         getContract(contractId);
 
+        boolean hasPendingRequest = contractChangeMapper.findByContractId(contractId).stream()
+                .anyMatch(changeRequest -> "PENDING".equals(changeRequest.getStatus()));
+
+        if (hasPendingRequest) {
+            throw ContractChangeErrorCode.DUPLICATE_PENDING_REQUEST.toException();
+        }
+
         LoanContractChangeDTO changeDTO = LoanContractChangeDTO.builder()
                 .changeReason(request.getChangeReason())
                 .newMaturityDate(request.getNewMaturityDate())
