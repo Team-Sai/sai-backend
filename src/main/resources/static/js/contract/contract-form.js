@@ -1,16 +1,6 @@
 (function () {
   "use strict";
 
-  // This page only collects the loan terms (LoanContractRequest fields minus
-  // debtorEmail). The contract isn't created here anymore: 채무자 이메일(상대확인)
-  // and the creditor's signature are now collected together on
-  // contract-signature.html, which is what actually calls
-  // POST /api/contracts + PATCH /{contractId}/signature.
-  //
-  // Endpoints this file talks to:
-  //   GET /{contractId}   - LoanContractResponse (view mode, when ?contractId= is in the URL)
-  //   GET /api/users/me   - UserResponse, used to auto-fill the creditor's name/birth date
-
   const DRAFT_KEY = "loanContractDraft";
 
   const form = document.getElementById("contractForm");
@@ -53,7 +43,6 @@
     statusBanner.hidden = !text;
   }
 
-  /** Collect the LoanContractRequest fields currently in the form. */
   function serializeForm() {
     const data = {};
     FIELD_IDS.forEach((id) => {
@@ -141,9 +130,6 @@
     });
   }
 
-  // Stash the loan terms locally and hand off to the signature page, which
-  // collects the debtor's email (상대확인) and the creditor's signature, then
-  // actually creates the contract.
   nextBtn?.addEventListener("click", () => {
     if (!validate()) return;
 
@@ -157,7 +143,6 @@
     window.location.href = "contract-signature.html";
   });
 
-  // Auto-format the principal amount with thousands separators while typing.
   const principalInput = document.getElementById("principalAmount");
   if (principalInput) {
     principalInput.addEventListener("blur", () => {
@@ -169,7 +154,6 @@
     });
   }
 
-  /** Fill in the creditor's name/birth date from the logged-in user's account. */
   async function loadCreditorInfo() {
     try {
       const response = await fetch("/api/users/me", {
@@ -187,7 +171,6 @@
     }
   }
 
-  /** View an already-created contract via GET /{contractId} and lock the form. */
   async function loadExistingContract() {
     nextBtn.hidden = true;
 

@@ -127,37 +127,5 @@
         WHERE lc.contract_id = #{contractId}
     </select>
 
-    <insert id="insertContractFile" useGeneratedKeys="true" keyProperty="fileId">
-        INSERT INTO loan_contract_file(
-        contract_id,
-        original_filename,
-        saved_filename,
-        file_size,
-        file_type,
-        created_at
-        ) VALUES (
-        #{contractId},
-        #{originalFilename},
-        #{savedFilename},
-        #{fileSize},
-        #{fileType},
-        NOW()
-        )
-
-    </insert>
-
-    <select id="findFileByContractId" resultType="org.teamsai.saibackend.domain.contract.dto.LoanContractFileDTO">
-        SELECT
-        file_id           AS fileId,
-        contract_id       AS contractId,
-        original_filename AS originalFilename,
-        saved_filename    AS savedFilename,
-        file_size         AS fileSize,
-        file_type         AS fileType,
-        created_at        AS createdAt
-        FROM loan_contract_file
-        WHERE contract_id = #{contractId}
-    </select>
-
 
 </mapper>

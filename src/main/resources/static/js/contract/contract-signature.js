@@ -1,14 +1,6 @@
 (function () {
   "use strict";
 
-  // This page finishes what contract-form.html started:
-  //   1. Reads the loan terms that contract-form.js stashed in sessionStorage.
-  //   2. Collects the debtor's email (상대확인) and a hand-drawn signature.
-  //   3. POST /api/contracts   - creates the contract (loan terms + debtorEmail)
-  //   4. PATCH /{contractId}/signature (multipart "signature" file)
-  //        - saves the signature as a file (LoanContractFileService) and
-  //          moves the contract to PENDING, sending it to the debtor.
-
   const DRAFT_KEY = "loanContractDraft";
 
   const closeBtn = document.getElementById("button");
@@ -44,7 +36,7 @@
     statusEl.classList.toggle("is-error", Boolean(isError));
   }
 
-  // ----- load the loan terms handed off from contract-form.js -----
+
   let draft = null;
   try {
     draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null");
@@ -61,7 +53,6 @@
     window.location.href = "contract-form.html";
   });
 
-  // ----- signature pad (mouse + touch) -----
   function canvasPoint(event) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -111,7 +102,6 @@
 
   clearBtn?.addEventListener("click", clearSignature);
 
-  // ----- submit: create the contract, then upload the signature -----
   async function createContract() {
     const response = await fetch("/api/contracts", {
       method: "POST",
