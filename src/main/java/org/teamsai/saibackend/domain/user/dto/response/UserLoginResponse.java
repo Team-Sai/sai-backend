@@ -13,7 +13,7 @@ import org.teamsai.saibackend.domain.user.dto.UserDTO;
 public class UserLoginResponse {
 
     private String accessToken;
-    private String userKey;
+    private String userToken;
     private String name;
 
     public static UserLoginResponse of(
@@ -22,7 +22,7 @@ public class UserLoginResponse {
     ) {
         return UserLoginResponse.builder()
                 .accessToken(accessToken)
-                .userKey(user.getUserKey())
+                .userToken(user.getUserToken())
                 .name(user.getName())
                 .build();
     }
