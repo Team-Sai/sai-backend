@@ -1,10 +1,3 @@
-/* =========================================================
-   금전소비대차 · Contract Form
-   Palette sourced from reference design:
-   white #FFFFFF · deep green #003527 · slate #404944
-   teal #006C49 · mint #6CF8BB · sage #80BEA6 · navy #131B2E
-   ========================================================= */
-
 :root {
   --white: #FFFFFF;
   --deep-green: #003527;
@@ -39,7 +32,6 @@ html, body {
 
 button { font-family: inherit; }
 
-/* ===================== TOP NAV ===================== */
 .topnav {
   background: var(--navy);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -118,7 +110,6 @@ button { font-family: inherit; }
   color: var(--mint);
 }
 
-/* ===================== STEPPER ===================== */
 .stepper-wrap {
   background: var(--white);
   border-bottom: 1px solid var(--border-soft);
@@ -198,7 +189,6 @@ button { font-family: inherit; }
   font-weight: 700;
 }
 
-/* ===================== PAGE / DOC CARD ===================== */
 .page {
   max-width: 760px;
   margin: 32px auto 80px;
@@ -274,7 +264,6 @@ button { font-family: inherit; }
   margin: 0 0 28px;
 }
 
-/* ---- inline document inputs ---- */
 .doc__inline-input {
   font-family: inherit;
   font-size: 13.5px;
@@ -294,16 +283,54 @@ button { font-family: inherit; }
   background: rgba(108, 248, 187, 0.12);
 }
 
-.doc__inline-input--name { width: 84px; }
 .doc__inline-input--amount { width: 110px; font-weight: 700; }
 .doc__inline-input--date { width: 140px; }
 .doc__inline-input--rate { width: 64px; }
 .doc__inline-input--day { width: 44px; }
-.doc__inline-input--tiny { width: 36px; }
-.doc__inline-input--year { width: 60px; font-family: var(--font-doc); font-size: 16px; }
-.doc__inline-input--md { width: 32px; font-family: var(--font-doc); font-size: 16px; }
+.doc__inline-input--alias { width: 100%; text-align: left; }
 
-/* ---- radio group ---- */
+.doc__readonly {
+  color: var(--deep-green);
+  font-weight: 600;
+  border-bottom: 1.5px dashed var(--sage);
+  padding: 1px 4px;
+}
+
+.doc__textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--text-body);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.doc__textarea:focus {
+  outline: none;
+  border-color: var(--teal);
+  background: rgba(108, 248, 187, 0.08);
+}
+
+.doc__status-banner {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--teal);
+  background: rgba(108, 248, 187, 0.14);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin: 0 0 24px;
+}
+
+.doc__hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--slate);
+  text-align: center;
+}
+
 .doc__radio-group {
   display: flex;
   gap: 22px;
@@ -351,7 +378,6 @@ button { font-family: inherit; }
   transform: scale(1);
 }
 
-/* ===================== PARTIES TABLE ===================== */
 .parties {
   width: 100%;
   border-collapse: collapse;
@@ -408,6 +434,14 @@ button { font-family: inherit; }
   color: #B7C2BC;
 }
 
+.parties__input:disabled,
+.doc__inline-input:disabled,
+.doc__textarea:disabled {
+  color: #8A9691;
+  cursor: not-allowed;
+  background: rgba(64, 73, 68, 0.04);
+}
+
 .parties__seal {
   border: 1px dashed var(--sage);
   background: var(--white);
@@ -421,7 +455,6 @@ button { font-family: inherit; }
   vertical-align: middle;
 }
 
-/* ===================== ACTIONS ===================== */
 .doc__actions {
   display: flex;
   justify-content: flex-end;
@@ -476,7 +509,6 @@ button { font-family: inherit; }
   color: #C0392B;
 }
 
-/* ===================== RESPONSIVE ===================== */
 @media (max-width: 640px) {
   .doc { padding: 32px 20px; }
   .doc__article { flex-direction: column; gap: 4px; }

@@ -7,9 +7,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
@@ -31,7 +33,7 @@ public class LoanContractController {
 
     @Operation(
             summary = "차용증 최초 생성",
-            description = "채권자가 입력한 정보로 차용증 계약서를 최초 생성(임시저장)합니다."
+            description = "채권자가 입력한 정보로 차용증 계약서를 최초 생성합니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -61,17 +63,6 @@ public class LoanContractController {
     }
 
     @Operation(
-            summary = "차용증 임시저장",
-            description = "차용증 상태를 임시저장(DRAFT) 상태로 변경합니다."
-    )
-    @ResponseBody
-    @PatchMapping("/{contractId}/draft")
-    public ContractStatus saveDraft(@PathVariable Long contractId) {
-        return contractService.saveDraftContract(contractId);
-    }
-
-
-    @Operation(
             summary = "차용증 전송",
             description = "차용증을 채권자에게 전송하고 대기(PENDING) 상태로 변경합니다."
     )
@@ -82,13 +73,29 @@ public class LoanContractController {
     }
 
     @Operation(
-            summary = "채무자 승인",
-            description = "채무자가 차용증을 최종 동의하여 완료(COMPLETED) 상태로 변경합니다."
+            summary = "채권자 전자서명 제출",
+            description = "채권자가 수기로 남긴 서명 이미지를 파일로 저장하고, 상태를 대기(PENDING)로 변경하여 채무자에게 전송합니다."
     )
     @ResponseBody
-    @PatchMapping("/{contractId}/approve")
-    public ContractStatus approveByDebtor(@PathVariable Long contractId) {
-        return contractService.approveByDebtor(contractId);
+    @PatchMapping(value = "/{contractId}/signature", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ContractStatus submitSignature(
+            @PathVariable Long contractId,
+            @RequestParam("signature") MultipartFile signature
+    ) {
+        return contractService.submitCreditorSignature(contractId, signature);
+    }
+
+    @Operation(
+            summary = "채무자 승인 및 전자서명 제출",
+            description = "채무자가 수기로 남긴 서명 이미지를 파일로 저장하고, 상태를 완료(COMPLETED)로 변경합니다."
+    )
+    @ResponseBody
+    @PatchMapping(value = "/{contractId}/approve", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ContractStatus approveByDebtor(
+            @PathVariable Long contractId,
+            @RequestParam("signature") MultipartFile signature
+    ) {
+        return contractService.submitDebtorSignature(contractId, signature);
     }
 
 

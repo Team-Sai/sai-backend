@@ -43,9 +43,8 @@
     <insert id="insertByContract" useGeneratedKeys="true" keyProperty="request.contractId">
         INSERT INTO loan_contract (
         creditor_id,
-        creditor_name,
-        creditor_birth_date,
         creditor_address,
+        debtor_id,
         principal_amount,
         interest_rate,
         repayment_type,
@@ -59,9 +58,8 @@
         updated_at
         ) VALUES (
         #{user.userId},
-        #{user.name},
-        #{user.birthDate},
         #{request.creditorAddress},
+        #{debtor.userId},
         #{request.principalAmount},
         #{request.interestRate},
         #{request.repaymentType},
@@ -84,6 +82,50 @@
         WHERE contract_id = #{contractId}
         AND creditor_id = #{creditorId}
     </update>
+
+    <update id="updateCreditorSignature">
+        UPDATE loan_contract
+        SET
+        creditor_signature = #{signaturePath},
+        status = #{status},
+        updated_at = NOW()
+        WHERE contract_id = #{contractId}
+    </update>
+
+    <update id="updateDebtorSignature">
+        UPDATE loan_contract
+        SET
+        debtor_signature = #{signaturePath},
+        status = #{status},
+        updated_at = NOW()
+        WHERE contract_id = #{contractId}
+    </update>
+
+    <select id="findContractById" resultType="org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse">
+        SELECT
+        lc.contract_id        AS contractId,
+        creditor.name         AS creditorName,
+        creditor.birth_date   AS creditorBirthDate,
+        lc.creditor_address   AS creditorAddress,
+        lc.creditor_signature AS creditorSignature,
+        debtor.name           AS debtorName,
+        debtor.birth_date     AS debtorBirthDate,
+        lc.debtor_address     AS debtorAddress,
+        lc.debtor_signature   AS debtorSignature,
+        lc.principal_amount   AS principalAmount,
+        lc.interest_rate      AS interestRate,
+        lc.repayment_type     AS repaymentType,
+        lc.start_date         AS startDate,
+        lc.maturity_date      AS maturityDate,
+        lc.repayment_day      AS repaymentDay,
+        lc.contract_alias     AS contractAlias,
+        lc.terms              AS terms,
+        lc.status             AS status
+        FROM loan_contract lc
+        JOIN users creditor ON creditor.user_id = lc.creditor_id
+        JOIN users debtor ON debtor.user_id = lc.debtor_id
+        WHERE lc.contract_id = #{contractId}
+    </select>
 
     <insert id="insertContractFile" useGeneratedKeys="true" keyProperty="fileId">
         INSERT INTO loan_contract_file(
