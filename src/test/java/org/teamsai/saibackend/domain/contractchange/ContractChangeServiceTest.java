@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractReadDTO;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
@@ -16,6 +17,7 @@ import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -142,6 +144,26 @@ class ContractChangeServiceTest {
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
                                     .isEqualTo(ContractChangeErrorCode.FORBIDDEN_CONTRACT_ACCESS)
+                    );
+        }
+
+        @Test
+        @DisplayName("이미 PENDING 요청이 있으면 예외가 발생한다")
+        void requestChangeFailsWhenDuplicatePending() {
+            LoanContractChangeDTO pendingRequest = LoanContractChangeDTO.builder()
+                    .status("PENDING")
+                    .build();
+
+            given(contractChangeMapper.findById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract()));
+            given(contractChangeMapper.findByContractId(CONTRACT_ID))
+                    .willReturn(List.of(pendingRequest));
+
+            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), CREDITOR_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.DUPLICATE_PENDING_REQUEST)
                     );
         }
     }
