@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 public class LinkedBankAccountService {
 
     private final LinkedBankAccountMapper linkedBankAccountMapper;
-    private final MockBankClient mockBankClient;
 
     private static final String DEFAULT_BANK_CODE = "SAI_001";
 

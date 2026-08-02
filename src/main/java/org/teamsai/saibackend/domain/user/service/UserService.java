@@ -39,7 +39,6 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public String getUserKeyByUserToken(String userToken) {
-        // user 테이블에서 userId로 userKey(연동키) 조회
         return userMapper.findUserKeyByUserToken(userToken);
     }
 }
