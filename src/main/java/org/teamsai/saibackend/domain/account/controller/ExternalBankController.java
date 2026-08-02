@@ -6,10 +6,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.teamsai.saibackend.domain.account.dto.AccountDetailResponse;
 import org.teamsai.saibackend.domain.account.dto.LinkableAccountResponse;
 import org.teamsai.saibackend.domain.account.service.ExternalBankService;
+import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 import java.util.List;
 
@@ -28,11 +30,14 @@ public class ExternalBankController {
     @Operation(summary = "연동 가능한 사이은행 계좌 목록 조회")
     @GetMapping("/available")
     public ResponseEntity<List<LinkableAccountResponse>> getAvailableAccounts(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             Authentication authentication
     ) {
         String userToken = authentication.getName();
+        Long userId = userDetails.getUserId();
 
-        List<LinkableAccountResponse> accounts = externalBankService.fetchAvailableAccountsFromBank(userToken);
+        List<LinkableAccountResponse> accounts =
+                externalBankService.fetchAvailableAccountsFromBank(userId, userToken);
 
         return ResponseEntity.ok(accounts);
     }

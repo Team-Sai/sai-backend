@@ -92,6 +92,12 @@
         WHERE user_token = #{userToken}
     </select>
 
+    <update id="updateUserKey">
+        UPDATE users
+        SET user_key = #{userKey}
+        WHERE user_token = #{userToken}
+    </update>
+
     <!-- 회원 탈퇴: 실제 데이터 삭제 -->
 
     <delete id="deleteByUserToken">

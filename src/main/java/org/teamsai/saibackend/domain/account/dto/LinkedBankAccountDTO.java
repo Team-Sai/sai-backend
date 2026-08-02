@@ -14,9 +14,11 @@ import java.time.LocalDateTime;
 public class LinkedBankAccountDTO {
     private Long linkedAccountId;
     private Long userId;
+    private Long accountId;
     private String bankCode;
     private String accountNumber;
     private String accountAlias;
+    private Long balance;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String accountHolderName;

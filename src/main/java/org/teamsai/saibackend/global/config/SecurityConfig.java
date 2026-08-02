@@ -53,8 +53,7 @@ public class SecurityConfig {
                                         "/login", "/signup",
                                         "/v3/api-docs/**",
                                         "/swagger-ui/**",
-                                        "/swagger-ui.html",
-                                        "/api/linked-accounts"
+                                        "/swagger-ui.html"
                                 ).permitAll()
 
                                 .requestMatchers(
@@ -62,7 +61,8 @@ public class SecurityConfig {
                                         "/login",
                                         "/signup",
                                         "/mypage",
-                                        "/mypage/"
+                                        "/mypage/",
+                                        "/accounts/**"
                                 )
                                 .permitAll()
 

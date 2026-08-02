@@ -15,7 +15,8 @@ document.addEventListener(
         };
 
         const API = {
-            me: "/api/users/me"
+            me: "/api/users/me",
+            linkedAccounts: "/api/linked-accounts"
         };
 
         document
@@ -139,56 +140,107 @@ document.addEventListener(
 
             accountList.innerHTML = "";
 
-            if (
-                !Array.isArray(accounts) ||
-                accounts.length === 0
-            ) {
+            if (!Array.isArray(accounts) || accounts.length === 0) {
+                accountList.appendChild(createEmptyAccountState());
                 return;
             }
 
             accounts.forEach(account => {
-                const item =
-                    document.createElement("div");
-
-                item.className =
-                    "account-item";
+                const item = document.createElement("div");
+                item.className = "account-item";
 
                 item.innerHTML = `
-                    ${createBankIcon()}
+            ${createBankIcon()}
 
-                    <div class="account-content">
-                        <div class="account-top">
-                            <div>
-                                <div class="bank-name">
-                                    ${escapeHtml(
-                    account.bankName
-                )}
-                                </div>
-
-                                <div class="account-name">
-                                    ${escapeHtml(
-                    account.accountName
-                )}
-                                </div>
-                            </div>
-
-                            <strong class="account-balance">
-                                ${escapeHtml(
-                    account.balance
-                )}
-                            </strong>
+            <div class="account-content">
+                <div class="account-top">
+                    <div>
+                        <div class="bank-name">
+                            ${escapeHtml(account.bankName)}
                         </div>
 
-                        <div class="account-number">
-                            ${escapeHtml(
-                    account.maskedAccountNumber
-                )}
+                        <div class="account-name">
+                            ${escapeHtml(account.accountAlias)}
                         </div>
                     </div>
-                `;
+
+                    <strong class="account-balance">
+                        ${formatBalance(account.balance)}원
+                    </strong>
+                </div>
+
+                <div class="account-number">
+                    ${escapeHtml(account.maskedAccountNumber)}
+                </div>
+            </div>
+        `;
 
                 accountList.appendChild(item);
             });
+        }
+
+        function formatBalance(balance) {
+            if (balance == null) {
+                return "0";
+            }
+            return Number(balance).toLocaleString("ko-KR");
+        }
+
+        function createEmptyAccountState() {
+            const wrapper =
+                document.createElement("div");
+
+            wrapper.className =
+                "account-empty";
+
+            wrapper.innerHTML = `
+        <div class="account-empty-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m3 10 9-6 9 6"></path>
+                <path d="M5 10v8"></path>
+                <path d="M9 10v8"></path>
+                <path d="M15 10v8"></path>
+                <path d="M19 10v8"></path>
+                <path d="M3 18h18"></path>
+                <path d="M2 21h20"></path>
+            </svg>
+        </div>
+
+        <strong class="account-empty-title">
+            연결된 계좌가 없습니다
+        </strong>
+
+        <p class="account-empty-desc">
+            계좌를 연결하면 정산 및 차용금 관리가<br>
+            자동화되어 더욱 편리해집니다.
+        </p>
+
+        <button type="button"
+                class="account-empty-button"
+                id="connect-account-button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 8v8"></path>
+                <path d="M8 12h8"></path>
+            </svg>
+            지금 바로 연결하기
+        </button>
+    `;
+
+            wrapper
+                .querySelector("#connect-account-button")
+                ?.addEventListener(
+                    "click",
+                    handleConnectAccountClick
+                );
+
+            return wrapper;
+        }
+
+        function handleConnectAccountClick() {
+            window.location.href = FILE_PREVIEW
+                ? "../link/link.html"
+                : "/accounts/link";
         }
 
         function renderMyPage(rawData) {
@@ -199,7 +251,7 @@ document.addEventListener(
 
             setText(
                 "header-user-name",
-                data.name
+                data.name ? `${data.name} 님` : ""
             );
 
             setText(
@@ -227,11 +279,23 @@ document.addEventListener(
                 data.userKey
             );
 
-            // 현재 API에서 반환하지 않는 정보는 빈칸 처리
-            setText(
-                "verification-status",
-                data.verificationStatus ?? ""
-            );
+            function setVerificationStatus(status) {
+                const badge = document.getElementById("verification-status");
+
+                if (!badge) {
+                    return;
+                }
+
+                if (!status) {
+                    badge.hidden = true;
+                    badge.textContent = "";
+                    return;
+                }
+
+                badge.hidden = false;
+                badge.textContent = status;
+            }
+            setVerificationStatus(data.verificationStatus);
 
             setText(
                 "joined-at",
@@ -271,43 +335,41 @@ document.addEventListener(
                 return;
             }
 
-            const response = await fetch(
-                API.me,
-                {
-                    method: "GET",
-                    headers: {
-                        "Accept":
-                            "application/json",
+            const authHeaders = {
+                "Accept": "application/json",
+                "Authorization": `Bearer ${token}`
+            };
 
-                        "Authorization":
-                            `Bearer ${token}`
-                    }
-                }
-            );
+            const [meResponse, accountsResponse] = await Promise.all([
+                fetch(API.me, { method: "GET", headers: authHeaders }),
+                fetch(API.linkedAccounts, { method: "GET", headers: authHeaders })
+            ]);
 
             if (
-                response.status === 401 ||
-                response.status === 403
+                meResponse.status === 401 || meResponse.status === 403 ||
+                accountsResponse.status === 401 || accountsResponse.status === 403
             ) {
-                sessionStorage.removeItem(
-                    "accessToken"
-                );
-
+                sessionStorage.removeItem("accessToken");
                 redirectToLogin(true);
                 return;
             }
 
-            const responseData =
-                await readJson(response);
+            const meData = await readJson(meResponse);
 
-            if (!response.ok) {
-                throw new Error(
-                    responseData.message ||
-                    "내 정보 조회에 실패했습니다."
-                );
+            if (!meResponse.ok) {
+                throw new Error(meData.message || "내 정보 조회에 실패했습니다.");
             }
 
-            renderMyPage(responseData);
+            // 계좌 목록은 실패하더라도 내 정보 화면 자체는 보여준다 (부분 실패 허용)
+            let accounts = [];
+            if (accountsResponse.ok) {
+                const accountsData = await readJson(accountsResponse);
+                accounts = accountsData?.data ?? accountsData ?? [];
+            } else {
+                console.error("연결된 계좌 조회 실패");
+            }
+
+            renderMyPage({ ...(meData?.data ?? meData ?? {}), accounts });
         }
 
         function loadPreviewMyPage() {
@@ -438,6 +500,10 @@ document.addEventListener(
                 }
             }
         );
+
+        document
+            .querySelector(".add-account-button")
+            ?.addEventListener("click", handleConnectAccountClick);
 
         try {
             await loadMyPage();

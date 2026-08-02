@@ -24,6 +24,11 @@ public interface UserMapper {
             @Param("userToken") String userToken
     );
 
+    int updateUserKey(
+            @Param("userToken") String userToken,
+            @Param("userKey") String userKey
+    );
+
     int deleteByUserKey(String userToken);
 
     boolean existsByUserToken(
