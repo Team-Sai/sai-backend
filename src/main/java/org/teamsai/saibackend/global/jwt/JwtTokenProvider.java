@@ -29,30 +29,30 @@ public class JwtTokenProvider {
         this.accessTokenExpirationMs = accessTokenExpirationMs;
     }
 
-    public String createAccessToken(String userKey) {
+    public String createAccessToken(Long userId) {
         Date issuedAt = new Date();
         Date expiration = new Date(
                 issuedAt.getTime() + accessTokenExpirationMs
         );
 
         return Jwts.builder()
-                .subject(userKey)
+                .subject(String.valueOf(userId))
                 .issuedAt(issuedAt)
                 .expiration(expiration)
                 .signWith(signingKey)
                 .compact();
     }
 
-    public Optional<String> getUserKeyIfValid(String token) {
+    public Optional<Long> getUserIdIfValid(String token) {
         try {
             Claims claims = parseClaims(token);
-            String userKey = claims.getSubject();
+            String subject = claims.getSubject();
 
-            if (userKey == null || userKey.isBlank()) {
+            if (subject == null || subject.isBlank()) {
                 return Optional.empty();
             }
 
-            return Optional.of(userKey);
+            return Optional.of(Long.valueOf(subject));
         } catch (JwtException | IllegalArgumentException exception) {
             return Optional.empty();
         }

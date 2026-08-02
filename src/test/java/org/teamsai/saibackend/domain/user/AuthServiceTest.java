@@ -34,6 +34,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
@@ -45,7 +46,10 @@ import static org.mockito.Mockito.verify;
 @DisplayName("AuthService 단위 테스트")
 class AuthServiceTest {
 
-    private static final String USER_KEY = "SAI-ABCDEFGH";
+    private static final Long USER_ID = 1L;
+    private static final String USER_TOKEN = "SAI-ABCDEFGH";
+    private static final String USER_KEY = "mock-bank-user-key";
+
     private static final String RAW_PASSWORD = "Password1!";
     private static final String ENCODED_PASSWORD = "encoded-password";
 
@@ -82,7 +86,7 @@ class AuthServiceTest {
                     LocalDate.of(2002, 10, 22)
             );
 
-            given(userMapper.existsByUserKey(anyString()))
+            given(userMapper.existsByUserToken(anyString()))
                     .willReturn(false);
 
             given(passwordEncoder.encode(RAW_PASSWORD))
@@ -108,8 +112,11 @@ class AuthServiceTest {
 
             UserDTO savedUser = userCaptor.getValue();
 
-            assertThat(savedUser.getUserKey())
+            assertThat(savedUser.getUserToken())
                     .matches("^SAI-[A-HJ-NP-Z2-9]{8}$");
+
+            assertThat(savedUser.getUserKey())
+                    .isNull();
 
             assertThat(savedUser.getEmail())
                     .isEqualTo("user@example.com");
@@ -123,8 +130,8 @@ class AuthServiceTest {
             assertThat(savedUser.getBirthDate())
                     .isEqualTo(LocalDate.of(2002, 10, 22));
 
-            assertThat(response.getUserKey())
-                    .isEqualTo(savedUser.getUserKey());
+            assertThat(response.getUserToken())
+                    .isEqualTo(savedUser.getUserToken());
 
             assertThat(response.getEmail())
                     .isEqualTo("user@example.com");
@@ -158,15 +165,15 @@ class AuthServiceTest {
                     .encode(anyString());
 
             verify(userMapper, never())
-                    .existsByUserKey(anyString());
+                    .existsByUserToken(anyString());
 
             verify(userMapper, never())
                     .insert(any(UserDTO.class));
         }
 
         @Test
-        @DisplayName("사용자 키를 10회 연속 생성하지 못하면 예외가 발생한다")
-        void signUpFailsWhenUserKeyGenerationFails() {
+        @DisplayName("사용자 토큰을 10회 연속 생성하지 못하면 예외가 발생한다")
+        void signUpFailsWhenUserTokenGenerationFails() {
             UserSignUpRequest request = createSignUpRequest(
                     "user@example.com",
                     RAW_PASSWORD,
@@ -174,7 +181,7 @@ class AuthServiceTest {
                     LocalDate.of(2002, 10, 22)
             );
 
-            given(userMapper.existsByUserKey(anyString()))
+            given(userMapper.existsByUserToken(anyString()))
                     .willReturn(true);
 
             assertThatThrownBy(
@@ -184,12 +191,12 @@ class AuthServiceTest {
                     exception -> assertThat(
                             exception.getErrorCode()
                     ).isEqualTo(
-                            UserErrorCode.USER_KEY_GENERATION_FAILED
+                            UserErrorCode.USER_TOKEN_GENERATION_FAILED
                     )
             );
 
             verify(userMapper, times(10))
-                    .existsByUserKey(anyString());
+                    .existsByUserToken(anyString());
 
             verify(passwordEncoder, never())
                     .encode(anyString());
@@ -208,7 +215,7 @@ class AuthServiceTest {
                     LocalDate.of(2002, 10, 22)
             );
 
-            given(userMapper.existsByUserKey(anyString()))
+            given(userMapper.existsByUserToken(anyString()))
                     .willReturn(false);
 
             given(passwordEncoder.encode(RAW_PASSWORD))
@@ -253,7 +260,7 @@ class AuthServiceTest {
                     .insert(any(UserDTO.class));
 
             verify(jwtTokenProvider, never())
-                    .createAccessToken(anyString());
+                    .createAccessToken(anyLong());
         }
     }
 
@@ -303,7 +310,7 @@ class AuthServiceTest {
     class Login {
 
         @Test
-        @DisplayName("회원 조회와 비밀번호 검증에 성공하면 JWT를 발급한다")
+        @DisplayName("회원 조회와 비밀번호 검증에 성공하면 userId 기반 JWT를 발급한다")
         void loginSuccess() {
             UserLoginRequest request = createLoginRequest(
                     "  USER@Example.COM  ",
@@ -315,7 +322,7 @@ class AuthServiceTest {
             given(userMapper.findByEmail("user@example.com"))
                     .willReturn(Optional.of(user));
 
-            given(jwtTokenProvider.createAccessToken(USER_KEY))
+            given(jwtTokenProvider.createAccessToken(USER_ID))
                     .willReturn("access-token");
 
             UserLoginResponse response =
@@ -328,13 +335,13 @@ class AuthServiceTest {
                     );
 
             verify(jwtTokenProvider)
-                    .createAccessToken(USER_KEY);
+                    .createAccessToken(USER_ID);
 
             assertThat(response.getAccessToken())
                     .isEqualTo("access-token");
 
-            assertThat(response.getUserKey())
-                    .isEqualTo(USER_KEY);
+            assertThat(response.getUserToken())
+                    .isEqualTo(USER_TOKEN);
 
             assertThat(response.getName())
                     .isEqualTo("김사이");
@@ -369,7 +376,7 @@ class AuthServiceTest {
                     );
 
             verify(jwtTokenProvider, never())
-                    .createAccessToken(anyString());
+                    .createAccessToken(anyLong());
         }
 
         @Test
@@ -402,7 +409,7 @@ class AuthServiceTest {
             ).isSameAs(expectedException);
 
             verify(jwtTokenProvider, never())
-                    .createAccessToken(anyString());
+                    .createAccessToken(anyLong());
         }
     }
 
@@ -466,7 +473,8 @@ class AuthServiceTest {
 
     private UserDTO createUser() {
         return UserDTO.builder()
-                .userId(1L)
+                .userId(USER_ID)
+                .userToken(USER_TOKEN)
                 .userKey(USER_KEY)
                 .email("user@example.com")
                 .password(ENCODED_PASSWORD)

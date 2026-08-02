@@ -13,14 +13,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserResponse {
 
-    private String userKey;
+    private String userToken;
     private String email;
     private String name;
     private LocalDate birthDate;
 
     public static UserResponse from(UserDTO user) {
         return UserResponse.builder()
-                .userKey(user.getUserKey())
+                .userToken(user.getUserToken())
                 .email(user.getEmail())
                 .name(user.getName())
                 .birthDate(user.getBirthDate())
