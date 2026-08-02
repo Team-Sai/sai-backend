@@ -23,7 +23,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return userToken;
+        return String.valueOf(userId);
     }
 
     @Override

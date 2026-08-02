@@ -9,7 +9,6 @@
                type="org.teamsai.saibackend.domain.user.dto.UserDTO">
 
         <id property="userId" column="user_id"/>
-
         <result property="userToken" column="user_token"/>
         <result property="userKey" column="user_key"/>
         <result property="email" column="email"/>
@@ -19,7 +18,6 @@
 
     </resultMap>
 
-    <!-- 이메일 중복 확인 -->
     <select id="existsByEmail"
             resultType="boolean">
         SELECT EXISTS (
@@ -29,7 +27,6 @@
         )
     </select>
 
-    <!-- 회원가입 -->
     <insert id="insert"
             parameterType="org.teamsai.saibackend.domain.user.dto.UserDTO"
             useGeneratedKeys="true"
@@ -53,7 +50,6 @@
 
     </insert>
 
-    <!-- 로그인용 회원 조회 -->
     <select id="findByEmail"
             resultMap="userResultMap">
 
@@ -69,7 +65,22 @@
 
     </select>
 
-    <!-- JWT 인증 및 내 정보 조회 -->
+    <select id="findById"
+            resultMap="userResultMap">
+
+        SELECT
+        user_id,
+        user_token,
+        user_key,
+        email,
+        password,
+        name,
+        birth_date
+        FROM users
+        WHERE user_id = #{userId}
+
+    </select>
+
     <select id="findByUserToken"
             resultMap="userResultMap">
 
@@ -104,7 +115,12 @@
         WHERE user_token = #{userToken}
     </update>
 
-    <!-- 회원 탈퇴: 실제 데이터 삭제 -->
+    <delete id="deleteById">
+
+        DELETE FROM users
+        WHERE user_id = #{userId}
+
+    </delete>
 
     <delete id="deleteByUserToken">
         DELETE FROM users
@@ -121,9 +137,16 @@
         )
 
     </select>
-    <select id="findById" resultType="org.teamsai.saibackend.domain.user.dto.UserDTO">
-        SELECT user_id, name, email, user_key
+
+
+
+    <select id="findUserKeyById"
+            resultType="string">
+
+        SELECT user_key
         FROM users
         WHERE user_id = #{userId}
+
     </select>
+
 </mapper>
