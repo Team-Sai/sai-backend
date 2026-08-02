@@ -3,10 +3,10 @@ package org.teamsai.saibackend.domain.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.teamsai.saibackend.domain.link.mapper.LinkMapper;
-import org.teamsai.saibackend.domain.user.controller.MockBankClient;
 import org.teamsai.saibackend.domain.link.dto.response.UserKeyResponse;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
+import org.teamsai.saibackend.global.client.MockBankClient;
 
 @Service
 @RequiredArgsConstructor

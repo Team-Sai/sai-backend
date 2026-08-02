@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.account;
+package org.teamsai.saibackend.domain.account.dto;
 
 public enum ConnectionStatus {
     AVAILABLE,

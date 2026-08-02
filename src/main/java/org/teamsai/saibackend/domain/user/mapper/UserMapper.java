@@ -24,9 +24,13 @@ public interface UserMapper {
             @Param("userToken") String userToken
     );
 
-    int deleteByUserToken(String userKey);
+    int deleteByUserKey(String userToken);
 
     boolean existsByUserToken(
+            @Param("userToken") String userToken
+    );
+
+    String findUserKeyByUserToken(
             @Param("userToken") String userToken
     );
 }

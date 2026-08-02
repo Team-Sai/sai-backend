@@ -76,6 +76,7 @@
         SELECT
         user_id,
         user_token,
+        user_key,
         email,
         password,
         name,
@@ -83,6 +84,12 @@
         FROM users
         WHERE user_token = #{userToken}
 
+    </select>
+
+    <select id="findUserKeyByUserToken" parameterType="string" resultType="string">
+        SELECT user_key
+        FROM users
+        WHERE user_token = #{userToken}
     </select>
 
     <!-- 회원 탈퇴: 실제 데이터 삭제 -->
