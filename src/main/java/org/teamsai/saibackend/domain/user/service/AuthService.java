@@ -36,7 +36,7 @@ public class AuthService {
         authValidator.validateSignUp(email);
 
         UserDTO user = UserDTO.builder()
-                .userToken(createUserKToken())
+                .userKey(createUserKey())
                 .userKey(null)
                 .email(email)
                 .password(
@@ -74,7 +74,7 @@ public class AuthService {
         );
 
         String accessToken =
-                jwtTokenProvider.createAccessToken(user.getUserToken());
+                jwtTokenProvider.createAccessToken(user.getUserId());
 
         return UserLoginResponse.of(
                 user,
@@ -82,23 +82,23 @@ public class AuthService {
         );
     }
 
-    private static final String USER_TOKEN_PREFIX = "SAI-";
+    private static final String USER_KEY_PREFIX = "SAI-";
 
-    private static final String USER_TOKEN_CHARACTERS =
+    private static final String USER_KEY_CHARACTERS =
             "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-    private static final int USER_TOKEN_LENGTH = 8;
+    private static final int USER_KEY_LENGTH = 8;
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
 
-    private String createUserKToken() {
+    private String createUserKey() {
         for (int attempt = 0; attempt < 10; attempt++) {
-            StringBuilder token = new StringBuilder(USER_TOKEN_PREFIX);
+            StringBuilder token = new StringBuilder(USER_KEY_PREFIX);
 
-            for (int i = 0; i < USER_TOKEN_LENGTH; i++) {
-                int index = RANDOM.nextInt(USER_TOKEN_CHARACTERS.length());
-                token.append(USER_TOKEN_CHARACTERS.charAt(index));
+            for (int i = 0; i < USER_KEY_LENGTH; i++) {
+                int index = RANDOM.nextInt(USER_KEY_CHARACTERS.length());
+                token.append(USER_KEY_CHARACTERS.charAt(index));
             }
 
             String userToken = token.toString();

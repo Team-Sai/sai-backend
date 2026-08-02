@@ -25,8 +25,9 @@ import static org.mockito.Mockito.verify;
 @DisplayName("UserService 단위 테스트")
 class UserServiceTest {
 
-    private static final String USER_KEY = "SAI-ABCDEFGH";
-
+    private static final Long USER_ID = 1L;
+    private static final String USER_TOKEN = "SAI-ABCDEFGH";
+    private static final String USER_KEY = "mock-bank-user-key";
     @Mock
     private UserMapper userMapper;
 
@@ -40,7 +41,7 @@ class UserServiceTest {
         @Test
         @DisplayName("사용자 키로 회원을 조회해 응답 DTO로 반환한다")
         void getMyInfoSuccess() {
-            given(userMapper.findByUserToken(USER_KEY))
+            given(userMapper.findById(USER_ID))
                     .willReturn(Optional.of(createUser()));
 
             UserResponse response = userService.getMyInfo(USER_KEY);
@@ -55,10 +56,10 @@ class UserServiceTest {
         @Test
         @DisplayName("사용자 키에 해당하는 회원이 없으면 예외가 발생한다")
         void getMyInfoFailsWhenUserDoesNotExist() {
-            given(userMapper.findByUserToken(USER_KEY))
+            given(userMapper.findById(USER_ID))
                     .willReturn(Optional.empty());
 
-            assertUserNotFound(() -> userService.getMyInfo(USER_KEY));
+            assertUserNotFound(() -> userService.getMyInfo(USER_ID));
         }
     }
 
@@ -67,23 +68,23 @@ class UserServiceTest {
     class Withdraw {
 
         @Test
-        @DisplayName("사용자 키로 회원을 바로 삭제한다")
+        @DisplayName("사용자 ID로 회원을 바로 삭제한다")
         void withdrawSuccess() {
-            given(userMapper.deleteByUserKey(USER_KEY)).willReturn(1);
+            given(userMapper.deleteById(USER_ID)).willReturn(1);
 
-            userService.withdraw(USER_KEY);
+            userService.withdraw(USER_ID);
 
-            verify(userMapper).deleteByUserKey(USER_KEY);
+            verify(userMapper).deleteById(USER_ID);
         }
 
         @Test
         @DisplayName("삭제된 행이 0개이면 회원 없음 예외가 발생한다")
         void withdrawFailsWhenUserDoesNotExist() {
-            given(userMapper.deleteByUserKey(USER_KEY)).willReturn(0);
+            given(userMapper.deleteById(USER_ID)).willReturn(0);
 
-            assertUserNotFound(() -> userService.withdraw(USER_KEY));
+            assertUserNotFound(() -> userService.withdraw(USER_ID));
 
-            verify(userMapper).deleteByUserKey(USER_KEY);
+            verify(userMapper).deleteById(USER_ID);
         }
     }
 
@@ -98,7 +99,8 @@ class UserServiceTest {
 
     private UserDTO createUser() {
         return UserDTO.builder()
-                .userId(1L)
+                .userId(USER_ID)
+                .userToken(USER_TOKEN)
                 .userKey(USER_KEY)
                 .email("user@example.com")
                 .password("encoded-password")

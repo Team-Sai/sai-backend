@@ -25,8 +25,8 @@ public class ExternalBankService {
     private final UserService userService;
     private final LinkedBankAccountMapper linkedBankAccountMapper;
 
-    public List<LinkableAccountResponse> fetchAvailableAccountsFromBank(Long userId, String userToken) {
-        String userKey = userService.getUserKeyByUserToken(userToken);
+    public List<LinkableAccountResponse> fetchAvailableAccountsFromBank(Long userId) {
+        String userKey = userService.getUserKeyByUserId(userId);
         List<LinkableAccountResponse> allAccounts;
         try {
             allAccounts = mockBankClient.getAccountsByUserKey(userKey);

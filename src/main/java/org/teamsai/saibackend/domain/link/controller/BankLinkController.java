@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.teamsai.saibackend.domain.link.dto.response.UserKeyResponse;
 import org.teamsai.saibackend.domain.user.service.AccountService;
+import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 
 @Tag(
@@ -22,9 +24,10 @@ public class BankLinkController {
 
     @Operation(summary = "연동키 생성 요청")
     @PostMapping("/link")
-    public ResponseEntity<UserKeyResponse> createUserKey(Authentication authentication) {
-        String userToken = authentication.getName();
-        UserKeyResponse response = accountService.issueOrGetUserKey(userToken);
+    public ResponseEntity<UserKeyResponse> createUserKey(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUserId();
+        UserKeyResponse response = accountService.issueOrGetUserKey(userId);
         return ResponseEntity.ok(response);
     }
 }

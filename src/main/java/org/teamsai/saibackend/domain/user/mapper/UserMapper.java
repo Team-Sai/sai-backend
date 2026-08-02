@@ -1,13 +1,15 @@
 package org.teamsai.saibackend.domain.user.mapper;
 
-import org.apache.catalina.User;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
+
 import java.util.Optional;
 
 @Mapper
 public interface UserMapper {
+
     int insert(UserDTO user);
 
     boolean existsByEmail(
@@ -15,6 +17,7 @@ public interface UserMapper {
     );
 
     Optional<UserDTO> findById(@Param("userId") Long userId);
+
 
     Optional<UserDTO> findByEmail(
             @Param("email") String email
@@ -29,16 +32,17 @@ public interface UserMapper {
             @Param("userKey") String userKey
     );
 
-    int deleteByUserKey(String userToken);
+    String findUserKeyByUserToken(
+            @Param("userToken") String userToken
+    );
+
+
+    int deleteByUserId(Long userId);
 
     boolean existsByUserToken(
             @Param("userToken") String userToken
     );
 
-    String findUserKeyByUserToken(
-            @Param("userToken") String userToken
-    );
-    
     String findUserKeyByUserId(
             @Param("userId") Long userId
     );

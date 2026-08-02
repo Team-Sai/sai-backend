@@ -38,7 +38,7 @@ public enum UserErrorCode
 
     USER_TOKEN_GENERATION_FAILED(
             HttpStatus.INTERNAL_SERVER_ERROR,
-        "회원 초대 코드 생성에 실패했습니다."
+            "회원 초대 코드 생성에 실패했습니다."
     );
 
     private final HttpStatus httpStatus;

@@ -33,10 +33,9 @@ public class ExternalBankController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUserId();
-        String userToken = userDetails.getUsername();
 
         List<LinkableAccountResponse> accounts =
-                externalBankService.fetchAvailableAccountsFromBank(userId, userToken);
+                externalBankService.fetchAvailableAccountsFromBank(userId);
 
         return ResponseEntity.ok(accounts);
     }
