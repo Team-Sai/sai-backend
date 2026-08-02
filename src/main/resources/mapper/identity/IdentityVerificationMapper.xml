@@ -45,7 +45,7 @@
             useGeneratedKeys="true"
             keyProperty="identityId">
 
-        INSERT INTO identity_verification (
+        INSERT INTO identity (
         identity_verification_id,
         user_id,
         purpose,
@@ -76,14 +76,14 @@
         expires_at,
         used_at,
         failure_reason
-        FROM identity_verification
+        FROM identity
         WHERE identity_verification_id = #{identityVerificationId}
 
     </select>
 
     <update id="updateVerified">
 
-        UPDATE identity_verification
+        UPDATE identity
         SET status = 'VERIFIED',
         verified_at = #{verifiedAt},
         expires_at = #{expiresAt},
@@ -95,7 +95,7 @@
 
     <update id="updateFailed">
 
-        UPDATE identity_verification
+        UPDATE identity
         SET status = 'FAILED',
         failure_reason = #{failureReason}
         WHERE identity_verification_id = #{identityVerificationId}
@@ -105,7 +105,7 @@
 
     <update id="consume">
 
-        UPDATE identity_verification
+        UPDATE identity
         SET status = 'USED',
         used_at = NOW()
         WHERE identity_verification_id = #{identityVerificationId}

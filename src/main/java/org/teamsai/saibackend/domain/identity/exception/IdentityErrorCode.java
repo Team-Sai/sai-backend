@@ -69,6 +69,20 @@ public enum IdentityErrorCode
     PORTONE_API_INVALID_RESPONSE(
             HttpStatus.BAD_GATEWAY,
             "포트원 본인인증 서버에서 올바르지 않은 응답을 받았습니다."
+    ),
+    IDENTITY_VERIFICATION_NOT_COMPLETED(
+            HttpStatus.CONFLICT,
+            "본인인증이 아직 완료되지 않았습니다."
+    ),
+
+    IDENTITY_USER_INFORMATION_MISSING(
+            HttpStatus.CONFLICT,
+            "회원의 이름 또는 생년월일 정보가 없습니다."
+    ),
+
+    IDENTITY_INFORMATION_MISMATCH(
+            HttpStatus.BAD_REQUEST,
+            "회원정보와 본인인증 정보가 일치하지 않습니다."
     );
 
     private final HttpStatus httpStatus;

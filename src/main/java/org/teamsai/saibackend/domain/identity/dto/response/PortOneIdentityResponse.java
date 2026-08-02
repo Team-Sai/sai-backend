@@ -10,13 +10,13 @@ public record PortOneIdentityResponse(
         String status,
         VerifiedCustomer verifiedCustomer,
         Failure failure
-
 ) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record VerifiedCustomer(
             String name,
-            LocalDate birthDate
+            LocalDate birthDate,
+            String ci
     ) {
     }
 

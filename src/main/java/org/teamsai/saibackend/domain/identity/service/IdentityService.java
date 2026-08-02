@@ -1,11 +1,9 @@
 package org.teamsai.saibackend.domain.identity.service;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
+import org.springframework.util.StringUtils;
 import org.teamsai.saibackend.domain.identity.dto.IdentityDTO;
 import org.teamsai.saibackend.domain.identity.dto.request.IdentityPrepareRequest;
 import org.teamsai.saibackend.domain.identity.dto.response.IdentityCompleteResponse;
@@ -15,16 +13,19 @@ import org.teamsai.saibackend.domain.identity.exception.IdentityErrorCode;
 import org.teamsai.saibackend.domain.identity.mapper.IdentityMapper;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
 import org.teamsai.saibackend.domain.identity.type.IdentityStatus;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
+import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
+import org.teamsai.saibackend.domain.user.mapper.UserMapper;
+import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 @Service
 public class IdentityService {
-
-    private static final String PORTONE_API_BASE_URL =
-            "https://api.portone.io";
 
     private static final String PORTONE_STATUS_VERIFIED =
             "VERIFIED";
@@ -35,47 +36,44 @@ public class IdentityService {
     private static final String IDENTITY_VERIFICATION_ID_PREFIX =
             "identity-verification-";
 
+    private static final int FAILURE_REASON_MAX_LENGTH =
+            255;
+
     private final IdentityMapper identityMapper;
-    private final RestClient portOneRestClient;
+    private final UserMapper userMapper;
+
+    private final PortOneIdentityService portOneIdentityService;
+    private final IdentityValidator identityValidator;
 
     private final String storeId;
     private final String channelKey;
-    private final String apiSecret;
     private final long validMinutes;
 
     public IdentityService(
             IdentityMapper identityMapper,
+            UserMapper userMapper,
+            PortOneIdentityService portOneIdentityService,
+            IdentityValidator identityValidator,
 
-            @Value("${portone.store-id}")
+            @Value("${portone.identity.store-id}")
             String storeId,
 
-            @Value("${portone.channel-key}")
+            @Value("${portone.identity.channel-key}")
             String channelKey,
 
-            @Value("${portone.api-secret}")
-            String apiSecret,
-
-            @Value("${portone.identity-valid-minutes:10}")
+            @Value("${portone.identity.valid-minutes:10}")
             long validMinutes
     ) {
         this.identityMapper = identityMapper;
+        this.userMapper = userMapper;
+        this.portOneIdentityService = portOneIdentityService;
+        this.identityValidator = identityValidator;
+
         this.storeId = storeId;
         this.channelKey = channelKey;
-        this.apiSecret = apiSecret;
         this.validMinutes = validMinutes;
-
-        this.portOneRestClient = RestClient.builder()
-                .baseUrl(PORTONE_API_BASE_URL)
-                .build();
     }
 
-    /**
-     * 본인인증 요청 준비
-     *
-     * 1. 포트원 인증 식별값 생성
-     * 2. REQUESTED 상태로 DB 저장
-     * 3. 프론트엔드 SDK 호출에 필요한 값 반환
-     */
     @Transactional
     public IdentityPrepareResponse prepare(
             Long userId,
@@ -114,12 +112,6 @@ public class IdentityService {
         );
     }
 
-    /**
-     * 본인인증 완료 처리
-     *
-     * 프론트엔드의 인증 성공 응답을 그대로 신뢰하지 않고,
-     * 포트원 서버에서 인증 결과를 다시 조회한다.
-     */
     public IdentityCompleteResponse complete(
             Long userId,
             String identityVerificationId
@@ -149,27 +141,62 @@ public class IdentityService {
         }
 
         PortOneIdentityResponse portOneResponse =
-                requestPortOneVerification(identityVerificationId);
+                portOneIdentityService.getIdentityVerification(
+                        identityVerificationId
+                );
 
-        String portOneStatus =
-                portOneResponse.status();
+        identityValidator.validatePortOneResponse(
+                identityVerificationId,
+                portOneResponse
+        );
 
-        if (PORTONE_STATUS_FAILED.equals(portOneStatus)) {
-            processFailure(identityVerificationId);
+        if (PORTONE_STATUS_FAILED.equals(
+                portOneResponse.status()
+        )) {
+            processFailure(
+                    identityVerificationId,
+                    createFailureReason(portOneResponse)
+            );
 
             throw IdentityErrorCode
                     .PORTONE_VERIFICATION_NOT_VERIFIED
                     .toException();
         }
 
-        /*
-         * READY 등 아직 인증 완료 상태가 아닌 경우
-         * 로컬 상태를 FAILED로 변경하지 않는다.
-         */
-        if (!PORTONE_STATUS_VERIFIED.equals(portOneStatus)) {
+        if (!PORTONE_STATUS_VERIFIED.equals(
+                portOneResponse.status()
+        )) {
             throw IdentityErrorCode
-                    .PORTONE_VERIFICATION_NOT_VERIFIED
+                    .IDENTITY_VERIFICATION_NOT_COMPLETED
                     .toException();
+        }
+
+        UserDTO user =
+                userMapper.findById(userId)
+                        .orElseThrow(
+                                UserErrorCode
+                                        .USER_NOT_FOUND
+                                        ::toException
+                        );
+
+        try {
+            identityValidator.validateSameUser(
+                    user,
+                    portOneResponse.verifiedCustomer()
+            );
+
+        } catch (DomainException exception) {
+
+            if (exception.getErrorCode()
+                    == IdentityErrorCode.IDENTITY_INFORMATION_MISMATCH) {
+
+                processFailure(
+                        identityVerificationId,
+                        "IDENTITY_INFORMATION_MISMATCH"
+                );
+            }
+
+            throw exception;
         }
 
         LocalDateTime verifiedAt =
@@ -200,11 +227,6 @@ public class IdentityService {
         );
     }
 
-    /**
-     * 완료된 본인인증 건을 특정 기능에서 1회 사용 처리한다.
-     *
-     * 차용증 확정 등 본인인증이 필요한 실제 기능에서 호출한다.
-     */
     @Transactional
     public void consume(
             Long userId,
@@ -234,44 +256,6 @@ public class IdentityService {
         }
     }
 
-    /**
-     * 포트원 본인인증 단건 조회 API 호출
-     */
-    private PortOneIdentityResponse requestPortOneVerification(
-            String identityVerificationId
-    ) {
-        try {
-            PortOneIdentityResponse response =
-                    portOneRestClient.get()
-                            .uri(
-                                    "/identity-verifications/{identityVerificationId}",
-                                    identityVerificationId
-                            )
-                            .header(
-                                    HttpHeaders.AUTHORIZATION,
-                                    "PortOne " + apiSecret
-                            )
-                            .retrieve()
-                            .body(PortOneIdentityResponse.class);
-
-            if (response == null
-                    || response.status() == null
-                    || response.status().isBlank()) {
-
-                throw IdentityErrorCode
-                        .PORTONE_API_INVALID_RESPONSE
-                        .toException();
-            }
-
-            return response;
-
-        } catch (RestClientException exception) {
-            throw IdentityErrorCode
-                    .PORTONE_API_CALL_FAILED
-                    .toException();
-        }
-    }
-
     private IdentityDTO findIdentity(
             String identityVerificationId
     ) {
@@ -293,7 +277,10 @@ public class IdentityService {
             IdentityDTO identity,
             Long userId
     ) {
-        if (!Objects.equals(identity.getUserId(), userId)) {
+        if (!Objects.equals(
+                identity.getUserId(),
+                userId
+        )) {
             throw IdentityErrorCode
                     .IDENTITY_VERIFICATION_FORBIDDEN
                     .toException();
@@ -301,17 +288,32 @@ public class IdentityService {
     }
 
     private void processFailure(
-            String identityVerificationId
+            String identityVerificationId,
+            String failureReason
     ) {
-        identityMapper.updateFailed(
-                identityVerificationId,
-                PORTONE_STATUS_FAILED
-        );
+        int updatedCount =
+                identityMapper.updateFailed(
+                        identityVerificationId,
+                        truncateFailureReason(failureReason)
+                );
+
+        if (updatedCount == 1) {
+            return;
+        }
+
+        IdentityDTO latestIdentity =
+                findIdentity(identityVerificationId);
+
+        if (latestIdentity.getStatus()
+                == IdentityStatus.FAILED) {
+            return;
+        }
+
+        throw IdentityErrorCode
+                .IDENTITY_VERIFICATION_UPDATE_FAILED
+                .toException();
     }
 
-    /**
-     * 완료 요청이 동시에 들어온 경우 최신 DB 상태를 다시 확인한다.
-     */
     private IdentityCompleteResponse handleConcurrentCompletion(
             Long userId,
             String identityVerificationId
@@ -343,6 +345,75 @@ public class IdentityService {
         );
     }
 
+    private String createFailureReason(
+            PortOneIdentityResponse response
+    ) {
+        PortOneIdentityResponse.Failure failure =
+                response.failure();
+
+        if (failure == null) {
+            return PORTONE_STATUS_FAILED;
+        }
+
+        List<String> reasonParts =
+                new ArrayList<>();
+
+        addFailureReason(
+                reasonParts,
+                failure.reason()
+        );
+
+        addFailureReason(
+                reasonParts,
+                failure.pgCode()
+        );
+
+        addFailureReason(
+                reasonParts,
+                failure.pgMessage()
+        );
+
+        if (reasonParts.isEmpty()) {
+            return PORTONE_STATUS_FAILED;
+        }
+
+        return String.join(
+                " | ",
+                reasonParts
+        );
+    }
+
+    private void addFailureReason(
+            List<String> reasonParts,
+            String value
+    ) {
+        if (StringUtils.hasText(value)) {
+            reasonParts.add(value.trim());
+        }
+    }
+
+    private String truncateFailureReason(
+            String failureReason
+    ) {
+        if (!StringUtils.hasText(failureReason)) {
+            return PORTONE_STATUS_FAILED;
+        }
+
+        String normalizedReason =
+                failureReason.trim();
+
+        if (normalizedReason.length()
+                <= FAILURE_REASON_MAX_LENGTH) {
+
+            return normalizedReason;
+        }
+
+        return normalizedReason.substring(
+                0,
+                FAILURE_REASON_MAX_LENGTH
+        );
+    }
+
     private String generateIdentityVerificationId() {
         return IDENTITY_VERIFICATION_ID_PREFIX
                 + UUID.randomUUID()
@@ -350,7 +421,9 @@ public class IdentityService {
                 .replace("-", "");
     }
 
-    private void validateUserId(Long userId) {
+    private void validateUserId(
+            Long userId
+    ) {
         if (userId == null) {
             throw IdentityErrorCode
                     .UNAUTHENTICATED_USER
@@ -361,7 +434,9 @@ public class IdentityService {
     private void validatePrepareRequest(
             IdentityPrepareRequest request
     ) {
-        if (request == null || request.purpose() == null) {
+        if (request == null
+                || request.purpose() == null) {
+
             throw IdentityErrorCode
                     .INVALID_IDENTITY_PURPOSE
                     .toException();
@@ -371,9 +446,9 @@ public class IdentityService {
     private void validateIdentityVerificationId(
             String identityVerificationId
     ) {
-        if (identityVerificationId == null
-                || identityVerificationId.isBlank()) {
-
+        if (!StringUtils.hasText(
+                identityVerificationId
+        )) {
             throw IdentityErrorCode
                     .INVALID_IDENTITY_VERIFICATION_ID
                     .toException();
