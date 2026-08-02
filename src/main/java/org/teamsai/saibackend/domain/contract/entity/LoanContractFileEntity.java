@@ -1,7 +1,5 @@
 package org.teamsai.saibackend.domain.contract.entity;
 
-import org.teamsai.saibackend.global.common.BaseEntity;
-
 import lombok.*;
 
 @Getter
@@ -9,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LoanContractFileEntity extends BaseEntity {
+public class LoanContractFileEntity {
 
     private Long fileId;            // PK
     private Long contractId;        //FK
