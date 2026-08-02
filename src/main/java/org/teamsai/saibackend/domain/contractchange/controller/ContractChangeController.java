@@ -22,9 +22,9 @@ public class ContractChangeController {
     @GetMapping("/{contractId}")
     public ContractSummaryResponse getContract(
             @PathVariable Long contractId,
-            @AuthenticationPrincipal(expression = "userId") Long userID
+            @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
-        LoanContractReadDTO contract = contractChangeService.getContract(contractId, userID);
+        LoanContractReadDTO contract = contractChangeService.getContract(contractId, userId);
         return ContractSummaryResponse.from(contract);
 
 
