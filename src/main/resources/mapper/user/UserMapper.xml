@@ -92,6 +92,12 @@
         WHERE user_token = #{userToken}
     </select>
 
+    <select id="findUserKeyByUserId" resultType="java.lang.String">
+        SELECT user_key
+        FROM users
+        WHERE user_id = #{userId}
+    </select>
+
     <update id="updateUserKey">
         UPDATE users
         SET user_key = #{userKey}

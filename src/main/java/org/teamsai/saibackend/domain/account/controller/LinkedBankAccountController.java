@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.account.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +31,7 @@ public class LinkedBankAccountController {
     @PostMapping
     public ResponseEntity<List<LinkedBankAccountResponse>> linkAccounts(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody LinkAccountRequest request
+            @Valid @RequestBody LinkAccountRequest request
     ) {
         List<LinkedBankAccountResponse> responses =
                 linkedBankAccountService.linkSelectedAccounts(userDetails.getUserId(), request);

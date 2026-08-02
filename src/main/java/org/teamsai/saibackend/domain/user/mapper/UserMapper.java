@@ -38,4 +38,8 @@ public interface UserMapper {
     String findUserKeyByUserToken(
             @Param("userToken") String userToken
     );
+    
+    String findUserKeyByUserId(
+            @Param("userId") Long userId
+    );
 }

@@ -4,11 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.teamsai.saibackend.domain.account.dto.AccountDetailResponse;
 import org.teamsai.saibackend.domain.account.dto.LinkableAccountResponse;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,8 +22,13 @@ public class MockBankClient {
     private final RestClient restClient;
 
     public MockBankClient(@Value("${mock-bank.base-url:http://localhost:8081}") String baseUrl) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(3000);
+        requestFactory.setReadTimeout(5000);
+
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
+                .requestFactory(requestFactory)
                 .build();
     }
 

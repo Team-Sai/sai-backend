@@ -17,6 +17,7 @@
         created_at AS createdAt
         FROM linked_bank_account
         WHERE user_id = #{userId}
+        <!-- 현재 활성 상태인 것만 소유권으로 인정할지는 나중에 정함 -->
     </select>
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="linkedAccountId">
@@ -63,7 +64,7 @@
         updated_at
         FROM linked_bank_account
         WHERE user_id = #{userId}
-        AND connection_status = 'CONNECTED'
+        AND connection_status = 'AVAILABLE'
         ORDER BY created_at DESC
     </select>
 
