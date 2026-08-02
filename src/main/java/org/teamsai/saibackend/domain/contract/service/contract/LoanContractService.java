@@ -37,34 +37,32 @@ public class LoanContractService {
     }
 
     @Transactional
-    public ContractStatus submitAndSendToDebtor(Long contractId){
-        contractMapper.updateContractStatus(contractId, ContractStatus.PENDING);
-        return ContractStatus.PENDING;
-    }
-
-    @Transactional
-    public ContractStatus approveByDebtor(Long contractId) {
-        contractMapper.updateContractStatus(contractId, ContractStatus.COMPLETED);
-        return ContractStatus.COMPLETED;
-    }
-
-    @Transactional
     public ContractStatus submitCreditorSignature(Long contractId, MultipartFile signature) {
         String signaturePath = fileService.saveSignatureFile(contractId, signature);
         contractMapper.updateCreditorSignature(contractId, signaturePath, ContractStatus.PENDING);
+
         return ContractStatus.PENDING;
     }
+
 
     @Transactional
     public ContractStatus submitDebtorSignature(Long contractId, MultipartFile signature) {
         String signaturePath = fileService.saveSignatureFile(contractId, signature);
         contractMapper.updateDebtorSignature(contractId, signaturePath, ContractStatus.COMPLETED);
+
         return ContractStatus.COMPLETED;
     }
 
-    public LoanContractResponse findContract(Long contractId) {
-        return contractMapper.findContractById(contractId)
+    public LoanContractResponse findContract(Long contractId, Long userId) {
+        LoanContractResponse contract = contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+
+        boolean isParty = contract.getCreditorId().equals(userId) || contract.getDebtorId().equals(userId);
+        if (!isParty) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+        }
+
+        return contract;
     }
 
 

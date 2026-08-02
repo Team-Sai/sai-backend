@@ -74,14 +74,6 @@
         )
     </insert>
 
-    <update id="updateContractStatus">
-        UPDATE loan_contract
-        SET
-        status = #{status},
-        updated_at = NOW()
-        WHERE contract_id = #{contractId}
-    </update>
-
     <update id="updateCreditorSignature">
         UPDATE loan_contract
         SET
@@ -103,6 +95,8 @@
     <select id="findContractById" resultType="org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse">
         SELECT
         lc.contract_id        AS contractId,
+        lc.creditor_id        AS creditorId,
+        lc.debtor_id          AS debtorId,
         creditor.name         AS creditorName,
         creditor.birth_date   AS creditorBirthDate,
         lc.creditor_address   AS creditorAddress,

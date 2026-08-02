@@ -39,7 +39,8 @@ public class LoanContractFileService {
         try {
             Files.createDirectories(SIGNATURE_DIR);
 
-            String savedFilename = contractId + "_" + UUID.randomUUID() + "_" + signature.getOriginalFilename();
+            String extension = extractExtension(signature.getOriginalFilename());
+            String savedFilename = contractId + "_" + UUID.randomUUID() + extension;
             Path savedPath = SIGNATURE_DIR.resolve(savedFilename);
             Files.copy(signature.getInputStream(), savedPath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -48,5 +49,22 @@ public class LoanContractFileService {
             log.error("서명 파일 저장 실패 (contractId={})", contractId, e);
             throw LoanContractFileErrorCode.SIGNATURE_UPLOAD_FAILED.toException();
         }
+    }
+
+    private String extractExtension(String originalFilename) {
+        if (originalFilename == null) {
+            return "";
+        }
+
+        int lastSeparator = Math.max(originalFilename.lastIndexOf('/'), originalFilename.lastIndexOf('\\'));
+        String filename = originalFilename.substring(lastSeparator + 1);
+
+        int dotIndex = filename.lastIndexOf('.');
+        if (dotIndex <= 0 || dotIndex == filename.length() - 1) {
+            return "";
+        }
+
+        String extension = filename.substring(dotIndex + 1);
+        return extension.matches("[a-zA-Z0-9]{1,10}") ? "." + extension : "";
     }
 }

@@ -27,18 +27,19 @@ import org.teamsai.saibackend.global.security.CustomUserDetails;
 )
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/api/contracts")
 public class LoanContractController {
 
     private final LoanContractService contractService;
 
     @Operation(hidden = true)
-    @GetMapping("/api/contracts")
+    @GetMapping
     public String contractFormPage() {
         return "contract/contract-form";
     }
 
     @Operation(hidden = true)
-    @GetMapping("/api/contracts/signature")
+    @GetMapping("/signature")
     public String contractSignaturePage() {
         return "contract/contract-signature";
     }
@@ -66,7 +67,7 @@ public class LoanContractController {
 
 
     @ResponseBody
-    @PostMapping("/api/contracts")
+    @PostMapping
     public Long createContract(
             @Valid @RequestBody LoanContractRequest request,
             @Parameter(hidden = true) Authentication authentication
@@ -76,18 +77,8 @@ public class LoanContractController {
     }
 
     @Operation(
-            summary = "차용증 전송",
-            description = "차용증을 채권자에게 전송하고 대기(PENDING) 상태로 변경합니다."
-    )
-    @ResponseBody
-    @PatchMapping("/{contractId}/send")
-    public ContractStatus sendToDebtor(@PathVariable Long contractId){
-        return contractService.approveByDebtor(contractId);
-    }
-
-    @Operation(
-            summary = "채권자 전자서명 제출",
-            description = "채권자가 수기로 남긴 서명 이미지를 파일로 저장하고, 상태를 대기(PENDING)로 변경하여 채무자에게 전송합니다."
+            summary = "채권자 전자서명 제출 및 전송",
+            description = "채권자가 수기로 남긴 서명 이미지를 저장하고, 상태를 대기(PENDING)로 변경하여 채무자에게 전송합니다."
     )
     @ResponseBody
     @PatchMapping(value = "/{contractId}/signature", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -100,7 +91,7 @@ public class LoanContractController {
 
     @Operation(
             summary = "채무자 승인 및 전자서명 제출",
-            description = "채무자가 수기로 남긴 서명 이미지를 파일로 저장하고, 상태를 완료(COMPLETED)로 변경합니다."
+            description = "채무자가 수기로 남긴 서명 이미지를 저장하고, 상태를 완료(COMPLETED)로 변경합니다."
     )
     @ResponseBody
     @PatchMapping(value = "/{contractId}/approve", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -118,8 +109,12 @@ public class LoanContractController {
     )
     @ResponseBody
     @GetMapping("/{contractId}")
-    public LoanContractResponse getContract(@PathVariable Long contractId) {
-        return contractService.findContract(contractId);
+    public LoanContractResponse getContract(
+            @PathVariable Long contractId,
+            @Parameter(hidden = true) Authentication authentication
+    ) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return contractService.findContract(contractId, userDetails.getUserId());
     }
 
 
