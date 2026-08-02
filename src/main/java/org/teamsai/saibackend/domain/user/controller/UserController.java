@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,11 +53,10 @@ public class UserController {
     @GetMapping("/api/users/me")
     public UserResponse getMyInfo(
             @Parameter(hidden = true)
-            Authentication authentication
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId
     ) {
-        String userKey = authentication.getName();
-
-        return userService.getMyInfo(userKey);
+        return userService.getMyInfo(userId);
     }
 
     @Operation(
@@ -79,10 +78,9 @@ public class UserController {
     @DeleteMapping("/api/users/me")
     public void withdraw(
             @Parameter(hidden = true)
-            Authentication authentication
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId
     ) {
-        String userKey = authentication.getName();
-
-        userService.withdraw(userKey);
+        userService.withdraw(userId);
     }
 }
