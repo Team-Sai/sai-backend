@@ -28,7 +28,7 @@ document.getElementById('changeRequestForm').addEventListener('submit', function
         newInterestRate: document.getElementById('newInterestRate').value,
         newRepaymentType: document.getElementById('newRepaymentType').value,
         newRepaymentDate: document.getElementById('newRepaymentDate').value,
-        userId: 1 // TODO: 로그인 연동되면 실제 로그인한 사용자 ID로 교체
+
     };
 
     fetch(`/api/contracts/${contractId}/change-requests`, {

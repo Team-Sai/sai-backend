@@ -19,16 +19,20 @@ public class ContractChangeService {
 
     private final ContractChangeMapper contractChangeMapper;
 
-    public LoanContractReadDTO getContract (Long contractId) {
-        return contractChangeMapper.findById(contractId).orElseThrow(
-                ContractChangeErrorCode.CONTRACT_NOT_FOUND::toException);
+    public LoanContractReadDTO getContract (Long contractId, Long userId) {
+        LoanContractReadDTO contract = contractChangeMapper.findById(contractId)
+                .orElseThrow(ContractChangeErrorCode.CONTRACT_NOT_FOUND::toException);
 
+        if (!contract.getCreditorId().equals(userId) && !contract.getDebtorId().equals(userId)) {
+            throw ContractChangeErrorCode.FORBIDDEN_CONTRACT_ACCESS.toException();
+        }
+        return contract;
     }
 
     @Transactional
-    public LoanContractChangeDTO requestChange(Long contractId, ContractChangeRequest request) {
+    public LoanContractChangeDTO requestChange(Long contractId, ContractChangeRequest request, Long userId) {
 
-        getContract(contractId);
+        getContract(contractId, userId);
 
         boolean hasPendingRequest = contractChangeMapper.findByContractId(contractId).stream()
                 .anyMatch(changeRequest -> "PENDING".equals(changeRequest.getStatus()));
@@ -43,7 +47,7 @@ public class ContractChangeService {
                 .newInterestRate(request.getNewInterestRate())
                 .newRepaymentType(request.getNewRepaymentType())
                 .newRepaymentDate(request.getNewRepaymentDate())
-                .userId(request.getUserId())
+                .userId(userId)
                 .contractId(contractId)
                 .status("PENDING")
                 .createdAt(LocalDateTime.now())
