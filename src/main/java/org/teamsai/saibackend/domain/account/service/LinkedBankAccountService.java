@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
 import org.teamsai.saibackend.domain.account.dto.*;
+import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
 import org.teamsai.saibackend.domain.account.mapper.LinkedBankAccountMapper;
+import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.client.MockBankClient;
 
 import java.time.LocalDateTime;
@@ -18,41 +21,41 @@ import java.util.stream.Collectors;
 public class LinkedBankAccountService {
 
     private final LinkedBankAccountMapper linkedBankAccountMapper;
-
-    //private static final String DEFAULT_BANK_CODE = "SAI_001";
+    private final UserService userService;
+    private final MockBankClient mockBankClient;
 
     @Transactional
     public List<LinkedBankAccountResponse> linkSelectedAccounts(Long userId, LinkAccountRequest request) {
-        log.info("[LinkedBankAccountService] 계좌 연동 시작 - userId: {}, 선택된 계좌 수: {}",
-                userId, request.selectedAccounts().size());
-
-        List<LinkedBankAccountDTO> dtosToSave = new ArrayList<>();
+        String userKey = userService.getUserKeyByUserId(userId);
         LocalDateTime now = LocalDateTime.now();
 
-        for (LinkAccountRequest.SelectedAccount selected : request.selectedAccounts()) {
-            //String maskedNumber = MaskingUtil.maskAccountNumber(selected.accountNumber());
-
-            LinkedBankAccountDTO dto = LinkedBankAccountDTO.builder()
-                    .userId(userId)
-                    .accountId(selected.accountId())
-                    .bankCode(selected.bankCode())
-                    .accountNumber(selected.accountNumber())
-                    .accountAlias(selected.accountAlias())
-                    .accountHolderName(selected.accountHolderName())
-                    .balance(selected.balance())
-                    .connectionStatus(ConnectionStatus.AVAILABLE)
-                    .createdAt(now)
-                    .updatedAt(now)
-                    .build();
-
-            dtosToSave.add(dto);
-        }
+        List<LinkedBankAccountDTO> dtosToSave = request.selectedAccounts().stream()
+                .map(selected -> {
+                    AccountDetailResponse detail;
+                    try {
+                        detail = mockBankClient.getAccountDetail(selected.accountId(), userKey);
+                    } catch (RestClientException e) {
+                        log.warn("[LinkedBankAccountService] 계좌 상세 조회 실패 - accountId: {}", selected.accountId(), e);
+                        throw AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
+                    }
+                    
+                    return LinkedBankAccountDTO.builder()
+                            .userId(userId)
+                            .accountId(selected.accountId())
+                            .bankCode(detail.bankCode())
+                            .accountNumber(detail.accountNumber())
+                            .accountAlias(selected.accountAlias())
+                            .accountHolderName(detail.accountHolderName())
+                            .balance(detail.balance())
+                            .connectionStatus(ConnectionStatus.AVAILABLE)
+                            .createdAt(now)
+                            .updatedAt(now)
+                            .build();
+                })
+                .toList();
 
         linkedBankAccountMapper.insertBatch(dtosToSave);
-
-        return dtosToSave.stream()
-                .map(LinkedBankAccountResponse::from)
-                .toList();
+        return dtosToSave.stream().map(LinkedBankAccountResponse::from).toList();
     }
 
     @Transactional(readOnly = true)

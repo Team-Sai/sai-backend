@@ -41,4 +41,9 @@ public class UserService {
     public String getUserKeyByUserToken(String userToken) {
         return userMapper.findUserKeyByUserToken(userToken);
     }
+
+    @Transactional(readOnly = true)
+    public String getUserKeyByUserId(Long userId){
+        return userMapper.findUserKeyByUserId(userId);
+    }
 }

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -18,7 +19,7 @@ public class LinkedBankAccountDTO {
     private String bankCode;
     private String accountNumber;
     private String accountAlias;
-    private Long balance;
+    private BigDecimal balance;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String accountHolderName;

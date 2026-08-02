@@ -3,6 +3,8 @@ package org.teamsai.saibackend.domain.account.dto;
 import lombok.Builder;
 import org.teamsai.saibackend.domain.account.util.BankCodeResolver;
 
+import java.math.BigDecimal;
+
 import static org.teamsai.saibackend.global.util.MaskingUtil.maskAccountNumber;
 
 @Builder
@@ -13,7 +15,7 @@ public record LinkedBankAccountResponse(
         String maskedAccountNumber,
         String accountAlias,
         String accountHolderName,
-        Long balance,
+        BigDecimal balance,
         String connectionStatus
 ) {
     public static LinkedBankAccountResponse from(LinkedBankAccountDTO entity) {

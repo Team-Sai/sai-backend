@@ -30,11 +30,10 @@ public class ExternalBankController {
     @Operation(summary = "연동 가능한 사이은행 계좌 목록 조회")
     @GetMapping("/available")
     public ResponseEntity<List<LinkableAccountResponse>> getAvailableAccounts(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            Authentication authentication
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String userToken = authentication.getName();
         Long userId = userDetails.getUserId();
+        String userToken = userDetails.getUsername();
 
         List<LinkableAccountResponse> accounts =
                 externalBankService.fetchAvailableAccountsFromBank(userId, userToken);
@@ -45,12 +44,14 @@ public class ExternalBankController {
     @Operation(summary = "계좌 상세 조회")
     @GetMapping("/{accountId}")
     public ResponseEntity<AccountDetailResponse> getAccount(
-            @PathVariable Long accountId,
-            @RequestParam("userKey") String userKey
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long accountId
     ) {
-        log.info("[sai-member] 계좌 상세 조회 요청 전달 - accountId: {}, userKey: {}", accountId, userKey);
+        Long userId = userDetails.getUserId();
 
-        AccountDetailResponse response = externalBankService.getAccountDetail(accountId, userKey);
+        log.info("[sai-member] 계좌 상세 조회 요청 전달 - accountId: {}, userId: {}", accountId, userId);
+
+        AccountDetailResponse response = externalBankService.getAccountDetail(accountId, userId);
 
         return ResponseEntity.ok(response);
     }
