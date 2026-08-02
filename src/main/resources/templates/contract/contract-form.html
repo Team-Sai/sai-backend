@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<!-- ===================== TOP NAVIGATION ===================== -->
+
 <header class="topnav">
   <div class="topnav__inner">
     <div class="topnav__logo">사이월렛</div>
@@ -32,7 +32,7 @@
   </div>
 </header>
 
-<!-- ===================== STEP INDICATOR ===================== -->
+
 <div class="stepper-wrap">
   <ol class="stepper">
     <li class="stepper__step is-done">
@@ -58,16 +58,8 @@
   </ol>
 </div>
 
-<!-- ===================== CONTRACT FORM ===================== -->
 <main class="page">
-  <!--
-    이 화면은 대출 조건만 입력받고, 계약서를 생성하지 않습니다.
-    채무자 이메일(상대확인)과 채권자 서명은 다음 화면(contract-signature.html)에서 함께 입력받은 뒤,
-    그 화면에서 POST /api/contracts(생성) + PATCH /{contractId}/signature(서명 저장 및 전송)를 호출합니다.
-    "다음" 버튼은 여기서는 API를 호출하지 않고, 입력값을 sessionStorage에 임시 저장한 뒤 다음 화면으로 이동만 합니다.
 
-    조회 모드(?contractId=)에서는 GET /{contractId} 로 LoanContractResponse 를 읽어와 읽기 전용으로 보여줍니다.
-  -->
   <form class="doc" id="contractForm" data-contract-id="">
 
     <h1 class="doc__title">금 전 차 용 계 약 서</h1>
@@ -157,7 +149,6 @@
       갑과 을은 상기 계약을 증명하기 위하여 본 계약서 2통을 작성하고, 각자 서명 날인한 후 1통씩을 보관한다.
     </p>
 
-    <!-- ===================== PARTIES TABLE ===================== -->
     <table class="parties">
       <tbody>
         <tr>
@@ -195,7 +186,6 @@
     </table>
     <p class="doc__hint">채무자 정보는 채무자가 직접 확인·서명하는 단계에서 채워지며, 현재 화면에서는 입력할 수 없습니다.</p>
 
-    <!-- ===================== ACTIONS ===================== -->
     <div class="doc__actions">
       <button type="button" class="btn btn--primary" id="btnNext">다음 (전자서명)</button>
     </div>
