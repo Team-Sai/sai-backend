@@ -21,12 +21,10 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
     // swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
     // thymeleaf
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-
     // mybatis
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.0.0'
     // mariaDB

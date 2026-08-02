@@ -45,12 +45,12 @@
   }
 
   if (!draft) {
-    window.location.href = "contract-form.html";
+    window.location.href = "/api/contracts";
     return;
   }
 
   closeBtn?.addEventListener("click", () => {
-    window.location.href = "contract-form.html";
+    window.location.href = "/api/contracts";
   });
 
   function canvasPoint(event) {

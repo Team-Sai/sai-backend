@@ -80,7 +80,6 @@
         status = #{status},
         updated_at = NOW()
         WHERE contract_id = #{contractId}
-        AND creditor_id = #{creditorId}
     </update>
 
     <update id="updateCreditorSignature">
