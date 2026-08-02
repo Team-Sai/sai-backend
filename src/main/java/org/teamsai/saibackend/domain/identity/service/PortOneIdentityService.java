@@ -65,23 +65,19 @@ public class PortOneIdentityService {
 
         } catch (RestClientResponseException exception) {
             log.warn(
-                    "포트원 본인인증 조회 실패: id={}, status={}, body={}",
+                    "포트원 본인인증 조회 실패: id={}, status={}",
                     identityVerificationId,
-                    exception.getStatusCode(),
-                    exception.getResponseBodyAsString()
+                    exception.getStatusCode()
             );
 
             throw IdentityErrorCode
                     .PORTONE_API_CALL_FAILED
                     .toException();
-
         } catch (RestClientException exception) {
             log.warn(
-                    "포트원 본인인증 통신 오류: id={}, type={}, message={}",
+                    "포트원 본인인증 통신 오류: id={}, type={}",
                     identityVerificationId,
-                    exception.getClass().getSimpleName(),
-                    exception.getMessage(),
-                    exception
+                    exception.getClass().getSimpleName()
             );
 
             throw IdentityErrorCode

@@ -66,7 +66,6 @@ public class IdentityController {
             @RequestBody
             IdentityPrepareRequest request
     ) {
-        System.out.println("Identity principal userId = " + userId);
         IdentityPrepareResponse response =
                 identityService.prepare(userId, request);
 
