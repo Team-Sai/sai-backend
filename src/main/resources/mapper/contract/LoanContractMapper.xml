@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper">
+
+    <resultMap id="LoanContractMap" type="org.teamsai.saibackend.domain.contract.dto.LoanContractDTO">
+        <id property="contractId" column="contract_id"/>
+
+        <result property="previousContractId" column="previous_contract_id"/>
+        <result property="creditorId" column="creditor_id"/>
+        <result property="debtorId" column="debtor_id"/>
+
+        <result property="principalAmount" column="principal_amount"/>
+        <result property="interestRate" column="interest_rate"/>
+        <result property="repaymentType" column="repayment_type"/>
+        <result property="startDate" column="start_date"/>
+        <result property="maturityDate" column="maturity_date"/>
+        <result property="repaymentDay" column="repayment_day"/>
+
+        <result property="status" column="status"/>
+        <result property="creditorAddress" column="creditor_address"/>
+        <result property="debtorAddress" column="debtor_address"/>
+        <result property="contractAlias" column="contract_alias"/>
+        <result property="terms" column="terms"/>
+
+        <result property="creditorSignature" column="creditor_signature"/>
+        <result property="debtorSignature" column="debtor_signature"/>
+
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="contractColumns">
+        contract_id, previous_contract_id, creditor_id, debtor_id,
+        principal_amount, interest_rate, repayment_type, start_date, maturity_date, repayment_day,
+        status, creditor_address, debtor_address, contract_alias, terms,
+        creditor_signature, debtor_signature,
+        created_at, updated_at
+    </sql>
+
+    <insert id="insertByContract" useGeneratedKeys="true" keyProperty="request.contractId">
+        INSERT INTO loan_contract (
+        creditor_id,
+        creditor_name,
+        creditor_birth_date,
+        creditor_address,
+        principal_amount,
+        interest_rate,
+        repayment_type,
+        start_date,
+        maturity_date,
+        repayment_day,
+        contract_alias,
+        terms,
+        status,
+        created_at,
+        updated_at
+        ) VALUES (
+        #{user.userId},
+        #{user.name},
+        #{user.birthDate},
+        #{request.creditorAddress},
+        #{request.principalAmount},
+        #{request.interestRate},
+        #{request.repaymentType},
+        #{request.startDate},
+        #{request.maturityDate},
+        #{request.repaymentDay},
+        #{request.contractAlias},
+        #{request.terms},
+        'DRAFT',
+        NOW(),
+        NOW()
+        )
+    </insert>
+
+    <update id="updateContractStatus">
+        UPDATE loan_contract
+        SET
+        status = #{status},
+        updated_at = NOW()
+        WHERE contract_id = #{contractId}
+        AND creditor_id = #{creditorId}
+    </update>
+
+    <insert id="insertContractFile" useGeneratedKeys="true" keyProperty="fileId">
+        INSERT INTO loan_contract_file(
+        contract_id,
+        original_filename,
+        saved_filename,
+        file_size,
+        file_type,
+        created_at
+        ) VALUES (
+        #{contractId},
+        #{originalFilename},
+        #{savedFilename},
+        #{fileSize},
+        #{fileType},
+        NOW()
+        )
+
+    </insert>
+
+    <select id="findFileByContractId" resultType="org.teamsai.saibackend.domain.contract.dto.LoanContractFileDTO">
+        SELECT
+        file_id           AS fileId,
+        contract_id       AS contractId,
+        original_filename AS originalFilename,
+        saved_filename    AS savedFilename,
+        file_size         AS fileSize,
+        file_type         AS fileType,
+        created_at        AS createdAt
+        FROM loan_contract_file
+        WHERE contract_id = #{contractId}
+    </select>
+
+
+</mapper>

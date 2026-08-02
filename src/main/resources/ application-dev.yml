@@ -33,3 +33,8 @@ mock-bank:
 logging:
   level:
     com.teamsai.saiwonjang: debug
+
+
+jwt:
+  secret: 01d0d25e07ba3a7ec20c104e926ade45d26845e5fbba522fff0ec08f43522fa94adbe9a10eb283ad814effbae89a8a0daf0c5e36153416ee855e8d8d1130f650
+  access-token-expiration-ms: 3600000
