@@ -36,6 +36,8 @@ import static org.mockito.Mockito.*;
 class LoanContractServiceTest {
 
     private static final Long CREDITOR_ID = 1L;
+    private static final Long DEBTOR_ID = 2L;
+    private static final Long OTHER_USER_ID = 999L;
     private static final String DEBTOR_EMAIL = "debtor@example.com";
     private static final Long CONTRACT_ID = 1L;
 
@@ -119,34 +121,6 @@ class LoanContractServiceTest {
     }
 
     @Nested
-    @DisplayName("차용증 전송")
-    class SubmitAndSendToDebtor {
-
-        @Test
-        @DisplayName("상태를 PENDING으로 변경한다")
-        void submitAndSendToDebtorSuccess() {
-            ContractStatus status = loanContractService.submitAndSendToDebtor(CONTRACT_ID);
-
-            verify(contractMapper).updateContractStatus(CONTRACT_ID, ContractStatus.PENDING);
-            assertThat(status).isEqualTo(ContractStatus.PENDING);
-        }
-    }
-
-    @Nested
-    @DisplayName("채무자 승인")
-    class ApproveByDebtor {
-
-        @Test
-        @DisplayName("상태를 COMPLETED로 변경한다")
-        void approveByDebtorSuccess() {
-            ContractStatus status = loanContractService.approveByDebtor(CONTRACT_ID);
-
-            verify(contractMapper).updateContractStatus(CONTRACT_ID, ContractStatus.COMPLETED);
-            assertThat(status).isEqualTo(ContractStatus.COMPLETED);
-        }
-    }
-
-    @Nested
     @DisplayName("채권자 전자서명 제출")
     class SubmitCreditorSignature {
 
@@ -191,12 +165,23 @@ class LoanContractServiceTest {
     class FindContract {
 
         @Test
-        @DisplayName("계약서 ID로 조회해 응답 DTO를 반환한다")
-        void findContractSuccess() {
+        @DisplayName("채권자가 조회하면 응답 DTO를 반환한다")
+        void findContractSuccessAsCreditor() {
             LoanContractResponse response = createResponse();
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(response));
 
-            LoanContractResponse result = loanContractService.findContract(CONTRACT_ID);
+            LoanContractResponse result = loanContractService.findContract(CONTRACT_ID, CREDITOR_ID);
+
+            assertThat(result).isEqualTo(response);
+        }
+
+        @Test
+        @DisplayName("채무자가 조회하면 응답 DTO를 반환한다")
+        void findContractSuccessAsDebtor() {
+            LoanContractResponse response = createResponse();
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(response));
+
+            LoanContractResponse result = loanContractService.findContract(CONTRACT_ID, DEBTOR_ID);
 
             assertThat(result).isEqualTo(response);
         }
@@ -206,11 +191,25 @@ class LoanContractServiceTest {
         void findContractFailsWhenNotFound() {
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> loanContractService.findContract(CONTRACT_ID))
+            assertThatThrownBy(() -> loanContractService.findContract(CONTRACT_ID, CREDITOR_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
                                     .isEqualTo(LoanContractErrorCode.CONTRACT_NOT_FOUND)
+                    );
+        }
+
+        @Test
+        @DisplayName("계약 당사자가 아닌 사용자가 조회하면 예외가 발생한다")
+        void findContractFailsWhenUserIsNotParty() {
+            LoanContractResponse response = createResponse();
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(response));
+
+            assertThatThrownBy(() -> loanContractService.findContract(CONTRACT_ID, OTHER_USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
                     );
         }
     }
@@ -244,6 +243,8 @@ class LoanContractServiceTest {
     private LoanContractResponse createResponse() {
         return LoanContractResponse.builder()
                 .contractId(CONTRACT_ID)
+                .creditorId(CREDITOR_ID)
+                .debtorId(DEBTOR_ID)
                 .creditorName("김채권")
                 .creditorBirthDate("1995-05-05")
                 .creditorAddress("서울특별시 강남구 테헤란로 123")

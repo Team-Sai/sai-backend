@@ -20,11 +20,6 @@ public interface LoanContractMapper {
             @Param("debtor") UserDTO debtor
     );
 
-    void updateContractStatus(
-            @Param("contractId") Long contractId,
-            @Param("status") ContractStatus status
-    );
-
     void updateCreditorSignature(
             @Param("contractId") Long contractId,
             @Param("signaturePath") String signaturePath,

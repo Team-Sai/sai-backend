@@ -112,6 +112,23 @@ class LoanContractFileServiceTest {
             assertThat(savedPath).exists();
             assertThat(Files.readAllBytes(savedPath)).isEqualTo("signature-bytes".getBytes());
             assertThat(resultPath).contains(CONTRACT_ID + "_");
+            assertThat(resultPath).endsWith(".png");
+        }
+
+        @Test
+        @DisplayName("원본 파일명에 경로 조작 문자가 있어도 저장 경로를 벗어나지 않는다")
+        void saveSignatureFileIgnoresPathTraversalInOriginalFilename() throws IOException {
+            MultipartFile signature = new MockMultipartFile(
+                    "signature", "../../../../etc/evil.png", "image/png", "signature-bytes".getBytes()
+            );
+
+            String resultPath = fileService.saveSignatureFile(CONTRACT_ID, signature);
+            savedPath = Path.of(resultPath);
+
+            assertThat(savedPath).exists();
+            assertThat(savedPath.normalize()).isEqualTo(savedPath);
+            assertThat(savedPath.toString().replace("\\", "/")).doesNotContain("../");
+            assertThat(resultPath).endsWith(".png");
         }
 
         @Test

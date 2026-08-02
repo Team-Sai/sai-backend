@@ -1,6 +1,7 @@
 package org.teamsai.saibackend.domain.contract.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
@@ -15,6 +16,11 @@ import java.time.LocalDate;
 public class LoanContractResponse {
 
     private Long contractId;
+
+    @JsonIgnore
+    private Long creditorId;
+    @JsonIgnore
+    private Long debtorId;
 
     private String creditorName;
     private String creditorBirthDate;
