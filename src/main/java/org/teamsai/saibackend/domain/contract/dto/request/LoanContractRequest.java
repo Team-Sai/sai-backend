@@ -41,10 +41,14 @@ public class LoanContractRequest {
     @NotBlank(message = "주소를 입력해주세요.")
     private String creditorAddress;
 
+    @NotBlank(message = "채무자 이메일을 입력해주세요.")
+    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    private String debtorEmail;
+
     @NotBlank(message = "계약의 목적을 입력해주세요.")
     private String contractAlias;
 
-    private String terms; // 선택 입력 항목
+    private String terms;
 
     @AssertTrue(message = "대출 만기일은 시작일 이후여야 합니다.")
     public boolean isValidMaturityDate() {

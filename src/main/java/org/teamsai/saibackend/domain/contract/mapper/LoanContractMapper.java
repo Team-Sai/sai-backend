@@ -16,11 +16,24 @@ public interface LoanContractMapper {
 
     void insertByContract(
             @Param("request") LoanContractRequest request,
-            @Param("user") UserDTO user
+            @Param("user") UserDTO user,
+            @Param("debtor") UserDTO debtor
     );
 
     void updateContractStatus(
             @Param("contractId") Long contractId,
+            @Param("status") ContractStatus status
+    );
+
+    void updateCreditorSignature(
+            @Param("contractId") Long contractId,
+            @Param("signaturePath") String signaturePath,
+            @Param("status") ContractStatus status
+    );
+
+    void updateDebtorSignature(
+            @Param("contractId") Long contractId,
+            @Param("signaturePath") String signaturePath,
             @Param("status") ContractStatus status
     );
 
