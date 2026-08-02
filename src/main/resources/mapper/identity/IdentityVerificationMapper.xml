@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.identity.mapper.IdentityMapper">
+
+    <resultMap id="identityResultMap"
+               type="org.teamsai.saibackend.domain.identity.dto.IdentityDTO">
+
+        <id property="identityId"
+            column="identity_id"/>
+
+        <result property="identityVerificationId"
+                column="identity_verification_id"/>
+
+        <result property="userId"
+                column="user_id"/>
+
+        <result property="purpose"
+                column="purpose"/>
+
+        <result property="status"
+                column="status"/>
+
+        <result property="requestedAt"
+                column="requested_at"/>
+
+        <result property="verifiedAt"
+                column="verified_at"/>
+
+        <result property="expiresAt"
+                column="expires_at"/>
+
+        <result property="usedAt"
+                column="used_at"/>
+
+        <result property="failureReason"
+                column="failure_reason"/>
+
+    </resultMap>
+
+    <insert id="insert"
+            parameterType="org.teamsai.saibackend.domain.identity.dto.IdentityDTO"
+            useGeneratedKeys="true"
+            keyProperty="identityId">
+
+        INSERT INTO identity_verification (
+        identity_verification_id,
+        user_id,
+        purpose,
+        status,
+        requested_at
+        )
+        VALUES (
+        #{identityVerificationId},
+        #{userId},
+        #{purpose},
+        #{status},
+        #{requestedAt}
+        )
+
+    </insert>
+
+    <select id="findByIdentityVerificationId"
+            resultMap="identityResultMap">
+
+        SELECT
+        identity_id,
+        identity_verification_id,
+        user_id,
+        purpose,
+        status,
+        requested_at,
+        verified_at,
+        expires_at,
+        used_at,
+        failure_reason
+        FROM identity_verification
+        WHERE identity_verification_id = #{identityVerificationId}
+
+    </select>
+
+    <update id="updateVerified">
+
+        UPDATE identity_verification
+        SET status = 'VERIFIED',
+        verified_at = #{verifiedAt},
+        expires_at = #{expiresAt},
+        failure_reason = NULL
+        WHERE identity_verification_id = #{identityVerificationId}
+        AND status = 'REQUESTED'
+
+    </update>
+
+    <update id="updateFailed">
+
+        UPDATE identity_verification
+        SET status = 'FAILED',
+        failure_reason = #{failureReason}
+        WHERE identity_verification_id = #{identityVerificationId}
+        AND status = 'REQUESTED'
+
+    </update>
+
+    <update id="consume">
+
+        UPDATE identity_verification
+        SET status = 'USED',
+        used_at = NOW()
+        WHERE identity_verification_id = #{identityVerificationId}
+        AND user_id = #{userId}
+        AND purpose = #{purpose}
+        AND status = 'VERIFIED'
+        AND expires_at > NOW()
+        AND used_at IS NULL
+
+    </update>
+
+</mapper>
