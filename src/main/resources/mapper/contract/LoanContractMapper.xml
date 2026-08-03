@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper">
+
+    <resultMap id="LoanContractMap" type="org.teamsai.saibackend.domain.contract.dto.LoanContractDTO">
+        <id property="contractId" column="contract_id"/>
+
+        <result property="previousContractId" column="previous_contract_id"/>
+        <result property="creditorId" column="creditor_id"/>
+        <result property="debtorId" column="debtor_id"/>
+
+        <result property="principalAmount" column="principal_amount"/>
+        <result property="interestRate" column="interest_rate"/>
+        <result property="repaymentType" column="repayment_type"/>
+        <result property="startDate" column="start_date"/>
+        <result property="maturityDate" column="maturity_date"/>
+        <result property="repaymentDay" column="repayment_day"/>
+
+        <result property="status" column="status"/>
+        <result property="creditorAddress" column="creditor_address"/>
+        <result property="debtorAddress" column="debtor_address"/>
+        <result property="contractAlias" column="contract_alias"/>
+        <result property="terms" column="terms"/>
+
+        <result property="creditorSignature" column="creditor_signature"/>
+        <result property="debtorSignature" column="debtor_signature"/>
+
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="contractColumns">
+        contract_id, previous_contract_id, creditor_id, debtor_id,
+        principal_amount, interest_rate, repayment_type, start_date, maturity_date, repayment_day,
+        status, creditor_address, debtor_address, contract_alias, terms,
+        creditor_signature, debtor_signature,
+        created_at, updated_at
+    </sql>
+
+    <insert id="insertByContract" useGeneratedKeys="true" keyProperty="request.contractId">
+        INSERT INTO loan_contract (
+        creditor_id,
+        creditor_address,
+        debtor_id,
+        principal_amount,
+        interest_rate,
+        repayment_type,
+        start_date,
+        maturity_date,
+        repayment_day,
+        contract_alias,
+        terms,
+        status,
+        created_at,
+        updated_at
+        ) VALUES (
+        #{user.userId},
+        #{request.creditorAddress},
+        #{debtor.userId},
+        #{request.principalAmount},
+        #{request.interestRate},
+        #{request.repaymentType},
+        #{request.startDate},
+        #{request.maturityDate},
+        #{request.repaymentDay},
+        #{request.contractAlias},
+        #{request.terms},
+        'DRAFT',
+        NOW(),
+        NOW()
+        )
+    </insert>
+
+    <update id="updateCreditorSignature">
+        UPDATE loan_contract
+        SET
+        creditor_signature = #{signaturePath},
+        status = #{status},
+        updated_at = NOW()
+        WHERE contract_id = #{contractId}
+    </update>
+
+    <update id="updateDebtorSignature">
+        UPDATE loan_contract
+        SET
+        debtor_signature = #{signaturePath},
+        status = #{status},
+        updated_at = NOW()
+        WHERE contract_id = #{contractId}
+    </update>
+
+    <select id="findContractById" resultType="org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse">
+        SELECT
+        lc.contract_id        AS contractId,
+        lc.creditor_id        AS creditorId,
+        lc.debtor_id          AS debtorId,
+        creditor.name         AS creditorName,
+        creditor.birth_date   AS creditorBirthDate,
+        lc.creditor_address   AS creditorAddress,
+        lc.creditor_signature AS creditorSignature,
+        debtor.name           AS debtorName,
+        debtor.birth_date     AS debtorBirthDate,
+        lc.debtor_address     AS debtorAddress,
+        lc.debtor_signature   AS debtorSignature,
+        lc.principal_amount   AS principalAmount,
+        lc.interest_rate      AS interestRate,
+        lc.repayment_type     AS repaymentType,
+        lc.start_date         AS startDate,
+        lc.maturity_date      AS maturityDate,
+        lc.repayment_day      AS repaymentDay,
+        lc.contract_alias     AS contractAlias,
+        lc.terms              AS terms,
+        lc.status             AS status
+        FROM loan_contract lc
+        JOIN users creditor ON creditor.user_id = lc.creditor_id
+        JOIN users debtor ON debtor.user_id = lc.debtor_id
+        WHERE lc.contract_id = #{contractId}
+    </select>
+
+
+</mapper>

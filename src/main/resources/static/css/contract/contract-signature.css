@@ -1,0 +1,595 @@
+/* =========================================================
+   금전소비대차 · 전자서명 (contract-signature)
+   user/login.css, user/mypage.css 와 동일한 팔레트·폰트를 사용합니다.
+   원본은 Figma 자동 내보내기(1440px 고정 캔버스, 절대좌표)였는데,
+   반응형 flexbox 레이아웃으로 다시 작성했습니다.
+   HTML의 클래스/id 이름(한글 포함)은 그대로 유지합니다.
+   ========================================================= */
+
+:root {
+  --page: #F7F8FB;
+  --surface: #FFFFFF;
+  --text: #17191D;
+  --muted: #697080;
+  --line: #CFD5E2;
+  --primary: #006E2A;
+  --primary-bright: #00C853;
+  --error: #BA1A1A;
+
+  --font-ui: "Noto Sans KR", sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--page);
+  font-family: var(--font-ui);
+  color: var(--text);
+}
+
+button { font-family: inherit; }
+
+/* ===================== PAGE ROOT ===================== */
+.전자서명받기 {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ===================== TOP NAV ===================== */
+.로그인후헤더 {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 24px;
+}
+
+.frame9 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gradient,
+.gradient2,
+.gradient3 {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-bright));
+}
+
+.사이원장 {
+  color: var(--primary);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.frame8 {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+  margin-left: 24px;
+  overflow-x: auto;
+}
+
+.서비스소개,
+.금전소비대차,
+.정산,
+.캘린더 {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.서비스소개:hover,
+.금전소비대차:hover,
+.정산:hover,
+.캘린더:hover {
+  color: var(--primary);
+}
+
+.금전소비대차 {
+  color: var(--primary);
+}
+
+.frame72 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.container {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* ===================== MAIN CONTENT ===================== */
+.기본화면 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 40px 20px 80px;
+}
+
+/* pure structural wrappers from the Figma export: no visual footprint */
+.로그인후기본배경,
+.frame48,
+.기본프레임이거복사,
+.frame28,
+.frame46,
+.기본화면2 {
+  display: contents;
+}
+
+.대시보드프레임2-한줄에두개쓸거면이거복사 {
+  display: none;
+}
+
+.기본화면3 {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.heading1 {
+  width: 100%;
+  text-align: center;
+}
+
+.전자서명및계약체결동의 {
+  color: var(--primary);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.button:hover {
+  border-color: var(--primary);
+}
+
+.container2 {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===================== SIGNATURE CARD ===================== */
+.body {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.counterpartyarea {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  display: flex;
+}
+
+.서명-signature {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.debtor-email-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+}
+
+.debtor-email-input:focus {
+  outline: none;
+  border-color: var(--primary-bright);
+  background: rgba(0, 200, 83, 0.06);
+}
+
+.debtor-email-input::placeholder {
+  color: #B0B7C3;
+}
+
+.debtor-email-input.is-invalid {
+  border-color: var(--error);
+}
+
+.signaturearea {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.container3 {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.패드에수기서명을남겨주세요\. {
+  color: #B0B7C3;
+  font-size: 13px;
+}
+
+.container5 {
+  position: relative;
+  width: 100%;
+}
+
+.background-border {
+  width: 100%;
+  height: 220px;
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.container6 {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text {
+  color: rgba(23, 25, 29, 0.15);
+  font-size: 16px;
+  letter-spacing: 0.16em;
+}
+
+.signatureCanvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.button2 {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.button2:hover {
+  border-color: var(--primary);
+}
+
+.container8 {
+  width: 12px;
+  height: 12px;
+}
+
+.지우기 {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ===================== VERIFICATION STATUS ===================== */
+.verificationstatus {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #edf9f0;
+  border: 1px solid #b9dfc2;
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.overlay {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 110, 42, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container9 {
+  width: 16px;
+  height: 20px;
+}
+
+.container10 {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.container11 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.안전한계약체결을위해휴대폰본인인증이완료되었습니다\. {
+  color: #165c2d;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.container12 {
+  width: 16px;
+  height: 16px;
+}
+
+.인증일시 {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ===================== AGREEMENT ===================== */
+.agreement {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.container14 {
+  flex: 0 0 auto;
+  padding-top: 2px;
+}
+
+input.input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+input.input:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+input.input:checked::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 9px;
+  margin: 3px auto 0;
+  border: solid var(--surface);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.label2 {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.위약정내용을모두확인하였으며\,본인인증정보를기반으로한전자서명을통해상기계약조건에대한최종합의의사를기록합니다\. {
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* ===================== SUBMIT CARD ===================== */
+.section-modalcontent {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+
+.footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.button3 {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.button3:hover {
+  opacity: 0.9;
+}
+
+.button3:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.서명제출 {
+  color: var(--surface);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.container15 {
+  width: 16px;
+  height: 14px;
+}
+
+.form-status {
+  align-self: stretch;
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--primary);
+}
+
+.form-status.is-error {
+  color: var(--error);
+}
+
+.container16 {
+  width: 100%;
+}
+
+.text2 {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ===================== SITE FOOTER ===================== */
+.footer2 {
+  margin-top: auto;
+  width: 100%;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: 32px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.frame23 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 280px;
+}
+
+.frame92 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.사이원장2 {
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.복잡한금융정산을기술로해결하고더투명한거래문화를만듭니다\. {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.frame25 {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.공지사항,
+.자주묻는질문,
+.이용약관,
+.메일,
+.개인정보처리방침 {
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.공지사항:hover,
+.자주묻는질문:hover,
+.이용약관:hover,
+.메일:hover,
+.개인정보처리방침:hover {
+  color: var(--primary);
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 640px) {
+  .로그인후헤더 { flex-wrap: wrap; height: auto; padding: 12px 16px; }
+  .frame8 { order: 3; width: 100%; margin-left: 0; gap: 16px; }
+  .body, .section-modalcontent { padding: 20px; }
+  .전자서명및계약체결동의 { font-size: 22px; }
+  .footer2 { flex-direction: column; align-items: flex-start; }
+}
