@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.account.dto;
+package org.teamsai.saibackend.domain.account.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

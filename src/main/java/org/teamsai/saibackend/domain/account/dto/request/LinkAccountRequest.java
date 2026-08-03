@@ -1,12 +1,10 @@
-package org.teamsai.saibackend.domain.account.dto;
+package org.teamsai.saibackend.domain.account.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Schema(description = "계좌 연동 요청 DTO")

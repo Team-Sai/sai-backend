@@ -6,6 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.teamsai.saibackend.domain.account.dto.*;
+import org.teamsai.saibackend.domain.account.dto.request.LinkAccountRequest;
+import org.teamsai.saibackend.domain.account.dto.response.AccountDetailResponse;
+import org.teamsai.saibackend.domain.account.dto.response.LinkedBankAccountResponse;
+import org.teamsai.saibackend.domain.account.dto.type.ConnectionStatus;
 import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
 import org.teamsai.saibackend.domain.account.mapper.LinkedBankAccountMapper;
 import org.teamsai.saibackend.domain.user.service.UserService;
@@ -13,7 +17,6 @@ import org.teamsai.saibackend.global.client.MockBankClient;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
