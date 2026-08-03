@@ -36,7 +36,7 @@ public class AuthService {
         authValidator.validateSignUp(email);
 
         UserDTO user = UserDTO.builder()
-                .userKey(createUserKey())
+                .userToken(createUserKey())
                 .userKey(null)
                 .email(email)
                 .password(

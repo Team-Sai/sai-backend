@@ -44,7 +44,7 @@ class UserServiceTest {
             given(userMapper.findById(USER_ID))
                     .willReturn(Optional.of(createUser()));
 
-            UserResponse response = userService.getMyInfo(USER_KEY);
+            UserResponse response = userService.getMyInfo(USER_ID);
 
             assertThat(response.getUserToken()).isEqualTo(USER_KEY);
             assertThat(response.getEmail()).isEqualTo("user@example.com");
@@ -70,21 +70,21 @@ class UserServiceTest {
         @Test
         @DisplayName("사용자 ID로 회원을 바로 삭제한다")
         void withdrawSuccess() {
-            given(userMapper.deleteById(USER_ID)).willReturn(1);
+            given(userMapper.deleteByUserId(USER_ID)).willReturn(1);
 
             userService.withdraw(USER_ID);
 
-            verify(userMapper).deleteById(USER_ID);
+            verify(userMapper).deleteByUserId(USER_ID);
         }
 
         @Test
         @DisplayName("삭제된 행이 0개이면 회원 없음 예외가 발생한다")
         void withdrawFailsWhenUserDoesNotExist() {
-            given(userMapper.deleteById(USER_ID)).willReturn(0);
+            given(userMapper.deleteByUserId(USER_ID)).willReturn(0);
 
             assertUserNotFound(() -> userService.withdraw(USER_ID));
 
-            verify(userMapper).deleteById(USER_ID);
+            verify(userMapper).deleteByUserId(USER_ID);
         }
     }
 

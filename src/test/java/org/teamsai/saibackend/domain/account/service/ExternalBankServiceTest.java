@@ -73,7 +73,7 @@ class ExternalBankServiceTest {
             given(linkedBankAccountMapper.selectLinkedAccountsByUserId(USER_ID)).willReturn(List.of());
 
             List<LinkableAccountResponse> result =
-                    externalBankService.fetchAvailableAccountsFromBank(USER_ID, USER_TOKEN);
+                    externalBankService.fetchAvailableAccountsFromBank(USER_ID);
 
             assertThat(result).hasSize(2);
             assertThat(result).containsExactly(account1, account2);
@@ -89,7 +89,7 @@ class ExternalBankServiceTest {
             given(linkedBankAccountMapper.selectLinkedAccountsByUserId(USER_ID)).willReturn(List.of());
 
             List<LinkableAccountResponse> result =
-                    externalBankService.fetchAvailableAccountsFromBank(USER_ID, USER_TOKEN);
+                    externalBankService.fetchAvailableAccountsFromBank(USER_ID);
 
             assertThat(result).isEmpty();
         }
@@ -106,7 +106,7 @@ class ExternalBankServiceTest {
             given(linkedBankAccountMapper.selectLinkedAccountsByUserId(USER_ID)).willReturn(List.of(linked));
 
             List<LinkableAccountResponse> result =
-                    externalBankService.fetchAvailableAccountsFromBank(USER_ID, USER_TOKEN);
+                    externalBankService.fetchAvailableAccountsFromBank(USER_ID);
 
             assertThat(result).containsExactly(account2);
         }
@@ -119,7 +119,7 @@ class ExternalBankServiceTest {
                     .willThrow(new RestClientException("연결 실패"));
 
             assertThatThrownBy(() ->
-                    externalBankService.fetchAvailableAccountsFromBank(USER_ID, USER_TOKEN)
+                    externalBankService.fetchAvailableAccountsFromBank(USER_ID)
             ).isInstanceOf(RuntimeException.class);
 
             verify(linkedBankAccountMapper, never()).selectLinkedAccountsByUserId(USER_ID);
