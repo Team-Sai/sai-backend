@@ -145,18 +145,47 @@ class LoanContractServiceTest {
     class SubmitDebtorSignature {
 
         @Test
-        @DisplayName("서명 파일을 저장하고 상태를 COMPLETED로 변경한다")
+        @DisplayName("서명 파일과 채무자 주소를 저장하고 상태를 COMPLETED로 변경한다")
         void submitDebtorSignatureSuccess() {
+            MultipartFile signature = mock(MultipartFile.class);
+            String debtorAddress = "서울특별시 마포구 월드컵로 1";
+            given(fileService.saveSignatureFile(CONTRACT_ID, signature))
+                    .willReturn("uploads/signatures/1_signature.png");
+
+            ContractStatus status = loanContractService.submitDebtorSignature(CONTRACT_ID, debtorAddress, signature);
+
+            verify(contractMapper).updateDebtorSignature(
+                    CONTRACT_ID, debtorAddress, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
+            );
+            assertThat(status).isEqualTo(ContractStatus.COMPLETED);
+        }
+
+        @Test
+        @DisplayName("채무자 주소가 빈 문자열이어도 그대로 전달되어 저장된다")
+        void submitDebtorSignatureWithBlankAddress() {
             MultipartFile signature = mock(MultipartFile.class);
             given(fileService.saveSignatureFile(CONTRACT_ID, signature))
                     .willReturn("uploads/signatures/1_signature.png");
 
-            ContractStatus status = loanContractService.submitDebtorSignature(CONTRACT_ID, signature);
+            loanContractService.submitDebtorSignature(CONTRACT_ID, "", signature);
 
             verify(contractMapper).updateDebtorSignature(
-                    CONTRACT_ID, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
+                    CONTRACT_ID, "", "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
             );
-            assertThat(status).isEqualTo(ContractStatus.COMPLETED);
+        }
+
+        @Test
+        @DisplayName("채무자 주소가 null이어도 그대로 전달되어 저장된다")
+        void submitDebtorSignatureWithNullAddress() {
+            MultipartFile signature = mock(MultipartFile.class);
+            given(fileService.saveSignatureFile(CONTRACT_ID, signature))
+                    .willReturn("uploads/signatures/1_signature.png");
+
+            loanContractService.submitDebtorSignature(CONTRACT_ID, null, signature);
+
+            verify(contractMapper).updateDebtorSignature(
+                    CONTRACT_ID, null, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
+            );
         }
     }
 
@@ -218,7 +247,7 @@ class LoanContractServiceTest {
         return LoanContractRequest.builder()
                 .principalAmount(BigDecimal.valueOf(1_000_000))
                 .interestRate(BigDecimal.valueOf(5.0))
-                .repaymentType(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST)
+                .repaymentType(RepaymentMethod.EQUAL_PAYMENT)
                 .startDate(LocalDate.of(2026, 1, 1))
                 .maturityDate(LocalDate.of(2027, 1, 1))
                 .repaymentDay(15)
@@ -252,7 +281,7 @@ class LoanContractServiceTest {
                 .debtorBirthDate("1996-06-06")
                 .principalAmount(BigDecimal.valueOf(1_000_000))
                 .interestRate(BigDecimal.valueOf(5.0))
-                .repaymentType(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST)
+                .repaymentType(RepaymentMethod.EQUAL_PAYMENT)
                 .startDate(LocalDate.of(2026, 1, 1))
                 .maturityDate(LocalDate.of(2027, 1, 1))
                 .repaymentDay(15)

@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.security.core.Authentication;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
@@ -44,6 +45,22 @@ public class LoanContractController {
         return "contract/contract-signature";
     }
 
+    //채무자 차용증 확인 페이지
+    @Operation(hidden = true)
+    @GetMapping("/{contractId}/approve")
+    public String contractDebtorApprovePage(@PathVariable Long contractId, Model model) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-debtor-approve";
+    }
+
+    //채무자 전자서명 페이지
+    @Operation(hidden = true)
+    @GetMapping("/{contractId}/approve/signature")
+    public String contractDebtorSignaturePage(@PathVariable Long contractId, Model model) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-debtor-signature";
+    }
+
 
     @Operation(
             summary = "차용증 최초 생성",
@@ -67,7 +84,7 @@ public class LoanContractController {
 
 
     @ResponseBody
-    @PostMapping
+    @PostMapping("/write")
     public Long createContract(
             @Valid @RequestBody LoanContractRequest request,
             @Parameter(hidden = true) Authentication authentication
@@ -91,25 +108,26 @@ public class LoanContractController {
 
     @Operation(
             summary = "채무자 승인 및 전자서명 제출",
-            description = "채무자가 수기로 남긴 서명 이미지를 저장하고, 상태를 완료(COMPLETED)로 변경합니다."
+            description = "채무자가 본인 주소를 입력하고 수기로 남긴 서명 이미지를 저장한 뒤, 상태를 완료(COMPLETED)로 변경합니다."
     )
     @ResponseBody
     @PatchMapping(value = "/{contractId}/approve", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ContractStatus approveByDebtor(
             @PathVariable Long contractId,
-            @RequestParam("signature") MultipartFile signature
+            @Parameter(description = "채무자 본인 주소") @RequestParam("debtorAddress") String debtorAddress,
+            @Parameter(description = "채무자 서명 이미지 파일") @RequestParam("signature") MultipartFile signature
     ) {
-        return contractService.submitDebtorSignature(contractId, signature);
+        return contractService.submitDebtorSignature(contractId, debtorAddress, signature);
     }
 
 
     @Operation(
             summary = "차용증 상세 조회",
-            description = "차용증 ID로 차용증 상세 내용을 조회합니다."
+            description = "로그인이 된 사용자가 차용증 ID로 차용증 상세 내용을 조회합니다."
     )
     @ResponseBody
-    @GetMapping("/{contractId}")
-    public LoanContractResponse getContract(
+    @GetMapping("{contractId}/listdetails")
+    public LoanContractResponse getContractDetails(
             @PathVariable Long contractId,
             @Parameter(hidden = true) Authentication authentication
     ) {
