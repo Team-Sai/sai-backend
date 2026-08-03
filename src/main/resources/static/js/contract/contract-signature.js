@@ -127,7 +127,7 @@
     const formData = new FormData();
     formData.append("signature", blob, "signature.png");
 
-    const response = await fetch(`/${contractId}/signature`, {
+    const response = await fetch(`/api/contracts/${contractId}/signature`, {
       method: "PATCH",
       headers: authHeaders(),
       body: formData,
