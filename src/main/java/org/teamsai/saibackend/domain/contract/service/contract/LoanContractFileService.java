@@ -10,16 +10,12 @@ import org.teamsai.saibackend.domain.contract.exception.LoanContractFileErrorCod
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractFileMapper;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.UUID;
+import java.util.Base64;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class LoanContractFileService {
-    private static final Path SIGNATURE_DIR = Path.of("uploads", "signatures");
 
     private final LoanContractFileMapper fileMapper;
 
@@ -34,37 +30,17 @@ public class LoanContractFileService {
                 .orElseThrow(LoanContractFileErrorCode.CONTRACT_FILE_NOT_FOUND::toException);
     }
 
-    
     public String saveSignatureFile(Long contractId, MultipartFile signature) {
         try {
-            Files.createDirectories(SIGNATURE_DIR);
+            String contentType = signature.getContentType() != null
+                    ? signature.getContentType()
+                    : "application/octet-stream";
+            String base64 = Base64.getEncoder().encodeToString(signature.getBytes());
 
-            String extension = extractExtension(signature.getOriginalFilename());
-            String savedFilename = contractId + "_" + UUID.randomUUID() + extension;
-            Path savedPath = SIGNATURE_DIR.resolve(savedFilename);
-            Files.copy(signature.getInputStream(), savedPath, StandardCopyOption.REPLACE_EXISTING);
-
-            return savedPath.toString();
+            return "data:" + contentType + ";base64," + base64;
         } catch (IOException e) {
-            log.error("서명 파일 저장 실패 (contractId={})", contractId, e);
+            log.error("서명 파일 인코딩 실패 (contractId={})", contractId, e);
             throw LoanContractFileErrorCode.SIGNATURE_UPLOAD_FAILED.toException();
         }
-    }
-
-    private String extractExtension(String originalFilename) {
-        if (originalFilename == null) {
-            return "";
-        }
-
-        int lastSeparator = Math.max(originalFilename.lastIndexOf('/'), originalFilename.lastIndexOf('\\'));
-        String filename = originalFilename.substring(lastSeparator + 1);
-
-        int dotIndex = filename.lastIndexOf('.');
-        if (dotIndex <= 0 || dotIndex == filename.length() - 1) {
-            return "";
-        }
-
-        String extension = filename.substring(dotIndex + 1);
-        return extension.matches("[a-zA-Z0-9]{1,10}") ? "." + extension : "";
     }
 }

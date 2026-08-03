@@ -38,17 +38,17 @@ public class LoanContractService {
 
     @Transactional
     public ContractStatus submitCreditorSignature(Long contractId, MultipartFile signature) {
-        String signaturePath = fileService.saveSignatureFile(contractId, signature);
-        contractMapper.updateCreditorSignature(contractId, signaturePath, ContractStatus.PENDING);
+        String signatureData = fileService.saveSignatureFile(contractId, signature);
+        contractMapper.updateCreditorSignature(contractId, signatureData, ContractStatus.PENDING);
 
         return ContractStatus.PENDING;
     }
 
 
     @Transactional
-    public ContractStatus submitDebtorSignature(Long contractId, MultipartFile signature) {
-        String signaturePath = fileService.saveSignatureFile(contractId, signature);
-        contractMapper.updateDebtorSignature(contractId, signaturePath, ContractStatus.COMPLETED);
+    public ContractStatus submitDebtorSignature(Long contractId, String debtorAddress, MultipartFile signature) {
+        String signatureData = fileService.saveSignatureFile(contractId, signature);
+        contractMapper.updateDebtorSignature(contractId, debtorAddress, signatureData, ContractStatus.COMPLETED);
 
         return ContractStatus.COMPLETED;
     }

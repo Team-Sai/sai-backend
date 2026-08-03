@@ -1,19 +1,20 @@
 (function () {
   "use strict";
 
-  const DRAFT_KEY = "loanContractDraft";
+  const DRAFT_KEY = "debtorApprovalDraft";
 
-  const closeBtn = document.getElementById("button");
-  const debtorEmailInput = document.getElementById("debtorEmail");
-  const canvas = document.getElementById("signatureCanvas");
-  const signPlaceholder = document.getElementById("container7");
-  const clearBtn = document.getElementById("button2");
-  const agreeCheckbox = document.getElementById("agreeCheckbox");
-  const submitBtn = document.getElementById("button3");
+  const card = document.getElementById("signatureCard");
+  if (!card) return;
+
+  const contractId = card.dataset.contractId;
+
   const statusEl = document.getElementById("formStatus");
+  const agreeCheckbox = document.getElementById("agreeCheckbox");
+  const submitBtn = document.getElementById("btnSubmit");
 
-  if (!canvas) return;
-
+  const canvas = document.getElementById("signatureCanvas");
+  const signPlaceholder = document.getElementById("signPlaceholder");
+  const clearBtn = document.getElementById("clearSignature");
   const ctx = canvas.getContext("2d");
   ctx.lineWidth = 2.5;
   ctx.lineCap = "round";
@@ -21,6 +22,18 @@
 
   let hasSignature = false;
   let drawing = false;
+
+  let draft = null;
+  try {
+    draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null");
+  } catch (err) {
+    draft = null;
+  }
+
+  if (!draft || !draft.debtorAddress) {
+    window.location.href = `/api/contracts/${contractId}/approve`;
+    return;
+  }
 
   function authHeaders(extra) {
     const token = sessionStorage.getItem("accessToken");
@@ -32,26 +45,8 @@
 
   function showStatus(message, isError) {
     statusEl.textContent = message;
-    statusEl.hidden = !message;
     statusEl.classList.toggle("is-error", Boolean(isError));
   }
-
-
-  let draft = null;
-  try {
-    draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null");
-  } catch (err) {
-    draft = null;
-  }
-
-  if (!draft) {
-    window.location.href = "/api/contracts";
-    return;
-  }
-
-  closeBtn?.addEventListener("click", () => {
-    window.location.href = "/api/contracts";
-  });
 
   function canvasPoint(event) {
     const rect = canvas.getBoundingClientRect();
@@ -94,40 +89,23 @@
   canvas.addEventListener("touchmove", moveDraw, { passive: false });
   canvas.addEventListener("touchend", endDraw);
 
-  function clearSignature() {
+  clearBtn?.addEventListener("click", () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     hasSignature = false;
     if (signPlaceholder) signPlaceholder.hidden = false;
-  }
-
-  clearBtn?.addEventListener("click", clearSignature);
-
-  async function createContract() {
-    const response = await fetch("/api/contracts/write", {
-      method: "POST",
-      headers: authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify(
-        Object.assign({}, draft, { debtorEmail: debtorEmailInput.value.trim() })
-      ),
-    });
-
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      throw new Error(body?.message || `HTTP ${response.status}`);
-    }
-    return response.json();
-  }
+  });
 
   function canvasToBlob() {
     return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   }
 
-  async function submitSignature(contractId) {
+  async function submitApproval() {
     const blob = await canvasToBlob();
     const formData = new FormData();
+    formData.append("debtorAddress", draft.debtorAddress);
     formData.append("signature", blob, "signature.png");
 
-    const response = await fetch(`/${contractId}/signature`, {
+    const response = await fetch(`/api/contracts/${contractId}/approve`, {
       method: "PATCH",
       headers: authHeaders(),
       body: formData,
@@ -141,21 +119,13 @@
   }
 
   submitBtn?.addEventListener("click", async () => {
-    if (!debtorEmailInput.value.trim() || !debtorEmailInput.checkValidity()) {
-      debtorEmailInput.classList.add("is-invalid");
-      showStatus("채무자의 이메일을 올바르게 입력해 주세요.", true);
-      debtorEmailInput.focus();
-      return;
-    }
-    debtorEmailInput.classList.remove("is-invalid");
-
     if (!hasSignature) {
       showStatus("서명 패드에 서명을 남겨 주세요.", true);
       return;
     }
 
     if (!agreeCheckbox?.checked) {
-      showStatus("약정 내용 확인 및 전자 서명 동의에 체크해 주세요.", true);
+      showStatus("전자 서명 동의에 체크해 주세요.", true);
       return;
     }
 
@@ -163,11 +133,9 @@
     showStatus("서명을 제출하는 중입니다...", false);
 
     try {
-      const contractId = await createContract();
-      await submitSignature(contractId);
-
+      await submitApproval();
       sessionStorage.removeItem(DRAFT_KEY);
-      showStatus("서명이 제출되었습니다. 채무자에게 전송되었습니다.", false);
+      showStatus("서명이 제출되었습니다. 계약이 완료되었습니다.", false);
     } catch (err) {
       showStatus(err.message || "서명 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.", true);
       submitBtn.disabled = false;

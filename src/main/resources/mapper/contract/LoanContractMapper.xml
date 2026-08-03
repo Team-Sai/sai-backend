@@ -77,7 +77,7 @@
     <update id="updateCreditorSignature">
         UPDATE loan_contract
         SET
-        creditor_signature = #{signaturePath},
+        creditor_signature = #{signatureData},
         status = #{status},
         updated_at = NOW()
         WHERE contract_id = #{contractId}
@@ -86,7 +86,8 @@
     <update id="updateDebtorSignature">
         UPDATE loan_contract
         SET
-        debtor_signature = #{signaturePath},
+        debtor_address = #{debtorAddress},
+        debtor_signature = #{signatureData},
         status = #{status},
         updated_at = NOW()
         WHERE contract_id = #{contractId}
