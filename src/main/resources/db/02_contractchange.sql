@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS loan_contract_change_request (
 
     PRIMARY KEY (change_request_id),
 
-    CONSTRAINT fk_change_request_contract FOREIGN KEY (contract_id) REFERENCES loan_contract(contract_id)
+    CONSTRAINT fk_change_request_contract FOREIGN KEY (contract_id) REFERENCES loan_contract(contract_id),
+    CONSTRAINT fk_change_request_user FOREIGN KEY (user_id) REFERENCES users(user_id)
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;

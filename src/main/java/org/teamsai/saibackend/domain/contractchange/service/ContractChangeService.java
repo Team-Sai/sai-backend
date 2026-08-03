@@ -38,10 +38,14 @@ public class ContractChangeService {
 
 
 
-        LoanContractResponse contract = getContract(contractId, userId);
+        LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
         if(!contract.getCreditorId().equals(userId)) {
             throw ContractChangeErrorCode.ONLY_CREDITOR_CAN_REQUEST_CHANGE.toException();
+        }
+
+        if(contract.getStatus() != ContractStatus.COMPLETED) {
+            throw ContractChangeErrorCode.CONTRACT_NOT_COMPLETED.toException();
         }
 
         boolean hasPendingRequest = contractChangeMapper.findByContractId(contractId).stream()
