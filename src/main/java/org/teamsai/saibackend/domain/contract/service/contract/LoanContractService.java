@@ -46,7 +46,14 @@ public class LoanContractService {
 
 
     @Transactional
-    public ContractStatus submitDebtorSignature(Long contractId, String debtorAddress, MultipartFile signature) {
+    public ContractStatus submitDebtorSignature(Long contractId, Long userId, String debtorAddress, MultipartFile signature) {
+        LoanContractResponse contract = contractMapper.findContractById(contractId)
+                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+
+        if (!contract.getDebtorId().equals(userId)) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+        }
+
         String signatureData = fileService.saveSignatureFile(contractId, signature);
         contractMapper.updateDebtorSignature(contractId, debtorAddress, signatureData, ContractStatus.COMPLETED);
 

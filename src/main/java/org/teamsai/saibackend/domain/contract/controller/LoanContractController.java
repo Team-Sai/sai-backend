@@ -115,9 +115,11 @@ public class LoanContractController {
     public ContractStatus approveByDebtor(
             @PathVariable Long contractId,
             @Parameter(description = "채무자 본인 주소") @RequestParam("debtorAddress") String debtorAddress,
-            @Parameter(description = "채무자 서명 이미지 파일") @RequestParam("signature") MultipartFile signature
+            @Parameter(description = "채무자 서명 이미지 파일") @RequestParam("signature") MultipartFile signature,
+            @Parameter(hidden = true) Authentication authentication
     ) {
-        return contractService.submitDebtorSignature(contractId, debtorAddress, signature);
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return contractService.submitDebtorSignature(contractId, userDetails.getUserId(), debtorAddress, signature);
     }
 
 
