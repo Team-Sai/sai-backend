@@ -1,7 +1,9 @@
 package org.teamsai.saibackend.domain.contract.service.contract;
 
-import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,14 +12,22 @@ import org.teamsai.saibackend.domain.contract.exception.LoanContractFileErrorCod
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractFileMapper;
 
 import java.io.IOException;
-import java.util.Base64;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 @Slf4j
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class LoanContractFileService {
 
     private final LoanContractFileMapper fileMapper;
+
+    @Getter
+    @Value("${file.upload-dir:C:/upload/shinhan/}")
+    private String uploadDir = "C:/upload/shinhan/";
 
     @Transactional
     public Long insertContractFile(LoanContractFileDTO file) {
@@ -30,16 +40,35 @@ public class LoanContractFileService {
                 .orElseThrow(LoanContractFileErrorCode.CONTRACT_FILE_NOT_FOUND::toException);
     }
 
-    public String saveSignatureFile(Long contractId, MultipartFile signature) {
-        try {
-            String contentType = signature.getContentType() != null
-                    ? signature.getContentType()
-                    : "application/octet-stream";
-            String base64 = Base64.getEncoder().encodeToString(signature.getBytes());
+    public String saveSignatureFile(Long contractId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("서명 파일이 존재하지 않습니다.");
+        }
 
-            return "data:" + contentType + ";base64," + base64;
+        try {
+            Path dirPath = Paths.get(uploadDir);
+            if (!Files.exists(dirPath)) {
+                Files.createDirectories(dirPath);
+            }
+
+            String originalFilename = file.getOriginalFilename();
+            String ext = "png";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                ext = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
+            }
+
+            String savedFilename = contractId + "_" + UUID.randomUUID() + "." + ext;
+
+            Path savePath = dirPath.resolve(savedFilename);
+            Files.copy(file.getInputStream(), savePath, StandardCopyOption.REPLACE_EXISTING);
+
+            log.info("[Signature Saved] ContractId: {}, Original: {} -> Saved: {}",
+                    contractId, originalFilename, savedFilename);
+
+            return savePath.toString();
+
         } catch (IOException e) {
-            log.error("서명 파일 인코딩 실패 (contractId={})", contractId, e);
+            log.error("서명 파일 저장 중 오류 발생", e);
             throw LoanContractFileErrorCode.SIGNATURE_UPLOAD_FAILED.toException();
         }
     }

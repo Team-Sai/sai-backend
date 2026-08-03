@@ -101,9 +101,11 @@ public class LoanContractController {
     @PatchMapping(value = "/{contractId}/signature", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ContractStatus submitSignature(
             @PathVariable Long contractId,
-            @RequestParam("signature") MultipartFile signature
+            @RequestParam("signature") MultipartFile signature,
+            @Parameter(hidden = true) Authentication authentication
     ) {
-        return contractService.submitCreditorSignature(contractId, signature);
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return contractService.submitCreditorSignature(contractId, userDetails.getUserId(), signature);
     }
 
     @Operation(

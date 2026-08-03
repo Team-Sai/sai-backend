@@ -37,9 +37,16 @@ public class LoanContractService {
     }
 
     @Transactional
-    public ContractStatus submitCreditorSignature(Long contractId, MultipartFile signature) {
-        String signatureData = fileService.saveSignatureFile(contractId, signature);
-        contractMapper.updateCreditorSignature(contractId, signatureData, ContractStatus.PENDING);
+    public ContractStatus submitCreditorSignature(Long contractId, Long userId, MultipartFile signature) {
+        LoanContractResponse contract = contractMapper.findContractById(contractId)
+                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+
+        if (!contract.getCreditorId().equals(userId)) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+        }
+
+        String savedPath = fileService.saveSignatureFile(contractId, signature);
+        contractMapper.updateCreditorSignature(contractId, savedPath, ContractStatus.PENDING);
 
         return ContractStatus.PENDING;
     }
@@ -47,6 +54,7 @@ public class LoanContractService {
 
     @Transactional
     public ContractStatus submitDebtorSignature(Long contractId, Long userId, String debtorAddress, MultipartFile signature) {
+
         LoanContractResponse contract = contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
 
@@ -54,8 +62,8 @@ public class LoanContractService {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
 
-        String signatureData = fileService.saveSignatureFile(contractId, signature);
-        contractMapper.updateDebtorSignature(contractId, debtorAddress, signatureData, ContractStatus.COMPLETED);
+        String savedPath = fileService.saveSignatureFile(contractId, signature);
+        contractMapper.updateDebtorSignature(contractId, debtorAddress, savedPath, ContractStatus.COMPLETED);
 
         return ContractStatus.COMPLETED;
     }
