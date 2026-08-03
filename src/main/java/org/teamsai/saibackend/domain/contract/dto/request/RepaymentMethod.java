@@ -1,6 +1,5 @@
 package org.teamsai.saibackend.domain.contract.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
