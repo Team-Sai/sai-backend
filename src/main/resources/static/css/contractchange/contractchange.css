@@ -1,0 +1,116 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, "Malgun Gothic", sans-serif;
+    background-color: #f5f6f7;
+    margin: 0;
+    padding: 40px;
+    color: #1a1a1a;
+}
+
+.page {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.page h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.page > p {
+    color: #666;
+    margin-bottom: 32px;
+}
+
+.content {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+#changeRequestForm {
+    flex: 2;
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+#changeRequestForm label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+#changeRequestForm input,
+#changeRequestForm textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+#changeReason {
+    grid-column: 1 / -1;
+    height: 90px;
+    resize: none;
+}
+
+#submitButton,
+#cancelButton {
+    grid-column: span 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#cancelButton {
+    background: #f0f0f0;
+    color: #333;
+}
+
+#submitButton {
+    background: #0b3d2e;
+    color: white;
+}
+
+.current-contract {
+    flex: 1;
+    background: #0b3d2e;
+    color: white;
+    padding: 24px;
+    border-radius: 12px;
+}
+
+.current-contract h2 {
+    font-size: 16px;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.current-contract dl {
+    margin: 0;
+}
+
+.current-contract dt {
+    font-size: 13px;
+    color: #a8c3b8;
+    margin-top: 16px;
+}
+
+.current-contract dd {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 4px 0 0;
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper">
+
+    <insert id="insert" parameterType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO"
+            useGeneratedKeys="true" keyProperty="changeRequestId">
+    INSERT INTO loan_contract_change_request(
+    user_id, change_reason, new_maturity_date, new_interest_rate,
+    new_repayment_type, new_repayment_date, status,
+    created_at, updated_at, contract_id
+    )
+    VALUES (
+            #{userId}, #{changeReason}, #{newMaturityDate}, #{newInterestRate},
+            #{newRepaymentType}, #{newRepaymentDate}, #{status}, #{createdAt},
+            #{updatedAt}, #{contractId}
+           )
+    </insert>
+
+    <select id="findById" parameterType="java.lang.Long" resultType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractReadDTO">
+        SELECT
+            contract_id, previous_contract_id, principal_amount, interest_rate,
+            repayment_type, start_date, maturity_date, repayment_day, status,
+            address, created_at, updated_at, creditor_signature, debtor_signature,
+            creditor_id, debtor_id, contract_alias, terms
+        FROM loan_contract
+        WHERE contract_id = #{contractId}
+    </select>
+
+    <select id="findByContractId" parameterType="java.lang.Long"
+            resultType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO">
+        SELECT
+            change_request_id, user_id, change_reason, new_maturity_date, new_interest_rate,
+            new_repayment_type, new_repayment_date, status, created_at, updated_at, contract_id
+        FROM loan_contract_change_request
+        WHERE contract_id = #{contractId}
+    </select>
+
+</mapper>
