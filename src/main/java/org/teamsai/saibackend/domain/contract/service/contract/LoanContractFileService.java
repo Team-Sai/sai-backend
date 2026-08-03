@@ -65,7 +65,7 @@ public class LoanContractFileService {
             log.info("[Signature Saved] ContractId: {}, Original: {} -> Saved: {}",
                     contractId, originalFilename, savedFilename);
 
-            return savePath.toString();
+            return savedFilename;
 
         } catch (IOException e) {
             log.error("서명 파일 저장 중 오류 발생", e);
