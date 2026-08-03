@@ -1,0 +1,39 @@
+package org.teamsai.saibackend.domain.settlement.dto;
+
+import lombok.*;
+import org.teamsai.saibackend.domain.settlement.type.CycleRule;
+import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
+import org.teamsai.saibackend.domain.settlement.type.SettlementType;
+import org.teamsai.saibackend.domain.settlement.type.SplitType;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SettlementDTO {
+    private Long settlementId;
+    private Long ownerId;
+
+    private SettlementType settlementType;
+    private SettlementStatus settlementStatus;
+
+    private String settlementCategory;
+    private String title;
+    private SplitType splitType;
+    private LocalDate dueDate;
+
+    // 정기정산에서 사용
+    private String cycleRule;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private CycleRule cycleDate;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime closedAt;
+
+    private String status;
+}
