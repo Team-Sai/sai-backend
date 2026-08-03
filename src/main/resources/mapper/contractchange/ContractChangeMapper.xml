@@ -18,15 +18,7 @@
            )
     </insert>
 
-    <select id="findById" parameterType="java.lang.Long" resultType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractReadDTO">
-        SELECT
-            contract_id, previous_contract_id, principal_amount, interest_rate,
-            repayment_type, start_date, maturity_date, repayment_day, status,
-            address, created_at, updated_at, creditor_signature, debtor_signature,
-            creditor_id, debtor_id, contract_alias, terms
-        FROM loan_contract
-        WHERE contract_id = #{contractId}
-    </select>
+
 
     <select id="findByContractId" parameterType="java.lang.Long"
             resultType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO">

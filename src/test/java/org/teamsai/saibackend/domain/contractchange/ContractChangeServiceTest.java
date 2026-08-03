@@ -7,9 +7,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
+import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
+import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
-import org.teamsai.saibackend.domain.contractchange.dto.LoanContractReadDTO;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
@@ -18,7 +21,6 @@ import org.teamsai.saibackend.global.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,66 +33,66 @@ import static org.mockito.Mockito.verify;
 class ContractChangeServiceTest {
 
     private static final Long CONTRACT_ID = 1L;
-    private static final Long CREDITOR_ID = 10L;
-    private static final Long DEBTOR_ID = 20L;
-    private static final Long STRANGER_ID = 99L;
+    private static final Long USER_ID = 10L;
 
     @Mock
     private ContractChangeMapper contractChangeMapper;
+
+    @Mock
+    private LoanContractService loanContractService;
 
     @InjectMocks
     private ContractChangeService contractChangeService;
 
     @Nested
-    @DisplayName("현 계약의 조건 조회")
+    @DisplayName("계약 조회")
     class GetContract {
 
         @Test
-        @DisplayName("당사자가 조회하면 계약서를 반환한다")
+        @DisplayName("완료된 계약이면 정상적으로 반환한다")
         void getContractSuccess() {
-            given(contractChangeMapper.findById(CONTRACT_ID))
-                    .willReturn(Optional.of(createContract()));
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
 
-            LoanContractReadDTO result = contractChangeService.getContract(CONTRACT_ID, CREDITOR_ID);
+            LoanContractResponse result = contractChangeService.getContract(CONTRACT_ID, USER_ID);
 
             assertThat(result.getContractId()).isEqualTo(CONTRACT_ID);
         }
 
         @Test
-        @DisplayName("존재하지 않는 계약서면 예외가 발생한다")
-        void getContractFailsWhenNotFound() {
-            given(contractChangeMapper.findById(CONTRACT_ID))
-                    .willReturn(Optional.empty());
+        @DisplayName("완료되지 않은 계약이면 예외가 발생한다")
+        void getContractFailsWhenNotCompleted() {
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(createContract(ContractStatus.PENDING));
 
-            assertThatThrownBy(() -> contractChangeService.getContract(CONTRACT_ID, CREDITOR_ID))
+            assertThatThrownBy(() -> contractChangeService.getContract(CONTRACT_ID, USER_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
-                                    .isEqualTo(ContractChangeErrorCode.CONTRACT_NOT_FOUND)
+                                    .isEqualTo(ContractChangeErrorCode.CONTRACT_NOT_COMPLETED)
                     );
         }
 
         @Test
-        @DisplayName("당사자가 아니면 예외가 발생한다")
-        void getContractFailsWhenNotParty() {
-            given(contractChangeMapper.findById(CONTRACT_ID))
-                    .willReturn(Optional.of(createContract()));
+        @DisplayName("계약서 도메인에서 던진 예외를 그대로 전달한다")
+        void getContractPropagatesExceptionFromLoanContractService() {
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willThrow(LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException());
 
-            assertThatThrownBy(() -> contractChangeService.getContract(CONTRACT_ID, STRANGER_ID))
+            assertThatThrownBy(() -> contractChangeService.getContract(CONTRACT_ID, USER_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
-                                    .isEqualTo(ContractChangeErrorCode.FORBIDDEN_CONTRACT_ACCESS)
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
                     );
         }
     }
 
-    private LoanContractReadDTO createContract() {
-        return LoanContractReadDTO.builder()
+    private LoanContractResponse createContract(ContractStatus status) {
+        return LoanContractResponse.builder()
                 .contractId(CONTRACT_ID)
-                .creditorId(CREDITOR_ID)
-                .debtorId(DEBTOR_ID)
-                .status("ACTIVE")
+                .status(status)
+                .creditorId(USER_ID)
                 .build();
     }
 
@@ -109,41 +111,29 @@ class ContractChangeServiceTest {
     class RequestChange {
 
         @Test
-        @DisplayName("당사자가 요청하면 변경 요청을 저장한다")
+        @DisplayName("완료된 계약이고 중복 요청이 없으면 저장한다")
         void requestChangeSuccess() {
-            given(contractChangeMapper.findById(CONTRACT_ID))
-                    .willReturn(Optional.of(createContract()));
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(contractChangeMapper.findByContractId(CONTRACT_ID))
+                    .willReturn(List.of());
 
-            contractChangeService.requestChange(CONTRACT_ID, changeRequest(), CREDITOR_ID);
+            contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID);
 
             verify(contractChangeMapper).insert(any());
         }
 
         @Test
-        @DisplayName("존재하지 않는 계약서면 예외가 발생한다")
-        void requestChangeFailsWhenNotFound() {
-            given(contractChangeMapper.findById(CONTRACT_ID))
-                    .willReturn(Optional.empty());
+        @DisplayName("완료되지 않은 계약이면 예외가 발생한다")
+        void requestChangeFailsWhenNotCompleted() {
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(createContract(ContractStatus.DRAFT));
 
-            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), CREDITOR_ID))
+            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
-                                    .isEqualTo(ContractChangeErrorCode.CONTRACT_NOT_FOUND)
-                    );
-        }
-
-        @Test
-        @DisplayName("당사자가 아니면 예외가 발생한다")
-        void requestChangeFailsWhenNotParty() {
-            given(contractChangeMapper.findById(CONTRACT_ID))
-                    .willReturn(Optional.of(createContract()));
-
-            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), STRANGER_ID))
-                    .isInstanceOfSatisfying(
-                            DomainException.class,
-                            exception -> assertThat(exception.getErrorCode())
-                                    .isEqualTo(ContractChangeErrorCode.FORBIDDEN_CONTRACT_ACCESS)
+                                    .isEqualTo(ContractChangeErrorCode.CONTRACT_NOT_COMPLETED)
                     );
         }
 
@@ -154,16 +144,36 @@ class ContractChangeServiceTest {
                     .status("PENDING")
                     .build();
 
-            given(contractChangeMapper.findById(CONTRACT_ID))
-                    .willReturn(Optional.of(createContract()));
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
             given(contractChangeMapper.findByContractId(CONTRACT_ID))
                     .willReturn(List.of(pendingRequest));
 
-            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), CREDITOR_ID))
+            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
                                     .isEqualTo(ContractChangeErrorCode.DUPLICATE_PENDING_REQUEST)
+                    );
+        }
+
+        @Test
+        @DisplayName("채권자가 아니면 예외가 발생한다")
+        void requestChangeFailsWhenNotCreditor() {
+            LoanContractResponse contract = LoanContractResponse.builder()
+                    .contractId(CONTRACT_ID)
+                    .status(ContractStatus.COMPLETED)
+                    .creditorId(999L)   // ← userId(10L)와 다른 채권자
+                    .build();
+
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(contract);
+
+            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.ONLY_CREDITOR_CAN_REQUEST_CHANGE)
                     );
         }
     }
