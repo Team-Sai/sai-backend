@@ -12,7 +12,6 @@ import org.teamsai.saibackend.domain.account.dto.response.LinkableAccountRespons
 import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
 
 import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @Component
