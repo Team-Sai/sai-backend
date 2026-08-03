@@ -20,52 +20,15 @@
         <!-- 현재 활성 상태인 것만 소유권으로 인정할지는 나중에 정함 -->
     </select>
 
-    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="linkedAccountId">
+    <insert id="insertOne" useGeneratedKeys="true" keyProperty="linkedAccountId">
         INSERT INTO linked_bank_account (
-        user_id,
-        account_id,
-        bank_code,
-        account_number,
-        account_alias,
-        account_holder_name,
-        balance,
-        connection_status,
-        created_at,
-        updated_at
-        ) VALUES
-        <foreach collection="list" item="item" separator=",">
-            (
-            #{item.userId},
-            #{item.accountId},
-            #{item.bankCode},
-            #{item.accountNumber},
-            #{item.accountAlias},
-            #{item.accountHolderName},
-            #{item.balance},
-            #{item.connectionStatus},
-            #{item.createdAt},
-            #{item.updatedAt}
-            )
-        </foreach>
+        user_id, account_id, bank_code, account_number,
+        account_alias, account_holder_name, balance,
+        connection_status, created_at, updated_at
+        ) VALUES (
+        #{userId}, #{accountId}, #{bankCode}, #{accountNumber},
+        #{accountAlias}, #{accountHolderName}, #{balance},
+        #{connectionStatus}, #{createdAt}, #{updatedAt}
+        )
     </insert>
-
-    <select id="findByUserId" resultType="org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO">
-        SELECT
-        linked_account_id,
-        user_id,
-        account_id,
-        bank_code,
-        account_number,
-        account_alias,
-        account_holder_name,
-        balance,
-        connection_status,
-        created_at,
-        updated_at
-        FROM linked_bank_account
-        WHERE user_id = #{userId}
-        AND connection_status = 'AVAILABLE'
-        ORDER BY created_at DESC
-    </select>
-
 </mapper>

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.teamsai.saibackend.domain.account.dto.response.AccountDetailResponse;
 import org.teamsai.saibackend.domain.account.dto.response.LinkableAccountResponse;
+import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
 
 import java.util.List;
 import java.util.Objects;
@@ -19,7 +20,7 @@ public class MockBankClient {
 
     private final RestClient restClient;
 
-    public MockBankClient(@Value("${mock-bank.base-url:http://localhost:8081}") String baseUrl) {
+    public MockBankClient(@Value("${mock-bank.base-url}") String baseUrl) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000);
         requestFactory.setReadTimeout(5000);
@@ -29,10 +30,14 @@ public class MockBankClient {
                 .requestFactory(requestFactory)
                 .build();
     }
+    private <T> T requireBody(T body) {
+        if (body == null) {
+            throw AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
+        }
+        return body;
+    }
 
     public String requestUserKey(String name, String userToken) {
-        //log.info("[MockBankClient] 연동키 발급 요청 -> name: {}", name);
-
         MockBankLinkRequest request = new MockBankLinkRequest(name, userToken);
 
         MockBankLinkResponse response = restClient.post()
@@ -42,29 +47,31 @@ public class MockBankClient {
                 .retrieve()
                 .body(MockBankLinkResponse.class);
 
-        return Objects.requireNonNull(response).userKey();
+        return requireBody(response).userKey();
     }
 
     public List<LinkableAccountResponse> getAccountsByUserKey(String userKey) {
-        //log.info("[MockBankClient] 계좌 목록 조회 요청 -> userKey: {}", userKey);
-
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/mock-bank/accounts")
-                        .queryParam("userKey", userKey)
-                        .build())
-                .retrieve()
-                .body(new ParameterizedTypeReference<List<LinkableAccountResponse>>() {});
+        return requireBody(
+                restClient.get()
+                        .uri(uriBuilder -> uriBuilder
+                                .path("/api/mock-bank/accounts")
+                                .queryParam("userKey", userKey)
+                                .build())
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<List<LinkableAccountResponse>>() {})
+        );
     }
 
     public AccountDetailResponse getAccountDetail(Long accountId, String userKey) {
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/mock-bank/accounts/{accountId}")
-                        .queryParam("userKey", userKey)
-                        .build(accountId))
-                .retrieve()
-                .body(AccountDetailResponse.class);
+        return requireBody(
+                restClient.get()
+                        .uri(uriBuilder -> uriBuilder
+                                .path("/api/mock-bank/accounts/{accountId}")
+                                .queryParam("userKey", userKey)
+                                .build(accountId))
+                        .retrieve()
+                        .body(AccountDetailResponse.class)
+        );
     }
 
     private record MockBankLinkRequest(String name, String userToken) {}

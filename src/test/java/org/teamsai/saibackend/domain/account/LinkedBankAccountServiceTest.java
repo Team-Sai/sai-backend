@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.account.service;
+package org.teamsai.saibackend.domain.account;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,6 +15,7 @@ import org.teamsai.saibackend.domain.account.dto.response.AccountDetailResponse;
 import org.teamsai.saibackend.domain.account.dto.response.LinkedBankAccountResponse;
 import org.teamsai.saibackend.domain.account.dto.type.ConnectionStatus;
 import org.teamsai.saibackend.domain.account.mapper.LinkedBankAccountMapper;
+import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
 import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.client.MockBankClient;
 
@@ -59,12 +60,12 @@ public class LinkedBankAccountServiceTest {
             LinkAccountRequest request = new LinkAccountRequest(List.of(selected1, selected2));
 
             AccountDetailResponse detail1 = new AccountDetailResponse(
-                    1L, 10L, "088", "1111111111", "사이 입출금통장",
+                    1L, "088", "1111111111", "사이 입출금통장",
                     "홍길동", BigDecimal.valueOf(100_000), "ACTIVE",
                     LocalDateTime.now(), LocalDateTime.now()
             );
             AccountDetailResponse detail2 = new AccountDetailResponse(
-                    2L, 10L, "004", "2222222222", "사이 저축통장",
+                    2L,  "004", "2222222222", "사이 저축통장",
                     "홍길동", BigDecimal.valueOf(500_000), "ACTIVE",
                     LocalDateTime.now(), LocalDateTime.now()
             );
@@ -85,11 +86,9 @@ public class LinkedBankAccountServiceTest {
             assertThat(result.get(1).bankCode()).isEqualTo("004");
             assertThat(result.get(1).accountAlias()).isEqualTo("비상금통장");
 
-            @SuppressWarnings("unchecked")
-            ArgumentCaptor<List<LinkedBankAccountDTO>> captor = ArgumentCaptor.forClass(List.class);
-            verify(linkedBankAccountMapper).insertBatch(captor.capture());
-
-            List<LinkedBankAccountDTO> savedList = captor.getValue();
+            ArgumentCaptor<LinkedBankAccountDTO> captor = ArgumentCaptor.forClass(LinkedBankAccountDTO.class);
+            verify(linkedBankAccountMapper, times(2)).insertOne(captor.capture());
+            List<LinkedBankAccountDTO> savedList = captor.getAllValues();
             assertThat(savedList).hasSize(2);
             assertThat(savedList)
                     .allMatch(dto -> dto.getUserId().equals(USER_ID))
@@ -113,7 +112,7 @@ public class LinkedBankAccountServiceTest {
                     linkedBankAccountService.linkSelectedAccounts(USER_ID, request);
 
             assertThat(result).isEmpty();
-            verify(linkedBankAccountMapper).insertBatch(List.of());
+            verify(linkedBankAccountMapper, never()).insertOne(any());
             verifyNoInteractions(mockBankClient);
         }
 
@@ -132,7 +131,7 @@ public class LinkedBankAccountServiceTest {
                     linkedBankAccountService.linkSelectedAccounts(USER_ID, request)
             ).isInstanceOf(RuntimeException.class);
 
-            verify(linkedBankAccountMapper, never()).insertBatch(any());
+            verify(linkedBankAccountMapper, never()).insertOne(any());
         }
     }
 

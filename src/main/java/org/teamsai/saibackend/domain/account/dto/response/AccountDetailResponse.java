@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 
 public record AccountDetailResponse(
         Long accountId,
-        Long identityId,
         String bankCode,
         String accountNumber,
         String accountName,

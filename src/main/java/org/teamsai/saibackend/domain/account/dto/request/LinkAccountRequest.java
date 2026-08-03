@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -11,11 +12,13 @@ import java.util.List;
 public record LinkAccountRequest(
         @Schema(description = "선택된 계좌 목록")
         @NotEmpty(message = "연동할 계좌를 하나 이상 선택해주세요.")
-        List<@Valid SelectedAccount> selectedAccounts
+        @Valid
+        List<SelectedAccount> selectedAccounts
 ) {
     @Schema(description = "개별 선택 계좌 정보")
     public record SelectedAccount(
             @NotNull Long accountId,
+            @Size(max = 50, message = "계좌 별칭은 50자를 초과할 수 없습니다.")
             String accountAlias   // 사용자가 직접 입력하는 값만 클라이언트 신뢰
     ) {}
 }
