@@ -1,6 +1,7 @@
-package org.teamsai.saibackend.domain.account.dto;
+package org.teamsai.saibackend.domain.account.dto.response;
 
 import lombok.Builder;
+import org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO;
 import org.teamsai.saibackend.domain.account.util.BankCodeResolver;
 
 import java.math.BigDecimal;

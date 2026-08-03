@@ -4,14 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-import org.teamsai.saibackend.domain.account.dto.AccountDetailResponse;
-import org.teamsai.saibackend.domain.account.dto.LinkableAccountResponse;
+import org.teamsai.saibackend.domain.account.dto.response.AccountDetailResponse;
+import org.teamsai.saibackend.domain.account.dto.response.LinkableAccountResponse;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 

@@ -1,6 +1,4 @@
-package org.teamsai.saibackend.domain.account.dto;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+package org.teamsai.saibackend.domain.account.dto.response;
 
 import java.math.BigDecimal;
 
