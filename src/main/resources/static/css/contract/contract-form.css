@@ -1,0 +1,532 @@
+/* =========================================================
+   금전소비대차 · Contract Form
+   user/login.css, user/mypage.css 와 동일한 팔레트·폰트를 사용합니다.
+   ========================================================= */
+
+:root {
+  --page: #F7F8FB;
+  --surface: #FFFFFF;
+  --text: #17191D;
+  --muted: #697080;
+  --line: #CFD5E2;
+  --primary: #006E2A;
+  --primary-bright: #00C853;
+  --error: #BA1A1A;
+
+  --font-ui: "Noto Sans KR", sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--page);
+  font-family: var(--font-ui);
+  color: var(--text);
+}
+
+button { font-family: inherit; }
+
+/* ===================== TOP NAV ===================== */
+.topnav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.topnav__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 0 24px;
+}
+
+.topnav__logo {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 21px;
+  letter-spacing: -0.04em;
+  margin-right: 8px;
+}
+
+.topnav__menu {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex: 1;
+}
+
+.topnav__link {
+  position: relative;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 18px 2px;
+  transition: color 0.15s ease;
+}
+
+.topnav__link:hover {
+  color: var(--primary);
+}
+
+.topnav__link.is-active {
+  color: var(--primary);
+}
+
+.topnav__link.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px 2px 0 0;
+}
+
+.topnav__bell {
+  background: transparent;
+  border: none;
+  color: #414756;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.topnav__bell:hover {
+  background: #f1f3f7;
+  color: var(--primary);
+}
+
+/* ===================== STEPPER ===================== */
+.stepper-wrap {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.stepper {
+  max-width: 640px;
+  margin: 0 auto;
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22px 24px;
+  position: relative;
+}
+
+.stepper::before {
+  content: "";
+  position: absolute;
+  top: 33px;
+  left: 60px;
+  right: 60px;
+  height: 1px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.stepper__step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.stepper__circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepper__label {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.stepper__step.is-done .stepper__circle {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.stepper__step.is-done .stepper__label {
+  color: var(--primary);
+}
+
+.stepper__step.is-active .stepper__circle {
+  background: var(--surface);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(0, 200, 83, 0.12);
+}
+
+.stepper__step.is-active .stepper__label {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ===================== PAGE / DOC CARD ===================== */
+.page {
+  max-width: 760px;
+  margin: 32px auto 80px;
+  padding: 0 20px;
+}
+
+.doc {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 48px 56px 40px;
+}
+
+.doc__title {
+  font-family: var(--font-ui);
+  text-align: center;
+  color: var(--primary);
+  font-size: 24px;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  font-weight: 700;
+  margin: 0 0 36px;
+}
+
+.doc__article {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.doc__clause {
+  flex: 0 0 auto;
+  min-width: 128px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.doc__text {
+  display: block;
+  color: var(--text);
+}
+
+.doc__text--indent {
+  margin-top: 4px;
+}
+
+.doc__sublist {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--text);
+}
+
+.doc__sublist li {
+  margin-bottom: 4px;
+}
+
+.doc__closing {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin: 28px 0 20px;
+  text-align: center;
+}
+
+.doc__date {
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  color: var(--primary);
+  font-weight: 700;
+  margin: 0 0 28px;
+}
+
+/* ---- inline document inputs ---- */
+.doc__inline-input {
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--primary);
+  font-weight: 600;
+  border: none;
+  border-bottom: 1.5px solid var(--line);
+  background: transparent;
+  padding: 1px 4px;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.doc__inline-input:focus {
+  outline: none;
+  border-color: var(--primary-bright);
+  background: rgba(0, 200, 83, 0.08);
+}
+
+.doc__inline-input--amount { width: 110px; font-weight: 700; }
+.doc__inline-input--date { width: 140px; }
+.doc__inline-input--rate { width: 64px; }
+.doc__inline-input--day { width: 44px; }
+.doc__inline-input--alias { width: 100%; text-align: left; }
+
+/* ---- read-only document values (filled from the logged-in user's account) ---- */
+.doc__readonly {
+  color: var(--primary);
+  font-weight: 600;
+  border-bottom: 1.5px dashed var(--line);
+  padding: 1px 4px;
+}
+
+/* ---- optional free-text terms ---- */
+.doc__textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.doc__textarea:focus {
+  outline: none;
+  border-color: var(--primary-bright);
+  background: rgba(0, 200, 83, 0.05);
+}
+
+/* ---- current-status banner (view mode) ---- */
+.doc__status-banner {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #165c2d;
+  background: #edf9f0;
+  border: 1px solid #b9dfc2;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin: 0 0 24px;
+}
+
+.doc__hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---- radio group ---- */
+.doc__radio-group {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: 2px;
+}
+
+.doc__radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.doc__radio input[type="radio"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  display: grid;
+  place-content: center;
+  margin: 0;
+  cursor: pointer;
+}
+
+.doc__radio input[type="radio"]::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  transform: scale(0);
+  transition: transform 0.12s ease;
+}
+
+.doc__radio input[type="radio"]:checked {
+  border-color: var(--primary);
+}
+
+.doc__radio input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+/* ===================== PARTIES TABLE ===================== */
+.parties {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  border-top: 2px solid var(--primary);
+  font-size: 13px;
+}
+
+.parties th,
+.parties td {
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+}
+
+.parties__role {
+  width: 64px;
+  background: rgba(0, 110, 42, 0.04);
+  color: var(--primary);
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.15em;
+}
+
+.parties__label {
+  width: 84px;
+  background: #f3f4f5;
+  color: var(--muted);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.parties__value {
+  background: var(--surface);
+}
+
+.parties__input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  padding: 4px 2px;
+}
+
+.parties__input:focus {
+  outline: none;
+  background: rgba(0, 200, 83, 0.08);
+  border-radius: 4px;
+}
+
+.parties__input::placeholder {
+  color: #B0B7C3;
+}
+
+.parties__input:disabled,
+.doc__inline-input:disabled,
+.doc__textarea:disabled {
+  color: #9AA1AC;
+  cursor: not-allowed;
+  background: rgba(105, 112, 128, 0.06);
+}
+
+.parties__seal {
+  border: 1px dashed var(--line);
+  background: var(--surface);
+  color: var(--primary);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+  margin-left: 6px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+/* ===================== ACTIONS ===================== */
+.doc__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.btn {
+  border-radius: var(--radius-sm);
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: opacity 0.18s ease, transform 0.1s ease, background 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.99);
+}
+
+.btn--ghost {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.btn--ghost:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: var(--surface);
+}
+
+.btn--primary:hover {
+  opacity: 0.9;
+}
+
+.doc__status {
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--primary);
+  min-height: 18px;
+  margin: 10px 0 0;
+}
+
+.doc__status.is-error {
+  color: var(--error);
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 640px) {
+  .doc { padding: 32px 20px; }
+  .doc__article { flex-direction: column; gap: 4px; }
+  .doc__clause { min-width: 0; }
+  .stepper__label { font-size: 11px; }
+  .topnav__menu { gap: 16px; overflow-x: auto; }
+  .parties__role { width: 48px; }
+}
