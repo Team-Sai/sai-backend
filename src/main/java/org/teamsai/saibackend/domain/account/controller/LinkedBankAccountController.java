@@ -44,7 +44,6 @@ public class LinkedBankAccountController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUserId();
-        //log.info("추출된 userId: {}", userId);
         List<LinkedBankAccountResponse> response =
                 linkedBankAccountService.getLinkedAccounts(userId);
         return ResponseEntity.ok(response);

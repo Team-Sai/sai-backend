@@ -27,7 +27,6 @@ public class LinkedBankAccountService {
     private final UserService userService;
     private final MockBankClient mockBankClient;
 
-    @Transactional
     public List<LinkedBankAccountResponse> linkSelectedAccounts(Long userId, LinkAccountRequest request) {
         String userKey = userService.getUserKeyByUserId(userId);
         LocalDateTime now = LocalDateTime.now();
@@ -41,7 +40,7 @@ public class LinkedBankAccountService {
                         log.warn("[LinkedBankAccountService] 계좌 상세 조회 실패 - accountId: {}", selected.accountId(), e);
                         throw AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
                     }
-                    
+
                     return LinkedBankAccountDTO.builder()
                             .userId(userId)
                             .accountId(selected.accountId())
@@ -57,7 +56,8 @@ public class LinkedBankAccountService {
                 })
                 .toList();
 
-        linkedBankAccountMapper.insertBatch(dtosToSave);
+        dtosToSave.forEach(linkedBankAccountMapper::insertOne);
+
         return dtosToSave.stream().map(LinkedBankAccountResponse::from).toList();
     }
 

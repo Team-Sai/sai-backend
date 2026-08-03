@@ -46,9 +46,7 @@ public class ExternalBankController {
             @PathVariable Long accountId
     ) {
         Long userId = userDetails.getUserId();
-
-        log.info("[sai-member] 계좌 상세 조회 요청 전달 - accountId: {}, userId: {}", accountId, userId);
-
+        
         AccountDetailResponse response = externalBankService.getAccountDetail(accountId, userId);
 
         return ResponseEntity.ok(response);

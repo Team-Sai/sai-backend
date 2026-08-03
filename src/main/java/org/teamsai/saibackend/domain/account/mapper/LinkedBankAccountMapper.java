@@ -9,7 +9,7 @@ import java.util.List;
 @Mapper
 public interface LinkedBankAccountMapper {
 
-    void insertBatch(@Param("list") List<LinkedBankAccountDTO> list);
+    void insertOne(LinkedBankAccountDTO dto);
     
     List<LinkedBankAccountDTO> selectLinkedAccountsByUserId(@Param("userId") Long userId);
 }

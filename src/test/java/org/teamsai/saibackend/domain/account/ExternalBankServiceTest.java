@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.account.service;
+package org.teamsai.saibackend.domain.account;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,9 +12,12 @@ import org.springframework.web.client.RestClientException;
 import org.teamsai.saibackend.domain.account.dto.response.AccountDetailResponse;
 import org.teamsai.saibackend.domain.account.dto.response.LinkableAccountResponse;
 import org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO;
+import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
 import org.teamsai.saibackend.domain.account.mapper.LinkedBankAccountMapper;
+import org.teamsai.saibackend.domain.account.service.ExternalBankService;
 import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.client.MockBankClient;
+import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,6 +25,8 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -62,13 +67,13 @@ class ExternalBankServiceTest {
     }
 
     @Nested
-    @DisplayName("fetchAvailableAccountsFromBank(userId, userToken)")
+    @DisplayName("fetchAvailableAccountsFromBank(userId)")
     class FetchAvailableAccountsFromBank {
 
         @Test
         @DisplayName("연동 가능한 계좌 목록을 정상적으로 반환한다")
         void returnsAvailableAccounts() {
-            given(userService.getUserKeyByUserToken(USER_TOKEN)).willReturn(USER_KEY);
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
             given(mockBankClient.getAccountsByUserKey(USER_KEY)).willReturn(List.of(account1, account2));
             given(linkedBankAccountMapper.selectLinkedAccountsByUserId(USER_ID)).willReturn(List.of());
 
@@ -77,14 +82,14 @@ class ExternalBankServiceTest {
 
             assertThat(result).hasSize(2);
             assertThat(result).containsExactly(account1, account2);
-            verify(userService).getUserKeyByUserToken(USER_TOKEN);
+            verify(userService).getUserKeyByUserId(USER_ID);
             verify(mockBankClient).getAccountsByUserKey(USER_KEY);
         }
 
         @Test
         @DisplayName("사이은행에 연동 가능한 계좌가 없으면 빈 목록을 그대로 반환한다")
         void returnsEmptyListWhenNoAccountsAvailable() {
-            given(userService.getUserKeyByUserToken(USER_TOKEN)).willReturn(USER_KEY);
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
             given(mockBankClient.getAccountsByUserKey(USER_KEY)).willReturn(List.of());
             given(linkedBankAccountMapper.selectLinkedAccountsByUserId(USER_ID)).willReturn(List.of());
 
@@ -97,7 +102,7 @@ class ExternalBankServiceTest {
         @Test
         @DisplayName("이미 연동된 계좌는 목록에서 제외한다")
         void excludesAlreadyLinkedAccounts() {
-            given(userService.getUserKeyByUserToken(USER_TOKEN)).willReturn(USER_KEY);
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
             given(mockBankClient.getAccountsByUserKey(USER_KEY)).willReturn(List.of(account1, account2));
 
             LinkedBankAccountDTO linked = LinkedBankAccountDTO.builder()
@@ -114,7 +119,7 @@ class ExternalBankServiceTest {
         @Test
         @DisplayName("사이은행 계좌 목록 조회 실패 시 BANK_SERVER_UNAVAILABLE 예외를 던진다")
         void throwsExceptionWhenBankServerUnavailable() {
-            given(userService.getUserKeyByUserToken(USER_TOKEN)).willReturn(USER_KEY);
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
             given(mockBankClient.getAccountsByUserKey(USER_KEY))
                     .willThrow(new RestClientException("연결 실패"));
 
@@ -131,7 +136,7 @@ class ExternalBankServiceTest {
     class GetAccountDetail {
 
         @Test
-        @DisplayName("본인 소유 계좌면 상세 정보를 정상적으로 반환한다")
+        @DisplayName("본인이 연동한 계좌면 상세 정보를 정상적으로 반환한다")
         void returnsAccountDetailWhenOwned() {
             LinkedBankAccountDTO linked = LinkedBankAccountDTO.builder()
                     .accountId(ACCOUNT_ID)
@@ -140,7 +145,7 @@ class ExternalBankServiceTest {
             given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
 
             AccountDetailResponse detail = new AccountDetailResponse(
-                    ACCOUNT_ID, 10L, "088", "1111111111", "사이 입출금통장",
+                    ACCOUNT_ID, "088", "1111111111", "사이 입출금통장",
                     "홍길동", BigDecimal.valueOf(100_000), "ACTIVE",
                     LocalDateTime.now(), LocalDateTime.now()
             );
@@ -153,16 +158,19 @@ class ExternalBankServiceTest {
         }
 
         @Test
-        @DisplayName("본인 소유 계좌가 아니면 ACCOUNT_ACCESS_DENIED 예외를 던진다")
+        @DisplayName("본인이 연동하지 않은 계좌면 ACCOUNT_ACCESS_DENIED 예외를 던지고 조회하지 않는다")
         void throwsExceptionWhenNotOwned() {
             given(linkedBankAccountMapper.selectLinkedAccountsByUserId(USER_ID)).willReturn(List.of());
 
             assertThatThrownBy(() ->
                     externalBankService.getAccountDetail(ACCOUNT_ID, USER_ID)
-            ).isInstanceOf(RuntimeException.class);
+            )
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.ACCOUNT_ACCESS_DENIED);
 
             verify(userService, never()).getUserKeyByUserId(USER_ID);
-            verify(mockBankClient, never()).getAccountDetail(ACCOUNT_ID, USER_KEY);
+            verify(mockBankClient, never()).getAccountDetail(anyLong(), anyString());
         }
 
         @Test
@@ -178,7 +186,10 @@ class ExternalBankServiceTest {
 
             assertThatThrownBy(() ->
                     externalBankService.getAccountDetail(ACCOUNT_ID, USER_ID)
-            ).isInstanceOf(RuntimeException.class);
+            )
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.BANK_SERVER_UNAVAILABLE);
         }
     }
 }

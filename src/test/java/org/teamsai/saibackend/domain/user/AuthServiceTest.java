@@ -44,7 +44,10 @@ import static org.mockito.Mockito.verify;
 @DisplayName("AuthService 단위 테스트")
 class AuthServiceTest {
 
-    private static final String USER_KEY = "SAI-ABCDEFGH";
+    private static final Long USER_ID =1L;
+    private static final String USER_TOKEN= "SAI-ABCDEFGH";
+    private static final String USER_KEY = "mock-bank-user-key";
+
     private static final String RAW_PASSWORD = "Password1!";
     private static final String ENCODED_PASSWORD = "encoded-password";
 

@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `linked_bank_account` (
                                        `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                        `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                                        `account_id` bigint DEFAULT NULL,
-                                       `balance` bigint DEFAULT NULL,
+                                       `balance` decimal DEFAULT NULL,
                                        PRIMARY KEY (`linked_account_id`),
                                        UNIQUE KEY `uq_user_account` (`user_id`,`account_id`),
                                        KEY `idx_user_id` (`user_id`)
