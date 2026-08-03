@@ -92,6 +92,7 @@ class ContractChangeServiceTest {
         return LoanContractResponse.builder()
                 .contractId(CONTRACT_ID)
                 .status(status)
+                .creditorId(USER_ID)
                 .build();
     }
 
@@ -153,6 +154,26 @@ class ContractChangeServiceTest {
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
                                     .isEqualTo(ContractChangeErrorCode.DUPLICATE_PENDING_REQUEST)
+                    );
+        }
+
+        @Test
+        @DisplayName("채권자가 아니면 예외가 발생한다")
+        void requestChangeFailsWhenNotCreditor() {
+            LoanContractResponse contract = LoanContractResponse.builder()
+                    .contractId(CONTRACT_ID)
+                    .status(ContractStatus.COMPLETED)
+                    .creditorId(999L)   // ← userId(10L)와 다른 채권자
+                    .build();
+
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(contract);
+
+            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.ONLY_CREDITOR_CAN_REQUEST_CHANGE)
                     );
         }
     }

@@ -36,7 +36,13 @@ public class ContractChangeService {
     @Transactional
     public LoanContractChangeDTO requestChange(Long contractId, ContractChangeRequest request, Long userId) {
 
-        getContract(contractId, userId);
+
+
+        LoanContractResponse contract = getContract(contractId, userId);
+
+        if(!contract.getCreditorId().equals(userId)) {
+            throw ContractChangeErrorCode.ONLY_CREDITOR_CAN_REQUEST_CHANGE.toException();
+        }
 
         boolean hasPendingRequest = contractChangeMapper.findByContractId(contractId).stream()
                 .anyMatch(changeRequest -> "PENDING".equals(changeRequest.getStatus()));
