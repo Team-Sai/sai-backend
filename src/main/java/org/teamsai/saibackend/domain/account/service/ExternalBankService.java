@@ -47,16 +47,23 @@ public class ExternalBankService {
     }
 
     public AccountDetailResponse getAccountDetail(Long accountId, Long userId) {
-        boolean owns = linkedBankAccountMapper
-                .selectLinkedAccountsByUserId(userId)
-                .stream()
-                .anyMatch(acc -> acc.getAccountId().equals(accountId));
+        String userKey = userService.getUserKeyByUserId(userId);
+
+        List<LinkableAccountResponse> accounts;
+        try {
+            accounts = mockBankClient.getAccountsByUserKey(userKey);
+        } catch (RestClientException e) {
+            log.warn("[ExternalBankService] 사이은행 계좌 목록 조회 실패 - userId: {}", userId, e);
+            throw AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
+        }
+
+        boolean owns = accounts.stream()
+                .anyMatch(acc -> acc.accountId().equals(accountId));
 
         if (!owns) {
             throw AccountErrorCode.ACCOUNT_ACCESS_DENIED.toException();
         }
 
-        String userKey = userService.getUserKeyByUserId(userId);
         try {
             return mockBankClient.getAccountDetail(accountId, userKey);
         } catch (RestClientException e) {

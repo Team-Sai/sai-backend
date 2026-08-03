@@ -30,16 +30,4 @@ public record LinkedBankAccountResponse(
                 .connectionStatus(entity.getConnectionStatus().name())
                 .build();
     }
-    private static String maskAccountNumber(String raw) {
-        if (raw == null || raw.length() < 4) {
-            return raw;
-        }
-        String digits = raw.replaceAll("\\D", "");
-        if (digits.length() < 4) {
-            return raw;
-        }
-        String prefix = digits.substring(0, Math.min(3, digits.length() - 4));
-        String tail = digits.substring(digits.length() - 4);
-        return prefix + "-***-" + tail;
-    }
 }

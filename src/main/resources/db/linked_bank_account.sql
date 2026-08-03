@@ -1,4 +1,4 @@
-CREATE TABLE `linked_bank_account` (
+CREATE TABLE IF NOT EXISTS `linked_bank_account` (
                                        `linked_account_id` bigint NOT NULL AUTO_INCREMENT,
                                        `user_id` bigint NOT NULL,
                                        `bank_code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -8,7 +8,9 @@ CREATE TABLE `linked_bank_account` (
                                        `connection_status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'AVAILABLE',
                                        `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                        `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                                       `user_key_hash` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+                                       `account_id` bigint DEFAULT NULL,
+                                       `balance` bigint DEFAULT NULL,
                                        PRIMARY KEY (`linked_account_id`),
+                                       UNIQUE KEY `uq_user_account` (`user_id`,`account_id`),
                                        KEY `idx_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
