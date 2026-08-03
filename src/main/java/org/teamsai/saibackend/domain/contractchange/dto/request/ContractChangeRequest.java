@@ -28,7 +28,10 @@ public class ContractChangeRequest {
     private BigDecimal newInterestRate;
 
     @NotBlank(message = "상환 방식은 필수입니다.")
-    @Size(max = 20, message = "상환 방식은 20자 이하로 입력해 주세요.")
+    @Pattern(
+            regexp = "원리금균등상환|원금균등상환|만기일시상환",
+            message = "상환 방식은 원리금균등상환, 원금균등상환, 만기일시상환 중 하나여야 합니다."
+    )
     private String newRepaymentType;
 
     @NotNull(message = "변경 상환일은 필수입니다.")

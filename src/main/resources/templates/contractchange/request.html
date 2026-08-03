@@ -25,7 +25,12 @@
             <input type="number" step="0.01" id="newInterestRate">
 
             <label for="newRepaymentType">상환 방식</label>
-            <input type="text" id="newRepaymentType">
+            <select id="newRepaymentType">
+                <option value="">선택해주세요</option>
+                <option value="원리금균등상환">원리금균등상환</option>
+                <option value="원금균등상환">원금균등상환</option>
+                <option value="만기일시상환">만기일시상환</option>
+            </select>
 
             <label for="newRepaymentDate">상환일 변경</label>
             <input type="date" id="newRepaymentDate">
