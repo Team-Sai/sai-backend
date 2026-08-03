@@ -11,7 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSharedSettlementResponse;
 import org.teamsai.saibackend.domain.settlement.service.SharedSettlementService;
@@ -25,6 +28,16 @@ import org.teamsai.saibackend.domain.settlement.service.SharedSettlementService;
 public class SettlementController {
 
     private final SharedSettlementService sharedSettlementService;
+
+    @GetMapping("/settlements")
+    public String settlementListPage() {
+        return "settlement/settlement-list";
+    }
+
+    @GetMapping("/settlements/new")
+    public String settlementCreatePage() {
+        return "settlement/settlement-create";
+    }
 
     @Operation(
             summary = "공동정산 생성",

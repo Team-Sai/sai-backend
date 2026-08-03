@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>새로운 정산 만들기 | 사이원장</title>
+    <link rel="stylesheet" href="/css/settlement/settlement-common.css">
+    <link rel="stylesheet" href="/css/settlement/settlement-create.css">
+    <script src="/js/settlement/settlement-create.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+    <div class="header-inner">
+        <a class="brand" href="/">사이원장</a>
+
+        <nav class="main-nav" aria-label="주요 메뉴">
+            <a href="/">서비스 소개</a>
+            <a href="/contracts">금전거래대차</a>
+            <a class="active" href="/settlements">정산</a>
+            <a href="/schedule">거래 일정</a>
+        </nav>
+
+        <div class="header-actions">
+            <a class="text-link" href="/login">로그인</a>
+            <a class="button button-primary button-small" href="/signup">회원가입</a>
+        </div>
+    </div>
+</header>
+
+<main class="create-shell">
+    <div class="breadcrumb">
+        <a href="/settlements">정산 서비스</a>
+        <span>/</span>
+        <strong>정산 생성</strong>
+    </div>
+
+    <div class="create-heading">
+        <h1>새로운 정산 만들기</h1>
+        <p>공동정산의 기본 정보를 먼저 생성한 뒤 참여자 초대와 계좌 설정을 이어서 진행합니다.</p>
+    </div>
+
+    <div class="settlement-type-tabs" role="tablist">
+        <button class="type-tab active" type="button" role="tab" aria-selected="true">공동정산</button>
+        <button class="type-tab disabled" type="button" role="tab" aria-selected="false" disabled>
+            정기정산
+            <span>준비 중</span>
+        </button>
+    </div>
+
+    <div class="create-layout">
+        <form id="shared-settlement-form" class="form-column" novalidate>
+            <section class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">▤</span>
+                    <h2>정산 기본 정보</h2>
+                </div>
+
+                <div class="field-grid two-column">
+                    <label class="form-field">
+                        <span>정산명 <em>(필수)</em></span>
+                        <input
+                                id="title"
+                                name="title"
+                                type="text"
+                                maxlength="200"
+                                placeholder="예: 제주 여행 경비"
+                                required
+                        >
+                        <small class="field-error" data-error-for="title"></small>
+                    </label>
+
+                    <label class="form-field">
+                        <span>정산 성격 <em>(필수)</em></span>
+                        <select id="settlement-category" name="settlementCategory" required>
+                            <option value="">선택해 주세요</option>
+                            <option value="여행">여행</option>
+                            <option value="생활비">생활비</option>
+                            <option value="회식">회식</option>
+                            <option value="공동구매">공동구매</option>
+                            <option value="모임">모임</option>
+                            <option value="기타">기타</option>
+                        </select>
+                        <small class="field-error" data-error-for="settlementCategory"></small>
+                    </label>
+                </div>
+            </section>
+
+            <section class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">□</span>
+                    <h2>정산 마감일</h2>
+                </div>
+
+                <label class="form-field date-field">
+                    <span>납부 마감일 <em>(필수)</em></span>
+                    <input id="due-date" name="dueDate" type="date" required>
+                    <small class="field-error" data-error-for="dueDate"></small>
+                </label>
+            </section>
+
+            <section class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">≋</span>
+                    <h2>분배 방식</h2>
+                </div>
+
+                <div class="choice-grid">
+                    <label class="choice-card selected">
+                        <input type="radio" name="splitType" value="EQUAL" checked>
+                        <span class="choice-title">균등 분배</span>
+                        <span class="choice-description">참여자에게 동일한 금액을 분배합니다.</span>
+                    </label>
+
+                    <label class="choice-card">
+                        <input type="radio" name="splitType" value="CUSTOM">
+                        <span class="choice-title">직접 설정</span>
+                        <span class="choice-description">참여자별 금액을 이후 단계에서 입력합니다.</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="form-card pending-card">
+                <div class="card-title card-title-between">
+                    <div>
+                        <span class="card-icon">♙</span>
+                        <h2>납부자</h2>
+                    </div>
+                    <button type="button" class="inline-action" disabled>＋ 납부자 추가</button>
+                </div>
+
+                <div class="participant-chips">
+                    <span id="owner-chip" class="participant-chip owner">나 (생성자)</span>
+                </div>
+                <p class="pending-message">
+                    공동정산 생성 후 회원토큰 기반 초대 기능에서 참여자를 추가합니다.
+                </p>
+            </section>
+
+            <section class="form-card pending-card">
+                <div class="card-title card-title-between">
+                    <div>
+                        <span class="card-icon">▥</span>
+                        <h2>정산 확인 계좌</h2>
+                    </div>
+                    <button type="button" class="inline-action" disabled>계좌 선택</button>
+                </div>
+
+                <div class="disabled-account">
+                    <span class="account-icon">▣</span>
+                    <div>
+                        <strong>정산 생성 후 계좌를 설정합니다.</strong>
+                        <p>SettlementAccount 기능이 연결되면 연동 계좌를 선택할 수 있습니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-card pending-card">
+                <div class="card-title">
+                    <span class="card-icon">▣</span>
+                    <h2>총 금액</h2>
+                </div>
+
+                <label class="form-field">
+                    <span>총 금액</span>
+                    <input type="text" value="정산 금액 설정 기능 구현 후 입력 가능" disabled>
+                </label>
+            </section>
+        </form>
+
+        <aside class="summary-panel">
+            <div class="summary-header">공동 정산 요약</div>
+
+            <div class="summary-body">
+                <dl class="summary-list">
+                    <div>
+                        <dt>정산명</dt>
+                        <dd id="summary-title">입력 전</dd>
+                    </div>
+                    <div>
+                        <dt>정산 성격</dt>
+                        <dd id="summary-category">선택 전</dd>
+                    </div>
+                    <div>
+                        <dt>참여자 수</dt>
+                        <dd>1명 (본인)</dd>
+                    </div>
+                    <div>
+                        <dt>분배 방식</dt>
+                        <dd id="summary-split-type">균등 분배</dd>
+                    </div>
+                </dl>
+
+                <div class="summary-divider"></div>
+
+                <div class="account-summary">
+                    <span>▣ 정산 계좌</span>
+                    <strong>아직 설정되지 않음</strong>
+                </div>
+
+                <dl class="summary-list compact">
+                    <div>
+                        <dt>정산 마감일</dt>
+                        <dd id="summary-due-date">선택 전</dd>
+                    </div>
+                    <div>
+                        <dt>생성 후 상태</dt>
+                        <dd>진행 중</dd>
+                    </div>
+                </dl>
+
+                <button
+                        id="submit-button"
+                        class="button button-primary submit-button"
+                        type="submit"
+                        form="shared-settlement-form"
+                >
+                    공동정산 생성
+                </button>
+
+                <p class="submit-description">
+                    생성이 완료되면 정산 목록으로 이동합니다.
+                </p>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div>
+            <strong>사이원장</strong>
+            <p>© Sai-Wonjang. All rights reserved.</p>
+        </div>
+        <nav>
+            <a href="#">이용약관</a>
+            <a href="#">개인정보처리방침</a>
+            <a href="#">고객센터</a>
+        </nav>
+    </div>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
