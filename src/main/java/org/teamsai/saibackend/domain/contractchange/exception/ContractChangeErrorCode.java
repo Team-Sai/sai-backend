@@ -11,6 +11,7 @@ import org.teamsai.saibackend.global.exception.DomainException;
 @RequiredArgsConstructor
 public enum ContractChangeErrorCode implements BaseErrorCode<DomainException> {
 
+    CONTRACT_NOT_COMPLETED(HttpStatus.BAD_REQUEST,"완료된 계약만 변경 요청 할 수 있습니다."),
     CONTRACT_NOT_FOUND(HttpStatus.NOT_FOUND, "계약서가 존재 하지 않습니다."),
     DUPLICATE_PENDING_REQUEST(HttpStatus.CONFLICT, "이미 처리 대기 중인 변경 요청이 있습니다."),
     FORBIDDEN_CONTRACT_ACCESS(HttpStatus.FORBIDDEN, "해당 계약의 당사자만 접근할 수 있습니다.");
