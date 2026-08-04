@@ -18,6 +18,7 @@ import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 
 @Component

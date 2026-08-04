@@ -27,6 +27,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     // mybatis
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.0.0'
+    //mybatis Test
+    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:4.0.0'
     // mariaDB
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     // Spring Boot Test
