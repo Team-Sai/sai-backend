@@ -1,7 +1,6 @@
 package org.teamsai.saibackend.domain.transaction.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO;
@@ -20,12 +19,17 @@ public class BankTransactionService {
 
     @Transactional
     public Long saveIfNotExists(BankTransactionDTO bankTransaction) {
-        return bankTransactionMapper.findByExternalKey(
-                        bankTransaction.getLinkedAccountId(),
-                        bankTransaction.getExternalTransactionId()
-                )
-                .map(BankTransactionDTO::getBankTransactionId)
-                .orElseGet(() -> insertOrFindExisting(bankTransaction));
+        bankTransactionMapper.insertOrGetId(bankTransaction);
+
+        Long bankTransactionId = bankTransaction.getBankTransactionId();
+
+        if (bankTransactionId == null) {
+            throw BankTransactionErrorCode
+                    .BANK_TRANSACTION_CREATE_FAILED
+                    .toException();
+        }
+
+        return bankTransactionId;
     }
 
     public List<BankTransactionDTO> findPendingDeposits() {
@@ -46,31 +50,6 @@ public class BankTransactionService {
             throw BankTransactionErrorCode
                     .BANK_TRANSACTION_STATUS_UPDATE_FAILED
                     .toException();
-        }
-    }
-
-    private Long insertOrFindExisting(BankTransactionDTO bankTransaction) {
-        try {
-            int insertedCount = bankTransactionMapper.insert(bankTransaction);
-
-            if (insertedCount != 1
-                    || bankTransaction.getBankTransactionId() == null) {
-                throw BankTransactionErrorCode.BANK_TRANSACTION_CREATE_FAILED
-                        .toException();
-            }
-
-            return bankTransaction.getBankTransactionId();
-
-        } catch (DuplicateKeyException exception) {
-            return bankTransactionMapper.findByExternalKey(
-                            bankTransaction.getLinkedAccountId(),
-                            bankTransaction.getExternalTransactionId()
-                    )
-                    .map(BankTransactionDTO::getBankTransactionId)
-                    .orElseThrow(
-                            BankTransactionErrorCode
-                                    .BANK_TRANSACTION_CREATE_FAILED::toException
-                    );
         }
     }
 }

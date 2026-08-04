@@ -32,10 +32,11 @@
         synced_at
     </sql>
 
-    <insert id="insert"
+    <insert id="insertOrGetId"
             parameterType="org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO"
             useGeneratedKeys="true"
-            keyProperty="bankTransactionId">
+            keyProperty="bankTransactionId"
+            keyColumn="bank_transaction_id">
         INSERT INTO bank_transaction (
         linked_account_id,
         external_transaction_id,
@@ -56,6 +57,8 @@
         #{memo},
         #{syncedAt}
         )
+        ON DUPLICATE KEY UPDATE
+        bank_transaction_id = LAST_INSERT_ID(bank_transaction_id)
     </insert>
 
     <select id="findById" resultMap="BankTransactionResultMap">

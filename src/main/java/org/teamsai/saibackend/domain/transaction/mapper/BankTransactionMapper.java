@@ -11,7 +11,7 @@ import java.util.Optional;
 @Mapper
 public interface BankTransactionMapper {
 
-    int insert(BankTransactionDTO bankTransaction);
+    int insertOrGetId(BankTransactionDTO bankTransaction);
 
     Optional<BankTransactionDTO> findById(
             @Param("bankTransactionId") Long bankTransactionId
