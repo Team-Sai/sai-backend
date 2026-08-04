@@ -15,6 +15,9 @@ public class LoanContractRequest {
 
     private Long contractId;
 
+    @NotBlank(message = "본인인증 식별값은 필수입니다.")
+    private String identityVerificationId;
+
     @NotNull(message = "대출원금을 입력해주세요.")
     @Positive(message = "대출원금은 0보다 커야 합니다.")
     private BigDecimal principalAmount;
