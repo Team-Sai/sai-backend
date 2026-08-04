@@ -6,9 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
+import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
 import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
 import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
@@ -26,7 +26,6 @@ import java.time.LocalDateTime;
 public class ContractChangeService {
 
     private final ContractChangeMapper contractChangeMapper;
-    private final LoanContractMapper loanContractMapper;
     private final LoanContractService loanContractService;
 
     public LoanContractResponse getContract(Long contractId, Long userID) {
@@ -49,6 +48,10 @@ public class ContractChangeService {
 
         if (!isCreditor && !isDebtor) {
             throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
+        }
+
+        if (!isCreditor) {
+            throw ContractChangeErrorCode.NOT_CREDITOR.toException();
         }
 
         if (contract.getStatus() != ContractStatus.COMPLETED) {
@@ -85,7 +88,7 @@ public class ContractChangeService {
                 .debtorId(contract.getDebtorId())
                 .principalAmount(contract.getPrincipalAmount())
                 .interestRate(request.getNewInterestRate())
-                .repaymentType(request.getNewRepaymentType())
+                .repaymentType(RepaymentMethod.valueOf(request.getNewRepaymentType()))
                 .startDate(contract.getStartDate())
                 .maturityDate(request.getNewMaturityDate())
                 .repaymentDay(request.getNewRepaymentDate())
@@ -98,7 +101,7 @@ public class ContractChangeService {
                 .updatedAt(now)
                 .build();
 
-        loanContractMapper.insertChangedContract(newContractDTO);
+        loanContractService.insertChangedContract(newContractDTO);
 
         log.info("계약 변경 요청 생성 및 차용증 재저장 완료: contractId={}, userId={}",
                 contractId, userId);

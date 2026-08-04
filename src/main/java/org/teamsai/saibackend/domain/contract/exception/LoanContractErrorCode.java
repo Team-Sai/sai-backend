@@ -23,6 +23,16 @@ public enum LoanContractErrorCode implements BaseErrorCode<DomainException> {
     CONTRACT_ACCESS_DENIED(
             HttpStatus.FORBIDDEN,
             "해당 차용증에 접근할 권한이 없습니다."
+    ),
+
+    CANNOT_CREATE_CONTRACT_TO_SELF(
+            HttpStatus.FORBIDDEN,
+            "채무자와 채권자는 동일인이 될 수 없습니다."
+    ),
+
+    DEBTOR_ALREADY_LINKED(
+            HttpStatus.CONFLICT,
+            "이미 채무자가 연결된 계약서입니다."
     );
 
     private final HttpStatus httpStatus;
