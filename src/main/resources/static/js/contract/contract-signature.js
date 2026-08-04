@@ -103,7 +103,7 @@
   clearBtn?.addEventListener("click", clearSignature);
 
   async function createContract() {
-    const response = await fetch("/api/contracts", {
+    const response = await fetch("/api/contracts/write", {
       method: "POST",
       headers: authHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(
@@ -127,7 +127,7 @@
     const formData = new FormData();
     formData.append("signature", blob, "signature.png");
 
-    const response = await fetch(`/${contractId}/signature`, {
+    const response = await fetch(`/api/contracts/${contractId}/signature`, {
       method: "PATCH",
       headers: authHeaders(),
       body: formData,

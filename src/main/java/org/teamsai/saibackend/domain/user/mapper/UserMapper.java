@@ -16,9 +16,8 @@ public interface UserMapper {
             @Param("email") String email
     );
 
-    Optional<UserDTO> findById(
-            @Param("userId") Long userId
-    );
+    Optional<UserDTO> findById(@Param("userId") Long userId);
+
 
     Optional<UserDTO> findByEmail(
             @Param("email") String email
@@ -28,15 +27,23 @@ public interface UserMapper {
             @Param("userToken") String userToken
     );
 
-    int deleteById(
-            @Param("userId") Long userId
+    int updateUserKey(
+            @Param("userToken") String userToken,
+            @Param("userKey") String userKey
     );
+
+    String findUserKeyByUserToken(
+            @Param("userToken") String userToken
+    );
+
+
+    int deleteByUserId(Long userId);
 
     boolean existsByUserToken(
             @Param("userToken") String userToken
     );
 
-    String findUserKeyById(
+    String findUserKeyByUserId(
             @Param("userId") Long userId
     );
 }

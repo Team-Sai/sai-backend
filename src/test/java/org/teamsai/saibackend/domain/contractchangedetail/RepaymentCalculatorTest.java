@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.contractchangedetail;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.teamsai.saibackend.domain.contractchangedetail.util.RepaymentCalculator;
+import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,33 +22,30 @@ class RepaymentCalculatorTest {
     @DisplayName("만기일시상환 — 원금 × 이율/12")
     void calculateBulletRepayment() {
         BigDecimal result = RepaymentCalculator.calculate(
-                PRINCIPAL, INTEREST_RATE, "만기일시상환", START_DATE, MATURITY_DATE
+                PRINCIPAL, INTEREST_RATE, "BULLET_REPAYMENT", START_DATE, MATURITY_DATE
         );
 
         assertThat(result).isEqualByComparingTo(BigDecimal.valueOf(375000));
-        System.out.println(result);
     }
 
     @Test
     @DisplayName("원금균등상환 — 매달 원금 + 1회차 이자")
     void calculateEqualPrincipal() {
         BigDecimal result = RepaymentCalculator.calculate(
-                PRINCIPAL, INTEREST_RATE, "원금균등상환", START_DATE, MATURITY_DATE
+                PRINCIPAL, INTEREST_RATE, "EQUAL_PRINCIPAL", START_DATE, MATURITY_DATE
         );
 
         assertThat(result).isEqualByComparingTo(BigDecimal.valueOf(8708333.33));
-        System.out.println(result);
     }
 
     @Test
     @DisplayName("원리금균등상환 — 매달 동일 금액")
     void calculateEqualPrincipalAndInterest() {
         BigDecimal result = RepaymentCalculator.calculate(
-                PRINCIPAL, INTEREST_RATE, "원리금균등상환", START_DATE, MATURITY_DATE
+                PRINCIPAL, INTEREST_RATE, "EQUAL_PRINCIPAL_AND_INTEREST", START_DATE, MATURITY_DATE
         );
 
         assertThat(result).isEqualByComparingTo(BigDecimal.valueOf(8537852.16));
-        System.out.println(result);
 
     }
 
@@ -58,6 +56,6 @@ class RepaymentCalculatorTest {
                 RepaymentCalculator.calculate(
                         PRINCIPAL, INTEREST_RATE, "이상한방식", START_DATE, MATURITY_DATE
                 )
-        ).isInstanceOf(IllegalArgumentException.class);
+        ).isInstanceOf(DomainException.class);
     }
 }

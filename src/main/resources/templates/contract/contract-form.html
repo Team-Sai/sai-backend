@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="./contract-form.css" />
+  <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
 </head>
 <body>
 
@@ -65,6 +66,16 @@
     <h1 class="doc__title">금 전 차 용 계 약 서</h1>
 
     <p class="doc__status-banner" id="statusBanner" hidden></p>
+
+    <section class="identity-panel" id="identityPanel">
+      <div class="identity-panel__info">
+        <strong>본인인증</strong>
+        <span class="identity-panel__status" id="identityStatusText">본인인증 후 계약서를 작성할 수 있습니다.</span>
+      </div>
+      <button type="button" class="btn btn--primary" id="btnIdentityVerify">본인인증 시작</button>
+    </section>
+
+    <input type="hidden" id="identityVerificationId" name="identityVerificationId" />
 
     <section class="doc__article">
       <span class="doc__clause">제1조(당사자)</span>
@@ -151,37 +162,38 @@
 
     <table class="parties">
       <tbody>
-        <tr>
-          <th rowspan="2" class="parties__role">채권자</th>
-          <td class="parties__label">주 소</td>
-          <td class="parties__value" colspan="3">
-            <input type="text" class="parties__input" id="creditorAddress" name="creditorAddress" placeholder="주소를 입력하세요" />
-          </td>
-        </tr>
-        <tr>
-          <td class="parties__label">성 명</td>
-          <td class="parties__value">
-            <strong id="creditorNameCell" class="doc__readonly">-</strong>
-          </td>
-          <td class="parties__label">생년월일</td>
-          <td class="parties__value">
-            <strong id="creditorBirthDateCell" class="doc__readonly">-</strong>
-          </td>
-        </tr>
+      <tr>
+        <th rowspan="2" class="parties__role">채권자</th>
+        <td class="parties__label">성 명</td>
+        <td class="parties__value">
+          <strong id="creditorNameCell" class="doc__readonly">-</strong>
+        </td>
+        <td class="parties__label">생년월일</td>
+        <td class="parties__value">
+          <strong id="creditorBirthDateCell" class="doc__readonly">-</strong>
+        </td>
+      </tr>
+      <tr>
+        <td class="parties__label">주 소</td>
+        <td class="parties__value" colspan="3">
+          <input type="text" class="parties__input" id="creditorAddress" name="creditorAddress" placeholder="주소를 입력하세요" />
+        </td>
+      </tr>
 
-        <tr>
-          <th rowspan="2" class="parties__role">채무자</th>
-          <td class="parties__label">주 소</td>
-          <td class="parties__value" colspan="3">
-            <input type="text" class="parties__input" id="debtorAddress" disabled placeholder="채무자 확인 후 자동 입력됩니다" />
-          </td>
-        </tr>
-        <tr>
-          <td class="parties__label">성 명</td>
-          <td class="parties__value" colspan="3">
-            <input type="text" class="parties__input" id="debtorName" disabled placeholder="채무자 확인 후 자동 입력됩니다" />
-          </td>
-        </tr>
+      <tr>
+        <th rowspan="2" class="parties__role">채무자</th>
+
+        <td class="parties__label">성 명</td>
+        <td class="parties__value" colspan="3">
+          <input type="text" class="parties__input" id="debtorName" disabled placeholder="채무자 확인 후 자동 입력됩니다" />
+        </td>
+      </tr>
+      <tr>
+        <td class="parties__label">주 소</td>
+        <td class="parties__value" colspan="3">
+          <input type="text" class="parties__input" id="debtorAddress" disabled placeholder="채무자 확인 후 자동 입력됩니다" />
+        </td>
+      </tr>
       </tbody>
     </table>
     <p class="doc__hint">채무자 정보는 채무자가 직접 확인·서명하는 단계에서 채워지며, 현재 화면에서는 입력할 수 없습니다.</p>

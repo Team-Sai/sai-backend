@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.contractchangedetail.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contractchangedetail.dto.ChangeRequestDetailDTO;
@@ -16,9 +17,21 @@ import java.time.Period;
 @RequiredArgsConstructor
 public class ChangeRequestDetailService {
 
+    private String translateRepaymentType(String repaymentType) {
+                return switch(repaymentType) {
+                    case "EQUAL_PRINCIPAL_AND_INTEREST" -> "원리금균등상환";
+                    case "EQUAL_PRINCIPAL" -> "원금균등상환";
+                    case "BULLET_REPAYMENT" -> "만기일시상환";
+                    default -> repaymentType;
+                };
+    }
+
     private final ContractChangeService contractChangeService;
 
     public ChangeRequestDetailDTO getDetail(Long contractId, Long changeRequestId, Long userId) {
+
+
+
 
         LoanContractChangeDTO changeDTO = contractChangeService.getChangeRequest(changeRequestId);
 
@@ -26,7 +39,9 @@ public class ChangeRequestDetailService {
             throw ChangeRequestDetailErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
         }
 
-        if(changeDTO.getNewInterestRate() == null) {
+        if(changeDTO.getNewInterestRate() == null
+        || changeDTO.getNewRepaymentType() == null
+        || changeDTO.getNewRepaymentDate() == null) {
             throw ChangeRequestDetailErrorCode.INVALID_CHANGE_REQUEST_DATA.toException();
         }
 
@@ -38,10 +53,11 @@ public class ChangeRequestDetailService {
 
 
 
+
         BigDecimal currentMonthlyPayment = RepaymentCalculator.calculate(
                 contract.getPrincipalAmount(),
                 contract.getInterestRate(),
-                contract.getRepaymentType().getDescription(),
+                contract.getRepaymentType().name(),
                 contract.getStartDate(),
                 contract.getMaturityDate()
         );
@@ -67,7 +83,7 @@ public class ChangeRequestDetailService {
                 .currentRepaymentType(contract.getRepaymentType().getDescription())
                 .newMaturityDate(changeDTO.getNewMaturityDate())
                 .newInterestRate(changeDTO.getNewInterestRate())
-                .newRepaymentType(changeDTO.getNewRepaymentType())
+                .newRepaymentType(translateRepaymentType(changeDTO.getNewRepaymentType()))
                 .changeReason(changeDTO.getChangeReason())
                 .extendedMonths(extendedMonths)
                 .currentMonthlyPayment(currentMonthlyPayment)
@@ -75,12 +91,12 @@ public class ChangeRequestDetailService {
                 .build();
     }
 
-    private String translateStatus(String status) {
+    private String translateStatus(ChangeRequestStatus status) {
         return switch (status) {
-            case "PENDING" -> "승인 대기 중";
-            case "APPROVED" -> "승인됨";
-            case "REJECTED" -> "거절됨";
-            default -> status;
+            case PENDING -> "승인 대기 중";
+            case APPROVED -> "승인됨";
+            case REJECTED -> "거절됨";
+
         };
 
 

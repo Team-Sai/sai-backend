@@ -20,9 +20,9 @@ public class RepaymentCalculator {
         int months = calculateMonths(startDate, maturityDate);
 
         return switch (repaymentType) {
-            case "만기일시상환" -> calculateBulletRepayment(principal, annualInterestRate);
-            case "원금균등상환" -> calculateEqualPrincipal(principal, annualInterestRate, months);
-            case "원리금균등상환" -> calculateEqualPrincipalAndInterest(principal, annualInterestRate, months);
+            case "BULLET_REPAYMENT" -> calculateBulletRepayment(principal, annualInterestRate);
+            case "EQUAL_PRINCIPAL" -> calculateEqualPrincipal(principal, annualInterestRate, months);
+            case "EQUAL_PRINCIPAL_AND_INTEREST" -> calculateEqualPrincipalAndInterest(principal, annualInterestRate, months);
             default -> throw ChangeRequestDetailErrorCode.UNKNOWN_REPAYMENT_TYPE.toException();        };
     }
 

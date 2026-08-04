@@ -1,13 +1,17 @@
 package org.teamsai.saibackend.domain.contract.mapper;
 
+import jakarta.validation.constraints.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.contract.dto.LoanContractDTO;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
+import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.user.dto.UserDTO;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 
@@ -16,23 +20,29 @@ public interface LoanContractMapper {
 
     void insertByContract(
             @Param("request") LoanContractRequest request,
-            @Param("user") UserDTO user,
-            @Param("debtor") UserDTO debtor
+            @Param("creditorId") Long creditorId
+    );
+
+    void updateDebtorId(
+            @Param("contractId") Long contractId,
+            @Param("debtorId") Long debtorId
     );
 
     void updateCreditorSignature(
             @Param("contractId") Long contractId,
-            @Param("signaturePath") String signaturePath,
+            @Param("signatureData") String signatureData,
             @Param("status") ContractStatus status
     );
 
     void updateDebtorSignature(
             @Param("contractId") Long contractId,
-            @Param("signaturePath") String signaturePath,
+            @Param("debtorAddress") String debtorAddress,
+            @Param("signatureData") String signatureData,
             @Param("status") ContractStatus status
     );
 
     Optional<LoanContractResponse> findContractById(@Param("contractId") Long contractId);
 
+    int insertChangedContract(ChangeLoanContractResponse contract);
 
 }

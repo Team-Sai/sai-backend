@@ -29,14 +29,15 @@ public class ContractChangeRequest {
 
     @NotBlank(message = "상환 방식은 필수입니다.")
     @Pattern(
-            regexp = "원리금균등상환|원금균등상환|만기일시상환",
-            message = "상환 방식은 원리금균등상환, 원금균등상환, 만기일시상환 중 하나여야 합니다."
+            regexp = "EQUAL_PRINCIPAL_AND_INTEREST|EQUAL_PRINCIPAL|BULLET_REPAYMENT",
+            message = "상환 방식이 올바르지 않습니다."
     )
     private String newRepaymentType;
 
     @NotNull(message = "변경 상환일은 필수입니다.")
-    @Future(message = "변경 상환일은 오늘 이후 날짜여야 합니다.")
-    private LocalDate newRepaymentDate;
+    @Min(value = 1, message = "상환일은 1일 이상이어야 합니다.")
+    @Max(value = 31, message = "상환일은 31일 이하여야 합니다.")
+    private Integer newRepaymentDate;
 
 
 

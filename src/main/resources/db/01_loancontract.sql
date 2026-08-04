@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS loan_contract (
     previous_contract_id BIGINT NULL,
 
     creditor_id          BIGINT NOT NULL,
-    debtor_id            BIGINT NOT NULL,
+    debtor_id            BIGINT NULL,
 
     principal_amount     DECIMAL(15,2) NOT NULL,
     interest_rate        DECIMAL(5,2) NOT NULL,
@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS loan_contract (
     contract_alias       VARCHAR(100) NOT NULL,
     terms                TEXT NULL,
 
-    creditor_signature   VARCHAR(500) NULL,
-    debtor_signature     VARCHAR(500) NULL,
+    creditor_signature   LONGTEXT NULL,
+    debtor_signature     LONGTEXT NULL,
 
     created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

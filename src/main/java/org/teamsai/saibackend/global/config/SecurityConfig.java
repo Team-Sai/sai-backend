@@ -50,14 +50,13 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/api/auth/signup",
                                         "/api/auth/login",
-                                        "/login", "/signup",
+                                        "/login",
+                                        "/signup",
                                         "/v3/api-docs/**",
                                         "/swagger-ui/**",
                                         "/swagger-ui.html"
-
-
-
-                                ).permitAll()
+                                )
+                                .permitAll()
 
                                 .requestMatchers(
                                         "/",
@@ -65,7 +64,13 @@ public class SecurityConfig {
                                         "/signup",
                                         "/mypage",
                                         "/mypage/",
-                                        "/identity-test"
+
+                                        "/identity-test",
+
+
+                                        "/accounts/**",
+                                        "/settlements",
+                                        "/settlements/**"
 
                                 )
                                 .permitAll()
@@ -78,7 +83,6 @@ public class SecurityConfig {
                                         "/error"
                                 )
                                 .permitAll()
-
                                 .anyRequest()
                                 .authenticated()
                 )
@@ -90,5 +94,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 }

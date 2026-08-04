@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contractchangedetail.dto.ChangeRequestDetailDTO;
@@ -40,7 +41,7 @@ class ChangeRequestDetailServiceTest {
     private LoanContractChangeDTO createChangeRequestWithDifferentContractId(){
         return LoanContractChangeDTO.builder()
                 .changeRequestId(CHANGE_REQUEST_ID)
-                .status("PENDING")
+                .status(ChangeRequestStatus.PENDING)
                 .contractId(999L)
                 .build();
     }
@@ -93,10 +94,11 @@ class ChangeRequestDetailServiceTest {
     private LoanContractChangeDTO createChangeRequest() {
         return LoanContractChangeDTO.builder()
                 .changeRequestId(CHANGE_REQUEST_ID)
-                .status("PENDING")
+                .status(ChangeRequestStatus.PENDING)
                 .newMaturityDate(LocalDate.of(2026, 12, 31))
                 .newInterestRate(BigDecimal.valueOf(4.2))
-                .newRepaymentType("원리금균등상환")
+                .newRepaymentType("EQUAL_PRINCIPAL_AND_INTEREST")
+                .newRepaymentDate(15)
                 .changeReason("자금 사정으로 인한 연장 요청")
                 .createdAt(LocalDateTime.now())
                 .contractId(CONTRACT_ID)
