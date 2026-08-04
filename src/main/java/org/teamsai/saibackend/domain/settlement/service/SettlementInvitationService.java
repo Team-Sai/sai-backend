@@ -10,13 +10,11 @@ import org.teamsai.saibackend.domain.settlement.dto.response.CreateSettlementInv
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementInvitationMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
-import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
 import org.teamsai.saibackend.domain.settlement.type.SettlementInvitationStatus;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.time.LocalDateTime;
-
 
 @Service
 @RequiredArgsConstructor
@@ -24,34 +22,33 @@ public class SettlementInvitationService {
 
     private final SettlementMapper settlementMapper;
     private final SettlementInvitationMapper invitationMapper;
-    private final SettlementParticipantMapper participantMapper;
     private final UserService userService;
     private final SettlementInvitationValidator invitationValidator;
 
     @Transactional
-    public CreateSettlementInvitationResponse invite(Long ownerId, Long settlementId, CreateSettlementInvitationRequest request){
-        SettlementDTO settlement = settlementMapper.findById(settlementId)
-                .orElseThrow(
-                        SettlementErrorCode.SETTLEMENT_NOT_FOUND::toException
-                );
-        invitationValidator.validateInvitableSettlement(settlement,ownerId);
-        UserDTO invitedUser = userService.findRequestTarget(ownerId,request.getUserToken());
-        invitationValidator.validateInviteTarget(settlementId,invitedUser.getUserId());
+    public CreateSettlementInvitationResponse invite(
+            Long ownerId,
+            Long settlementId,
+            CreateSettlementInvitationRequest request
+    ) {
+        SettlementDTO settlement = findSettlement(settlementId);
 
-        boolean alreadyParticipant = participantMapper.existsActiveParticipant(settlementId,invitedUser.getUserId());
+        invitationValidator.validateInvitableSettlement(
+                settlement,
+                ownerId
+        );
 
-        if(alreadyParticipant){
-            throw SettlementErrorCode.ALREADY_CLOSED_SETTLEMENT.toException();
-        }
+        UserDTO invitedUser = userService.findRequestTarget(
+                ownerId,
+                request.getUserToken()
+        );
 
-        boolean duplicateInvitation = invitationMapper.existsInvitedInvitation(settlementId,invitedUser.getUserId());
-
-        if(duplicateInvitation){
-            throw SettlementErrorCode.DUPLICATE_SETTLEMENT_INVITATION.toException();
-        }
+        invitationValidator.validateInviteTarget(
+                settlementId,
+                invitedUser.getUserId()
+        );
 
         LocalDateTime invitedAt = LocalDateTime.now();
-
 
         SettlementInvitationDTO invitation =
                 SettlementInvitationDTO.builder()
@@ -61,10 +58,13 @@ public class SettlementInvitationService {
                         .invitedAt(invitedAt)
                         .acceptedAt(null)
                         .build();
+
         int insertCount = invitationMapper.insert(invitation);
 
-        if(insertCount != 1){
-            throw SettlementErrorCode.SETTLEMENT_INVITATION_CREATE_FAILED.toException();
+        if (insertCount != 1) {
+            throw SettlementErrorCode
+                    .SETTLEMENT_INVITATION_CREATE_FAILED
+                    .toException();
         }
 
         return CreateSettlementInvitationResponse.builder()
@@ -75,14 +75,14 @@ public class SettlementInvitationService {
                 .invitationStatus(invitation.getInvitationStatus())
                 .invitedAt(invitation.getInvitedAt())
                 .build();
-
-
     }
 
-    private SettlementDTO findSettlement(Long settlementId){
+    private SettlementDTO findSettlement(Long settlementId) {
         return settlementMapper.findById(settlementId)
-                .orElseThrow(SettlementErrorCode.SETTLEMENT_NOT_FOUND::toException);
+                .orElseThrow(
+                        SettlementErrorCode
+                                .SETTLEMENT_NOT_FOUND
+                                ::toException
+                );
     }
-
-
 }
