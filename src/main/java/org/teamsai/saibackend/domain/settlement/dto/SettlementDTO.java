@@ -27,10 +27,10 @@ public class SettlementDTO {
     private LocalDate dueDate;
 
     // 정기정산에서 사용
-    private String cycleRule;
+    private CycleRule cycleRule;
     private LocalDate startDate;
     private LocalDate endDate;
-    private CycleRule cycleDate;
+    private LocalDate cycleDate;
 
     private LocalDateTime createdAt;
     private LocalDateTime closedAt;
