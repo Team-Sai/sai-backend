@@ -8,13 +8,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
+import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
+import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
-import org.teamsai.saibackend.domain.user.dto.UserDTO;
-import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
-import org.teamsai.saibackend.domain.user.mapper.UserMapper;
+import org.teamsai.saibackend.domain.identity.service.IdentityService;
+import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
+import org.teamsai.saibackend.domain.user.service.UserService;
+
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -22,18 +26,45 @@ import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 public class LoanContractService {
     private final LoanContractMapper contractMapper;
     private final LoanContractFileService fileService;
-    private final UserMapper userMapper;
+    private final UserService userService;
+    private final IdentityService identityService;
 
     @Transactional
     public Long createContract(LoanContractRequest request, Long userId) {
-        UserDTO currentUser = userMapper.findById(userId)
-                .orElseThrow(UserErrorCode.USER_NOT_FOUND::toException);
 
-        UserDTO debtor = userMapper.findByEmail(request.getDebtorEmail())
-                .orElseThrow(LoanContractErrorCode.DEBTOR_NOT_FOUND::toException);
+        identityService.consume(
+                userId,
+                request.getIdentityVerificationId(),
+                IdentityPurpose.LOAN_CONTRACT
+        );
 
-        contractMapper.insertByContract(request, currentUser, debtor);
+        userService.getMyInfo(userId);
+
+        contractMapper.insertByContract(request, userId);
+
         return request.getContractId();
+    }
+
+    @Transactional
+    public void linkDebtor(Long contractId, Long userId, LoanContractDebtorLinkRequest request) {
+        LoanContractResponse contract = contractMapper.findContractById(contractId)
+                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+
+        if (contract.getDebtorId() != null) {
+            throw LoanContractErrorCode.DEBTOR_ALREADY_LINKED.toException();
+        }
+
+        if (userId.equals(contract.getCreditorId())) {
+            throw LoanContractErrorCode.CANNOT_CREATE_CONTRACT_TO_SELF.toException();
+        }
+
+        identityService.consume(
+                userId,
+                request.identityVerificationId(),
+                IdentityPurpose.LOAN_CONTRACT
+        );
+
+        contractMapper.updateDebtorId(contractId, userId);
     }
 
     @Transactional
@@ -58,7 +89,7 @@ public class LoanContractService {
         LoanContractResponse contract = contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
 
-        if (!contract.getDebtorId().equals(userId)) {
+        if (!Objects.equals(contract.getDebtorId(), userId)) {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
 
@@ -72,7 +103,7 @@ public class LoanContractService {
         LoanContractResponse contract = contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
 
-        boolean isParty = contract.getCreditorId().equals(userId) || contract.getDebtorId().equals(userId);
+        boolean isParty = contract.getCreditorId().equals(userId) || Objects.equals(contract.getDebtorId(), userId);
         if (!isParty) {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
@@ -80,5 +111,9 @@ public class LoanContractService {
         return contract;
     }
 
+    @Transactional
+    public void insertChangedContract(ChangeLoanContractResponse changedContract) {
+        contractMapper.insertChangedContract(changedContract);
+    }
 
 }

@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS loan_contract (
     previous_contract_id BIGINT NULL,
 
     creditor_id          BIGINT NOT NULL,
-    debtor_id            BIGINT NOT NULL,
+    debtor_id            BIGINT NULL,
 
     principal_amount     DECIMAL(15,2) NOT NULL,
     interest_rate        DECIMAL(5,2) NOT NULL,
