@@ -13,6 +13,9 @@ import java.time.LocalDate;
 @Builder
 public class LoanContractRequest {
 
+    @NotBlank(message = "본인인증 식별값은 필수입니다.")
+    private String identityVerificationId;
+
     private Long contractId;
 
     @NotNull(message = "대출원금을 입력해주세요.")

@@ -18,8 +18,8 @@ public class LoanContractChangeDTO {
     private LocalDate newMaturityDate;
     private BigDecimal newInterestRate;
     private String newRepaymentType;
-    private LocalDate newRepaymentDate;
-    private String status;
+    private Integer newRepaymentDate;
+    private ChangeRequestStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long contractId;
