@@ -42,6 +42,7 @@
         external_transaction_id,
         amount,
         transaction_type,
+        processing_status,
         transaction_at,
         counterparty_name,
         memo,
@@ -52,6 +53,7 @@
         #{externalTransactionId},
         #{amount},
         #{transactionType},
+        'PENDING',
         #{transactionAt},
         #{counterpartyName},
         #{memo},
@@ -89,8 +91,9 @@
 
     <update id="updateStatus">
         UPDATE bank_transaction
-        SET processing_status = #{processingStatus}
+        SET processing_status = #{nextStatus}
         WHERE bank_transaction_id = #{bankTransactionId}
+        AND processing_status = #{currentStatus}
     </update>
 
 </mapper>

@@ -10,13 +10,23 @@ import org.teamsai.saibackend.global.exception.DomainException;
 @RequiredArgsConstructor
 public enum BankTransactionErrorCode implements BaseErrorCode<DomainException> {
 
+    INVALID_BANK_TRANSACTION(
+            HttpStatus.BAD_REQUEST,
+            "은행 거래 정보가 올바르지 않습니다."
+    ),
+
+    INVALID_BANK_TRANSACTION_STATUS_TRANSITION(
+            HttpStatus.BAD_REQUEST,
+            "은행 거래 처리 상태 전이가 올바르지 않습니다."
+    ),
+
     BANK_TRANSACTION_CREATE_FAILED(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "은행 거래 생성에 실패했습니다."
     ),
 
     BANK_TRANSACTION_STATUS_UPDATE_FAILED(
-            HttpStatus.INTERNAL_SERVER_ERROR,
+            HttpStatus.CONFLICT,
             "은행 거래 처리 상태 변경에 실패했습니다."
     ),
 

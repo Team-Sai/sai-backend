@@ -72,8 +72,8 @@ class BankTransactionMapperTest {
 
     @Test
     @Transactional
-    @DisplayName("신규 은행 거래는 DB 기본값으로 PENDING 상태가 된다")
-    void insertOrGetIdAppliesPendingStatusByDefault() {
+    @DisplayName("신규 은행 거래는 PENDING 상태로 저장된다")
+    void insertOrGetIdSavesNewTransactionAsPending() {
         BankTransactionDTO bankTransaction = transaction(
                 uniqueExternalTransactionId(),
                 BankTransactionType.DEPOSIT,
@@ -89,6 +89,33 @@ class BankTransactionMapperTest {
 
         assertThat(savedTransaction.getProcessingStatus())
                 .isEqualTo(BankTransactionProcessingStatus.PENDING);
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("현재 상태가 일치할 때만 은행 거래 처리 상태를 변경한다")
+    void updateStatusUpdatesOnlyWhenCurrentStatusMatches() {
+        BankTransactionDTO bankTransaction = transaction(
+                uniqueExternalTransactionId(),
+                BankTransactionType.DEPOSIT,
+                LocalDateTime.of(2026, 8, 4, 10, 0)
+        );
+
+        bankTransactionMapper.insertOrGetId(bankTransaction);
+
+        int updatedCount = bankTransactionMapper.updateStatus(
+                bankTransaction.getBankTransactionId(),
+                BankTransactionProcessingStatus.PENDING,
+                BankTransactionProcessingStatus.APPLIED
+        );
+        int staleUpdatedCount = bankTransactionMapper.updateStatus(
+                bankTransaction.getBankTransactionId(),
+                BankTransactionProcessingStatus.PENDING,
+                BankTransactionProcessingStatus.FAILED
+        );
+
+        assertThat(updatedCount).isEqualTo(1);
+        assertThat(staleUpdatedCount).isZero();
     }
 
     @Test
@@ -122,6 +149,7 @@ class BankTransactionMapperTest {
         bankTransactionMapper.insertOrGetId(appliedDeposit);
         bankTransactionMapper.updateStatus(
                 appliedDeposit.getBankTransactionId(),
+                BankTransactionProcessingStatus.PENDING,
                 BankTransactionProcessingStatus.APPLIED
         );
 

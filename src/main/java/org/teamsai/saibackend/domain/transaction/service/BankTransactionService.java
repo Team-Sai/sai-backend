@@ -19,10 +19,11 @@ public class BankTransactionService {
 
     @Transactional
     public Long saveIfNotExists(BankTransactionDTO bankTransaction) {
+        validateNewBankTransaction(bankTransaction);
+
         bankTransactionMapper.insertOrGetId(bankTransaction);
 
         Long bankTransactionId = bankTransaction.getBankTransactionId();
-
         if (bankTransactionId == null) {
             throw BankTransactionErrorCode
                     .BANK_TRANSACTION_CREATE_FAILED
@@ -39,11 +40,15 @@ public class BankTransactionService {
     @Transactional
     public void updateStatus(
             Long bankTransactionId,
-            BankTransactionProcessingStatus processingStatus
+            BankTransactionProcessingStatus currentStatus,
+            BankTransactionProcessingStatus nextStatus
     ) {
+        validateStatusTransition(currentStatus, nextStatus);
+
         int updatedCount = bankTransactionMapper.updateStatus(
                 bankTransactionId,
-                processingStatus
+                currentStatus,
+                nextStatus
         );
 
         if (updatedCount != 1) {
@@ -51,5 +56,68 @@ public class BankTransactionService {
                     .BANK_TRANSACTION_STATUS_UPDATE_FAILED
                     .toException();
         }
+    }
+
+    private void validateNewBankTransaction(
+            BankTransactionDTO bankTransaction
+    ) {
+        if (bankTransaction == null
+                || hasInvalidRequiredField(bankTransaction)
+                || hasInvalidAmount(bankTransaction)
+                || hasInvalidInitialStatus(bankTransaction)) {
+            throw BankTransactionErrorCode.INVALID_BANK_TRANSACTION
+                    .toException();
+        }
+    }
+
+    private boolean hasInvalidRequiredField(
+            BankTransactionDTO bankTransaction
+    ) {
+        return bankTransaction.getLinkedAccountId() == null
+                || isBlank(bankTransaction.getExternalTransactionId())
+                || bankTransaction.getTransactionType() == null
+                || bankTransaction.getTransactionAt() == null
+                || bankTransaction.getSyncedAt() == null;
+    }
+
+    private boolean hasInvalidAmount(BankTransactionDTO bankTransaction) {
+        return bankTransaction.getAmount() == null
+                || bankTransaction.getAmount().signum() <= 0;
+    }
+
+    private boolean hasInvalidInitialStatus(
+            BankTransactionDTO bankTransaction
+    ) {
+        return bankTransaction.getProcessingStatus() != null
+                && bankTransaction.getProcessingStatus()
+                != BankTransactionProcessingStatus.PENDING;
+    }
+
+    private void validateStatusTransition(
+            BankTransactionProcessingStatus currentStatus,
+            BankTransactionProcessingStatus nextStatus
+    ) {
+        if (currentStatus != BankTransactionProcessingStatus.PENDING
+                || !isTerminalStatus(nextStatus)) {
+            throw BankTransactionErrorCode
+                    .INVALID_BANK_TRANSACTION_STATUS_TRANSITION
+                    .toException();
+        }
+    }
+
+    private boolean isTerminalStatus(
+            BankTransactionProcessingStatus processingStatus
+    ) {
+        return processingStatus == BankTransactionProcessingStatus.APPLIED
+                || processingStatus
+                == BankTransactionProcessingStatus.UNMATCHED
+                || processingStatus
+                == BankTransactionProcessingStatus.NEEDS_CHECK
+                || processingStatus
+                == BankTransactionProcessingStatus.FAILED;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

@@ -26,7 +26,9 @@ public interface BankTransactionMapper {
 
     int updateStatus(
             @Param("bankTransactionId") Long bankTransactionId,
-            @Param("processingStatus") BankTransactionProcessingStatus
-                    processingStatus
+            @Param("currentStatus")
+            BankTransactionProcessingStatus currentStatus,
+            @Param("nextStatus")
+            BankTransactionProcessingStatus nextStatus
     );
 }

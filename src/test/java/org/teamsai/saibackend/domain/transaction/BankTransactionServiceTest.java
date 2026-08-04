@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -79,6 +80,54 @@ class BankTransactionServiceTest {
 
             verify(bankTransactionMapper).insertOrGetId(bankTransaction);
         }
+
+        @Test
+        @DisplayName("필수 값이 없으면 은행 거래 정보 오류 예외가 발생한다")
+        void throwsInvalidBankTransactionWhenRequiredFieldIsMissing() {
+            BankTransactionDTO bankTransaction = BankTransactionDTO.builder()
+                    .linkedAccountId(LINKED_ACCOUNT_ID)
+                    .externalTransactionId(EXTERNAL_TRANSACTION_ID)
+                    .amount(new BigDecimal("10000.00"))
+                    .transactionType(BankTransactionType.DEPOSIT)
+                    .transactionAt(LocalDateTime.of(2026, 8, 4, 10, 0))
+                    .build();
+
+            assertTransactionExceptionThrownBy(
+                    () -> bankTransactionService.saveIfNotExists(
+                            bankTransaction
+                    ),
+                    BankTransactionErrorCode.INVALID_BANK_TRANSACTION
+            );
+
+            verify(bankTransactionMapper, never()).insertOrGetId(
+                    bankTransaction
+            );
+        }
+
+        @Test
+        @DisplayName("신규 거래 상태가 PENDING이 아니면 은행 거래 정보 오류 예외가 발생한다")
+        void throwsInvalidBankTransactionWhenInitialStatusIsNotPending() {
+            BankTransactionDTO bankTransaction = BankTransactionDTO.builder()
+                    .linkedAccountId(LINKED_ACCOUNT_ID)
+                    .externalTransactionId(EXTERNAL_TRANSACTION_ID)
+                    .amount(new BigDecimal("10000.00"))
+                    .transactionType(BankTransactionType.DEPOSIT)
+                    .processingStatus(BankTransactionProcessingStatus.APPLIED)
+                    .transactionAt(LocalDateTime.of(2026, 8, 4, 10, 0))
+                    .syncedAt(LocalDateTime.of(2026, 8, 4, 10, 5))
+                    .build();
+
+            assertTransactionExceptionThrownBy(
+                    () -> bankTransactionService.saveIfNotExists(
+                            bankTransaction
+                    ),
+                    BankTransactionErrorCode.INVALID_BANK_TRANSACTION
+            );
+
+            verify(bankTransactionMapper, never()).insertOrGetId(
+                    bankTransaction
+            );
+        }
     }
 
     @Nested
@@ -106,21 +155,44 @@ class BankTransactionServiceTest {
     class UpdateStatus {
 
         @Test
-        @DisplayName("은행 거래 처리 상태를 변경한다")
-        void updatesTransactionProcessingStatus() {
+        @DisplayName("PENDING 상태의 은행 거래를 최종 상태로 변경한다")
+        void updatesPendingTransactionToTerminalStatus() {
             given(bankTransactionMapper.updateStatus(
                     BANK_TRANSACTION_ID,
+                    BankTransactionProcessingStatus.PENDING,
                     BankTransactionProcessingStatus.APPLIED
             )).willReturn(1);
 
             bankTransactionService.updateStatus(
                     BANK_TRANSACTION_ID,
+                    BankTransactionProcessingStatus.PENDING,
                     BankTransactionProcessingStatus.APPLIED
             );
 
             verify(bankTransactionMapper).updateStatus(
                     BANK_TRANSACTION_ID,
+                    BankTransactionProcessingStatus.PENDING,
                     BankTransactionProcessingStatus.APPLIED
+            );
+        }
+
+        @Test
+        @DisplayName("허용되지 않은 상태 전이면 상태 전이 오류 예외가 발생한다")
+        void throwsInvalidStatusTransitionWhenTransitionIsNotAllowed() {
+            assertTransactionExceptionThrownBy(
+                    () -> bankTransactionService.updateStatus(
+                            BANK_TRANSACTION_ID,
+                            BankTransactionProcessingStatus.APPLIED,
+                            BankTransactionProcessingStatus.FAILED
+                    ),
+                    BankTransactionErrorCode
+                            .INVALID_BANK_TRANSACTION_STATUS_TRANSITION
+            );
+
+            verify(bankTransactionMapper, never()).updateStatus(
+                    BANK_TRANSACTION_ID,
+                    BankTransactionProcessingStatus.APPLIED,
+                    BankTransactionProcessingStatus.FAILED
             );
         }
 
@@ -129,12 +201,14 @@ class BankTransactionServiceTest {
         void throwsStatusUpdateFailedWhenUpdateCountIsNotOne() {
             given(bankTransactionMapper.updateStatus(
                     BANK_TRANSACTION_ID,
+                    BankTransactionProcessingStatus.PENDING,
                     BankTransactionProcessingStatus.APPLIED
             )).willReturn(0);
 
             assertTransactionExceptionThrownBy(
                     () -> bankTransactionService.updateStatus(
                             BANK_TRANSACTION_ID,
+                            BankTransactionProcessingStatus.PENDING,
                             BankTransactionProcessingStatus.APPLIED
                     ),
                     BankTransactionErrorCode
