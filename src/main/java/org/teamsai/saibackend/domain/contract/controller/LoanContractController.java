@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
+import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
@@ -45,23 +46,6 @@ public class LoanContractController {
         return "contract/contract-signature";
     }
 
-    //채무자 차용증 확인 페이지
-    @Operation(hidden = true)
-    @GetMapping("/{contractId}/approve")
-    public String contractDebtorApprovePage(@PathVariable Long contractId, Model model) {
-        model.addAttribute("contractId", contractId);
-        return "contract/contract-debtor-approve";
-    }
-
-    //채무자 전자서명 페이지
-    @Operation(hidden = true)
-    @GetMapping("/{contractId}/approve/signature")
-    public String contractDebtorSignaturePage(@PathVariable Long contractId, Model model) {
-        model.addAttribute("contractId", contractId);
-        return "contract/contract-debtor-signature";
-    }
-
-
     @Operation(
             summary = "차용증 최초 생성",
             description = "채권자가 입력한 정보로 차용증 계약서를 최초 생성합니다."
@@ -82,7 +66,7 @@ public class LoanContractController {
 
     })
 
-
+    //차용증 작성 시 본인인증 후 작성
     @ResponseBody
     @PostMapping("/write")
     public Long createContract(
@@ -91,6 +75,39 @@ public class LoanContractController {
     ) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         return contractService.createContract(request, userDetails.getUserId());
+    }
+
+    @Operation(
+            summary = "채무자 계약 합류",
+            description = "본인인증을 완료한 채무자가 차용증에 채무자로 연결됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "채무자 연결 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "차용증을 찾을 수 없음"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 채무자가 연결되었거나 본인인증이 완료되지 않음"
+            )
+    })
+    @ResponseBody
+    @PatchMapping("/{contractId}/debtor")
+    public void linkDebtor(
+            @PathVariable Long contractId,
+            @Valid @RequestBody LoanContractDebtorLinkRequest request,
+            @Parameter(hidden = true) Authentication authentication
+    ) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        contractService.linkDebtor(contractId, userDetails.getUserId(), request);
     }
 
     @Operation(
@@ -124,6 +141,21 @@ public class LoanContractController {
         return contractService.submitDebtorSignature(contractId, userDetails.getUserId(), debtorAddress, signature);
     }
 
+    //채무자 차용증 확인 페이지
+    @Operation(hidden = true)
+    @GetMapping("/{contractId}/approve")
+    public String contractDebtorApprovePage(@PathVariable Long contractId, Model model) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-debtor-approve";
+    }
+
+    //채무자 전자서명 페이지
+    @Operation(hidden = true)
+    @GetMapping("/{contractId}/approve/signature")
+    public String contractDebtorSignaturePage(@PathVariable Long contractId, Model model) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-debtor-signature";
+    }
 
     @Operation(
             summary = "차용증 상세 조회",

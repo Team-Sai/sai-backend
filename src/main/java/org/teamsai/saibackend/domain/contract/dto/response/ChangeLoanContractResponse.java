@@ -1,46 +1,43 @@
-package org.teamsai.saibackend.domain.contract.dto;
+package org.teamsai.saibackend.domain.contract.dto.response;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
+import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class ChangeLoanContractResponse {
 
-public class LoanContractDTO {
+    private Long contractId;
 
-    private Long contractId;          // (PK)
     private Long previousContractId;
+    private Long creditorId;
+    private Long debtorId;
 
     private BigDecimal principalAmount;
     private BigDecimal interestRate;
-    private String repaymentType;
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private RepaymentMethod repaymentType;
+
     private LocalDate startDate;
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate maturityDate;
+
     private Integer repaymentDay;
 
-    private ContractStatus status;
     private String creditorAddress;
     private String debtorAddress;
     private String contractAlias;
     private String terms;
 
-    private Long creditorId;            // (FK)
-    private Long debtorId;              // (FK)
-
-    private String creditorSignature;
-    private String debtorSignature;
-
+    private ContractStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
 }

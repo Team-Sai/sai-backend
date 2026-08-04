@@ -44,7 +44,6 @@
         INSERT INTO loan_contract (
         creditor_id,
         creditor_address,
-        debtor_id,
         principal_amount,
         interest_rate,
         repayment_type,
@@ -57,9 +56,8 @@
         created_at,
         updated_at
         ) VALUES (
-        #{user.userId},
+        #{creditorId},
         #{request.creditorAddress},
-        #{debtor.userId},
         #{request.principalAmount},
         #{request.interestRate},
         #{request.repaymentType},
@@ -117,9 +115,54 @@
         lc.status             AS status
         FROM loan_contract lc
         JOIN users creditor ON creditor.user_id = lc.creditor_id
-        JOIN users debtor ON debtor.user_id = lc.debtor_id
+        LEFT JOIN users debtor ON debtor.user_id = lc.debtor_id
         WHERE lc.contract_id = #{contractId}
     </select>
 
+    <update id="updateDebtorId">
+        UPDATE loan_contract
+        SET
+        debtor_id = #{debtorId},
+        updated_at = NOW()
+        WHERE contract_id = #{contractId}
+    </update>
+
+    <insert id="insertChangedContract" useGeneratedKeys="true" keyProperty="contractId">
+        INSERT INTO loan_contract (
+        previous_contract_id,
+        creditor_id,
+        debtor_id,
+        principal_amount,
+        interest_rate,
+        repayment_type,
+        start_date,
+        maturity_date,
+        repayment_day,
+        creditor_address,
+        debtor_address,
+        contract_alias,
+        terms,
+        status,
+        created_at,
+        updated_at
+        ) VALUES (
+        #{previousContractId},
+        #{creditorId},
+        #{debtorId},
+        #{principalAmount},
+        #{interestRate},
+        #{repaymentType},
+        #{startDate},
+        #{maturityDate},
+        #{repaymentDay},
+        #{creditorAddress},
+        #{debtorAddress},
+        #{contractAlias},
+        #{terms},
+        #{status},
+        #{createdAt},
+        #{updatedAt}
+        )
+    </insert>
 
 </mapper>
