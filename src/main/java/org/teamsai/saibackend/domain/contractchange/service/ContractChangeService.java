@@ -24,6 +24,7 @@ public class ContractChangeService {
     private final ContractChangeMapper contractChangeMapper;
     private final LoanContractService loanContractService;
 
+
     public LoanContractResponse getContract(Long contractId, Long userID) {
         LoanContractResponse contract = loanContractService.findContract(contractId, userID);
 
@@ -31,6 +32,12 @@ public class ContractChangeService {
             throw ContractChangeErrorCode.CONTRACT_NOT_COMPLETED.toException();
         }
         return contract;
+    }
+
+    public LoanContractChangeDTO getChangeRequest(Long changeRequestId) {
+        return contractChangeMapper.findByChangeRequestId(changeRequestId)
+                .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
+
     }
 
     @Transactional

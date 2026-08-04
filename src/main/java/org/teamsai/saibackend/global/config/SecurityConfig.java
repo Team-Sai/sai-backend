@@ -66,6 +66,7 @@ public class SecurityConfig {
                                         "/mypage",
                                         "/mypage/",
                                         "/identity-test"
+
                                 )
                                 .permitAll()
 
