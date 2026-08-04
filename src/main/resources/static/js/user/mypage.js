@@ -237,10 +237,21 @@ document.addEventListener(
             return wrapper;
         }
 
-        function handleConnectAccountClick() {
-            window.location.href = FILE_PREVIEW
-                ? "../link/link.html"
-                : "/accounts/link";
+        async function handleConnectAccountClick() {
+            const token = sessionStorage.getItem("accessToken");
+
+            const response = await fetch("/api/accounts/link/start", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                window.alert("계좌 연동을 시작할 수 없습니다.");
+                return;
+            }
+
+            const { redirectUrl } = await response.json();
+            window.location.href = redirectUrl;
         }
 
         function renderMyPage(rawData) {
@@ -360,7 +371,6 @@ document.addEventListener(
                 throw new Error(meData.message || "내 정보 조회에 실패했습니다.");
             }
 
-            // 계좌 목록은 실패하더라도 내 정보 화면 자체는 보여준다 (부분 실패 허용)
             let accounts = [];
             if (accountsResponse.ok) {
                 const accountsData = await readJson(accountsResponse);
