@@ -135,8 +135,22 @@ class ContractChangeServiceTest {
 
             verify(contractChangeMapper).insert(any());
             verify(loanContractMapper).insertChangedContract(
-                    eq(CONTRACT_ID), any(), any(), any(), any(), any(), any(),
-                    any(), any(), any(), any(), any(), any(), any(), any()
+                    eq(CONTRACT_ID),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    eq(ContractStatus.PENDING),
+                    any(),
+                    any()
             );
         }
 

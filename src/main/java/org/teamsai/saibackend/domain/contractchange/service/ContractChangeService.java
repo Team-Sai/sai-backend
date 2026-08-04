@@ -83,6 +83,7 @@ public class ContractChangeService {
                 contract.getPrincipalAmount(),
                 request.getNewInterestRate(),
                 request.getNewRepaymentType(),
+                contract.getStartDate(),
                 request.getNewMaturityDate(),
                 contract.getRepaymentDay(),
                 contract.getCreditorAddress(),

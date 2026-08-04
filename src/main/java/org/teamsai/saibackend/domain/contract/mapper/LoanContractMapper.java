@@ -46,6 +46,7 @@ public interface LoanContractMapper {
             @Param("principalAmount") BigDecimal principalAmount,
             @Param("interestRate") BigDecimal interestRate,
             @Param("repaymentType") String repaymentType,
+            @Param("startDate") LocalDate startDate,
             @Param("maturityDate") LocalDate maturityDate,
             @Param("repaymentDay") Integer repaymentDay,
             @Param("creditorAddress") String creditorAddress,
