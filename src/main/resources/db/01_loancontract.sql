@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS loan_contract (
     contract_alias       VARCHAR(100) NOT NULL,
     terms                TEXT NULL,
 
-    creditor_signature   VARCHAR(500) NULL,
-    debtor_signature     VARCHAR(500) NULL,
+    creditor_signature   LONGTEXT NULL,
+    debtor_signature     LONGTEXT NULL,
 
     created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
