@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>연결 여부 모달</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+          th:href="@{/css/accounts/link-modal.css}"
+          href="/css/accounts/link-modal.css">
+</head>
+<script th:src="@{/js/accounts/link-modal.js}"
+        src="/js/accounts/link-modal.js"
+        defer></script>
+<body>
+<div id="link-modal-backdrop" class="modal-backdrop" hidden>
+    <div class="modal-card"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="link-modal-title">
+
+        <button class="modal-close" type="button" aria-label="닫기" id="link-modal-close">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+            </svg>
+        </button>
+
+        <div class="modal-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m3 10 9-6 9 6"></path>
+                <path d="M5 10v8"></path>
+                <path d="M9 10v8"></path>
+                <path d="M15 10v8"></path>
+                <path d="M19 10v8"></path>
+                <path d="M3 18h18"></path>
+                <path d="M2 21h20"></path>
+            </svg>
+        </div>
+
+        <h2 id="link-modal-title" class="modal-title">계좌를 연결할까요?</h2>
+
+        <p class="modal-desc">
+            가상 금융망 서비스를 통해 본인 계좌를 확인하고, 선택한 계좌의 정보를
+            사이원장에 연결합니다.
+        </p>
+
+        <div class="modal-section">
+            <h3 class="modal-section-title">조회 항목</h3>
+
+            <ul class="modal-list">
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 11v5"></path>
+                        <path d="M12 8h.01"></path>
+                    </svg>
+                    계좌 기본정보
+                </li>
+
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                        <path d="M2 10h20"></path>
+                    </svg>
+                    현재 잔액
+                </li>
+
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m17 2 4 4-4 4"></path>
+                        <path d="M3 11v-1a4 4 0 0 1 4-4h14"></path>
+                        <path d="m7 22-4-4 4-4"></path>
+                        <path d="M21 13v1a4 4 0 0 1-4 4H3"></path>
+                    </svg>
+                    입출금 거래내역
+                </li>
+            </ul>
+        </div>
+
+        <div class="modal-section">
+            <h3 class="modal-section-title">이용 확인</h3>
+
+            <ul class="modal-list modal-list-check">
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="m8 12 3 3 5-6"></path>
+                    </svg>
+                    정산 입금 확인
+                </li>
+
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="m8 12 3 3 5-6"></path>
+                    </svg>
+                    차용금 지급 확인
+                </li>
+
+                <li>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="m8 12 3 3 5-6"></path>
+                    </svg>
+                    원금 및 이자 상환 확인
+                </li>
+            </ul>
+        </div>
+
+        <label class="modal-agree">
+            <input type="checkbox" id="link-agree-checkbox">
+            <span>계좌정보 조회 및 이용에 동의합니다.</span>
+        </label>
+
+        <button type="button" class="modal-agree-detail" id="link-agree-detail">
+            자세히 보기
+        </button>
+
+        <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-secondary" id="link-modal-cancel">
+                취소
+            </button>
+
+            <button type="button" class="modal-btn modal-btn-primary" id="link-modal-confirm" disabled>
+                동의하고 계속하기
+            </button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

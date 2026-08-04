@@ -1,12 +1,14 @@
 :root {
     --page: #f7f8fb;
     --surface: #ffffff;
-    --text: #17191d;
-    --muted: #697080;
-    --line: #cfd5e2;
-    --primary: #006e2a;
-    --soft: #f1f1ff;
+    --text: #191b23;
+    --muted: #434655;
+    --line: #c3c6d7;
+    --primary: #006d44;
+    --soft: #f3f3fe;
     --error: #ba1a1a;
+    --badge-bg: #ffdad6;
+    --badge-text: #93000a;
 }
 
 * {
@@ -174,16 +176,21 @@ svg {
 }
 
 .page-title h1 {
-    margin: 0;
-    font-size: 28px;
-    line-height: 1.25;
-    letter-spacing: -0.04em;
+    font-size: 32px;
+    letter-spacing: -0.02em;
 }
 
 .page-title p {
-    margin: 6px 0 0;
+    font-size: 16px;
+}
+
+.profile-name {
+    font-size: 24px;         /* 21px → 24px */
+}
+
+.member-email {
+    font-size: 14px;         /* 12px → 14px */
     color: var(--muted);
-    font-size: 12px;
 }
 
 .mypage-error {
@@ -279,12 +286,6 @@ svg {
     min-width: 100px;
     font-size: 21px;
     letter-spacing: -0.03em;
-}
-
-.verification-status {
-    min-width: 78px;
-    font-size: 10px;
-    font-weight: 600;
 }
 
 .member-email {
@@ -393,10 +394,26 @@ svg {
 
 .account-list {
     min-height: 156px;
+    max-height: 260px;
+    overflow-y: auto;
     margin-top: 18px;
     display: flex;
     flex-direction: column;
     gap: 11px;
+    padding-right: 4px;
+}
+
+.account-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.account-list::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 999px;
+}
+
+.account-list::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .account-item {
@@ -411,14 +428,14 @@ svg {
 }
 
 .bank-icon {
-    width: 40px;
-    height: 40px;
+    width: 5px;
+    height: 5px;
     flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
     background: white;
-    border: 1px solid #e1e3eb;
+    border: 1px solid #006C49;
     border-radius: 10px;
 }
 
@@ -486,6 +503,94 @@ svg {
     display: inline-block;
 }
 
+.account-empty {
+    height: 100%;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 32px 20px;
+    text-align: center;
+    background: #f7f8fc;
+    border: 1.5px dashed var(--line);
+    border-radius: 10px;
+}
+
+.account-empty-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--muted);
+}
+
+.account-empty-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.account-empty-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.account-empty-desc {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.account-empty-button {
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 18px;
+    color: white;
+    background: var(--primary);
+    border: 0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.account-empty-button:hover {
+    background: #00591f;
+}
+
+.account-empty-button svg {
+    width: 16px;
+    height: 16px;
+}
+.verification-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    color: var(--badge-text);
+    background: var(--badge-bg);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    white-space: nowrap;
+}
+
+.verification-status[hidden] {
+    display: none;
+}
+.detail-value-mono {
+    font-family: "Courier Prime", "JetBrains Mono", monospace;
+}
+
 @media (max-width: 820px) {
     .search-box {
         display: none;
@@ -496,7 +601,7 @@ svg {
     }
 }
 
-@media (max-width: 640px) {
+@media(max-width: 640px){
     .top-header {
         padding: 0 18px;
     }
