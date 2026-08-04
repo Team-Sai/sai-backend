@@ -12,6 +12,50 @@ public enum SettlementErrorCode implements BaseErrorCode<DomainException> {
     SETTLEMENT_CREATE_FAILED(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "정산 생성에 실패했습니다."
+    ),
+    SETTLEMENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "존재하지 않는 정산입니다."
+    ),
+
+    SETTLEMENT_ACCESS_DENIED(
+            HttpStatus.FORBIDDEN,
+            "해당 정산에 대한 접근 권한이 없습니다."
+    ),
+
+    ALREADY_CLOSED_SETTLEMENT(
+            HttpStatus.BAD_REQUEST,
+            "이미 종료된 정산입니다."
+    ),
+
+    ALREADY_SETTLEMENT_PARTICIPANT(
+            HttpStatus.CONFLICT,
+            "이미 참여 중인 회원입니다."
+    ),
+
+    DUPLICATE_SETTLEMENT_INVITATION(
+            HttpStatus.CONFLICT,
+            "이미 대기 중인 초대가 존재합니다."
+    ),
+
+    SETTLEMENT_INVITATION_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "존재하지 않는 정산 초대입니다."
+    ),
+
+    INVITATION_ACCESS_DENIED(
+            HttpStatus.FORBIDDEN,
+            "해당 초대를 처리할 권한이 없습니다."
+    ),
+
+    INVITATION_ALREADY_PROCESSED(
+            HttpStatus.CONFLICT,
+            "이미 처리된 초대입니다."
+    ),
+
+    SETTLEMENT_INVITATION_CREATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 초대 생성에 실패했습니다."
     );
 
     private final HttpStatus httpStatus;

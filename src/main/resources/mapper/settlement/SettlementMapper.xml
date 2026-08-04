@@ -5,6 +5,25 @@
 
 <mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper">
 
+    <resultMap id="settlementResultMap" type="org.teamsai.saibackend.domain.settlement.dto.SettlementDTO">
+        <id property="settlementId" column="settlement_id"/>
+        <result property="ownerId" column="owner_id"/>
+        <result property="settlementType" column="settlement_type"/>
+        <result property="settlementStatus" column="settlement_status"/>
+        <result property="settlementCategory" column="settlement_category"/>
+        <result property="title" column="title"/>
+        <result property="splitType" column="split_type"/>
+        <result property="dueDate" column="due_date"/>
+        <result property="cycleRule" column="cycle_rule"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="closedAt" column="closed_at"/>
+        <result property="status" column="status"/>
+        <result property="cycleDate" column="cycle_date"/>
+        <result property="invitationToken" column="invitation_token"/>
+    </resultMap>
+
     <insert id="insertSettlement"
             parameterType="org.teamsai.saibackend.domain.settlement.dto.SettlementDTO"
             useGeneratedKeys="true"
@@ -31,7 +50,28 @@
         #{dueDate},
         #{createdAt}
         )
-
     </insert>
+
+    <select id="findById" resultMap="settlementResultMap">
+        SELECT
+        settlement_id,
+        owner_id,
+        settlement_type,
+        settlement_status,
+        settlement_category,
+        title,
+        split_type,
+        due_date,
+        cycle_rule,
+        start_date,
+        end_date,
+        created_at,
+        closed_at,
+        status,
+        cycle_date,
+        invitation_token
+        FROM settlement
+        WHERE settlement_id = #{settlementId}
+    </select>
 
 </mapper>

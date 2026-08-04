@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementInvitationMapper">
+
+    <resultMap
+            id="settlementInvitationResultMap"
+            type="org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO">
+
+        <id
+                property="invitationId"
+                column="invitation_id"
+        />
+
+        <result
+                property="settlementId"
+                column="settlement_id"
+        />
+
+        <result
+                property="invitedUserId"
+                column="user_id"
+        />
+
+        <result
+                property="invitationStatus"
+                column="invitation_status"
+        />
+
+        <result
+                property="invitedAt"
+                column="invited_at"
+        />
+
+        <result
+                property="acceptedAt"
+                column="accepted_at"
+        />
+
+    </resultMap>
+
+    <insert
+            id="insert"
+            parameterType="org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO"
+            useGeneratedKeys="true"
+            keyProperty="invitationId"
+            keyColumn="invitation_id">
+
+        INSERT INTO settlement_invitation (
+        settlement_id,
+        user_id,
+        invitation_status,
+        invited_at,
+        accepted_at
+        )
+        VALUES (
+        #{settlementId},
+        #{invitedUserId},
+        #{invitationStatus},
+        #{invitedAt},
+        #{acceptedAt}
+        )
+
+    </insert>
+
+    <select
+            id="existsInvitedInvitation"
+            resultType="boolean">
+
+        SELECT EXISTS (
+        SELECT 1
+        FROM settlement_invitation
+        WHERE settlement_id = #{settlementId}
+        AND user_id = #{userId}
+        AND invitation_status = 'INVITED'
+        )
+
+    </select>
+
+    <select
+            id="findById"
+            resultMap="settlementInvitationResultMap">
+
+        SELECT
+        invitation_id,
+        settlement_id,
+        user_id,
+        invitation_status,
+        invited_at,
+        accepted_at
+        FROM settlement_invitation
+        WHERE invitation_id = #{invitationId}
+
+    </select>
+
+    <select
+            id="findReceivedInvitations"
+            resultType="org.teamsai.saibackend.domain.settlement.dto.response.ReceivedSettlementInvitationResponse">
+
+        SELECT
+        si.invitation_id AS invitationId,
+        si.settlement_id AS settlementId,
+        s.title AS settlementTitle,
+        owner.name AS ownerName,
+        si.invitation_status AS invitationStatus,
+        si.invited_at AS invitedAt,
+        si.accepted_at AS acceptedAt
+        FROM settlement_invitation si
+        JOIN settlement s
+        ON s.settlement_id = si.settlement_id
+        JOIN users owner
+        ON owner.user_id = s.owner_id
+        WHERE si.user_id = #{userId}
+        ORDER BY
+        CASE
+        WHEN si.invitation_status = 'INVITED' THEN 0
+        ELSE 1
+        END,
+        si.invited_at DESC
+
+    </select>
+
+    <update id="accept">
+
+        UPDATE settlement_invitation
+        SET invitation_status = 'ACCEPTED',
+        accepted_at = #{acceptedAt}
+        WHERE invitation_id = #{invitationId}
+        AND invitation_status = 'INVITED'
+
+    </update>
+
+    <update id="reject">
+
+        UPDATE settlement_invitation
+        SET invitation_status = 'REJECTED'
+        WHERE invitation_id = #{invitationId}
+        AND invitation_status = 'INVITED'
+
+    </update>
+
+</mapper>
