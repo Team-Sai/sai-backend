@@ -81,6 +81,7 @@
 
     </select>
 
+    <!-- 초대 코드 기반 회원 조회 -->
     <select id="findByUserToken"
             resultMap="userResultMap">
 
@@ -95,12 +96,6 @@
         FROM users
         WHERE user_token = #{userToken}
 
-    </select>
-
-    <select id="findUserKeyByUserToken" parameterType="string" resultType="string">
-        SELECT user_key
-        FROM users
-        WHERE user_token = #{userToken}
     </select>
 
     <select id="findUserKeyByUserId" resultType="java.lang.String">
@@ -137,8 +132,6 @@
         )
 
     </select>
-
-
 
     <select id="findUserKeyById"
             resultType="string">
