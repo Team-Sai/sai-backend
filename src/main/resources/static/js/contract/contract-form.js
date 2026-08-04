@@ -175,7 +175,7 @@
     nextBtn.hidden = true;
 
     try {
-      const response = await fetch(`/${contractId}`, {
+      const response = await fetch(`/api/contracts/${contractId}/listdetails`, {
         method: "GET",
         headers: authHeaders({ Accept: "application/json" }),
       });

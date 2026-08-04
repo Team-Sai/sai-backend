@@ -128,15 +128,54 @@ class LoanContractServiceTest {
         @DisplayName("서명 파일을 저장하고 상태를 PENDING으로 변경한다")
         void submitCreditorSignatureSuccess() {
             MultipartFile signature = mock(MultipartFile.class);
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
             given(fileService.saveSignatureFile(CONTRACT_ID, signature))
                     .willReturn("uploads/signatures/1_signature.png");
 
-            ContractStatus status = loanContractService.submitCreditorSignature(CONTRACT_ID, signature);
+            ContractStatus status = loanContractService.submitCreditorSignature(CONTRACT_ID, CREDITOR_ID, signature);
 
             verify(contractMapper).updateCreditorSignature(
                     CONTRACT_ID, "uploads/signatures/1_signature.png", ContractStatus.PENDING
             );
             assertThat(status).isEqualTo(ContractStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("계약 당사자가 아닌 사용자가 제출하면 예외가 발생하고 서명이 저장되지 않는다")
+        void submitCreditorSignatureFailsWhenUserIsNotCreditor() {
+            MultipartFile signature = mock(MultipartFile.class);
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
+
+            assertThatThrownBy(() ->
+                    loanContractService.submitCreditorSignature(CONTRACT_ID, OTHER_USER_ID, signature)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractMapper, never()).updateCreditorSignature(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("계약서를 찾을 수 없으면 예외가 발생하고 서명이 저장되지 않는다")
+        void submitCreditorSignatureFailsWhenContractNotFound() {
+            MultipartFile signature = mock(MultipartFile.class);
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() ->
+                    loanContractService.submitCreditorSignature(CONTRACT_ID, CREDITOR_ID, signature)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_NOT_FOUND)
+                    );
+
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractMapper, never()).updateCreditorSignature(any(), any(), any());
         }
     }
 
@@ -145,18 +184,89 @@ class LoanContractServiceTest {
     class SubmitDebtorSignature {
 
         @Test
-        @DisplayName("서명 파일을 저장하고 상태를 COMPLETED로 변경한다")
+        @DisplayName("채무자 본인이 제출하면 서명 파일과 주소를 저장하고 상태를 COMPLETED로 변경한다")
         void submitDebtorSignatureSuccess() {
             MultipartFile signature = mock(MultipartFile.class);
+            String debtorAddress = "서울특별시 마포구 월드컵로 1";
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
             given(fileService.saveSignatureFile(CONTRACT_ID, signature))
                     .willReturn("uploads/signatures/1_signature.png");
 
-            ContractStatus status = loanContractService.submitDebtorSignature(CONTRACT_ID, signature);
+            ContractStatus status =
+                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, debtorAddress, signature);
 
             verify(contractMapper).updateDebtorSignature(
-                    CONTRACT_ID, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
+                    CONTRACT_ID, debtorAddress, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
             );
             assertThat(status).isEqualTo(ContractStatus.COMPLETED);
+        }
+
+        @Test
+        @DisplayName("채무자 주소가 빈 문자열이어도 그대로 전달되어 저장된다")
+        void submitDebtorSignatureWithBlankAddress() {
+            MultipartFile signature = mock(MultipartFile.class);
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
+            given(fileService.saveSignatureFile(CONTRACT_ID, signature))
+                    .willReturn("uploads/signatures/1_signature.png");
+
+            loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, "", signature);
+
+            verify(contractMapper).updateDebtorSignature(
+                    CONTRACT_ID, "", "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
+            );
+        }
+
+        @Test
+        @DisplayName("채무자 주소가 null이어도 그대로 전달되어 저장된다")
+        void submitDebtorSignatureWithNullAddress() {
+            MultipartFile signature = mock(MultipartFile.class);
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
+            given(fileService.saveSignatureFile(CONTRACT_ID, signature))
+                    .willReturn("uploads/signatures/1_signature.png");
+
+            loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, null, signature);
+
+            verify(contractMapper).updateDebtorSignature(
+                    CONTRACT_ID, null, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
+            );
+        }
+
+        @Test
+        @DisplayName("계약 당사자가 아닌 사용자가 제출하면 예외가 발생하고 서명이 저장되지 않는다")
+        void submitDebtorSignatureFailsWhenUserIsNotDebtor() {
+            MultipartFile signature = mock(MultipartFile.class);
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
+
+            assertThatThrownBy(() ->
+                    loanContractService.submitDebtorSignature(CONTRACT_ID, OTHER_USER_ID, "아무 주소", signature)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractMapper, never()).updateDebtorSignature(any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("계약서를 찾을 수 없으면 예외가 발생하고 서명이 저장되지 않는다")
+        void submitDebtorSignatureFailsWhenContractNotFound() {
+            MultipartFile signature = mock(MultipartFile.class);
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() ->
+                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, "아무 주소", signature)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_NOT_FOUND)
+                    );
+
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractMapper, never()).updateDebtorSignature(any(), any(), any(), any());
         }
     }
 

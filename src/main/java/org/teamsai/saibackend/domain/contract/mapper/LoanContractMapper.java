@@ -22,13 +22,14 @@ public interface LoanContractMapper {
 
     void updateCreditorSignature(
             @Param("contractId") Long contractId,
-            @Param("signaturePath") String signaturePath,
+            @Param("signatureData") String signatureData,
             @Param("status") ContractStatus status
     );
 
     void updateDebtorSignature(
             @Param("contractId") Long contractId,
-            @Param("signaturePath") String signaturePath,
+            @Param("debtorAddress") String debtorAddress,
+            @Param("signatureData") String signatureData,
             @Param("status") ContractStatus status
     );
 
