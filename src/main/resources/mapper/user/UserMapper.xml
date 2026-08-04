@@ -84,7 +84,7 @@
 
     </select>
 
-    <!-- 정산 초대 코드 기반 회원 조회 -->
+    <!-- 초대 코드 기반 회원 조회 -->
     <select id="findByUserToken"
             resultMap="userResultMap">
 
