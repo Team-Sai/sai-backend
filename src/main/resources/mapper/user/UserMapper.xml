@@ -9,7 +9,6 @@
                type="org.teamsai.saibackend.domain.user.dto.UserDTO">
 
         <id property="userId" column="user_id"/>
-
         <result property="userToken" column="user_token"/>
         <result property="userKey" column="user_key"/>
         <result property="email" column="email"/>
@@ -57,7 +56,6 @@
         SELECT
         user_id,
         user_token,
-        user_key,
         email,
         password,
         name,
@@ -67,7 +65,6 @@
 
     </select>
 
-    <!-- 내부 PK 기반 회원 조회 -->
     <select id="findById"
             resultMap="userResultMap">
 
@@ -84,7 +81,7 @@
 
     </select>
 
-    <!-- 정산 초대 코드 기반 회원 조회 -->
+    <!-- 초대 코드 기반 회원 조회 -->
     <select id="findByUserToken"
             resultMap="userResultMap">
 
@@ -101,11 +98,28 @@
 
     </select>
 
+    <select id="findUserKeyByUserId" resultType="java.lang.String">
+        SELECT user_key
+        FROM users
+        WHERE user_id = #{userId}
+    </select>
+
+    <update id="updateUserKey">
+        UPDATE users
+        SET user_key = #{userKey}
+        WHERE user_token = #{userToken}
+    </update>
+
     <delete id="deleteById">
 
         DELETE FROM users
         WHERE user_id = #{userId}
 
+    </delete>
+
+    <delete id="deleteByUserToken">
+        DELETE FROM users
+        WHERE user_token = #{userToken}
     </delete>
 
     <select id="existsByUserToken"
