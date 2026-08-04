@@ -1,10 +1,7 @@
 package org.teamsai.saibackend.domain.settlement.dto;
 
 import lombok.*;
-import org.teamsai.saibackend.domain.settlement.type.CycleRule;
-import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
-import org.teamsai.saibackend.domain.settlement.type.SettlementType;
-import org.teamsai.saibackend.domain.settlement.type.SplitType;
+import org.teamsai.saibackend.domain.settlement.type.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,5 +32,5 @@ public class SettlementDTO {
     private LocalDateTime createdAt;
     private LocalDateTime closedAt;
 
-    private String status;
+    private SettlementDirection status;
 }
