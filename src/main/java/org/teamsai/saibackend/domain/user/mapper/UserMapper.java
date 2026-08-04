@@ -27,16 +27,6 @@ public interface UserMapper {
             @Param("userToken") String userToken
     );
 
-    int updateUserKey(
-            @Param("userToken") String userToken,
-            @Param("userKey") String userKey
-    );
-
-    String findUserKeyByUserToken(
-            @Param("userToken") String userToken
-    );
-
-
     int deleteByUserId(Long userId);
 
     boolean existsByUserToken(
@@ -46,4 +36,5 @@ public interface UserMapper {
     String findUserKeyByUserId(
             @Param("userId") Long userId
     );
+    int updateUserKeyByUserId(@Param("userId") Long userId, @Param("userKey") String userKey);
 }

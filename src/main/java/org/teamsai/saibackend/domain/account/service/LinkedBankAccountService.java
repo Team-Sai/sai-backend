@@ -61,6 +61,38 @@ public class LinkedBankAccountService {
         return dtosToSave.stream().map(LinkedBankAccountResponse::from).toList();
     }
 
+    @Transactional
+    public List<LinkedBankAccountResponse> linkAccountsByIds(Long userId, String userKey, List<Long> accountIds) {
+        List<LinkedBankAccountDTO> dtosToSave = accountIds.stream()
+                .map(accountId -> {
+                    AccountDetailResponse detail;
+                    try {
+                        detail = mockBankClient.getAccountDetail(accountId, userKey);
+                    } catch (RestClientException e) {
+                        log.warn("[LinkedBankAccountService] 계좌 상세 조회 실패 - accountId: {}", accountId, e);
+                        throw AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
+                    }
+
+                    return LinkedBankAccountDTO.builder()
+                            .userId(userId)
+                            .accountId(accountId)
+                            .bankCode(detail.bankCode())
+                            .accountNumber(detail.accountNumber())
+                            .accountAlias(detail.accountName())
+                            .accountHolderName(detail.accountHolderName())
+                            .balance(detail.balance())
+                            .connectionStatus(ConnectionStatus.AVAILABLE)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                })
+                .toList();
+
+        dtosToSave.forEach(linkedBankAccountMapper::insertOne);
+
+        return dtosToSave.stream().map(LinkedBankAccountResponse::from).toList();
+    }
+
     @Transactional(readOnly = true)
     public List<LinkedBankAccountResponse> getLinkedAccounts(Long userId) {
         if (userId == null) {

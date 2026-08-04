@@ -43,6 +43,38 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public String createLinkStateToken(Long userId) {
+        Date issuedAt = new Date();
+        Date expiration = new Date(issuedAt.getTime() + 10 * 60 * 1000);
+
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .claim("purpose", "bank-link")
+                .issuedAt(issuedAt)
+                .expiration(expiration)
+                .signWith(signingKey)
+                .compact();
+    }
+
+    public Optional<Long> getUserIdFromLinkState(String token) {
+        try {
+            Claims claims = parseClaims(token);
+
+            if (!"bank-link".equals(claims.get("purpose", String.class))) {
+                return Optional.empty();
+            }
+
+            String subject = claims.getSubject();
+            if (subject == null || subject.isBlank()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(Long.valueOf(subject));
+        } catch (JwtException | IllegalArgumentException exception) {
+            return Optional.empty();
+        }
+    }
+
     public Optional<Long> getUserIdIfValid(String token) {
         try {
             Claims claims = parseClaims(token);

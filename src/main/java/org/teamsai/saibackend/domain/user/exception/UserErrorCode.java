@@ -44,6 +44,14 @@ public enum UserErrorCode
     CANNOT_SELECT_SELF(
             HttpStatus.BAD_REQUEST,
         "본인은 요청 대상으로 선택할 수 없습니다."
+    ),
+    ALREADY_LINKED_USER(
+            HttpStatus.ALREADY_REPORTED,
+            "이미 연동된 회원입니다."
+    ),
+    INVALID_LINK_STATE(
+            HttpStatus.BAD_REQUEST,
+            "유효하지 않거나 만료된 연동 요청입니다. 다시 시도해주세요."
     );
 
     private final HttpStatus httpStatus;
