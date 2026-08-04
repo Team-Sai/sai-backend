@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.cglib.core.Local;
-import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,12 +29,11 @@ public class ContractChangeRequest {
     private BigDecimal newInterestRate;
 
     @NotBlank(message = "상환 방식은 필수입니다.")
-    @NotNull(message = "상환 방식은 필수입니다.")
-    private RepaymentMethod newRepaymentType;
+    private String newRepaymentType;
 
     @NotNull(message = "변경 상환일은 필수입니다.")
     @Future(message = "변경 상환일은 오늘 이후 날짜여야 합니다.")
-    private LocalDate newRepaymentDate;
+    private Integer newRepaymentDate;
 
 
 

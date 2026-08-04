@@ -30,7 +30,7 @@ public class ChangeLoanContractResponse {
     private LocalDate startDate;
     private LocalDate maturityDate;
 
-    private LocalDate repaymentDay;
+    private Integer repaymentDay;
 
     private String creditorAddress;
     private String debtorAddress;

@@ -13,7 +13,6 @@ import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
-import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
 import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
 import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
@@ -31,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,9 +43,6 @@ class ContractChangeServiceTest {
 
     @Mock
     private ContractChangeMapper contractChangeMapper;
-
-    @Mock
-    private LoanContractMapper loanContractMapper;
 
     @Mock
     private LoanContractService loanContractService;
@@ -117,8 +114,8 @@ class ContractChangeServiceTest {
                 .changeReason("이자율 조정 요청")
                 .newMaturityDate(LocalDate.of(2027, 1, 1))
                 .newInterestRate(BigDecimal.valueOf(5.0))
-                .newRepaymentType(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST)
-                .newRepaymentDate(LocalDate.of(2027, 1, 15))
+                .newRepaymentType(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST.name())
+                .newRepaymentDate(15)
                 .build();
     }
 
@@ -140,7 +137,7 @@ class ContractChangeServiceTest {
 
             ArgumentCaptor<ChangeLoanContractResponse> captor =
                     ArgumentCaptor.forClass(ChangeLoanContractResponse.class);
-            verify(loanContractMapper).insertChangedContract(captor.capture());
+            verify(loanContractService).insertChangedContract(captor.capture());
 
             ChangeLoanContractResponse changedContract = captor.getValue();
             assertThat(changedContract.getPreviousContractId()).isEqualTo(CONTRACT_ID);
@@ -200,6 +197,30 @@ class ContractChangeServiceTest {
                             exception -> assertThat(exception.getErrorCode())
                                     .isEqualTo(ContractChangeErrorCode.NOT_CONTRACT_PARTY)
                     );
+        }
+
+        @Test
+        @DisplayName("채무자가 요청하면 예외가 발생하고 저장하지 않는다")
+        void requestChangeFailsWhenRequesterIsDebtor() {
+            LoanContractResponse contract = LoanContractResponse.builder()
+                    .contractId(CONTRACT_ID)
+                    .status(ContractStatus.COMPLETED)
+                    .creditorId(888L)
+                    .debtorId(USER_ID)   // ← 요청자가 채무자인 경우
+                    .build();
+
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(contract);
+
+            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.NOT_CREDITOR)
+                    );
+
+            verify(contractChangeMapper, never()).insert(any());
+            verify(loanContractService, never()).insertChangedContract(any());
         }
     }
 }

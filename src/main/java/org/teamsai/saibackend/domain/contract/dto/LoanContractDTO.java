@@ -1,5 +1,6 @@
 package org.teamsai.saibackend.domain.contract.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
