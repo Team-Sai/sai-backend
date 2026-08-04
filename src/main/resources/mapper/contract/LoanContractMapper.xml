@@ -122,13 +122,14 @@
     </select>
 
     <insert id="insertChangedContract" useGeneratedKeys="true" keyProperty="contractId">
-        INSERT INTO loan_contracts (
+        INSERT INTO loan_contract (
         previous_contract_id,
         creditor_id,
         debtor_id,
         principal_amount,
         interest_rate,
         repayment_type,
+        start_date,
         maturity_date,
         repayment_day,
         creditor_address,
@@ -145,6 +146,7 @@
         #{principalAmount},
         #{interestRate},
         #{repaymentType},
+        #{startDate},
         #{maturityDate},
         #{repaymentDay},
         #{creditorAddress},
