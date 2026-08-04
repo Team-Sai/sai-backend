@@ -1,7 +1,9 @@
 package org.teamsai.saibackend.domain.contract.service.contract;
 
-import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,16 +14,20 @@ import org.teamsai.saibackend.domain.contract.mapper.LoanContractFileMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Slf4j
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class LoanContractFileService {
-    private static final Path SIGNATURE_DIR = Path.of("uploads", "signatures");
 
     private final LoanContractFileMapper fileMapper;
+
+    @Getter
+    @Value("${file.upload-dir:C:/upload/shinhan/}")
+    private String uploadDir = "C:/upload/shinhan/";
 
     @Transactional
     public Long insertContractFile(LoanContractFileDTO file) {
@@ -34,37 +40,36 @@ public class LoanContractFileService {
                 .orElseThrow(LoanContractFileErrorCode.CONTRACT_FILE_NOT_FOUND::toException);
     }
 
-    
-    public String saveSignatureFile(Long contractId, MultipartFile signature) {
+    public String saveSignatureFile(Long contractId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("서명 파일이 존재하지 않습니다.");
+        }
+
         try {
-            Files.createDirectories(SIGNATURE_DIR);
+            Path dirPath = Paths.get(uploadDir);
+            if (!Files.exists(dirPath)) {
+                Files.createDirectories(dirPath);
+            }
 
-            String extension = extractExtension(signature.getOriginalFilename());
-            String savedFilename = contractId + "_" + UUID.randomUUID() + extension;
-            Path savedPath = SIGNATURE_DIR.resolve(savedFilename);
-            Files.copy(signature.getInputStream(), savedPath, StandardCopyOption.REPLACE_EXISTING);
+            String originalFilename = file.getOriginalFilename();
+            String ext = "png";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                ext = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
+            }
 
-            return savedPath.toString();
+            String savedFilename = contractId + "_" + UUID.randomUUID() + "." + ext;
+
+            Path savePath = dirPath.resolve(savedFilename);
+            Files.copy(file.getInputStream(), savePath, StandardCopyOption.REPLACE_EXISTING);
+
+            log.info("[Signature Saved] ContractId: {}, Original: {} -> Saved: {}",
+                    contractId, originalFilename, savedFilename);
+
+            return savedFilename;
+
         } catch (IOException e) {
-            log.error("서명 파일 저장 실패 (contractId={})", contractId, e);
+            log.error("서명 파일 저장 중 오류 발생", e);
             throw LoanContractFileErrorCode.SIGNATURE_UPLOAD_FAILED.toException();
         }
-    }
-
-    private String extractExtension(String originalFilename) {
-        if (originalFilename == null) {
-            return "";
-        }
-
-        int lastSeparator = Math.max(originalFilename.lastIndexOf('/'), originalFilename.lastIndexOf('\\'));
-        String filename = originalFilename.substring(lastSeparator + 1);
-
-        int dotIndex = filename.lastIndexOf('.');
-        if (dotIndex <= 0 || dotIndex == filename.length() - 1) {
-            return "";
-        }
-
-        String extension = filename.substring(dotIndex + 1);
-        return extension.matches("[a-zA-Z0-9]{1,10}") ? "." + extension : "";
     }
 }
