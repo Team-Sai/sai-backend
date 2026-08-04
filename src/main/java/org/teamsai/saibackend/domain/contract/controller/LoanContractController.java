@@ -45,23 +45,6 @@ public class LoanContractController {
         return "contract/contract-signature";
     }
 
-    //채무자 차용증 확인 페이지
-    @Operation(hidden = true)
-    @GetMapping("/{contractId}/approve")
-    public String contractDebtorApprovePage(@PathVariable Long contractId, Model model) {
-        model.addAttribute("contractId", contractId);
-        return "contract/contract-debtor-approve";
-    }
-
-    //채무자 전자서명 페이지
-    @Operation(hidden = true)
-    @GetMapping("/{contractId}/approve/signature")
-    public String contractDebtorSignaturePage(@PathVariable Long contractId, Model model) {
-        model.addAttribute("contractId", contractId);
-        return "contract/contract-debtor-signature";
-    }
-
-
     @Operation(
             summary = "차용증 최초 생성",
             description = "채권자가 입력한 정보로 차용증 계약서를 최초 생성합니다."
@@ -82,7 +65,7 @@ public class LoanContractController {
 
     })
 
-
+    //차용증 작성 시 본인인증 후 작성
     @ResponseBody
     @PostMapping("/write")
     public Long createContract(
@@ -124,6 +107,21 @@ public class LoanContractController {
         return contractService.submitDebtorSignature(contractId, userDetails.getUserId(), debtorAddress, signature);
     }
 
+    //채무자 차용증 확인 페이지
+    @Operation(hidden = true)
+    @GetMapping("/{contractId}/approve")
+    public String contractDebtorApprovePage(@PathVariable Long contractId, Model model) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-debtor-approve";
+    }
+
+    //채무자 전자서명 페이지
+    @Operation(hidden = true)
+    @GetMapping("/{contractId}/approve/signature")
+    public String contractDebtorSignaturePage(@PathVariable Long contractId, Model model) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-debtor-signature";
+    }
 
     @Operation(
             summary = "차용증 상세 조회",

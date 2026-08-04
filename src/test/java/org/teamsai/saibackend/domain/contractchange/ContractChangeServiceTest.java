@@ -4,14 +4,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
+import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
+import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
 import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
+import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
@@ -26,7 +30,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -114,7 +117,7 @@ class ContractChangeServiceTest {
                 .changeReason("이자율 조정 요청")
                 .newMaturityDate(LocalDate.of(2027, 1, 1))
                 .newInterestRate(BigDecimal.valueOf(5.0))
-                .newRepaymentType("원리금균등상환")
+                .newRepaymentType(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST)
                 .newRepaymentDate(LocalDate.of(2027, 1, 15))
                 .build();
     }
@@ -134,24 +137,14 @@ class ContractChangeServiceTest {
             contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID);
 
             verify(contractChangeMapper).insert(any());
-            verify(loanContractMapper).insertChangedContract(
-                    eq(CONTRACT_ID),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    eq(ContractStatus.PENDING),
-                    any(),
-                    any()
-            );
+
+            ArgumentCaptor<ChangeLoanContractResponse> captor =
+                    ArgumentCaptor.forClass(ChangeLoanContractResponse.class);
+            verify(loanContractMapper).insertChangedContract(captor.capture());
+
+            ChangeLoanContractResponse changedContract = captor.getValue();
+            assertThat(changedContract.getPreviousContractId()).isEqualTo(CONTRACT_ID);
+            assertThat(changedContract.getStatus()).isEqualTo(ContractStatus.PENDING);
         }
 
         @Test
@@ -172,7 +165,7 @@ class ContractChangeServiceTest {
         @DisplayName("이미 PENDING 요청이 있으면 예외가 발생한다")
         void requestChangeFailsWhenDuplicatePending() {
             LoanContractChangeDTO pendingRequest = LoanContractChangeDTO.builder()
-                    .status(ContractStatus.PENDING)
+                    .status(ChangeRequestStatus.PENDING)
                     .build();
 
             given(loanContractService.findContract(CONTRACT_ID, USER_ID))
