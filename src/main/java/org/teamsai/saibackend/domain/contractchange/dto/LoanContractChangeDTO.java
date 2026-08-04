@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.contractchange.dto;
 
 
 import lombok.*;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,7 +20,7 @@ public class LoanContractChangeDTO {
     private BigDecimal newInterestRate;
     private String newRepaymentType;
     private LocalDate newRepaymentDate;
-    private String status;
+    private ContractStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long contractId;
