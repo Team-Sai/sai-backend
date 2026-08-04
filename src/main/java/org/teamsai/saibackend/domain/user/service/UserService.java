@@ -24,7 +24,7 @@ public class UserService {
 
     @Transactional
     public void withdraw(Long userId) {
-        int deletedCount = userMapper.deleteById(userId);
+        int deletedCount = userMapper.deleteByUserId(userId);
 
         if (deletedCount == 0) {
             throw UserErrorCode.USER_NOT_FOUND.toException();
@@ -38,13 +38,18 @@ public class UserService {
                 );
     }
 
-    public UserDTO findRequestTarget(Long requestUserId, String userToken){
+    public UserDTO findRequestTarget(Long requestUserId, String userToken) {
         UserDTO targetUser = userMapper.findByUserToken(userToken)
                 .orElseThrow(UserErrorCode.USER_NOT_FOUND::toException);
 
-        if(requestUserId.equals(targetUser.getUserId())){
+        if (requestUserId.equals(targetUser.getUserId())) {
             throw UserErrorCode.CANNOT_SELECT_SELF.toException();
         }
         return targetUser;
+    }
+
+    @Transactional(readOnly = true)
+    public String getUserKeyByUserId(Long userId){
+        return userMapper.findUserKeyByUserId(userId);
     }
 }

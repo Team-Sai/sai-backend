@@ -63,7 +63,7 @@ public class SecurityConfig {
                                         "/signup",
                                         "/mypage",
                                         "/mypage/",
-                                        "/identity-test",
+                                        "/accounts/**",
                                         "/settlements",
                                         "/settlements/**"
                                 )

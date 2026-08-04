@@ -1,5 +1,4 @@
 package org.teamsai.saibackend.domain.user;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,6 @@ class UserServiceTest {
     private static final Long USER_ID = 1L;
     private static final String USER_TOKEN = "SAI-ABCDEFGH";
     private static final String USER_KEY = "mock-bank-user-key";
-
     @Mock
     private UserMapper userMapper;
 
@@ -42,14 +40,14 @@ class UserServiceTest {
     class GetMyInfo {
 
         @Test
-        @DisplayName("사용자 ID로 회원을 조회해 응답 DTO로 반환한다")
+        @DisplayName("사용자 키로 회원을 조회해 응답 DTO로 반환한다")
         void getMyInfoSuccess() {
             given(userMapper.findById(USER_ID))
                     .willReturn(Optional.of(createUser()));
 
             UserResponse response = userService.getMyInfo(USER_ID);
 
-            assertThat(response.getUserToken()).isEqualTo(USER_TOKEN);
+            assertThat(response.getUserToken()).isEqualTo(USER_KEY);
             assertThat(response.getEmail()).isEqualTo("user@example.com");
             assertThat(response.getName()).isEqualTo("김사이");
             assertThat(response.getBirthDate())
@@ -57,7 +55,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("사용자 ID에 해당하는 회원이 없으면 예외가 발생한다")
+        @DisplayName("사용자 키에 해당하는 회원이 없으면 예외가 발생한다")
         void getMyInfoFailsWhenUserDoesNotExist() {
             given(userMapper.findById(USER_ID))
                     .willReturn(Optional.empty());
@@ -73,21 +71,21 @@ class UserServiceTest {
         @Test
         @DisplayName("사용자 ID로 회원을 바로 삭제한다")
         void withdrawSuccess() {
-            given(userMapper.deleteById(USER_ID)).willReturn(1);
+            given(userMapper.deleteByUserId(USER_ID)).willReturn(1);
 
             userService.withdraw(USER_ID);
 
-            verify(userMapper).deleteById(USER_ID);
+            verify(userMapper).deleteByUserId(USER_ID);
         }
 
         @Test
         @DisplayName("삭제된 행이 0개이면 회원 없음 예외가 발생한다")
         void withdrawFailsWhenUserDoesNotExist() {
-            given(userMapper.deleteById(USER_ID)).willReturn(0);
+            given(userMapper.deleteByUserId(USER_ID)).willReturn(0);
 
             assertUserNotFound(() -> userService.withdraw(USER_ID));
 
-            verify(userMapper).deleteById(USER_ID);
+            verify(userMapper).deleteByUserId(USER_ID);
         }
     }
 
