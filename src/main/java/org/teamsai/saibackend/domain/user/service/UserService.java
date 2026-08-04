@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
+import org.teamsai.saibackend.domain.user.dto.response.UserTokenLookupResponse;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 
@@ -37,9 +38,14 @@ public class UserService {
                 );
     }
 
-    @Transactional(readOnly = true)
-    public String getUserKeyByUserToken(String userToken) {
-        return userMapper.findUserKeyByUserToken(userToken);
+    public UserDTO findRequestTarget(Long requestUserId, String userToken) {
+        UserDTO targetUser = userMapper.findByUserToken(userToken)
+                .orElseThrow(UserErrorCode.USER_NOT_FOUND::toException);
+
+        if (requestUserId.equals(targetUser.getUserId())) {
+            throw UserErrorCode.CANNOT_SELECT_SELF.toException();
+        }
+        return targetUser;
     }
 
     @Transactional(readOnly = true)
