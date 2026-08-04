@@ -5,11 +5,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.dto.request.UserLoginRequest;
 import org.teamsai.saibackend.domain.user.dto.request.UserSignUpRequest;
 import org.teamsai.saibackend.domain.user.dto.response.UserLoginResponse;
 import org.teamsai.saibackend.domain.user.dto.response.UserSignUpResponse;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
@@ -22,17 +22,6 @@ import java.util.Locale;
 @Transactional(readOnly = true)
 public class AuthService {
 
-    private static final String USER_TOKEN_PREFIX = "SAI-";
-
-    private static final String USER_TOKEN_CHARACTERS =
-            "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-    private static final int USER_TOKEN_LENGTH = 8;
-    private static final int USER_TOKEN_GENERATION_ATTEMPTS = 10;
-
-    private static final SecureRandom RANDOM =
-            new SecureRandom();
-
     private final UserMapper userMapper;
     private final AuthValidator authValidator;
     private final PasswordEncoder passwordEncoder;
@@ -42,13 +31,12 @@ public class AuthService {
     public UserSignUpResponse signUp(
             UserSignUpRequest request
     ) {
-        String email =
-                normalizeEmail(request.getEmail());
+        String email = normalizeEmail(request.getEmail());
 
         authValidator.validateSignUp(email);
 
         UserDTO user = UserDTO.builder()
-                .userToken(createUserToken())
+                .userToken(createUserKey())
                 .userKey(null)
                 .email(email)
                 .password(
@@ -62,11 +50,9 @@ public class AuthService {
 
         try {
             userMapper.insert(user);
-
         } catch (DataIntegrityViolationException exception) {
             if (isEmailUniqueConstraintViolation(exception)) {
-                throw UserErrorCode.DUPLICATE_EMAIL
-                        .toException();
+                throw UserErrorCode.DUPLICATE_EMAIL.toException();
             }
 
             throw exception;
@@ -75,29 +61,20 @@ public class AuthService {
         return UserSignUpResponse.from(user);
     }
 
-    public UserLoginResponse login(
-            UserLoginRequest request
-    ) {
-        String email =
-                normalizeEmail(request.getEmail());
+    public UserLoginResponse login(UserLoginRequest request) {
+        String email = normalizeEmail(request.getEmail());
 
         UserDTO user = userMapper.findByEmail(email)
                 .orElseThrow(
-                        UserErrorCode
-                                .INVALID_LOGIN_CREDENTIALS
-                                ::toException
+                        UserErrorCode.INVALID_LOGIN_CREDENTIALS::toException
                 );
-
         authValidator.validateLoginPassword(
                 request.getPassword(),
                 user.getPassword()
         );
 
-
         String accessToken =
-                jwtTokenProvider.createAccessToken(
-                        user.getUserId()
-                );
+                jwtTokenProvider.createAccessToken(user.getUserId());
 
         return UserLoginResponse.of(
                 user,
@@ -105,63 +82,52 @@ public class AuthService {
         );
     }
 
-    private String createUserToken() {
-        for (
-                int attempt = 0;
-                attempt < USER_TOKEN_GENERATION_ATTEMPTS;
-                attempt++
-        ) {
-            StringBuilder token =
-                    new StringBuilder(USER_TOKEN_PREFIX);
+    private static final String USER_KEY_PREFIX = "SAI-";
 
-            for (int i = 0; i < USER_TOKEN_LENGTH; i++) {
-                int index =
-                        RANDOM.nextInt(
-                                USER_TOKEN_CHARACTERS.length()
-                        );
+    private static final String USER_KEY_CHARACTERS =
+            "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-                token.append(
-                        USER_TOKEN_CHARACTERS.charAt(index)
-                );
+    private static final int USER_KEY_LENGTH = 8;
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+
+    private String createUserKey() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            StringBuilder token = new StringBuilder(USER_KEY_PREFIX);
+
+            for (int i = 0; i < USER_KEY_LENGTH; i++) {
+                int index = RANDOM.nextInt(USER_KEY_CHARACTERS.length());
+                token.append(USER_KEY_CHARACTERS.charAt(index));
             }
 
-            String userToken =
-                    token.toString();
+            String userToken = token.toString();
 
             if (!userMapper.existsByUserToken(userToken)) {
                 return userToken;
             }
         }
 
-        throw UserErrorCode
-                .USER_TOKEN_GENERATION_FAILED
-                .toException();
+        throw UserErrorCode.USER_TOKEN_GENERATION_FAILED.toException();
     }
 
     private String normalizeEmail(String email) {
-        return email
-                .trim()
-                .toLowerCase(Locale.ROOT);
+        return email.trim().toLowerCase(Locale.ROOT);
     }
-
     private boolean isEmailUniqueConstraintViolation(
             Throwable exception
     ) {
         Throwable cause = exception;
-
         while (cause != null) {
-            String message =
-                    cause.getMessage();
-
-            if (message != null
-                    && message.contains("uk_users_email")) {
-
+            String message = cause.getMessage();
+            if (message != null && message.contains("uk_users_email")
+            ) {
                 return true;
             }
-
             cause = cause.getCause();
         }
 
         return false;
     }
+
 }
