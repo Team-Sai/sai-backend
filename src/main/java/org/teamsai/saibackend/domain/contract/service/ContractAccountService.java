@@ -8,6 +8,7 @@ import org.teamsai.saibackend.domain.account.dto.type.ConnectionStatus;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
 import org.teamsai.saibackend.domain.contract.dto.ContractAccountDTO;
 import org.teamsai.saibackend.domain.contract.dto.ContractAccountStatus;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.ContractAccountMapper;
@@ -27,39 +28,41 @@ public class ContractAccountService {
     @Transactional(readOnly = true)
     public List<LinkedBankAccountResponse> getSelectableAccounts(Long userId) {
         return linkedBankAccountService.getLinkedAccounts(userId).stream()
-                .filter(account -> ConnectionStatus.AVAILABLE.name()
-                .equals(account.connectionStatus()))
+                .filter(account -> ConnectionStatus.AVAILABLE.name().equals(account.connectionStatus()))
                 .toList();
     }
 
     @Transactional
     public void setupContractAccount(Long contractId, Long userId, Long linkedAccountId) {
-        if (linkedAccountId == null) {
-            return;
-        }
+        if (linkedAccountId == null) return;
 
-        validateSelectable(userId, linkedAccountId);
+        validateSelectable(userId, linkedAccountId); //사용자 동일한지
         insertActiveAccount(contractId, linkedAccountId);
     }
 
     @Transactional
     public void changeContractAccount(Long contractId, Long userId, Long newLinkedAccountId) {
         validateContractOwner(contractId, userId);
-        contractAccountMapper.findActiveAccountByContractId(contractId)
-                .orElseThrow(LoanContractErrorCode.CONTRACT_ACCOUNT_NOT_FOUND::toException);
         validateSelectable(userId, newLinkedAccountId);
 
-        contractAccountMapper.updateContractAccountStatus(contractId, ContractAccountStatus.REPLACED);
+        retireActiveAccount(contractId, ContractAccountStatus.REPLACED);
         insertActiveAccount(contractId, newLinkedAccountId);
     }
 
     @Transactional
     public void deactivateContractAccount(Long contractId, Long userId) {
         validateContractOwner(contractId, userId);
-        contractAccountMapper.findActiveAccountByContractId(contractId)
-                .orElseThrow(LoanContractErrorCode.CONTRACT_ACCOUNT_NOT_FOUND::toException);
+        retireActiveAccount(contractId, ContractAccountStatus.DISABLED);
+    }
 
-        contractAccountMapper.updateContractAccountStatus(contractId, ContractAccountStatus.DISABLED);
+
+
+    private void retireActiveAccount(Long contractId, ContractAccountStatus status) {
+
+        int updatedRows = contractAccountMapper.updateContractAccountStatus(contractId, status);
+        if (updatedRows == 0) {
+            throw LoanContractErrorCode.CONTRACT_ACCOUNT_NOT_FOUND.toException();
+        }
     }
 
     private void validateContractOwner(Long contractId, Long userId) {
@@ -69,17 +72,21 @@ public class ContractAccountService {
         if (!contract.getCreditorId().equals(userId)) {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
-    }
 
-    private void validateSelectable(Long userId, Long linkedAccountId) {
-        if (!isSelectableAccount(userId, linkedAccountId)) {
-            throw LoanContractErrorCode.INVALID_LINKED_ACCOUNT.toException();
+
+        if (contract.getStatus() == ContractStatus.COMPLETED) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+
         }
     }
 
-    private boolean isSelectableAccount(Long userId, Long linkedAccountId) {
-        return getSelectableAccounts(userId).stream()
+    private void validateSelectable(Long userId, Long linkedAccountId) {
+        boolean isSelectable = getSelectableAccounts(userId).stream()
                 .anyMatch(account -> account.linkedAccountId().equals(linkedAccountId));
+
+        if (!isSelectable) {
+            throw LoanContractErrorCode.INVALID_LINKED_ACCOUNT.toException();
+        }
     }
 
     private void insertActiveAccount(Long contractId, Long linkedAccountId) {

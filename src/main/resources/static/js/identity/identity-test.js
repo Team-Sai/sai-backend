@@ -59,11 +59,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             printResult(
-                "본인인증이 완료되었습니다. 계약서 작성 화면으로 이동합니다."
+                "본인인증이 완료되었습니다."
             );
-
-            window.location.href =
-                `/api/contracts?identityVerificationId=${encodeURIComponent(prepare.identityVerificationId)}`;
 
         } catch (error) {
             console.error(error);

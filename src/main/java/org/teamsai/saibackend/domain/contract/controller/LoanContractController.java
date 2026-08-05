@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.security.core.Authentication;
@@ -28,20 +29,12 @@ import org.teamsai.saibackend.global.security.CustomUserDetails;
 )
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/api/contracts")
 public class LoanContractController {
 
     private final LoanContractService contractService;
     private final IdentityService identityService;
-
-    @Operation(hidden = true)
-    @GetMapping("/dashboard")
-    public String contractDashboardPage(@Parameter(hidden = true) Authentication authentication) {
-        if (authentication == null) {
-            return "redirect:/login";
-        }
-        return "contract/contract-dashboard";
-    }
 
     @Operation(hidden = true)
     @GetMapping
@@ -53,11 +46,16 @@ public class LoanContractController {
             return "redirect:/login";
         }
 
+        if (identityVerificationId == null || identityVerificationId.isBlank()) {
+            return "redirect:/identity-test";
+        }
+
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         try {
             identityService.complete(userDetails.getUserId(), identityVerificationId);
-        } catch (Exception notVerified) {
+        } catch (RuntimeException e) {
+            log.warn("본인인증 검증 실패 - userId: {}, reason: {}", userDetails.getUserId(), e.getMessage());
             return "redirect:/identity-test";
         }
 
