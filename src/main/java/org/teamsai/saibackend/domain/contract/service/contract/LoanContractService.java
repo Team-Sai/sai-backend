@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
@@ -64,6 +65,8 @@ public class LoanContractService {
                 IdentityPurpose.LOAN_CONTRACT
         );
 
+        userService.getMyInfo(userId);
+
         contractMapper.updateDebtorId(contractId, userId);
     }
 
@@ -85,6 +88,10 @@ public class LoanContractService {
 
     @Transactional
     public ContractStatus submitDebtorSignature(Long contractId, Long userId, String debtorAddress, MultipartFile signature) {
+
+        if (!StringUtils.hasText(debtorAddress)) {
+            throw LoanContractErrorCode.DEBTOR_ADDRESS_REQUIRED.toException();
+        }
 
         LoanContractResponse contract = contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
@@ -108,7 +115,24 @@ public class LoanContractService {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
 
-        return contract;
+        return withPartyInfo(contract);
+    }
+
+    private LoanContractResponse withPartyInfo(LoanContractResponse contract) {
+        var creditor = userService.getMyInfo(contract.getCreditorId());
+
+        LoanContractResponse.LoanContractResponseBuilder enriched = contract.toBuilder()
+                .creditorName(creditor.getName())
+                .creditorBirthDate(creditor.getBirthDate().toString());
+
+        if (contract.getDebtorId() != null) {
+            var debtor = userService.getMyInfo(contract.getDebtorId());
+
+            enriched.debtorName(debtor.getName())
+                    .debtorBirthDate(debtor.getBirthDate().toString());
+        }
+
+        return enriched.build();
     }
 
     @Transactional

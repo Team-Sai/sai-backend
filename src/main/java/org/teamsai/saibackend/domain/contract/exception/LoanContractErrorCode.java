@@ -33,6 +33,11 @@ public enum LoanContractErrorCode implements BaseErrorCode<DomainException> {
     DEBTOR_ALREADY_LINKED(
             HttpStatus.CONFLICT,
             "이미 채무자가 연결된 계약서입니다."
+    ),
+
+    DEBTOR_ADDRESS_REQUIRED(
+            HttpStatus.BAD_REQUEST,
+            "채무자 주소를 입력해야 합니다."
     );
 
     private final HttpStatus httpStatus;

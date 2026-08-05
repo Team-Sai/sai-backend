@@ -107,7 +107,7 @@ class LoanContractFileServiceTest {
             );
 
             String resultPath = fileService.saveSignatureFile(CONTRACT_ID, signature);
-            savedPath = Path.of(resultPath);
+            savedPath = Path.of(fileService.getUploadDir()).resolve(resultPath);
 
             assertThat(savedPath).exists();
             assertThat(Files.readAllBytes(savedPath)).isEqualTo("signature-bytes".getBytes());
@@ -123,7 +123,7 @@ class LoanContractFileServiceTest {
             );
 
             String resultPath = fileService.saveSignatureFile(CONTRACT_ID, signature);
-            savedPath = Path.of(resultPath);
+            savedPath = Path.of(fileService.getUploadDir()).resolve(resultPath);
 
             assertThat(savedPath).exists();
             assertThat(savedPath.normalize()).isEqualTo(savedPath);
