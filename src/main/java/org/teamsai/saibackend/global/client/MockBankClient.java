@@ -19,7 +19,7 @@ public class MockBankClient {
 
     private final RestClient restClient;
 
-    public MockBankClient(@Value("${mock-bank.base-url}") String baseUrl) {
+    public MockBankClient(@Value("${sai.mock-bank.base-url}") String baseUrl) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000);
         requestFactory.setReadTimeout(5000);

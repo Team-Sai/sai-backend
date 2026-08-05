@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.account.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
@@ -63,7 +64,13 @@ public class LinkedBankAccountService {
 
     @Transactional
     public List<LinkedBankAccountResponse> linkAccountsByIds(Long userId, String userKey, List<Long> accountIds) {
-        List<LinkedBankAccountDTO> dtosToSave = accountIds.stream()
+        Set<Long> alreadyLinkedIds = new HashSet<>(getLinkedAccountIds(userId));
+
+        List<Long> newAccountIds = accountIds.stream()
+                .filter(accountId -> !alreadyLinkedIds.contains(accountId))
+                .toList();
+
+        List<LinkedBankAccountDTO> dtosToSave = newAccountIds.stream()
                 .map(accountId -> {
                     AccountDetailResponse detail;
                     try {
@@ -88,7 +95,13 @@ public class LinkedBankAccountService {
                 })
                 .toList();
 
-        dtosToSave.forEach(linkedBankAccountMapper::insertOne);
+        dtosToSave.forEach(dto -> {
+            try {
+                linkedBankAccountMapper.insertOne(dto);
+            } catch (DuplicateKeyException e) {
+                log.info("[LinkedBankAccountService] 이미 연동된 계좌라 저장을 건너뜁니다 - accountId: {}", dto.getAccountId());
+            }
+        });
 
         return dtosToSave.stream().map(LinkedBankAccountResponse::from).toList();
     }

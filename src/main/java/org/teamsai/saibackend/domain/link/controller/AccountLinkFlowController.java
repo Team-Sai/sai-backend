@@ -1,6 +1,7 @@
 package org.teamsai.saibackend.domain.link.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -23,6 +24,11 @@ import java.util.stream.Collectors;
 @Controller
 @RequiredArgsConstructor
 public class AccountLinkFlowController {
+    @Value("${sai.mock-bank.base-url}")
+    private String mockBankBaseUrl;
+
+    @Value("${sai.backend.base-url}")
+    private String backendBaseUrl;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserMapper userMapper;
@@ -43,8 +49,8 @@ public class AccountLinkFlowController {
                 .collect(Collectors.joining(","));
 
         String redirectUrl = UriComponentsBuilder
-                .fromUriString("http://localhost:8081/link/start")
-                .queryParam("returnUrl", "http://localhost:8080/accounts/link/callback")
+                .fromUriString(mockBankBaseUrl + "/link/start")
+                .queryParam("returnUrl", backendBaseUrl + "/accounts/link/callback")
                 .queryParam("state", state)
                 .queryParam("excludeAccountIds", linkedIdsParam)
                 .toUriString();
@@ -72,10 +78,16 @@ public class AccountLinkFlowController {
             return "redirect:/mypage?error=link_failed";
         }
 
+        if (accountIds == null || accountIds.isBlank()) {
+            return "redirect:/mypage?error=no_accounts_selected";
+        }
+
         try {
             List<Long> ids = Arrays.stream(accountIds.split(",")).map(Long::parseLong).toList();
             linkedBankAccountService.linkAccountsByIds(userId, userKey, ids);
-        } catch (DomainException e) {
+        }  catch (NumberFormatException e) {
+            return "redirect:/mypage?error=invalid_account_ids";
+        }catch (DomainException e) {
             return "redirect:/mypage?error=account_link_failed";
         }
 
