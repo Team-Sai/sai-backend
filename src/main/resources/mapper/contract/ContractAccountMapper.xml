@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.contract.mapper.ContractAccountMapper">
+
+    <insert id="insertContractAccount" useGeneratedKeys="true" keyProperty="account.contractAccountId">
+        INSERT INTO contract_account (
+        linked_account_id,
+        account_status,
+        selected_at,
+        ended_at,
+        contract_id
+        ) VALUES (
+        #{account.linkedAccountId},
+        #{account.accountStatus},
+        #{account.selectedAt},
+        #{account.endedAt},
+        #{account.contractId}
+        )
+    </insert>
+
+    <update id="updateContractAccountStatus">
+        UPDATE contract_account
+        SET
+        account_status = #{status},
+        ended_at = NOW()
+        WHERE contract_id = #{contractId}
+        AND account_status = 'ACTIVE'
+    </update>
+
+    <select id="findActiveAccountByContractId"
+            resultType="org.teamsai.saibackend.domain.contract.dto.ContractAccountDTO">
+        SELECT
+        contract_account_id AS contractAccountId,
+        linked_account_id   AS linkedAccountId,
+        account_status      AS accountStatus,
+        selected_at         AS selectedAt,
+        ended_at            AS endedAt,
+        contract_id         AS contractId
+        FROM contract_account
+        WHERE contract_id = #{contractId}
+        AND account_status = 'ACTIVE'
+    </select>
+
+</mapper>

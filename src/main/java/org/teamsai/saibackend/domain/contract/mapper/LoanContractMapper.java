@@ -1,17 +1,12 @@
 package org.teamsai.saibackend.domain.contract.mapper;
 
-import jakarta.validation.constraints.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.teamsai.saibackend.domain.contract.dto.LoanContractDTO;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 
@@ -43,6 +38,6 @@ public interface LoanContractMapper {
 
     Optional<LoanContractResponse> findContractById(@Param("contractId") Long contractId);
 
-    int insertChangedContract(ChangeLoanContractResponse contract);
+    void insertChangedContract(ChangeLoanContractResponse contract);
 
 }

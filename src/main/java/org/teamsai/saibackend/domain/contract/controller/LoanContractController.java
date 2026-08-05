@@ -17,16 +17,14 @@ import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
+import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
-import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
-import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 
 @Tag(
         name = "차용증 API",
-        description = "차용증 작성과 저장,채무자에게 전송까지 API"
+        description = "차용증 작성과 저장,채무자에게 전송 API"
 )
 @Controller
 @RequiredArgsConstructor
@@ -37,11 +35,24 @@ public class LoanContractController {
     private final IdentityService identityService;
 
     @Operation(hidden = true)
+    @GetMapping("/dashboard")
+    public String contractDashboardPage(@Parameter(hidden = true) Authentication authentication) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+        return "contract/contract-dashboard";
+    }
+
+    @Operation(hidden = true)
     @GetMapping
     public String contractFormPage(
             @RequestParam(name = "identityVerificationId", required = false) String identityVerificationId,
             @Parameter(hidden = true) Authentication authentication
     ) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         try {
@@ -86,7 +97,10 @@ public class LoanContractController {
 
     @Operation(hidden = true)
     @GetMapping("/signature")
-    public String contractSignaturePage() {
+    public String contractSignaturePage(@Parameter(hidden = true) Authentication authentication) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
         return "contract/contract-signature";
     }
 
@@ -141,7 +155,14 @@ public class LoanContractController {
     //채무자 차용증 확인 페이지
     @Operation(hidden = true)
     @GetMapping("/{contractId}/approve")
-    public String contractDebtorApprovePage(@PathVariable Long contractId, Model model) {
+    public String contractDebtorApprovePage(
+            @PathVariable Long contractId,
+            Model model,
+            @Parameter(hidden = true) Authentication authentication
+    ) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
         model.addAttribute("contractId", contractId);
         return "contract/contract-debtor-form";
     }
@@ -149,7 +170,14 @@ public class LoanContractController {
     //채무자 전자서명 페이지
     @Operation(hidden = true)
     @GetMapping("/{contractId}/approve/signature")
-    public String contractDebtorSignaturePage(@PathVariable Long contractId, Model model) {
+    public String contractDebtorSignaturePage(
+            @PathVariable Long contractId,
+            Model model,
+            @Parameter(hidden = true) Authentication authentication
+    ) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
         model.addAttribute("contractId", contractId);
         return "contract/contract-debtor-signature";
     }

@@ -1,8 +1,7 @@
-package org.teamsai.saibackend.domain.contract.service.contract;
+package org.teamsai.saibackend.domain.contract.service;
 
 
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +26,7 @@ import java.util.Objects;
 public class LoanContractService {
     private final LoanContractMapper contractMapper;
     private final LoanContractFileService fileService;
+    private final ContractAccountService contractAccountService;
     private final UserService userService;
     private final IdentityService identityService;
 
@@ -43,7 +43,24 @@ public class LoanContractService {
 
         contractMapper.insertByContract(request, userId);
 
+        contractAccountService.setupContractAccount(request.getContractId(), userId, request.getSelectedLinkedAccountId());
+
         return request.getContractId();
+    }
+
+    @Transactional
+    public ContractStatus submitCreditorSignature(Long contractId, Long userId, MultipartFile signature) {
+        LoanContractResponse contract = contractMapper.findContractById(contractId)
+                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+
+        if (!contract.getCreditorId().equals(userId)) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+        }
+
+        String savedPath = fileService.saveSignatureFile(contractId, signature);
+        contractMapper.updateCreditorSignature(contractId, savedPath, ContractStatus.PENDING);
+
+        return ContractStatus.PENDING;
     }
 
     @Transactional
@@ -69,22 +86,6 @@ public class LoanContractService {
 
         contractMapper.updateDebtorId(contractId, userId);
     }
-
-    @Transactional
-    public ContractStatus submitCreditorSignature(Long contractId, Long userId, MultipartFile signature) {
-        LoanContractResponse contract = contractMapper.findContractById(contractId)
-                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
-
-        if (!contract.getCreditorId().equals(userId)) {
-            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
-        }
-
-        String savedPath = fileService.saveSignatureFile(contractId, signature);
-        contractMapper.updateCreditorSignature(contractId, savedPath, ContractStatus.PENDING);
-
-        return ContractStatus.PENDING;
-    }
-
 
     @Transactional
     public ContractStatus submitDebtorSignature(Long contractId, Long userId, String debtorAddress, MultipartFile signature) {

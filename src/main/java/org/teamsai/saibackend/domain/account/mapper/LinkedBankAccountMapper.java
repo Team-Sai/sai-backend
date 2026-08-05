@@ -10,6 +10,6 @@ import java.util.List;
 public interface LinkedBankAccountMapper {
 
     void insertOne(LinkedBankAccountDTO dto);
-    
+
     List<LinkedBankAccountDTO> selectLinkedAccountsByUserId(@Param("userId") Long userId);
 }

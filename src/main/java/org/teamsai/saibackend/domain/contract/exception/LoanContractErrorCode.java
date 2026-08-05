@@ -38,6 +38,16 @@ public enum LoanContractErrorCode implements BaseErrorCode<DomainException> {
     DEBTOR_ADDRESS_REQUIRED(
             HttpStatus.BAD_REQUEST,
             "채무자 주소를 입력해야 합니다."
+    ),
+
+    INVALID_LINKED_ACCOUNT(
+            HttpStatus.BAD_REQUEST,
+            "본인 명의로 연동된 활성 계좌만 선택할 수 있습니다."
+    ),
+
+    CONTRACT_ACCOUNT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "해당 차용증에 연결된 계좌가 없습니다."
     );
 
     private final HttpStatus httpStatus;
