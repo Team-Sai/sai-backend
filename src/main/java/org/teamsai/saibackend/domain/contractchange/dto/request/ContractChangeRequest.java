@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.cglib.core.Local;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,6 +28,10 @@ public class ContractChangeRequest {
     private BigDecimal newInterestRate;
 
     @NotBlank(message = "상환 방식은 필수입니다.")
+    @Pattern(
+            regexp = "EQUAL_PRINCIPAL_AND_INTEREST|EQUAL_PRINCIPAL|BULLET_REPAYMENT",
+            message = "상환 방식이 올바르지 않습니다."
+    )
     private String newRepaymentType;
 
     @NotNull(message = "변경 상환일은 필수입니다.")
