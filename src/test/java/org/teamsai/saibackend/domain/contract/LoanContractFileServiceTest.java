@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.LoanContractFileDTO;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractFileErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractFileMapper;
-import org.teamsai.saibackend.domain.contract.service.contract.LoanContractFileService;
+import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.io.IOException;

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>계약서 대시보드</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" th:href="@{/css/contract/contract-dashboard.css}" href="./contract-dashboard.css" />
+</head>
+<body>
+
+<header class="topnav">
+  <div class="topnav__inner">
+    <div class="topnav__logo">사이월렛</div>
+    <nav class="topnav__menu">
+      <a class="topnav__link" href="#">서비스 소개</a>
+      <a class="topnav__link is-active" href="#">금전소비대차</a>
+      <a class="topnav__link" href="#">정산관리</a>
+      <a class="topnav__link" href="#">거래 일정</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <h1 class="page__title">계약서 대시보드</h1>
+  <p class="page__subtitle">임시 화면입니다. 아래 버튼으로 차용증 작성 플로우를 확인하세요.</p>
+
+  <section class="card">
+    <div class="card__info">
+      <strong class="card__title">금전소비대차 차용증</strong>
+      <span class="card__desc">본인인증을 완료하면 차용증 작성 화면으로 이동합니다.</span>
+    </div>
+    <a class="btn btn--primary" href="/identity-test">차용증 작성</a>
+  </section>
+</main>
+
+</body>
+</html>

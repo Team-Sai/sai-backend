@@ -15,8 +15,9 @@ import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
-import org.teamsai.saibackend.domain.contract.service.contract.LoanContractFileService;
-import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
+import org.teamsai.saibackend.domain.contract.service.ContractAccountService;
+import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
+import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.identity.exception.IdentityErrorCode;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
@@ -52,6 +53,9 @@ class LoanContractServiceTest {
 
     @Mock
     private LoanContractFileService fileService;
+
+    @Mock
+    private ContractAccountService contractAccountService;
 
     @Mock
     private UserService userService;
