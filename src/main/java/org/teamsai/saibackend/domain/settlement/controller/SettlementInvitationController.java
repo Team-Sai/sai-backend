@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSettlementInvitationResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.ReceivedSettlementInvitationResponse;
+import org.teamsai.saibackend.domain.settlement.service.SettlementInvitationResponseService;
 import org.teamsai.saibackend.domain.settlement.service.SettlementInvitationService;
 
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SettlementInvitationController {
     private final SettlementInvitationService service;
+    private final SettlementInvitationResponseService invitationResponseService;
 
     @Operation(
             summary = "공동정산 참여자 초대",
@@ -101,7 +103,7 @@ public class SettlementInvitationController {
             )
     })
     @ResponseBody
-    @GetMapping("/api/settlements/received")
+    @GetMapping("/api/settlement-invitations/received")
     public ResponseEntity<List<ReceivedSettlementInvitationResponse>> findReceivedInvitation(
             @Parameter(hidden = true)
             @AuthenticationPrincipal(expression = "userId")
@@ -110,6 +112,100 @@ public class SettlementInvitationController {
         List<ReceivedSettlementInvitationResponse> response = service.findReceivedInvitations(userId);
 
         return ResponseEntity.ok(response);
+    }
+    @Operation(
+            summary = "정산 초대 수락",
+            description = "로그인한 회원이 자신에게 도착한 정산 초대를 수락하고 정산 참여자로 등록됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "정산 초대 수락 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "종료된 정산의 초대"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "로그인이 필요하거나 토큰이 유효하지 않음"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "해당 정산 초대를 처리할 권한 없음"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "정산 또는 정산 초대를 찾을 수 없음"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 처리된 정산 초대"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "정산 참여자 등록 실패"
+            )
+    })
+    @ResponseBody
+    @PostMapping("/api/settlement-invitations/{invitationId}/accept")
+    public ResponseEntity<Void> accept(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId,
+
+            @Parameter(
+                    description = "수락할 정산 초대 ID",
+                    example = "1"
+            )
+            @PathVariable
+            Long invitationId
+    ){
+        invitationResponseService.accept(userId, invitationId);
+        return ResponseEntity.noContent().build();
+    }
+    @Operation(
+            summary = "정산 초대 거절",
+            description = "로그인한 회원이 자신에게 도착한 정산 초대를 거절합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "정산 초대 거절 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "로그인이 필요하거나 토큰이 유효하지 않음"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "해당 정산 초대를 처리할 권한 없음"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "정산 초대를 찾을 수 없음"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 처리된 정산 초대"
+            )
+    })
+    @ResponseBody
+    @PostMapping("/api/settlement-invitations/{invitationId}/reject")
+    public ResponseEntity<Void> reject(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId,
+
+            @Parameter(
+                    description = "거절할 정산 초대 ID",
+                    example = "1"
+            )
+            @PathVariable
+            Long invitationId
+    ){
+        invitationResponseService.reject(userId, invitationId);
+        return ResponseEntity.noContent().build();
     }
 
 }

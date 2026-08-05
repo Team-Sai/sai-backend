@@ -56,6 +56,10 @@ public enum SettlementErrorCode implements BaseErrorCode<DomainException> {
     SETTLEMENT_INVITATION_CREATE_FAILED(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "정산 초대 생성에 실패했습니다."
+    ),
+    SETTLEMENT_PARTICIPANT_CREATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 참여자 등록에 실패했습니다."
     );
 
     private final HttpStatus httpStatus;
