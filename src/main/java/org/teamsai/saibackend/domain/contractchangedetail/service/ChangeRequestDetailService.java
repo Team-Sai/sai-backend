@@ -31,7 +31,7 @@ public class ChangeRequestDetailService {
     public ChangeRequestDetailDTO getDetail(Long contractId, Long changeRequestId, Long userId) {
 
 
-
+        LoanContractResponse contract = contractChangeService.getContract(contractId, userId);
 
         LoanContractChangeDTO changeDTO = contractChangeService.getChangeRequest(changeRequestId);
 
@@ -41,11 +41,12 @@ public class ChangeRequestDetailService {
 
         if(changeDTO.getNewInterestRate() == null
         || changeDTO.getNewRepaymentType() == null
-        || changeDTO.getNewRepaymentDate() == null) {
+        || changeDTO.getNewRepaymentDate() == null
+        || changeDTO.getNewMaturityDate() == null) {
             throw ChangeRequestDetailErrorCode.INVALID_CHANGE_REQUEST_DATA.toException();
         }
 
-        LoanContractResponse contract = contractChangeService.getContract(contractId, userId);
+
 
         if(!changeDTO.getUserId().equals(contract.getCreditorId())) {
             throw ChangeRequestDetailErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();

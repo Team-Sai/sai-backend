@@ -19,6 +19,10 @@ public class RepaymentCalculator {
     ) {
         int months = calculateMonths(startDate, maturityDate);
 
+        if (months <= 0) {
+            throw ChangeRequestDetailErrorCode.INVALID_CHANGE_REQUEST_DATA.toException();
+        }
+
         return switch (repaymentType) {
             case "BULLET_REPAYMENT" -> calculateBulletRepayment(principal, annualInterestRate);
             case "EQUAL_PRINCIPAL" -> calculateEqualPrincipal(principal, annualInterestRate, months);
@@ -48,6 +52,9 @@ public class RepaymentCalculator {
     }
 
     private static BigDecimal calculateEqualPrincipalAndInterest(BigDecimal principal, BigDecimal annualInterestRate, int months) {
+        if (annualInterestRate.compareTo(BigDecimal.ZERO) == 0) {
+            return principal.divide(BigDecimal.valueOf(months), 2, RoundingMode.HALF_UP );
+        }
         BigDecimal monthlyRate = annualInterestRate
                 .divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)
                 .divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP);

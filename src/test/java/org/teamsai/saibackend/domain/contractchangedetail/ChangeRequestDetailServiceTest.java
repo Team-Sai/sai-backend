@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
@@ -104,6 +105,44 @@ class ChangeRequestDetailServiceTest {
                 .contractId(CONTRACT_ID)
                 .userId(USER_ID)
                 .build();
+    }
+
+    @Test
+    @DisplayName("newMaturityDate가 없으면 예외가 발생한다")
+    void getDetailFailsWhenNewMaturityDateIsNull() {
+        LoanContractChangeDTO invalidChangeRequest = LoanContractChangeDTO.builder()
+                .changeRequestId(CHANGE_REQUEST_ID)
+                .status(ChangeRequestStatus.PENDING)
+                .contractId(CONTRACT_ID)
+                .userId(USER_ID)
+                .newInterestRate(BigDecimal.valueOf(4.2))
+                .newRepaymentType("EQUAL_PRINCIPAL_AND_INTEREST")
+                .newRepaymentDate(15)
+                // newMaturityDate 일부러 안 채움
+                .build();
+
+        given(contractChangeService.getContract(CONTRACT_ID, USER_ID))
+                .willReturn(createContract());
+        given(contractChangeService.getChangeRequest(CHANGE_REQUEST_ID))
+                .willReturn(invalidChangeRequest);
+
+        assertThatThrownBy(() -> changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID))
+                .isInstanceOfSatisfying(
+                        DomainException.class,
+                        exception -> assertThat(exception.getErrorCode())
+                                .isEqualTo(ChangeRequestDetailErrorCode.INVALID_CHANGE_REQUEST_DATA)
+                );
+    }
+
+    @Test
+    @DisplayName("계약 당사자가 아니면 예외가 발생한다")
+    void getDetailFailsWhenNotContractParty() {
+        given(contractChangeService.getContract(CONTRACT_ID, USER_ID))
+                .willThrow(LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException());
+
+        assertThatThrownBy(() -> changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID))
+                .isInstanceOf(DomainException.class);
+
     }
 
 

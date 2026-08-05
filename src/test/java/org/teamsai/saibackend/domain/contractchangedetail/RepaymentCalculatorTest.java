@@ -58,4 +58,14 @@ class RepaymentCalculatorTest {
                 )
         ).isInstanceOf(DomainException.class);
     }
+
+    @Test
+    @DisplayName("이율이 0%면 원금을 개월수로 나눈 값을 반환한다.")
+    void calculateEqualPrincipalAndInterestWithZeroRate() {
+        BigDecimal result = RepaymentCalculator.calculate(
+                PRINCIPAL, BigDecimal.ZERO, "EQUAL_PRINCIPAL_AND_INTEREST", START_DATE, MATURITY_DATE
+        );
+
+        assertThat(result).isEqualByComparingTo(BigDecimal.valueOf(8333333.33));
+    }
 }
