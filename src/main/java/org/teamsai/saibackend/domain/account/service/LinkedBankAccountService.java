@@ -45,7 +45,7 @@ public class LinkedBankAccountService {
                             .userId(userId)
                             .accountId(selected.accountId())
                             .bankCode(detail.bankCode())
-                            .accountNumber(detail.accountNumber())
+                            .accountNumber(detail.maskedAccountNumber())
                             .accountAlias(selected.accountAlias())
                             .accountHolderName(detail.accountHolderName())
                             .balance(detail.balance())
@@ -77,7 +77,7 @@ public class LinkedBankAccountService {
                             .userId(userId)
                             .accountId(accountId)
                             .bankCode(detail.bankCode())
-                            .accountNumber(detail.accountNumber())
+                            .accountNumber(detail.maskedAccountNumber())
                             .accountAlias(detail.accountName())
                             .accountHolderName(detail.accountHolderName())
                             .balance(detail.balance())
@@ -106,6 +106,21 @@ public class LinkedBankAccountService {
 
         return linkedAccounts.stream()
                 .map(LinkedBankAccountResponse::from)
+                .toList();
+    }
+
+    public List<Long> getLinkedAccountIds(Long userId) {
+        if (userId == null) {
+            return Collections.emptyList();
+        }
+
+        List<LinkedBankAccountDTO> linkedAccounts = linkedBankAccountMapper.selectLinkedAccountsByUserId(userId);
+        if (linkedAccounts == null || linkedAccounts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return linkedAccounts.stream()
+                .map(LinkedBankAccountDTO::getAccountId)
                 .toList();
     }
 }
