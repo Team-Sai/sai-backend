@@ -25,12 +25,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SettlementInvitationResponseServiceTest {
@@ -73,7 +69,7 @@ class SettlementInvitationResponseServiceTest {
         when(invitationMapper.findById(INVITATION_ID))
                 .thenReturn(Optional.of(invitation));
 
-        when(settlementMapper.findById(SETTLEMENT_ID))
+        when(settlementMapper.findByIdForUpdate(SETTLEMENT_ID))
                 .thenReturn(Optional.of(settlement));
 
         when(invitationMapper.accept(
@@ -178,7 +174,7 @@ class SettlementInvitationResponseServiceTest {
         when(invitationMapper.findById(INVITATION_ID))
                 .thenReturn(Optional.of(invitation));
 
-        when(settlementMapper.findById(SETTLEMENT_ID))
+        when(settlementMapper.findByIdForUpdate(SETTLEMENT_ID))
                 .thenReturn(Optional.of(settlement));
 
         when(invitationMapper.accept(
@@ -218,7 +214,7 @@ class SettlementInvitationResponseServiceTest {
         when(invitationMapper.findById(INVITATION_ID))
                 .thenReturn(Optional.of(invitation));
 
-        when(settlementMapper.findById(SETTLEMENT_ID))
+        when(settlementMapper.findByIdForUpdate(SETTLEMENT_ID))
                 .thenReturn(Optional.of(settlement));
 
         when(invitationMapper.accept(
@@ -305,6 +301,112 @@ class SettlementInvitationResponseServiceTest {
         verifyNoInteractions(
                 settlementMapper,
                 participantMapper
+        );
+    }
+    @Test
+    @DisplayName("정산 초대 수락 시 정산을 잠금 조회한다")
+    void acceptUsesSettlementForUpdate() {
+        SettlementInvitationDTO invitation =
+                SettlementInvitationDTO.builder()
+                        .invitationId(INVITATION_ID)
+                        .settlementId(SETTLEMENT_ID)
+                        .invitedUserId(USER_ID)
+                        .invitationStatus(
+                                SettlementInvitationStatus.INVITED
+                        )
+                        .build();
+
+        SettlementDTO settlement =
+                mock(SettlementDTO.class);
+
+        when(invitationMapper.findById(INVITATION_ID))
+                .thenReturn(Optional.of(invitation));
+
+        when(settlementMapper.findByIdForUpdate(SETTLEMENT_ID))
+                .thenReturn(Optional.of(settlement));
+
+        when(
+                invitationMapper.accept(
+                        eq(INVITATION_ID),
+                        any(LocalDateTime.class)
+                )
+        ).thenReturn(1);
+
+        when(
+                participantMapper.insert(
+                        any(SettlementParticipantDTO.class)
+                )
+        ).thenReturn(1);
+
+        responseService.accept(
+                USER_ID,
+                INVITATION_ID
+        );
+
+        verify(settlementMapper)
+                .findByIdForUpdate(SETTLEMENT_ID);
+
+        verify(
+                settlementMapper,
+                never()
+        ).findById(anyLong());
+
+        verify(invitationValidator)
+                .validateAcceptableSettlement(settlement);
+
+        verify(invitationMapper)
+                .accept(
+                        eq(INVITATION_ID),
+                        any(LocalDateTime.class)
+                );
+
+        verify(participantMapper)
+                .insert(
+                        any(SettlementParticipantDTO.class)
+                );
+    }
+    @Test
+    @DisplayName("잠금 조회에서 정산을 찾지 못하면 초대와 참여자를 변경하지 않는다")
+    void acceptFailWhenSettlementNotFoundForUpdate() {
+        SettlementInvitationDTO invitation =
+                SettlementInvitationDTO.builder()
+                        .invitationId(INVITATION_ID)
+                        .settlementId(SETTLEMENT_ID)
+                        .invitedUserId(USER_ID)
+                        .invitationStatus(
+                                SettlementInvitationStatus.INVITED
+                        )
+                        .build();
+
+        when(invitationMapper.findById(INVITATION_ID))
+                .thenReturn(Optional.of(invitation));
+
+        when(settlementMapper.findByIdForUpdate(SETTLEMENT_ID))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(
+                () -> responseService.accept(
+                        USER_ID,
+                        INVITATION_ID
+                )
+        ).isInstanceOf(DomainException.class);
+
+        verify(settlementMapper)
+                .findByIdForUpdate(SETTLEMENT_ID);
+
+        verify(
+                invitationMapper,
+                never()
+        ).accept(
+                anyLong(),
+                any(LocalDateTime.class)
+        );
+
+        verify(
+                participantMapper,
+                never()
+        ).insert(
+                any(SettlementParticipantDTO.class)
         );
     }
 }

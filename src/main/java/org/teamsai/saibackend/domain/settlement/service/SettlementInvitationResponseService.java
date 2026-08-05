@@ -30,7 +30,7 @@ public class SettlementInvitationResponseService {
 
         invitationValidator.validateRespondableInvitation(invitation, userId);
 
-        SettlementDTO settlement = findSettlement(invitation.getSettlementId());
+        SettlementDTO settlement = findSettlementForUpdate(invitation.getSettlementId());
 
         invitationValidator.validateAcceptableSettlement(settlement);
 
@@ -38,7 +38,7 @@ public class SettlementInvitationResponseService {
 
         acceptInvitation(invitationId, acceptedAt);
 
-        createdMemberParticipant(invitationId,acceptedAt);
+        createMemberParticipant(invitationId,acceptedAt);
 
     }
 
@@ -57,12 +57,19 @@ public class SettlementInvitationResponseService {
 
     private SettlementInvitationDTO findInvitation(Long invitationId){
         return invitationMapper.findById(invitationId)
-                .orElseThrow(SettlementErrorCode.SETTLEMENT_NOT_FOUND::toException);
+                .orElseThrow(SettlementErrorCode.SETTLEMENT_INVITATION_NOT_FOUND::toException);
     }
 
-    private SettlementDTO findSettlement(Long settlementId){
-        return settlementMapper.findById(settlementId)
-                .orElseThrow(SettlementErrorCode.SETTLEMENT_NOT_FOUND::toException);
+    private SettlementDTO findSettlementForUpdate(
+            Long settlementId
+    ) {
+        return settlementMapper
+                .findByIdForUpdate(settlementId)
+                .orElseThrow(
+                        SettlementErrorCode
+                                .SETTLEMENT_NOT_FOUND
+                                ::toException
+                );
     }
 
     private void acceptInvitation(Long invitationID, LocalDateTime acceptedAt){
@@ -73,7 +80,7 @@ public class SettlementInvitationResponseService {
         }
     }
 
-    private void createdMemberParticipant(Long invitationId, LocalDateTime joinedAt){
+    private void createMemberParticipant(Long invitationId, LocalDateTime joinedAt){
         SettlementParticipantDTO participant = SettlementParticipantDTO.builder()
                 .invitationId(invitationId)
                 .participantRole(SettlementParticipantRole.MEMBER)
@@ -84,7 +91,7 @@ public class SettlementInvitationResponseService {
         int insertCount = participantMapper.insert(participant);
 
         if(insertCount != 1){
-            throw  SettlementErrorCode.SETTLEMENT_INVITATION_CREATE_FAILED.toException();
+            throw  SettlementErrorCode.SETTLEMENT_PARTICIPANT_CREATE_FAILED.toException();
         }
     }
 }
