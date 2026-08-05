@@ -27,13 +27,13 @@
             <label for="newRepaymentType">상환 방식</label>
             <select id="newRepaymentType">
                 <option value="">선택해주세요</option>
-                <option value="원리금균등상환">원리금균등상환</option>
-                <option value="원금균등상환">원금균등상환</option>
-                <option value="만기일시상환">만기일시상환</option>
+                <option value="EQUAL_PRINCIPAL_AND_INTEREST">원리금균등상환</option>
+                <option value="EQUAL_PRINCIPAL">원금균등상환</option>
+                <option value="BULLET_REPAYMENT">만기일시상환</option>
             </select>
 
             <label for="newRepaymentDate">상환일 변경</label>
-            <input type="date" id="newRepaymentDate">
+            <input type="number" id="newRepaymentDate" min="1" max="31" placeholder="예: 15">
 
             <button type="button" id="cancelButton">변경 취소</button>
             <button type="submit" id="submitButton">변경 요청 보내기</button>
