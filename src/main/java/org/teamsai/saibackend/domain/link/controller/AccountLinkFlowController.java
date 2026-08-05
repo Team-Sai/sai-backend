@@ -18,6 +18,7 @@ import org.teamsai.saibackend.global.security.CustomUserDetails;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -29,14 +30,23 @@ public class AccountLinkFlowController {
 
     @PostMapping("/api/accounts/link/start")
     public ResponseEntity<Map<String, String>> startLink(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
         Long userId = userDetails.getUserId();
         String state = jwtTokenProvider.createLinkStateToken(userId);
+
+        List<Long> alreadyLinkedAccountIds = linkedBankAccountService
+                .getLinkedAccountIds(userId);
+
+        String linkedIdsParam = alreadyLinkedAccountIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
 
         String redirectUrl = UriComponentsBuilder
                 .fromUriString("http://localhost:8081/link/start")
                 .queryParam("returnUrl", "http://localhost:8080/accounts/link/callback")
                 .queryParam("state", state)
+                .queryParam("excludeAccountIds", linkedIdsParam)
                 .toUriString();
 
         return ResponseEntity.ok(Map.of("redirectUrl", redirectUrl));
