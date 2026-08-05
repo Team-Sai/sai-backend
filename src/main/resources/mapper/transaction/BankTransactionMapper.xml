@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.transaction.mapper.BankTransactionMapper">
+
+    <resultMap id="BankTransactionResultMap"
+               type="org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO">
+        <id property="bankTransactionId" column="bank_transaction_id"/>
+        <result property="linkedAccountId" column="linked_account_id"/>
+        <result property="externalTransactionId" column="external_transaction_id"/>
+        <result property="amount" column="amount"/>
+        <result property="transactionType" column="transaction_type"/>
+        <result property="processingStatus" column="processing_status"/>
+        <result property="transactionAt" column="transaction_at"/>
+        <result property="counterpartyName" column="counterparty_name"/>
+        <result property="memo" column="memo"/>
+        <result property="syncedAt" column="synced_at"/>
+    </resultMap>
+
+    <sql id="BankTransactionColumns">
+        bank_transaction_id,
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at
+    </sql>
+
+    <insert id="insertOrGetId"
+            parameterType="org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO"
+            useGeneratedKeys="true"
+            keyProperty="bankTransactionId"
+            keyColumn="bank_transaction_id">
+        INSERT INTO bank_transaction (
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at
+        )
+        VALUES (
+        #{linkedAccountId},
+        #{externalTransactionId},
+        #{amount},
+        #{transactionType},
+        'PENDING',
+        #{transactionAt},
+        #{counterpartyName},
+        #{memo},
+        #{syncedAt}
+        )
+        ON DUPLICATE KEY UPDATE
+        bank_transaction_id = LAST_INSERT_ID(bank_transaction_id)
+    </insert>
+
+    <select id="findById" resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction
+        WHERE bank_transaction_id = #{bankTransactionId}
+    </select>
+
+    <select id="findByExternalKey"
+            resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction
+        WHERE linked_account_id = #{linkedAccountId}
+        AND external_transaction_id = #{externalTransactionId}
+    </select>
+
+    <select id="findPendingDeposits"
+            resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction
+        WHERE processing_status = 'PENDING'
+        AND transaction_type = 'DEPOSIT'
+        ORDER BY transaction_at ASC, bank_transaction_id ASC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE bank_transaction
+        SET processing_status = #{nextStatus}
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND processing_status = #{currentStatus}
+    </update>
+
+</mapper>
