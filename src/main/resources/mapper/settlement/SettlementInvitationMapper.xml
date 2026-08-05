@@ -113,12 +113,8 @@
         JOIN users owner
         ON owner.user_id = s.owner_id
         WHERE si.user_id = #{userId}
-        ORDER BY
-        CASE
-        WHEN si.invitation_status = 'INVITED' THEN 0
-        ELSE 1
-        END,
-        si.invited_at DESC
+        AND si.invitation_status = 'INVITED'
+        ORDER BY si.invited_at DESC
 
     </select>
 

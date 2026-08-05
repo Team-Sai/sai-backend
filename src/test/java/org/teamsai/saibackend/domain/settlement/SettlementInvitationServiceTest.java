@@ -12,6 +12,7 @@ import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSettlementInvitationResponse;
+import org.teamsai.saibackend.domain.settlement.dto.response.ReceivedSettlementInvitationResponse;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementInvitationMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.service.SettlementInvitationService;
@@ -21,6 +22,8 @@ import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -208,5 +211,95 @@ class SettlementInvitationServiceTest {
 
         verify(invitationMapper)
                 .insert(any(SettlementInvitationDTO.class));
+    }
+    @Test
+    @DisplayName("로그인한 회원이 받은 정산 초대 목록을 조회한다")
+    void findReceivedInvitationsSuccess() {
+        Long userId = 2L;
+
+        ReceivedSettlementInvitationResponse firstInvitation =
+                ReceivedSettlementInvitationResponse.builder()
+                        .invitationId(3L)
+                        .settlementId(2L)
+                        .settlementTitle("제주도")
+                        .ownerName("김사이")
+                        .invitationStatus(SettlementInvitationStatus.INVITED)
+                        .invitedAt(
+                                LocalDateTime.of(2026, 8, 4, 16, 0, 31
+                                )
+                        )
+                        .acceptedAt(null)
+                        .build();
+
+        ReceivedSettlementInvitationResponse secondInvitation =
+                ReceivedSettlementInvitationResponse.builder()
+                        .invitationId(1L)
+                        .settlementId(1L)
+                        .settlementTitle("제주도 여행비 정산")
+                        .ownerName("김사이")
+                        .invitationStatus(SettlementInvitationStatus.INVITED)
+                        .invitedAt(
+                                LocalDateTime.of(2026, 8, 4, 15, 13, 46
+                                )
+                        )
+                        .acceptedAt(null)
+                        .build();
+
+        List<ReceivedSettlementInvitationResponse> invitations =
+                List.of(
+                        firstInvitation,
+                        secondInvitation
+                );
+
+        when(invitationMapper.findReceivedInvitations(userId))
+                .thenReturn(invitations);
+
+        List<ReceivedSettlementInvitationResponse> response =
+                settlementInvitationService
+                        .findReceivedInvitations(userId);
+
+        assertThat(response)
+                .hasSize(2)
+                .containsExactly(
+                        firstInvitation,
+                        secondInvitation
+                );
+
+        assertThat(response.get(0).getInvitationId())
+                .isEqualTo(3L);
+
+        assertThat(response.get(0).getSettlementTitle())
+                .isEqualTo("제주도");
+
+        assertThat(response.get(0).getInvitationStatus())
+                .isEqualTo(SettlementInvitationStatus.INVITED);
+
+        assertThat(response.get(0).getAcceptedAt())
+                .isNull();
+
+        assertThat(response.get(1).getInvitationId())
+                .isEqualTo(1L);
+
+        verify(invitationMapper)
+                .findReceivedInvitations(userId);
+    }
+
+    @Test
+    @DisplayName("받은 정산 초대가 없으면 빈 목록을 반환한다")
+    void findReceivedInvitationsReturnsEmptyList() {
+        Long userId = 2L;
+
+        when(invitationMapper.findReceivedInvitations(userId))
+                .thenReturn(List.of());
+
+        List<ReceivedSettlementInvitationResponse> response =
+                settlementInvitationService
+                        .findReceivedInvitations(userId);
+
+        assertThat(response)
+                .isEmpty();
+
+        verify(invitationMapper)
+                .findReceivedInvitations(userId);
     }
 }
