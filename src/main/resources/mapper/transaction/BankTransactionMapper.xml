@@ -89,6 +89,17 @@
         ORDER BY transaction_at ASC, bank_transaction_id ASC
     </select>
 
+    <select id="findPendingDepositsByLinkedAccountId"
+            resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction
+        WHERE linked_account_id = #{linkedAccountId}
+        AND processing_status = 'PENDING'
+        AND transaction_type = 'DEPOSIT'
+        ORDER BY transaction_at ASC, bank_transaction_id ASC
+    </select>
+
     <update id="updateStatus">
         UPDATE bank_transaction
         SET processing_status = #{nextStatus}

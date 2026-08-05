@@ -7,9 +7,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
+import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementInvitationMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
 import org.teamsai.saibackend.domain.settlement.service.SettlementInvitationValidator;
+import org.teamsai.saibackend.domain.settlement.type.SettlementInvitationStatus;
 import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
 import org.teamsai.saibackend.global.exception.DomainException;
 
@@ -185,5 +187,95 @@ class SettlementInvitationValidatorTest {
                         SETTLEMENT_ID,
                         INVITED_USER_ID
                 );
+    }
+
+    @Test
+    @DisplayName("초대 대상 회원이고 INVITED 상태이면 초대에 응답할 수 있다")
+    void validateRespondableInvitationSuccess() {
+        SettlementInvitationDTO invitation =
+                SettlementInvitationDTO.builder()
+                        .invitedUserId(OTHER_USER_ID)
+                        .invitationStatus(
+                                SettlementInvitationStatus.INVITED
+                        )
+                        .build();
+
+        assertThatCode(
+                () -> invitationValidator
+                        .validateRespondableInvitation(
+                                invitation,
+                                OTHER_USER_ID
+                        )
+        ).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("초대 대상 회원이 아니면 초대를 처리할 수 없다")
+    void validateRespondableInvitationFailWhenNotInvitedUser() {
+        SettlementInvitationDTO invitation =
+                SettlementInvitationDTO.builder()
+                        .invitedUserId(INVITED_USER_ID)
+                        .invitationStatus(
+                                SettlementInvitationStatus.INVITED
+                        )
+                        .build();
+
+        assertThatThrownBy(
+                () -> invitationValidator
+                        .validateRespondableInvitation(
+                                invitation,
+                                OTHER_USER_ID
+                        )
+        ).isInstanceOf(DomainException.class);
+    }
+
+    @Test
+    @DisplayName("이미 처리된 초대에는 다시 응답할 수 없다")
+    void validateRespondableInvitationFailWhenAlreadyProcessed() {
+        SettlementInvitationDTO invitation =
+                SettlementInvitationDTO.builder()
+                        .invitedUserId(OTHER_USER_ID)
+                        .invitationStatus(
+                                SettlementInvitationStatus.ACCEPTED
+                        )
+                        .build();
+
+        assertThatThrownBy(
+                () -> invitationValidator
+                        .validateRespondableInvitation(
+                                invitation,
+                                OTHER_USER_ID
+                        )
+        ).isInstanceOf(DomainException.class);
+    }
+
+    @Test
+    @DisplayName("진행 중인 정산의 초대는 수락할 수 있다")
+    void validateAcceptableSettlementSuccess() {
+        SettlementDTO settlement =
+                mock(SettlementDTO.class);
+
+        when(settlement.getSettlementStatus())
+                .thenReturn(SettlementStatus.IN_PROGRESS);
+
+        assertThatCode(
+                () -> invitationValidator
+                        .validateAcceptableSettlement(settlement)
+        ).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("종료된 정산의 초대는 수락할 수 없다")
+    void validateAcceptableSettlementFailWhenClosed() {
+        SettlementDTO settlement =
+                mock(SettlementDTO.class);
+
+        when(settlement.getSettlementStatus())
+                .thenReturn(SettlementStatus.CLOSED);
+
+        assertThatThrownBy(
+                () -> invitationValidator
+                        .validateAcceptableSettlement(settlement)
+        ).isInstanceOf(DomainException.class);
     }
 }

@@ -24,6 +24,10 @@ public interface BankTransactionMapper {
 
     List<BankTransactionDTO> findPendingDeposits();
 
+    List<BankTransactionDTO> findPendingDepositsByLinkedAccountId(
+            @Param("linkedAccountId") Long linkedAccountId
+    );
+
     int updateStatus(
             @Param("bankTransactionId") Long bankTransactionId,
             @Param("currentStatus")
