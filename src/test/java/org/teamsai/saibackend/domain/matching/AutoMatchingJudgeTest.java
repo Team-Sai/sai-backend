@@ -15,6 +15,7 @@ import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -238,7 +239,8 @@ class AutoMatchingJudgeTest {
                 1L,
                 type,
                 new BigDecimal(amount),
-                counterpartyName
+                counterpartyName,
+                LocalDateTime.of(2026, 8, 5, 10, 0)
         );
     }
 

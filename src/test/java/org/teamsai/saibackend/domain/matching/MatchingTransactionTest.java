@@ -10,6 +10,7 @@ import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,7 +30,8 @@ class MatchingTransactionTest {
                             null,
                             AutoMatchingTransactionType.DEPOSIT,
                             new BigDecimal("10000"),
-                            "HongGilDong"
+                            "HongGilDong",
+                            transactionAt()
                     )
             );
         }
@@ -42,7 +44,8 @@ class MatchingTransactionTest {
                             1L,
                             null,
                             new BigDecimal("10000"),
-                            "HongGilDong"
+                            "HongGilDong",
+                            transactionAt()
                     )
             );
         }
@@ -55,7 +58,8 @@ class MatchingTransactionTest {
                             1L,
                             AutoMatchingTransactionType.DEPOSIT,
                             null,
-                            "HongGilDong"
+                            "HongGilDong",
+                            transactionAt()
                     )
             );
         }
@@ -68,7 +72,8 @@ class MatchingTransactionTest {
                             1L,
                             AutoMatchingTransactionType.DEPOSIT,
                             BigDecimal.ZERO,
-                            "HongGilDong"
+                            "HongGilDong",
+                            transactionAt()
                     )
             );
         }
@@ -81,7 +86,8 @@ class MatchingTransactionTest {
                             1L,
                             AutoMatchingTransactionType.DEPOSIT,
                             new BigDecimal("10000"),
-                            null
+                            null,
+                            transactionAt()
                     )
             );
         }
@@ -94,10 +100,29 @@ class MatchingTransactionTest {
                             1L,
                             AutoMatchingTransactionType.DEPOSIT,
                             new BigDecimal("10000"),
-                            " "
+                            " ",
+                            transactionAt()
                     )
             );
         }
+
+        @Test
+        @DisplayName("거래 시간이 null이면 잘못된 매칭 요청 예외가 발생한다")
+        void failsWhenTransactionAtIsNull() {
+            assertInvalidMatchingRequestThrownBy(
+                    () -> new MatchingTransaction(
+                            1L,
+                            AutoMatchingTransactionType.DEPOSIT,
+                            new BigDecimal("10000"),
+                            "HongGilDong",
+                            null
+                    )
+            );
+        }
+    }
+
+    private LocalDateTime transactionAt() {
+        return LocalDateTime.of(2026, 8, 5, 10, 0);
     }
 
     private void assertInvalidMatchingRequestThrownBy(
