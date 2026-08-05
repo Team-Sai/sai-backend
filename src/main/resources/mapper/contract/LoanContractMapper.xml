@@ -96,12 +96,8 @@
         lc.contract_id        AS contractId,
         lc.creditor_id        AS creditorId,
         lc.debtor_id          AS debtorId,
-        creditor.name         AS creditorName,
-        creditor.birth_date   AS creditorBirthDate,
         lc.creditor_address   AS creditorAddress,
         lc.creditor_signature AS creditorSignature,
-        debtor.name           AS debtorName,
-        debtor.birth_date     AS debtorBirthDate,
         lc.debtor_address     AS debtorAddress,
         lc.debtor_signature   AS debtorSignature,
         lc.principal_amount   AS principalAmount,
@@ -114,8 +110,6 @@
         lc.terms              AS terms,
         lc.status             AS status
         FROM loan_contract lc
-        JOIN users creditor ON creditor.user_id = lc.creditor_id
-        LEFT JOIN users debtor ON debtor.user_id = lc.debtor_id
         WHERE lc.contract_id = #{contractId}
     </select>
 

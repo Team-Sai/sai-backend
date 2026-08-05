@@ -20,6 +20,7 @@ import org.teamsai.saibackend.domain.contract.service.contract.LoanContractServi
 import org.teamsai.saibackend.domain.identity.exception.IdentityErrorCode;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
+import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.exception.DomainException;
@@ -167,7 +168,7 @@ class LoanContractServiceTest {
         }
 
         @Test
-        @DisplayName("이미 채무자가 연결되어 있으면 예외가 발생하고 본인인증을 소비하지 않는다")
+        @DisplayName("이미 채무자가 연결되어 있으면 예외가 발생하고 본인인증을 실행하지 않는다")
         void linkDebtorFailsWhenAlreadyLinked() {
             given(contractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createResponse()));
@@ -303,33 +304,39 @@ class LoanContractServiceTest {
         }
 
         @Test
-        @DisplayName("채무자 주소가 빈 문자열이어도 그대로 전달되어 저장된다")
-        void submitDebtorSignatureWithBlankAddress() {
+        @DisplayName("채무자 주소가 빈 문자열이면 예외가 발생하고 저장되지 않는다")
+        void submitDebtorSignatureFailsWhenAddressIsBlank() {
             MultipartFile signature = mock(MultipartFile.class);
-            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
-            given(fileService.saveSignatureFile(CONTRACT_ID, signature))
-                    .willReturn("uploads/signatures/1_signature.png");
 
-            loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, "", signature);
+            assertThatThrownBy(() ->
+                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, "", signature)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.DEBTOR_ADDRESS_REQUIRED)
+                    );
 
-            verify(contractMapper).updateDebtorSignature(
-                    CONTRACT_ID, "", "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
-            );
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractMapper, never()).updateDebtorSignature(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("채무자 주소가 null이어도 그대로 전달되어 저장된다")
-        void submitDebtorSignatureWithNullAddress() {
+        @DisplayName("채무자 주소가 null이면 예외가 발생하고 저장되지 않는다")
+        void submitDebtorSignatureFailsWhenAddressIsNull() {
             MultipartFile signature = mock(MultipartFile.class);
-            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
-            given(fileService.saveSignatureFile(CONTRACT_ID, signature))
-                    .willReturn("uploads/signatures/1_signature.png");
 
-            loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, null, signature);
+            assertThatThrownBy(() ->
+                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, null, signature)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.DEBTOR_ADDRESS_REQUIRED)
+                    );
 
-            verify(contractMapper).updateDebtorSignature(
-                    CONTRACT_ID, null, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
-            );
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractMapper, never()).updateDebtorSignature(any(), any(), any(), any());
         }
 
         @Test
@@ -380,10 +387,16 @@ class LoanContractServiceTest {
         void findContractSuccessAsCreditor() {
             LoanContractResponse response = createResponse();
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(response));
+            given(userService.getMyInfo(CREDITOR_ID)).willReturn(
+                    UserResponse.builder().name("김채권").birthDate(LocalDate.of(1995, 5, 5)).build()
+            );
+            given(userService.getMyInfo(DEBTOR_ID)).willReturn(
+                    UserResponse.builder().name("이채무").birthDate(LocalDate.of(1996, 6, 6)).build()
+            );
 
             LoanContractResponse result = loanContractService.findContract(CONTRACT_ID, CREDITOR_ID);
 
-            assertThat(result).isEqualTo(response);
+            assertThat(result).usingRecursiveComparison().isEqualTo(response);
         }
 
         @Test
@@ -391,10 +404,16 @@ class LoanContractServiceTest {
         void findContractSuccessAsDebtor() {
             LoanContractResponse response = createResponse();
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(response));
+            given(userService.getMyInfo(CREDITOR_ID)).willReturn(
+                    UserResponse.builder().name("김채권").birthDate(LocalDate.of(1995, 5, 5)).build()
+            );
+            given(userService.getMyInfo(DEBTOR_ID)).willReturn(
+                    UserResponse.builder().name("이채무").birthDate(LocalDate.of(1996, 6, 6)).build()
+            );
 
             LoanContractResponse result = loanContractService.findContract(CONTRACT_ID, DEBTOR_ID);
 
-            assertThat(result).isEqualTo(response);
+            assertThat(result).usingRecursiveComparison().isEqualTo(response);
         }
 
         @Test

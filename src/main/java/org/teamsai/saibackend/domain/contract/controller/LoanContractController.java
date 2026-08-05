@@ -18,6 +18,7 @@ import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLink
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
+import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
@@ -33,17 +34,23 @@ import org.teamsai.saibackend.global.security.CustomUserDetails;
 public class LoanContractController {
 
     private final LoanContractService contractService;
+    private final IdentityService identityService;
 
     @Operation(hidden = true)
     @GetMapping
-    public String contractFormPage() {
-        return "contract/contract-form";
-    }
+    public String contractFormPage(
+            @RequestParam(name = "identityVerificationId", required = false) String identityVerificationId,
+            @Parameter(hidden = true) Authentication authentication
+    ) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-    @Operation(hidden = true)
-    @GetMapping("/signature")
-    public String contractSignaturePage() {
-        return "contract/contract-signature";
+        try {
+            identityService.complete(userDetails.getUserId(), identityVerificationId);
+        } catch (Exception notVerified) {
+            return "redirect:/identity-test";
+        }
+
+        return "contract/contract-form";
     }
 
     @Operation(
@@ -75,6 +82,27 @@ public class LoanContractController {
     ) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         return contractService.createContract(request, userDetails.getUserId());
+    }
+
+    @Operation(hidden = true)
+    @GetMapping("/signature")
+    public String contractSignaturePage() {
+        return "contract/contract-signature";
+    }
+
+    @Operation(
+            summary = "채권자 전자서명 제출 및 전송",
+            description = "채권자가 수기로 남긴 서명 이미지를 저장하고, 상태를 대기(PENDING)로 변경하여 채무자에게 전송합니다."
+    )
+    @ResponseBody
+    @PatchMapping(value = "/{contractId}/signature", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ContractStatus submitSignature(
+            @PathVariable Long contractId,
+            @RequestParam("signature") MultipartFile signature,
+            @Parameter(hidden = true) Authentication authentication
+    ) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return contractService.submitCreditorSignature(contractId, userDetails.getUserId(), signature);
     }
 
     @Operation(
@@ -110,19 +138,20 @@ public class LoanContractController {
         contractService.linkDebtor(contractId, userDetails.getUserId(), request);
     }
 
-    @Operation(
-            summary = "채권자 전자서명 제출 및 전송",
-            description = "채권자가 수기로 남긴 서명 이미지를 저장하고, 상태를 대기(PENDING)로 변경하여 채무자에게 전송합니다."
-    )
-    @ResponseBody
-    @PatchMapping(value = "/{contractId}/signature", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ContractStatus submitSignature(
-            @PathVariable Long contractId,
-            @RequestParam("signature") MultipartFile signature,
-            @Parameter(hidden = true) Authentication authentication
-    ) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        return contractService.submitCreditorSignature(contractId, userDetails.getUserId(), signature);
+    //채무자 차용증 확인 페이지
+    @Operation(hidden = true)
+    @GetMapping("/{contractId}/approve")
+    public String contractDebtorApprovePage(@PathVariable Long contractId, Model model) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-debtor-form";
+    }
+
+    //채무자 전자서명 페이지
+    @Operation(hidden = true)
+    @GetMapping("/{contractId}/approve/signature")
+    public String contractDebtorSignaturePage(@PathVariable Long contractId, Model model) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-debtor-signature";
     }
 
     @Operation(
@@ -139,22 +168,6 @@ public class LoanContractController {
     ) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         return contractService.submitDebtorSignature(contractId, userDetails.getUserId(), debtorAddress, signature);
-    }
-
-    //채무자 차용증 확인 페이지
-    @Operation(hidden = true)
-    @GetMapping("/{contractId}/approve")
-    public String contractDebtorApprovePage(@PathVariable Long contractId, Model model) {
-        model.addAttribute("contractId", contractId);
-        return "contract/contract-debtor-approve";
-    }
-
-    //채무자 전자서명 페이지
-    @Operation(hidden = true)
-    @GetMapping("/{contractId}/approve/signature")
-    public String contractDebtorSignaturePage(@PathVariable Long contractId, Model model) {
-        model.addAttribute("contractId", contractId);
-        return "contract/contract-debtor-signature";
     }
 
     @Operation(
