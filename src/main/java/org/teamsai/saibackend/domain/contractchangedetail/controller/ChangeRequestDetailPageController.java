@@ -6,13 +6,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.teamsai.saibackend.domain.contractchangedetail.service.ChangeRequestDetailService;
+import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 
 @Controller
 @RequiredArgsConstructor
 public class ChangeRequestDetailPageController {
 
-    private final ChangeRequestDetailService changeRequestDetailService;
+    private final ContractChangeService contractChangeService;
 
     @GetMapping("/contracts/{contractId}/change-requests/{changeRequestId}")
     public String changeRequestDetailPage(
@@ -21,7 +21,7 @@ public class ChangeRequestDetailPageController {
             @AuthenticationPrincipal(expression = "userId") Long userId,
             Model model
     ) {
-        changeRequestDetailService.getDetail(contractId, changeRequestId, userId);
+        contractChangeService.checkAccess(contractId, userId);
         model.addAttribute("contractId", contractId);
         model.addAttribute("changeRequestId", changeRequestId);
         return "contractchangedetail/request-detail";

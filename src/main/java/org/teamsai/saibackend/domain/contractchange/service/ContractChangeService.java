@@ -16,7 +16,6 @@ import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -28,6 +27,10 @@ public class ContractChangeService {
     private final ContractChangeMapper contractChangeMapper;
     private final LoanContractService loanContractService;
 
+
+    public void checkAccess(Long contractId, Long userId) {
+        getContract(contractId, userId);
+    }
 
     public LoanContractResponse getContract(Long contractId, Long userID) {
         LoanContractResponse contract = loanContractService.findContract(contractId, userID);

@@ -71,8 +71,8 @@ public class ChangeRequestDetailService {
                 changeDTO.getNewMaturityDate()
         );
 
-        int extendedMonths = Period.between(contract.getMaturityDate(), changeDTO.getNewMaturityDate()).getMonths()
-                + Period.between(contract.getMaturityDate(), changeDTO.getNewMaturityDate()).getYears() * 12;
+        Period period = Period.between(contract.getMaturityDate(), changeDTO.getNewMaturityDate());
+        int extendedMonths = period.getMonths() + period.getYears() * 12;
 
         return ChangeRequestDetailDTO.builder()
                 .changeRequestId(changeDTO.getChangeRequestId())

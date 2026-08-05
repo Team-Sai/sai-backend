@@ -106,3 +106,9 @@ body {
     font-weight: 600;
     cursor: pointer;
 }
+
+.disclaimer {
+    font-size: 11px;
+    color: #999;
+    margin-top: 16px;
+}
