@@ -10,4 +10,5 @@ public class ContractDetailResponse {
 
    private LoanContractResponse contract;
    private boolean canRequestChange;
+   private String address;
 }

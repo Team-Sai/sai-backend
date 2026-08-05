@@ -17,11 +17,7 @@ fetch(`/api/contracts/${contractId}/contract-detail`)
         document.getElementById('repaymentType').textContent = data.contract.repaymentType;
         document.getElementById('repaymentDay').textContent = data.contract.repaymentDay;
         document.getElementById('terms').textContent = data.contract.terms;
-        if (canRequestChange) {
-            document.getElementById('address').textContent = data.contract.creditorAddress;
-        } else {
-            document.getElementById('address').textContent = data.contract.debtorAddress;
-        }
+        document.getElementById('address').textContent = data.address;
     })
     .catch(() => {
         alert('계약 정보를 불러오는 중 오류가 발생했습니다.')

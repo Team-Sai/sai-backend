@@ -12,14 +12,25 @@ public class ContractDetailService {
 
     private final LoanContractService loanContractService;
 
+    public boolean canRequestChange(Long contractId, Long userID) {
+        LoanContractResponse contract = loanContractService.findContract(contractId, userID);
+        return contract.getCreditorId().equals(userID);
+    }
+
+
     public ContractDetailResponse getCheck(Long contractId, Long userId){
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
         boolean canRequestChange = contract.getCreditorId().equals(userId);
 
+        String address = canRequestChange
+                ? contract.getCreditorAddress()
+                : contract.getDebtorAddress();
+
         return ContractDetailResponse.builder()
                 .contract(contract)
                 .canRequestChange(canRequestChange)
+                .address(address)
                 .build();
     }
 }

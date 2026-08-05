@@ -1,12 +1,11 @@
 package org.teamsai.saibackend.domain.contractdetail.controller;
 
-import org.springframework.ui.Model;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.teamsai.saibackend.domain.contractdetail.dto.response.ContractDetailResponse;
 import org.teamsai.saibackend.domain.contractdetail.service.ContractDetailService;
 
 @Controller
@@ -21,9 +20,9 @@ public class ContractDetailPageController {
             @AuthenticationPrincipal(expression = "userId") Long userId,
             Model model
     ) {
-       ContractDetailResponse result = contractDetailService.getCheck(contractId, userId);
+        boolean canRequestChange = contractDetailService.canRequestChange(contractId, userId);
        model.addAttribute("contractId", contractId);
-       model.addAttribute("canRequestChange", result.isCanRequestChange());
+       model.addAttribute("canRequestChange", canRequestChange);
        return "contractdetail/detail";
 
     }
