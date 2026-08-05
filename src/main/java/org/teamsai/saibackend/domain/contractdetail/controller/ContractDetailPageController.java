@@ -24,7 +24,7 @@ public class ContractDetailPageController {
        ContractDetailResponse result = contractDetailService.getCheck(contractId, userId);
        model.addAttribute("contractId", contractId);
        model.addAttribute("canRequestChange", result.isCanRequestChange());
-       return "contractdetail/response";
+       return "contractdetail/detail";
 
     }
 }

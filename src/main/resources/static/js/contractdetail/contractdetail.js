@@ -16,17 +16,18 @@ fetch(`/api/contracts/${contractId}/contract-detail`)
         document.getElementById('maturityDate').textContent = data.contract.maturityDate;
         document.getElementById('repaymentType').textContent = data.contract.repaymentType;
         document.getElementById('repaymentDay').textContent = data.contract.repaymentDay;
-        document.getElementById('address').textContent = data.contract.address;
         document.getElementById('terms').textContent = data.contract.terms;
+        if (canRequestChange) {
+            document.getElementById('address').textContent = data.contract.creditorAddress;
+        } else {
+            document.getElementById('address').textContent = data.contract.debtorAddress;
+        }
     })
     .catch(() => {
         alert('계약 정보를 불러오는 중 오류가 발생했습니다.')
     });
 
-if (!canRequestChange) {
-    document.getElementById('changeButton').style.display = 'none';
 
-}
 
 document.getElementById('changeButton').addEventListener('click', function () {
     window.location.href = `/contracts/${contractId}/change-request`;
