@@ -42,6 +42,7 @@
         FROM contract_account
         WHERE contract_id = #{contractId}
         AND account_status = 'ACTIVE'
+        FOR UPDATE
     </select>
 
 </mapper>
