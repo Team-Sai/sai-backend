@@ -13,13 +13,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSettlementInvitationResponse;
+import org.teamsai.saibackend.domain.settlement.dto.response.ReceivedSettlementInvitationResponse;
 import org.teamsai.saibackend.domain.settlement.service.SettlementInvitationService;
+
+import java.util.List;
 
 @Tag(
         name = "정산 초대 API",
@@ -85,6 +85,31 @@ public class SettlementInvitationController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(response);
+    }
+    @Operation(
+            summary = "받은 정산 초대 목록 조회",
+            description = "로그인한 회원에게 도착한 대기 중인 정산 초대 목록을 최신순으로 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "받은 정산 초대 목록 조회 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "로그인이 필요하거나 토큰이 유효하지 않음"
+            )
+    })
+    @ResponseBody
+    @GetMapping("/api/settlements/received")
+    public ResponseEntity<List<ReceivedSettlementInvitationResponse>> findReceivedInvitation(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal(expression = "userId")
+            Long userId
+    ){
+        List<ReceivedSettlementInvitationResponse> response = service.findReceivedInvitations(userId);
+
+        return ResponseEntity.ok(response);
     }
 
 }

@@ -7,6 +7,7 @@ import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSettlementInvitationResponse;
+import org.teamsai.saibackend.domain.settlement.dto.response.ReceivedSettlementInvitationResponse;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementInvitationMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
@@ -15,6 +16,7 @@ import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -85,4 +87,9 @@ public class SettlementInvitationService {
                                 ::toException
                 );
     }
+
+    public List<ReceivedSettlementInvitationResponse> findReceivedInvitations(Long userId){
+        return invitationMapper.findReceivedInvitations(userId);
+    }
+
 }
