@@ -72,8 +72,8 @@ public class SettlementInvitationResponseService {
                 );
     }
 
-    private void acceptInvitation(Long invitationID, LocalDateTime acceptedAt){
-        int updateCount = invitationMapper.accept(invitationID, acceptedAt);
+    private void acceptInvitation(Long invitationId, LocalDateTime acceptedAt){
+        int updateCount = invitationMapper.accept(invitationId, acceptedAt);
 
         if(updateCount != 1){
             throw SettlementErrorCode.INVITATION_ALREADY_PROCESSED.toException();
