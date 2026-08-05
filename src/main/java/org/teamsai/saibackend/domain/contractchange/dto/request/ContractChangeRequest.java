@@ -28,10 +28,6 @@ public class ContractChangeRequest {
     private BigDecimal newInterestRate;
 
     @NotBlank(message = "상환 방식은 필수입니다.")
-    @Pattern(
-            regexp = "EQUAL_PRINCIPAL_AND_INTEREST|EQUAL_PRINCIPAL|BULLET_REPAYMENT",
-            message = "상환 방식이 올바르지 않습니다."
-    )
     private String newRepaymentType;
 
     @NotNull(message = "변경 상환일은 필수입니다.")
