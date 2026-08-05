@@ -13,4 +13,8 @@ public interface SettlementMapper {
     Optional<SettlementDTO> findById(
             @Param("settlementId") Long settlementId
     );
+
+    Optional<SettlementDTO> findByIdForUpdate(
+            @Param("settlementId") Long settlementId
+    );
 }

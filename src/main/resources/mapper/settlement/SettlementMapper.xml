@@ -74,4 +74,31 @@
         WHERE settlement_id = #{settlementId}
     </select>
 
+    <select
+            id="findByIdForUpdate"
+            resultMap="settlementResultMap">
+
+        SELECT
+        settlement_id,
+        owner_id,
+        settlement_type,
+        settlement_status,
+        settlement_category,
+        title,
+        split_type,
+        due_date,
+        cycle_rule,
+        start_date,
+        end_date,
+        created_at,
+        closed_at,
+        status,
+        cycle_date,
+        invitation_token
+        FROM settlement
+        WHERE settlement_id = #{settlementId}
+        FOR UPDATE
+
+    </select>
+
 </mapper>
