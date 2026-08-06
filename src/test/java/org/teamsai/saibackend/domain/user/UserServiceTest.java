@@ -47,12 +47,10 @@ class UserServiceTest {
 
             UserResponse response = userService.getMyInfo(USER_ID);
 
-            assertThat(response.getUserToken()).isEqualTo(USER_KEY);
+            assertThat(response.getUserToken()).isEqualTo(USER_TOKEN);   // USER_KEY → USER_TOKEN
             assertThat(response.getEmail()).isEqualTo("user@example.com");
             assertThat(response.getName()).isEqualTo("김사이");
-            assertThat(response.getBirthDate())
-                    .isEqualTo(LocalDate.of(2002, 10, 22));
-        }
+            assertThat(response.getBirthDate()).isEqualTo(LocalDate.of(2002, 10, 22));        }
 
         @Test
         @DisplayName("사용자 키에 해당하는 회원이 없으면 예외가 발생한다")

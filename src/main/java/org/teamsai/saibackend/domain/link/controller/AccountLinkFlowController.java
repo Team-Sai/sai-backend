@@ -1,17 +1,19 @@
 package org.teamsai.saibackend.domain.link.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
+import org.teamsai.saibackend.domain.link.service.AccountLinkService;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
-import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.global.exception.DomainException;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
@@ -21,9 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class AccountLinkFlowController {
+
     @Value("${sai.mock-bank.base-url}")
     private String mockBankBaseUrl;
 
@@ -31,8 +35,8 @@ public class AccountLinkFlowController {
     private String backendBaseUrl;
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserMapper userMapper;
     private final LinkedBankAccountService linkedBankAccountService;
+    private final AccountLinkService accountLinkService;
 
     @PostMapping("/api/accounts/link/start")
     public ResponseEntity<Map<String, String>> startLink(
@@ -41,9 +45,7 @@ public class AccountLinkFlowController {
         Long userId = userDetails.getUserId();
         String state = jwtTokenProvider.createLinkStateToken(userId);
 
-        List<Long> alreadyLinkedAccountIds = linkedBankAccountService
-                .getLinkedAccountIds(userId);
-
+        List<Long> alreadyLinkedAccountIds = linkedBankAccountService.getLinkedAccountIds(userId);
         String linkedIdsParam = alreadyLinkedAccountIds.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
@@ -58,39 +60,61 @@ public class AccountLinkFlowController {
         return ResponseEntity.ok(Map.of("redirectUrl", redirectUrl));
     }
 
-
     @GetMapping("/accounts/link/callback")
     public String linkCallback(
             @RequestParam String state,
             @RequestParam String userKey,
-            @RequestParam String accountIds
+            @RequestParam(required = false) String accountIds,
+            Model model
     ) {
         Long userId;
         try {
             userId = jwtTokenProvider.getUserIdFromLinkState(state)
                     .orElseThrow(UserErrorCode.INVALID_LINK_STATE::toException);
         } catch (DomainException e) {
-            return "redirect:/mypage?error=invalid_link_state";
-        }
-
-        int updated = userMapper.updateUserKeyByUserId(userId, userKey);
-        if (updated == 0) {
-            return "redirect:/mypage?error=link_failed";
+            log.warn("[AccountLinkFlowController] 유효하지 않은 state - reason: {}", e.getMessage());
+            return errorView(model, "유효하지 않거나 만료된 요청입니다.");
         }
 
         if (accountIds == null || accountIds.isBlank()) {
-            return "redirect:/mypage?error=no_accounts_selected";
+            log.info("[AccountLinkFlowController] 선택된 계좌 없이 콜백 진입 - userId: {}", userId);
+            return errorView(model, "선택된 계좌가 없습니다.");
+        }
+
+        List<Long> ids;
+        try {
+            ids = Arrays.stream(accountIds.split(","))
+                    .map(String::trim)
+                    .filter(token -> !token.isEmpty())
+                    .map(Long::parseLong)
+                    .distinct()
+                    .toList();
+        } catch (NumberFormatException e) {
+            log.warn("[AccountLinkFlowController] accountIds 파싱 실패 - userId: {}, accountIds: {}", userId, accountIds);
+            return errorView(model, "계좌 연동에 실패했습니다.");
+        }
+
+        if (ids.isEmpty()) {
+            return errorView(model, "선택된 계좌가 없습니다.");
         }
 
         try {
-            List<Long> ids = Arrays.stream(accountIds.split(",")).map(Long::parseLong).toList();
-            linkedBankAccountService.linkAccountsByIds(userId, userKey, ids);
-        }  catch (NumberFormatException e) {
-            return "redirect:/mypage?error=invalid_account_ids";
-        }catch (DomainException e) {
-            return "redirect:/mypage?error=account_link_failed";
+            accountLinkService.completeLink(userId, userKey, ids);
+        } catch (DomainException e) {
+            log.warn(
+                    "[AccountLinkFlowController] 계좌 연동 실패 - userId: {}, accountIds: {}, errorCode: {}",
+                    userId, ids, e.getErrorCode()
+            );
+            return errorView(model, "계좌 연동에 실패했습니다.");
         }
 
-        return "redirect:/mypage";
+        model.addAttribute("success", true);
+        return "link/link-complete";
+    }
+
+    private String errorView(Model model, String message) {
+        model.addAttribute("success", false);
+        model.addAttribute("errorMessage", message);
+        return "link/link-complete";
     }
 }

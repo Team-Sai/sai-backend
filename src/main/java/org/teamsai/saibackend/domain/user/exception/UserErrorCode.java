@@ -52,6 +52,11 @@ public enum UserErrorCode
     INVALID_LINK_STATE(
             HttpStatus.BAD_REQUEST,
             "유효하지 않거나 만료된 연동 요청입니다. 다시 시도해주세요."
+    ),
+    LINK_KEY_UPDATE_CONFLICT(
+            HttpStatus.CONFLICT,
+            "계좌 연동 처리 중 충돌이 발생했습니다. 다시 시도해주세요."
+
     );
 
     private final HttpStatus httpStatus;
