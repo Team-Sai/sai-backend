@@ -136,6 +136,7 @@
       await submitApproval();
       sessionStorage.removeItem(DRAFT_KEY);
       showStatus("서명이 제출되었습니다. 계약이 완료되었습니다.", false);
+      window.location.href = `/contracts/complete?contractId=${encodeURIComponent(contractId)}`;
     } catch (err) {
       showStatus(err.message || "서명 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.", true);
       submitBtn.disabled = false;
