@@ -7,10 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="./contract-form.css" />
+  <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="../../static/css/contract/contract-form.css" />
 </head>
 <body>
-
 
 <header class="topnav">
   <div class="topnav__inner">
@@ -32,11 +31,14 @@
   </div>
 </header>
 
-
 <div class="stepper-wrap">
   <ol class="stepper">
     <li class="stepper__step is-done">
-      <span class="stepper__circle"><svg viewBox="0 0 16 16" width="12" height="12" fill="none"><path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="stepper__circle">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
+          <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
       <span class="stepper__label">본인인증</span>
     </li>
     <li class="stepper__step is-active">
@@ -59,13 +61,10 @@
 </div>
 
 <main class="page">
-
   <form class="doc" id="contractForm" data-contract-id="">
-
     <h1 class="doc__title">금 전 차 용 계 약 서</h1>
 
     <p class="doc__status-banner" id="statusBanner" hidden></p>
-
     <input type="hidden" id="identityVerificationId" name="identityVerificationId" />
 
     <section class="doc__article">
@@ -141,19 +140,7 @@
     </section>
 
     <section class="doc__article">
-      <span class="doc__clause">제7조(대출금 지급계좌)</span>
-      <span class="doc__text">
-        갑은 본인 명의로 연동된 아래 계좌를 통해 대출금을 지급한다.
-      </span>
-      <span class="doc__text doc__text--indent">
-        <select class="doc__inline-input doc__inline-input--alias" id="selectedLinkedAccountId" name="selectedLinkedAccountId" disabled>
-          <option value="">본인인증을 완료하면 계좌를 선택할 수 있습니다</option>
-        </select>
-      </span>
-    </section>
-
-    <section class="doc__article">
-      <span class="doc__clause">제8조(특약사항)</span>
+      <span class="doc__clause">제7조(특약사항)</span>
       <span class="doc__text">
         <textarea class="doc__textarea" id="terms" name="terms" rows="3" placeholder="추가로 약정할 내용이 있다면 입력하세요 (선택)"></textarea>
       </span>
@@ -182,10 +169,8 @@
           <input type="text" class="parties__input" id="creditorAddress" name="creditorAddress" placeholder="주소를 입력하세요" />
         </td>
       </tr>
-
       <tr>
         <th rowspan="2" class="parties__role">채무자</th>
-
         <td class="parties__label">성 명</td>
         <td class="parties__value" colspan="3">
           <input type="text" class="parties__input" id="debtorName" disabled placeholder="채무자 확인 후 자동 입력됩니다" />
@@ -199,6 +184,7 @@
       </tr>
       </tbody>
     </table>
+
     <p class="doc__hint">채무자 정보는 채무자가 직접 확인·서명하는 단계에서 채워지며, 현재 화면에서는 입력할 수 없습니다.</p>
 
     <div class="doc__actions">
@@ -209,6 +195,6 @@
   </form>
 </main>
 
-<script th:src="@{/js/contract/contract-form.js}" src="./contract-form.js"></script>
+<script th:src="@{/js/contract/contract-form.js}" src="../../static/js/contract/contract-form.js"></script>
 </body>
 </html>
