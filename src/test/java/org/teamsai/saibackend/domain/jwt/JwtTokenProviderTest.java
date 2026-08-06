@@ -20,6 +20,8 @@ class JwtTokenProviderTest {
 
     private static final long ACCESS_TOKEN_EXPIRATION_MS =
             60 * 60 * 1000L;
+    private static final long LINK_STATE_EXPIRATION_Ms =
+            10 * 60 * 1000L;
 
     private static final Long USER_ID = 1L;
 
@@ -39,7 +41,8 @@ class JwtTokenProviderTest {
         jwtTokenProvider =
                 new JwtTokenProvider(
                         secret,
-                        ACCESS_TOKEN_EXPIRATION_MS
+                        ACCESS_TOKEN_EXPIRATION_MS,
+                        LINK_STATE_EXPIRATION_Ms
                 );
     }
 
