@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.LoanContractFileDTO;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractFileErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractFileMapper;
-import org.teamsai.saibackend.domain.contract.service.contract.LoanContractFileService;
+import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.io.IOException;
@@ -107,7 +107,7 @@ class LoanContractFileServiceTest {
             );
 
             String resultPath = fileService.saveSignatureFile(CONTRACT_ID, signature);
-            savedPath = Path.of(resultPath);
+            savedPath = Path.of(fileService.getUploadDir()).resolve(resultPath);
 
             assertThat(savedPath).exists();
             assertThat(Files.readAllBytes(savedPath)).isEqualTo("signature-bytes".getBytes());
@@ -123,7 +123,7 @@ class LoanContractFileServiceTest {
             );
 
             String resultPath = fileService.saveSignatureFile(CONTRACT_ID, signature);
-            savedPath = Path.of(resultPath);
+            savedPath = Path.of(fileService.getUploadDir()).resolve(resultPath);
 
             assertThat(savedPath).exists();
             assertThat(savedPath.normalize()).isEqualTo(savedPath);
