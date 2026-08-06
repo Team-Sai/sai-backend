@@ -13,6 +13,7 @@
         <result property="settlementCategory" column="settlement_category"/>
         <result property="title" column="title"/>
         <result property="splitType" column="split_type"/>
+        <result property="totalAmount" column="total_amount"/>
         <result property="dueDate" column="due_date"/>
         <result property="cycleRule" column="cycle_rule"/>
         <result property="startDate" column="start_date"/>
@@ -37,6 +38,7 @@
         settlement_category,
         title,
         split_type,
+        total_amount,
         due_date,
         created_at
         )
@@ -47,6 +49,7 @@
         #{settlementCategory},
         #{title},
         #{splitType},
+        #{totalAmount},
         #{dueDate},
         #{createdAt}
         )

@@ -21,6 +21,10 @@ public enum AccountErrorCode implements BaseErrorCode<DomainException> {
     LINKED_ACCOUNT_NOT_FOUND(
             HttpStatus.NOT_FOUND,
         "연동된 계좌를 찾을 수 없습니다."
+    ),
+    INVALID_BANK_RESPONSE(
+            HttpStatus.BAD_GATEWAY,
+            "은행으로부터 올바르지 않은 응답을 받았습니다."
     );
     private final HttpStatus httpStatus;
     private final String message;

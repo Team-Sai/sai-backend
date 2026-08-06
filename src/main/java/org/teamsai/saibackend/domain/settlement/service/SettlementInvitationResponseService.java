@@ -3,15 +3,12 @@ package org.teamsai.saibackend.domain.settlement.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.teamsai.saibackend.domain.payment.service.PaymentService;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
-import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementInvitationMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
-import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
-import org.teamsai.saibackend.domain.settlement.type.SettlementParticipantRole;
-import org.teamsai.saibackend.domain.settlement.type.SettlementParticipantStatus;
 
 import java.time.LocalDateTime;
 
@@ -21,8 +18,9 @@ public class SettlementInvitationResponseService {
 
     private final SettlementInvitationMapper invitationMapper;
     private final SettlementMapper settlementMapper;
-    private final SettlementParticipantMapper participantMapper;
     private final SettlementInvitationValidator invitationValidator;
+    private final PaymentService paymentService;
+    private final SettlementParticipantService participantService;
 
     @Transactional
     public void accept(Long userId, Long invitationId){
@@ -38,8 +36,6 @@ public class SettlementInvitationResponseService {
 
         acceptInvitation(invitationId, acceptedAt);
 
-        createMemberParticipant(invitationId,acceptedAt);
-
     }
 
     @Transactional
@@ -53,6 +49,8 @@ public class SettlementInvitationResponseService {
         if(updatedCount !=1 ){
             throw SettlementErrorCode.INVITATION_ALREADY_PROCESSED.toException();
         }
+        participantService.removeByInvitationId(invitationId);
+        paymentService.markObligationNeedsCheckByInvitationId(invitationId);
     }
 
     private SettlementInvitationDTO findInvitation(Long invitationId){
@@ -80,18 +78,4 @@ public class SettlementInvitationResponseService {
         }
     }
 
-    private void createMemberParticipant(Long invitationId, LocalDateTime joinedAt){
-        SettlementParticipantDTO participant = SettlementParticipantDTO.builder()
-                .invitationId(invitationId)
-                .participantRole(SettlementParticipantRole.MEMBER)
-                .participantStatus(SettlementParticipantStatus.ACTIVE)
-                .joinedAt(joinedAt)
-                .build();
-
-        int insertCount = participantMapper.insert(participant);
-
-        if(insertCount != 1){
-            throw  SettlementErrorCode.SETTLEMENT_PARTICIPANT_CREATE_FAILED.toException();
-        }
-    }
 }

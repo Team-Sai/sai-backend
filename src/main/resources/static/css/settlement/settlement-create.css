@@ -1,107 +1,177 @@
+/* settlement-create.css
+ * 공동정산 생성 화면 전용 스타일
+ * settlement-common.css 다음에 불러오세요.
+ */
+
+:root {
+    --settlement-page-bg: #f6f8fb;
+    --settlement-card-bg: #ffffff;
+    --settlement-border: #e5e7eb;
+    --settlement-border-strong: #d1d5db;
+    --settlement-text: #111827;
+    --settlement-muted: #6b7280;
+    --settlement-primary: #2563eb;
+    --settlement-primary-soft: #eff6ff;
+    --settlement-danger: #dc2626;
+    --settlement-success: #047857;
+    --settlement-radius-large: 18px;
+    --settlement-radius-medium: 12px;
+    --settlement-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--settlement-page-bg);
+    color: var(--settlement-text);
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+/* ─────────────────────────────────────────────
+   페이지 뼈대
+───────────────────────────────────────────── */
+
 .create-shell {
-    width: min(1120px, calc(100% - 48px));
+    width: min(1180px, calc(100% - 40px));
     margin: 0 auto;
-    padding: 32px 0 80px;
+    padding: 36px 0 80px;
 }
 
 .breadcrumb {
     display: flex;
-    gap: 7px;
-    color: var(--gray-650);
-    font-size: 12px;
-}
-
-.breadcrumb strong {
-    color: var(--gray-800);
-}
-
-.create-heading {
-    margin-top: 12px;
-}
-
-.create-heading h1 {
-    margin: 0;
-    color: var(--gray-950);
-    font-size: 32px;
-    letter-spacing: -1.3px;
-}
-
-.create-heading p {
-    margin: 10px 0 0;
-    color: var(--gray-650);
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 22px;
+    color: var(--settlement-muted);
     font-size: 14px;
 }
 
-.settlement-type-tabs {
-    margin-top: 25px;
-    padding: 4px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    background: #edf0ff;
-    border: 1px solid #e4e8ff;
+.breadcrumb a {
+    color: inherit;
+    text-decoration: none;
 }
 
-.type-tab {
-    height: 42px;
-    border: 0;
-    color: var(--gray-650);
-    background: var(--white);
-    cursor: pointer;
-    font-size: 13px;
+.breadcrumb a:hover {
+    color: var(--settlement-primary);
+}
+
+.breadcrumb strong {
+    color: var(--settlement-text);
     font-weight: 700;
 }
 
+.create-heading {
+    margin-bottom: 26px;
+}
+
+.create-heading h1 {
+    margin: 0 0 8px;
+    font-size: clamp(28px, 3vw, 38px);
+    line-height: 1.2;
+    letter-spacing: -0.04em;
+}
+
+.create-heading p {
+    margin: 0;
+    color: var(--settlement-muted);
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+/* ─────────────────────────────────────────────
+   정산 유형 탭
+───────────────────────────────────────────── */
+
+.settlement-type-tabs {
+    display: inline-flex;
+    gap: 8px;
+    padding: 6px;
+    margin-bottom: 24px;
+    border: 1px solid var(--settlement-border);
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.type-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--settlement-muted);
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .type-tab.active {
-    color: var(--white);
-    background: #132d65;
+    background: var(--settlement-primary);
+    color: #ffffff;
 }
 
 .type-tab.disabled {
     cursor: not-allowed;
+    opacity: 0.55;
 }
 
 .type-tab span {
-    margin-left: 5px;
-    color: var(--gray-500);
-    font-size: 10px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 11px;
 }
 
+/* ─────────────────────────────────────────────
+   좌우 레이아웃
+───────────────────────────────────────────── */
+
 .create-layout {
-    margin-top: 20px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 24px;
     align-items: start;
-    gap: 38px;
 }
 
 .form-column {
     display: grid;
     gap: 18px;
+    min-width: 0;
 }
 
+/* ─────────────────────────────────────────────
+   카드
+───────────────────────────────────────────── */
+
 .form-card {
-    padding: 25px 24px;
-    background: var(--white);
-    border: 1px solid var(--gray-350);
-    border-radius: 7px;
-    box-shadow: 0 1px 3px rgba(14, 34, 55, 0.03);
+    padding: 24px;
+    border: 1px solid var(--settlement-border);
+    border-radius: var(--settlement-radius-large);
+    background: var(--settlement-card-bg);
+    box-shadow: var(--settlement-shadow);
 }
 
 .card-title {
-    margin-bottom: 22px;
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
 .card-title h2 {
     margin: 0;
-    font-size: 19px;
-}
-
-.card-icon {
-    color: var(--navy-900);
-    font-weight: 800;
+    font-size: 18px;
+    line-height: 1.4;
+    letter-spacing: -0.02em;
 }
 
 .card-title-between {
@@ -111,276 +181,479 @@
 .card-title-between > div {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 10px;
 }
 
-.inline-action {
-    border: 0;
-    color: var(--blue-600);
-    background: transparent;
+.card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--settlement-primary-soft);
+    color: var(--settlement-primary);
+    font-weight: 800;
+}
+
+.pending-card {
+    border-style: dashed;
+}
+
+.pending-message {
+    margin: 14px 0 0;
+    color: var(--settlement-muted);
     font-size: 13px;
-    font-weight: 700;
+    line-height: 1.65;
 }
 
-.inline-action:disabled {
-    color: var(--gray-500);
-}
+/* ─────────────────────────────────────────────
+   입력 필드
+───────────────────────────────────────────── */
 
 .field-grid {
     display: grid;
-    gap: 18px;
+    gap: 16px;
 }
 
 .field-grid.two-column {
-    grid-template-columns: 1.2fr 0.8fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .form-field {
     display: grid;
-    gap: 9px;
+    gap: 8px;
+    min-width: 0;
 }
 
 .form-field > span {
-    color: var(--gray-800);
-    font-size: 13px;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 700;
 }
 
 .form-field em {
-    color: var(--gray-500);
+    color: var(--settlement-danger);
+    font-size: 12px;
     font-style: normal;
+    font-weight: 700;
 }
 
 .form-field input,
 .form-field select {
     width: 100%;
-    height: 52px;
-    padding: 0 15px;
-    color: var(--gray-950);
-    background: var(--white);
-    border: 1px solid var(--gray-350);
-    border-radius: 4px;
-    outline: 0;
+    min-width: 0;
+    height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--settlement-border-strong);
+    border-radius: 10px;
+    outline: none;
+    background: #ffffff;
+    color: var(--settlement-text);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.form-field input::placeholder {
+    color: #9ca3af;
 }
 
 .form-field input:focus,
 .form-field select:focus {
-    border-color: var(--blue-600);
-    box-shadow: 0 0 0 3px rgba(20, 120, 212, 0.1);
+    border-color: var(--settlement-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
-.form-field input:disabled {
-    color: var(--gray-500);
-    background: var(--gray-100);
+.form-field input:disabled,
+.form-field select:disabled {
+    cursor: not-allowed;
+    background: #f3f4f6;
+    color: #9ca3af;
 }
 
-.date-field {
-    max-width: 340px;
-}
-
-.field-error {
-    min-height: 16px;
-    color: var(--red-600);
+.form-field > small:not(.field-error) {
+    color: var(--settlement-muted);
     font-size: 12px;
 }
 
+.date-field {
+    max-width: 360px;
+}
+
+.field-error {
+    min-height: 18px;
+    color: var(--settlement-danger);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────
+   분배 방식
+───────────────────────────────────────────── */
+
 .choice-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
 }
 
 .choice-card {
-    min-height: 104px;
-    padding: 18px;
+    position: relative;
     display: grid;
-    align-content: center;
     gap: 7px;
-    border: 1px solid var(--gray-350);
-    border-radius: 5px;
+    min-height: 118px;
+    padding: 18px;
+    border: 1px solid var(--settlement-border);
+    border-radius: var(--settlement-radius-medium);
+    background: #ffffff;
     cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background-color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.choice-card:hover:not(.disabled) {
+    transform: translateY(-1px);
+    border-color: #93c5fd;
 }
 
 .choice-card.selected {
-    background: var(--blue-100);
-    border-color: #75b5f1;
+    border-color: var(--settlement-primary);
+    background: var(--settlement-primary-soft);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
 .choice-card input {
     position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
     opacity: 0;
     pointer-events: none;
 }
 
 .choice-title {
-    color: var(--navy-900);
+    color: var(--settlement-text);
+    font-size: 15px;
     font-weight: 800;
 }
 
 .choice-description {
-    color: var(--gray-650);
-    font-size: 12px;
+    color: var(--settlement-muted);
+    font-size: 13px;
     line-height: 1.6;
+}
+
+.choice-card.disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/* ─────────────────────────────────────────────
+   납부자 조회 및 칩
+───────────────────────────────────────────── */
+
+.payer-card {
+    overflow: visible;
+}
+
+.participant-lookup {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.participant-token-field {
+    margin: 0;
+}
+
+.participant-lookup-button {
+    min-width: 126px;
+    height: 46px;
+    white-space: nowrap;
 }
 
 .participant-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
+    margin-top: 18px;
 }
 
 .participant-chip {
-    padding: 9px 13px;
-    color: var(--gray-800);
-    background: var(--gray-150);
-    border: 1px solid var(--gray-250);
-    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 7px 11px;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    background: #f8fbff;
+    color: #1e3a8a;
     font-size: 13px;
 }
 
 .participant-chip.owner {
-    color: var(--navy-900);
-    background: var(--blue-100);
-    border-color: #86bfff;
-}
-
-.pending-message {
-    margin: 15px 0 0;
-    color: var(--gray-500);
-    font-size: 12px;
-}
-
-.disabled-account {
-    padding: 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    color: var(--gray-650);
-    background: var(--gray-100);
-    border: 1px dashed var(--gray-350);
-    border-radius: 5px;
-}
-
-.account-icon {
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    color: var(--blue-600);
-    background: var(--white);
-    border-radius: 8px;
-}
-
-.disabled-account strong {
-    color: var(--gray-800);
-    font-size: 13px;
-}
-
-.disabled-account p {
-    margin: 5px 0 0;
-    font-size: 12px;
-}
-
-.summary-panel {
-    position: sticky;
-    top: 20px;
-    overflow: hidden;
-    background: var(--white);
-    border: 1px solid var(--gray-350);
-    border-radius: 7px;
-    box-shadow: var(--shadow-card);
-}
-
-.summary-header {
-    padding: 24px;
-    color: var(--white);
-    background: var(--navy-950);
-    font-size: 19px;
+    border-color: #bfdbfe;
+    background: var(--settlement-primary-soft);
+    color: #1d4ed8;
     font-weight: 800;
 }
 
-.summary-body {
-    padding: 24px;
+.participant-chip.removable {
+    gap: 7px;
+    max-width: 100%;
 }
 
-.summary-list {
-    margin: 0;
-    display: grid;
-    gap: 20px;
-}
-
-.summary-list div {
-    display: grid;
-    grid-template-columns: 1fr minmax(0, 1.2fr);
-    gap: 15px;
-}
-
-.summary-list dt {
-    color: var(--gray-650);
-    font-size: 13px;
-}
-
-.summary-list dd {
-    margin: 0;
-    overflow: hidden;
-    color: var(--gray-950);
-    font-size: 13px;
+.participant-chip-name {
     font-weight: 700;
-    text-align: right;
+}
+
+.participant-chip-token {
+    max-width: 180px;
+    overflow: hidden;
+    color: var(--settlement-muted);
+    font-size: 12px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.summary-list.compact {
+.participant-remove-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.08);
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.participant-remove-button:hover {
+    background: rgba(15, 23, 42, 0.14);
+}
+
+.participant-help {
+    margin: 12px 0 0;
+    color: var(--settlement-muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* ─────────────────────────────────────────────
+   계좌 미설정 영역
+───────────────────────────────────────────── */
+
+.inline-action {
+    padding: 7px 11px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--settlement-primary-soft);
+    color: var(--settlement-primary);
+    font-weight: 700;
+}
+
+.inline-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.disabled-account {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 16px;
+    border: 1px dashed var(--settlement-border-strong);
+    border-radius: var(--settlement-radius-medium);
+    background: #f9fafb;
+}
+
+.account-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #e5e7eb;
+    color: #4b5563;
+}
+
+.disabled-account strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.disabled-account p {
+    margin: 0;
+    color: var(--settlement-muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+/* ─────────────────────────────────────────────
+   오른쪽 요약 패널
+───────────────────────────────────────────── */
+
+.summary-panel {
+    position: sticky;
+    top: 24px;
+    overflow: hidden;
+    border: 1px solid var(--settlement-border);
+    border-radius: var(--settlement-radius-large);
+    background: #ffffff;
+    box-shadow: var(--settlement-shadow);
+}
+
+.summary-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--settlement-border);
+    background: #111827;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.summary-body {
+    padding: 20px;
+}
+
+.summary-list {
+    display: grid;
     gap: 14px;
+    margin: 0;
+}
+
+.summary-list > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: start;
+}
+
+.summary-list dt {
+    color: var(--settlement-muted);
+    font-size: 13px;
+}
+
+.summary-list dd {
+    max-width: 180px;
+    margin: 0;
+    color: var(--settlement-text);
+    font-size: 14px;
+    font-weight: 700;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.summary-list.compact {
+    gap: 11px;
 }
 
 .summary-divider {
     height: 1px;
-    margin: 21px 0;
-    background: var(--gray-250);
+    margin: 20px 0;
+    background: var(--settlement-border);
 }
 
 .account-summary {
-    padding: 17px;
     display: grid;
-    gap: 8px;
-    color: var(--gray-650);
-    background: var(--gray-150);
-    border-radius: 4px;
+    gap: 5px;
+    padding: 14px;
+    margin-bottom: 18px;
+    border-radius: 10px;
+    background: #f9fafb;
+}
+
+.account-summary span {
+    color: var(--settlement-muted);
     font-size: 12px;
 }
 
 .account-summary strong {
-    color: var(--gray-800);
+    font-size: 14px;
 }
 
 .submit-button {
     width: 100%;
-    margin-top: 25px;
+    min-height: 48px;
+    margin-top: 22px;
+    border-radius: 11px;
+    font-weight: 800;
 }
 
 .submit-description {
-    margin: 12px 0 0;
-    color: var(--gray-500);
-    font-size: 11px;
+    margin: 10px 0 0;
+    color: var(--settlement-muted);
+    font-size: 12px;
+    line-height: 1.5;
     text-align: center;
 }
 
-@media (max-width: 900px) {
+/* ─────────────────────────────────────────────
+   토스트
+───────────────────────────────────────────── */
+
+.toast {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1000;
+    max-width: min(420px, calc(100vw - 48px));
+    padding: 13px 16px;
+    border-radius: 10px;
+    background: #111827;
+    color: #ffffff;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.22);
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+}
+
+.toast.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.error {
+    background: #991b1b;
+}
+
+/* ─────────────────────────────────────────────
+   반응형
+───────────────────────────────────────────── */
+
+@media (max-width: 960px) {
     .create-layout {
         grid-template-columns: 1fr;
     }
 
     .summary-panel {
         position: static;
-        order: -1;
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
     .create-shell {
-        width: min(100% - 28px, 1120px);
-        padding-top: 22px;
+        width: min(100% - 24px, 1180px);
+        padding-top: 24px;
     }
 
     .field-grid.two-column,
@@ -389,6 +662,40 @@
     }
 
     .form-card {
-        padding: 21px 18px;
+        padding: 20px;
+    }
+
+    .date-field {
+        max-width: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .participant-lookup {
+        grid-template-columns: 1fr;
+    }
+
+    .participant-lookup-button {
+        width: 100%;
+    }
+
+    .participant-chip-token {
+        max-width: 120px;
+    }
+
+    .summary-list > div {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .summary-list dd {
+        max-width: none;
+        text-align: left;
+    }
+
+    .toast {
+        right: 12px;
+        bottom: 12px;
+        max-width: calc(100vw - 24px);
     }
 }

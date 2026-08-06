@@ -91,4 +91,31 @@
         po.expected_amount
         HAVING po.expected_amount - COALESCE(SUM(pr.amount), 0) &gt; 0
     </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="paymentObligationId">
+        INSERT INTO payment_obligation (
+        participant_id,
+        expected_amount,
+        payment_status,
+        review_status,
+        obligation_status
+        )
+        VALUES (
+        #{participantId},
+        #{expectedAmount},
+        #{paymentStatus},
+        #{reviewStatus},
+        #{obligationStatus}
+        )
+    </insert>
+
+    <update id="updateReviewStatusByInvitationId">
+        UPDATE payment_obligation po
+        JOIN settlement_participant sp
+        ON sp.participant_id = po.participant_id
+        SET po.review_status = #{reviewStatus}
+        WHERE sp.invitation_id = #{invitationId}
+        AND po.obligation_status = 'ACTIVE'
+        AND po.review_status = 'NORMAL'
+    </update>
 </mapper>

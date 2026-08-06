@@ -12,8 +12,9 @@ public interface LinkedBankAccountMapper {
 
     void insertOne(LinkedBankAccountDTO dto);
 
+
     Optional<LinkedBankAccountDTO> findById(@Param("linkedAccountId") Long linkedAccountId);
-    
+
     List<LinkedBankAccountDTO> selectLinkedAccountsByUserId(@Param("userId") Long userId);
 
     Long findLastSyncedTransactionIdById(@Param("linkedAccountId") Long linkedAccountId);

@@ -40,6 +40,8 @@ public class LoanContractDTO {
     private String creditorSignature;
     private String debtorSignature;
 
+    private Long selectedLinkedAccountId;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

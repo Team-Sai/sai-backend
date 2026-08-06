@@ -10,7 +10,6 @@ import org.teamsai.saibackend.domain.link.dto.response.UserKeyResponse;
 import org.teamsai.saibackend.domain.user.service.AccountService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
-
 @Tag(
         name="은행 연동 API",
         description = "사용자 연동키 요청 API"
