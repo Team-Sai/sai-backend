@@ -1,16 +1,20 @@
 <!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>금전소비대차계약 체결 완료</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link rel="stylesheet" th:href="@{/css/contract/contract-complete.css}" href="../../static/css/contract/contract-complete.css" />
 </head>
 <body>
 
 <main class="success-container">
     <header class="success-header">
+        <h1 class="success-title">금전소비대차계약이 성공적으로 체결되었습니다!</h1>
         <div class="success-icon" aria-hidden="true">🎉</div>
         <p class="success-description">
+            "전자서명이 완료된 원본 차용증은 언제든지 조회 및 발급이 가능합니다."
         </p>
     </header>
 
@@ -24,15 +28,42 @@
             <span class="decor-line"></span>
             <span class="decor-line"></span>
         </div>
+
+        <div class="stamp-seal" aria-label="체결완료">
+            <span class="stamp-seal__text">체결완료</span>
+        </div>
+
+        <div class="contract-card__badge-group">
+                <span class="badge badge--digital">
+                    <svg class="badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    디지털 원본
+                </span>
         </div>
     </section>
 
     <footer class="action-group">
+        <button type="button" id="btnViewContract" class="btn btn--primary">
+            <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>차용증 확인</span>
         </button>
         <button type="button" class="btn btn--secondary">
+            <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="9"></rect>
+                <rect x="14" y="3" width="7" height="5"></rect>
+                <rect x="14" y="12" width="7" height="9"></rect>
+                <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>대시보드로 이동</span>
         </button>
     </footer>
 </main>
 
+<script th:src="@{/js/contract/contract-complete.js}" src="../../static/js/contract/contract-complete.js"></script>
 </body>
 </html>
