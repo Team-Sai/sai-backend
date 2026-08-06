@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS loan_contract_change_request (
     new_maturity_date DATE NULL,
     new_interest_rate DECIMAL(5, 2) NULL CHECK (new_interest_rate >= 0),
     new_repayment_type VARCHAR(20) NULL,
-    new_repayment_date DATE NULL,
+    new_repayment_date INT NULL,
     status VARCHAR(20) NOT NULL CHECK (
     status IN ('PENDING', 'APPROVED', 'REJECTED')
     ),

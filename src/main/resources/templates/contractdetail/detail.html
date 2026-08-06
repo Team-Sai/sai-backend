@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>금전차용계약서 조회</title>
+    <link rel="stylesheet" th:href="@{/css/contractdetail/contractdetail.css}">
+</head>
+<body>
+<input type="hidden" id="canRequestChange" th:value="${canRequestChange}">
+<input type="hidden" id="contractId" th:value="${contractId}">
+
+<div class="page">
+    <h1>금전차용계약서</h1>
+    <p>최근 체결된 금전차용계약서 입니다.</p>
+
+    <div class="contract-card">
+        <dl>
+            <dt>대출원금</dt><dd id="principalAmount">-</dd>
+            <dt>연이자율</dt><dd id="interestRate">-</dd>
+            <dt>대출시작일</dt><dd id="startDate">-</dd>
+            <dt>만기일</dt><dd id="maturityDate">-</dd>
+            <dt>상환방식</dt><dd id="repaymentType">-</dd>
+            <dt>매월상환일</dt><dd id="repaymentDay">-</dd>
+            <dt>주소</dt><dd id="address">-</dd>
+            <dt>특약</dt><dd id="terms">-</dd>
+        </dl>
+    </div>
+
+
+</div>
+
+<button id="changeButton">계약변경</button>
+
+<script th:src="@{/js/contractdetail/contractdetail.js}"></script>
+
+</body>
+</html>
