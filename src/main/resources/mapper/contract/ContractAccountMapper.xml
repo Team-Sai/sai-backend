@@ -21,6 +21,14 @@
         )
     </insert>
 
+
+    <select id="selectContractForUpdate" resultType="Long">
+        SELECT contract_id
+        FROM loan_contract
+        WHERE contract_id = #{contractId}
+        FOR UPDATE
+    </select>
+
     <update id="updateContractAccountStatus">
         UPDATE contract_account
         SET
@@ -42,7 +50,6 @@
         FROM contract_account
         WHERE contract_id = #{contractId}
         AND account_status = 'ACTIVE'
-        FOR UPDATE
     </select>
 
 </mapper>

@@ -43,7 +43,7 @@ public class LoanContractService {
 
         contractMapper.insertByContract(request, userId);
 
-        contractAccountService.setupContractAccount(request.getContractId(), userId, request.getSelectedLinkedAccountId());
+        contractAccountService.createContractAccount(request.getContractId(), userId, request.getSelectedLinkedAccountId());
 
         return request.getContractId();
     }

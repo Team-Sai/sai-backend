@@ -33,15 +33,25 @@ public class ContractAccountService {
     }
 
     @Transactional
-    public void setupContractAccount(Long contractId, Long userId, Long linkedAccountId) {
+    public void createContractAccount(Long contractId, Long userId, Long linkedAccountId) {
         if (linkedAccountId == null) return;
 
-        validateSelectable(userId, linkedAccountId); //사용자 동일한지
+        contractAccountMapper.selectContractForUpdate(contractId);
+
+        validateSelectable(userId, linkedAccountId);
+
+        try {
+            retireActiveAccount(contractId, ContractAccountStatus.REPLACED);
+        } catch (RuntimeException e) {
+        }
+
         insertActiveAccount(contractId, linkedAccountId);
     }
 
     @Transactional
     public void changeContractAccount(Long contractId, Long userId, Long newLinkedAccountId) {
+        contractAccountMapper.selectContractForUpdate(contractId);
+
         validateContractOwner(contractId, userId);
         validateSelectable(userId, newLinkedAccountId);
 
@@ -50,12 +60,12 @@ public class ContractAccountService {
     }
 
     @Transactional
-    public void deactivateContractAccount(Long contractId, Long userId) {
+    public void deleteContractAccount(Long contractId, Long userId) {
+        contractAccountMapper.selectContractForUpdate(contractId);
+
         validateContractOwner(contractId, userId);
         retireActiveAccount(contractId, ContractAccountStatus.DISABLED);
     }
-
-
 
     private void retireActiveAccount(Long contractId, ContractAccountStatus status) {
 

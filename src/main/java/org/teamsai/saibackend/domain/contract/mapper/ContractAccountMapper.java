@@ -18,4 +18,5 @@ public interface ContractAccountMapper {
     );
 
     List<ContractAccountDTO> findActiveAccountByContractId(@Param("contractId") Long contractId);
+    Long selectContractForUpdate(@Param("contractId") Long contractId);
 }
