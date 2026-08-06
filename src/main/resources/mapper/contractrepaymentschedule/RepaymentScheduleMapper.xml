@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper">
+
+    <insert id="insertAll">
+        INSERT INTO repayment_schedule (
+        contract_id, sequence, due_date,
+        principal_due, interest_due, total_payment_due, remaining_principal,
+        status, paid_at, created_at
+        ) VALUES
+        <foreach collection="list" item="schedule" separator=",">
+            (
+            #{schedule.contractId}, #{schedule.sequence}, #{schedule.dueDate},
+            #{schedule.principalDue}, #{schedule.interestDue}, #{schedule.totalPaymentDue}, #{schedule.remainingPrincipal},
+            #{schedule.status}, #{schedule.paidAt}, #{schedule.createdAt}
+            )
+        </foreach>
+    </insert>
+
+    <select id="findByContractId"
+    resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
+        SELECT
+        schedule_id          AS scheduleId,
+        contract_id          AS contractId,
+        sequence,
+        due_date              AS dueDate,
+        principal_due         AS principalDue,
+        interest_due          AS interestDue,
+        total_payment_due     AS totalPaymentDue,
+        remaining_principal   AS remainingPrincipal,
+        status,
+        paid_at               AS paidAt,
+        created_at            AS createdAt
+        FROM repayment_schedule
+        WHERE contract_id = #{contractId}
+    </select>
+
+    <select id="findEarliestPendingByContractId"
+            resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
+        SELECT
+        schedule_id AS scheduleId, contract_id AS contractId, sequence,
+        due_date AS dueDate, principal_due AS principalDue, interest_due AS interestDue,
+        total_payment_due AS totalPaymentDue, remaining_principal AS remainingPrincipal,
+        status, paid_at AS paidAt, created_at AS createdAt
+        FROM repayment_schedule
+        WHERE contract_id = #{contractId}
+        AND status = 'PENDING'
+        ORDER BY sequence ASC
+        LIMIT 1
+    </select>
+    
+    <update id="updateStatusToPaid">
+        UPDATE repayment_schedule
+        SET status = 'PAID',
+        paid_at = #{paidAt}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+</mapper>
