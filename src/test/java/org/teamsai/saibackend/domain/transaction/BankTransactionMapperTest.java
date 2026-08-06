@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @DisplayName("BankTransactionMapper 통합 테스트")
 @ActiveProfiles("dev")
-@Sql(scripts = "/db/transaction.sql")
+@Sql(scripts = "/db/bank_transaction.sql")
 class BankTransactionMapperTest {
 
     private static final Long LINKED_ACCOUNT_ID = 1L;

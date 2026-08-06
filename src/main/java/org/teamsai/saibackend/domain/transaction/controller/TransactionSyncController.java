@@ -1,0 +1,27 @@
+package org.teamsai.saibackend.domain.transaction.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
+import org.teamsai.saibackend.domain.transaction.service.TransactionSyncFacade;
+
+@Tag(name = "거래 동기화 API", description = "사이은행 거래내역 동기화 및 자동매칭 실행")
+@RestController
+@RequiredArgsConstructor
+public class TransactionSyncController {
+
+    private final TransactionSyncFacade transactionSyncFacade;
+
+    @Operation(summary = "연동계좌 거래 동기화")
+    @PostMapping("/api/linked-accounts/{linkedAccountId}/sync")
+    public ResponseEntity<AutoMatchingExecutionResult> sync(
+            @PathVariable Long linkedAccountId
+    ) {
+        return ResponseEntity.ok(transactionSyncFacade.syncAndMatch(linkedAccountId));
+    }
+}

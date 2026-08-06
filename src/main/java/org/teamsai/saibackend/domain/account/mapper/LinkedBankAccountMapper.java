@@ -5,11 +5,21 @@ import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO;
 
 import java.util.List;
+import java.util.Optional;
 
 @Mapper
 public interface LinkedBankAccountMapper {
 
     void insertOne(LinkedBankAccountDTO dto);
+
+    Optional<LinkedBankAccountDTO> findById(@Param("linkedAccountId") Long linkedAccountId);
     
     List<LinkedBankAccountDTO> selectLinkedAccountsByUserId(@Param("userId") Long userId);
+
+    Long findLastSyncedTransactionIdById(@Param("linkedAccountId") Long linkedAccountId);
+
+    int updateLastSyncedTransactionId(
+            @Param("linkedAccountId") Long linkedAccountId,
+            @Param("transactionId") Long transactionId
+    );
 }

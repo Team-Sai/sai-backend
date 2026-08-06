@@ -10,6 +10,7 @@ import org.springframework.web.client.RestClient;
 import org.teamsai.saibackend.domain.account.dto.response.AccountDetailResponse;
 import org.teamsai.saibackend.domain.account.dto.response.LinkableAccountResponse;
 import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
+import org.teamsai.saibackend.domain.transaction.dto.response.BankTransactionResponse;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class MockBankClient {
 
     private final RestClient restClient;
 
-    public MockBankClient(@Value("${mock-bank.base-url}") String baseUrl) {
+    public MockBankClient(@Value("${sai.mock-bank.base-url}") String baseUrl) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000);
         requestFactory.setReadTimeout(5000);
@@ -71,6 +72,19 @@ public class MockBankClient {
                         .retrieve()
                         .body(AccountDetailResponse.class)
         );
+    }
+
+    public List<BankTransactionResponse> getTransactions(Long accountId, String userKey, Long afterTransactionId) {
+        List<BankTransactionResponse> response = restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/mock-bank/accounts/{accountId}/transactions")
+                        .queryParam("userKey", userKey)
+                        .queryParam("afterTransactionId", afterTransactionId)
+                        .build(accountId))
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<BankTransactionResponse>>() {});
+
+        return requireBody(response);
     }
 
     private record MockBankLinkRequest(String name, String userToken) {}

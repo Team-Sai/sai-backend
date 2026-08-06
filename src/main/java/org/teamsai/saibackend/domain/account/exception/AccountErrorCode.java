@@ -17,8 +17,11 @@ public enum AccountErrorCode implements BaseErrorCode<DomainException> {
     BANK_SERVER_UNAVAILABLE(
             HttpStatus.SERVICE_UNAVAILABLE,
             "사이은행 서버에 일시적으로 연결할 수 없습니다. 잠시 후 다시 시도해주세요."
+    ),
+    LINKED_ACCOUNT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+        "연동된 계좌를 찾을 수 없습니다."
     );
-
     private final HttpStatus httpStatus;
     private final String message;
 
