@@ -148,6 +148,25 @@ class BankTransactionServiceTest {
 
             assertThat(result).containsExactly(bankTransaction);
         }
+
+        @Test
+        @DisplayName("연결 계좌 기준 처리 대기 입금 거래 목록을 반환한다")
+        void returnsPendingDepositTransactionsByLinkedAccountId() {
+            BankTransactionDTO bankTransaction =
+                    transaction(BANK_TRANSACTION_ID);
+
+            given(bankTransactionMapper.findPendingDepositsByLinkedAccountId(
+                    LINKED_ACCOUNT_ID
+            )).willReturn(List.of(bankTransaction));
+
+            List<BankTransactionDTO> result =
+                    bankTransactionService
+                            .findPendingDepositsByLinkedAccountId(
+                                    LINKED_ACCOUNT_ID
+                            );
+
+            assertThat(result).containsExactly(bankTransaction);
+        }
     }
 
     @Nested

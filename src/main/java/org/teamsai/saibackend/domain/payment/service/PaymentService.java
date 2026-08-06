@@ -9,10 +9,7 @@ import org.teamsai.saibackend.domain.payment.dto.PaymentRecordDTO;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 import org.teamsai.saibackend.domain.payment.mapper.PaymentRecordMapper;
-import org.teamsai.saibackend.domain.payment.type.ObligationStatus;
-import org.teamsai.saibackend.domain.payment.type.PaymentStatus;
-import org.teamsai.saibackend.domain.payment.type.RecordStatus;
-import org.teamsai.saibackend.domain.payment.type.SourceType;
+import org.teamsai.saibackend.domain.payment.type.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -98,6 +95,34 @@ public class PaymentService {
         }
     }
 
+    public Long createObligation(Long participantId, BigDecimal expectedAmount){
+        validateObligationCreation(participantId,expectedAmount);
+
+        PaymentObligationDTO paymentObligation =
+                PaymentObligationDTO.builder()
+                        .participantId(participantId)
+                        .expectedAmount(expectedAmount)
+                        .paymentStatus(PaymentStatus.UNPAID)
+                        .reviewStatus(ReviewStatus.NORMAL)
+                        .obligationStatus(ObligationStatus.ACTIVE)
+                        .build();
+
+        int insertCount = paymentObligationMapper.insert(paymentObligation);
+
+        if(insertCount != 1){
+            throw PaymentErrorCode.PAYMENT_OBLIGATION_CREATE_FAILED.toException();
+        }
+        return paymentObligation.getPaymentObligationId();
+    }
+
+    public void markObligationNeedsCheckByInvitationId(Long invitationId){
+        int updatedCount = paymentObligationMapper.updateReviewStatusByInvitationId(invitationId,ReviewStatus.NEEDS_CHECK);
+
+        if(updatedCount != 1){
+            throw PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND.toException();
+        }
+    }
+
     private void validateActiveObligation(PaymentObligationDTO obligation) {
         if (obligation.getObligationStatus() != ObligationStatus.ACTIVE) {
             throw PaymentErrorCode.PAYMENT_OBLIGATION_NOT_ACTIVE.toException();
@@ -141,5 +166,23 @@ public class PaymentService {
         }
 
         return PaymentStatus.PAID;
+    }
+
+    private void validateObligationCreation(
+            Long participantId,
+            BigDecimal expectedAmount
+    ) {
+        if (participantId == null || participantId <= 0) {
+            throw PaymentErrorCode
+                    .INVALID_PAYMENT_OBLIGATION_REQUEST
+                    .toException();
+        }
+        if (expectedAmount == null
+                || expectedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw PaymentErrorCode
+                    .INVALID_PAYMENT_OBLIGATION_REQUEST
+                    .toException();
+        }
+
     }
 }

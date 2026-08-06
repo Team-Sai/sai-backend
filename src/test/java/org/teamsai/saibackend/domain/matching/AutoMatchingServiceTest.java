@@ -13,6 +13,7 @@ import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.policy.AutoMatchingJudge;
 import org.teamsai.saibackend.domain.matching.service.AutoMatchingService;
+import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
@@ -20,6 +21,7 @@ import org.teamsai.saibackend.domain.payment.service.PaymentService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -85,6 +87,19 @@ class AutoMatchingServiceTest {
             assertThat(result.appliedCount()).isEqualTo(1);
             assertThat(result.needsCheckCount()).isZero();
             assertThat(result.unmatchedCount()).isZero();
+            assertThat(result.transactionResults())
+                    .extracting(
+                            transactionResult -> transactionResult
+                                    .transactionId(),
+                            transactionResult -> transactionResult
+                                    .processStatus()
+                    )
+                    .containsExactly(
+                            org.assertj.core.groups.Tuple.tuple(
+                                    101L,
+                                    AutoMatchingProcessStatus.APPLIED
+                            )
+                    );
         }
 
         @Test
@@ -119,6 +134,19 @@ class AutoMatchingServiceTest {
             assertThat(result.appliedCount()).isZero();
             assertThat(result.needsCheckCount()).isZero();
             assertThat(result.unmatchedCount()).isEqualTo(1);
+            assertThat(result.transactionResults())
+                    .extracting(
+                            transactionResult -> transactionResult
+                                    .transactionId(),
+                            transactionResult -> transactionResult
+                                    .processStatus()
+                    )
+                    .containsExactly(
+                            org.assertj.core.groups.Tuple.tuple(
+                                    101L,
+                                    AutoMatchingProcessStatus.UNMATCHED
+                            )
+                    );
         }
 
         @Test
@@ -159,6 +187,19 @@ class AutoMatchingServiceTest {
             assertThat(result.appliedCount()).isZero();
             assertThat(result.needsCheckCount()).isEqualTo(1);
             assertThat(result.unmatchedCount()).isZero();
+            assertThat(result.transactionResults())
+                    .extracting(
+                            transactionResult -> transactionResult
+                                    .transactionId(),
+                            transactionResult -> transactionResult
+                                    .processStatus()
+                    )
+                    .containsExactly(
+                            org.assertj.core.groups.Tuple.tuple(
+                                    101L,
+                                    AutoMatchingProcessStatus.NEEDS_CHECK
+                            )
+                    );
         }
 
         @Test
@@ -428,6 +469,19 @@ class AutoMatchingServiceTest {
             assertThat(result.unmatchedCount()).isZero();
             assertThat(result.duplicateCount()).isEqualTo(1);
             assertThat(result.failedCount()).isZero();
+            assertThat(result.transactionResults())
+                    .extracting(
+                            transactionResult -> transactionResult
+                                    .transactionId(),
+                            transactionResult -> transactionResult
+                                    .processStatus()
+                    )
+                    .containsExactly(
+                            org.assertj.core.groups.Tuple.tuple(
+                                    101L,
+                                    AutoMatchingProcessStatus.DUPLICATE
+                            )
+                    );
         }
 
         @Test
@@ -485,7 +539,8 @@ class AutoMatchingServiceTest {
                 transactionId,
                 type,
                 new BigDecimal(amount),
-                counterpartyName
+                counterpartyName,
+                LocalDateTime.of(2026, 8, 5, 10, 0)
         );
     }
 

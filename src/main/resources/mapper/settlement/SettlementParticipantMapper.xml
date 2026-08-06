@@ -55,4 +55,11 @@
 
     </select>
 
+    <update id="updateStatusByInvitationId">
+        UPDATE settlement_participant
+        SET participant_status = #{participantStatus}
+        WHERE invitation_id = #{invitationId}
+        AND participant_status = 'ACTIVE'
+    </update>
+
 </mapper>

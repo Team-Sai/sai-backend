@@ -14,6 +14,22 @@
         <result property="reviewStatus" column="review_status"/>
         <result property="obligationStatus" column="obligation_status"/>
     </resultMap>
+    <resultMap id="MatchingCandidateResultMap"
+               type="org.teamsai.saibackend.domain.matching.model.MatchingCandidate">
+        <constructor>
+            <arg column="target_type"
+                 javaType="org.teamsai.saibackend.domain.matching.type.MatchingTargetType"/>
+            <arg column="obligation_id"
+                 javaType="java.lang.Long"/>
+            <arg column="participant_id"
+                 javaType="java.lang.Long"/>
+            <arg column="participant_name"
+                 javaType="java.lang.String"/>
+            <arg column="remaining_amount"
+                 javaType="java.math.BigDecimal"/>
+        </constructor>
+    </resultMap>
+
     <select id="findByIdForUpdate"
             resultMap="PaymentObligationResultMap">
         SELECT
@@ -35,4 +51,71 @@
         WHERE payment_obligation_id = #{paymentObligationId}
     </update>
 
+    <select id="findMatchCandidatesByLinkedAccountId"
+            resultMap="MatchingCandidateResultMap">
+        SELECT
+        'SETTLEMENT' AS target_type,
+        po.payment_obligation_id AS obligation_id,
+        po.participant_id AS participant_id,
+        u.name AS participant_name,
+        po.expected_amount - COALESCE(SUM(pr.amount), 0) AS remaining_amount
+        FROM payment_obligation po
+        JOIN settlement_participant sp
+        ON sp.participant_id = po.participant_id
+        JOIN settlement_invitation si
+        ON si.invitation_id = sp.invitation_id
+        JOIN settlement s
+        ON s.settlement_id = si.settlement_id
+        JOIN settlement_account sa
+        ON sa.settlement_id = s.settlement_id
+        JOIN users u
+        ON u.user_id = si.user_id
+        LEFT JOIN payment_record pr
+        ON pr.obligation_id = po.payment_obligation_id
+        AND pr.record_status = 'CONFIRMED'
+        WHERE sa.linked_account_id = #{linkedAccountId}
+        AND sa.selected_at &lt;= #{transactionAt}
+        AND (
+        sa.ended_at IS NULL
+        OR sa.ended_at &gt; #{transactionAt}
+        )
+        AND s.created_at &lt;= #{transactionAt}
+        AND s.settlement_status = 'IN_PROGRESS'
+        AND po.obligation_status = 'ACTIVE'
+        AND po.payment_status != 'PAID'
+        AND sp.participant_status = 'ACTIVE'
+        GROUP BY
+        po.payment_obligation_id,
+        po.participant_id,
+        u.name,
+        po.expected_amount
+        HAVING po.expected_amount - COALESCE(SUM(pr.amount), 0) &gt; 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="paymentObligationId">
+        INSERT INTO payment_obligation (
+        participant_id,
+        expected_amount,
+        payment_status,
+        review_status,
+        obligation_status
+        )
+        VALUES (
+        #{participantId},
+        #{expectedAmount},
+        #{paymentStatus},
+        #{reviewStatus},
+        #{obligationStatus}
+        )
+    </insert>
+
+    <update id="updateReviewStatusByInvitationId">
+        UPDATE payment_obligation po
+        JOIN settlement_participant sp
+        ON sp.participant_id = po.participant_id
+        SET po.review_status = #{reviewStatus}
+        WHERE sp.invitation_id = #{invitationId}
+        AND po.obligation_status = 'ACTIVE'
+        AND po.review_status = 'NORMAL'
+    </update>
 </mapper>
