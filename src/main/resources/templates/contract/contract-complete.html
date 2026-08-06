@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>금전소비대차계약 체결 완료</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Pretendard&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Liberation+Sans&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" th:href="@{/css/contract/contract-complete.css}" href="../../static/css/contract/contract-complete.css" />
+</head>
+<body>
+
+<main class="success-container">
+
+    <header class="success-header">
+        <div class="success-icon" aria-hidden="true">🎉</div>
+        <h1 class="success-title">금전소비대차계약이 성공적으로 체결되었습니다!</h1>
+        <p class="success-description">
+            전자서명이 완료된 원본 차용증은 언제든지 조회 및 발급이 가능합니다.
+        </p>
+    </header>
+
+
+    <section class="contract-card">
+        <div class="contract-card__badge-group">
+            <span class="badge badge--digital">디지털 원본</span>
+            <span class="badge badge--completed">체결완료</span>
+        </div>
+
+        <div class="contract-card__content">
+            <h2 class="contract-card__title">금 전 소 비 대 차 계 약 서</h2>
+
+            <div class="contract-card__decorations" aria-hidden="true">
+                <span class="decor-line"></span>
+                <span class="decor-line"></span>
+                <span class="decor-line"></span>
+                <span class="decor-line"></span>
+                <span class="decor-line"></span>
+                <span class="decor-line"></span>
+            </div>
+        </div>
+    </section>
+
+
+    <footer class="action-group">
+        <button type="button" class="btn btn--primary">
+            <span class="btn__text">차용증 확인</span>
+        </button>
+        <button type="button" class="btn btn--secondary">
+            <span class="btn__text">대시보드로 이동</span>
+        </button>
+    </footer>
+</main>
+
+</body>
+</html>

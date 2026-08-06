@@ -93,7 +93,7 @@ class ContractAccountServiceTest {
                     createLinkedAccount(LINKED_ACCOUNT_ID, ConnectionStatus.AVAILABLE)
             ));
 
-            contractAccountService.setupContractAccount(CONTRACT_ID, CREDITOR_ID, LINKED_ACCOUNT_ID);
+            contractAccountService.createContractAccount(CONTRACT_ID, CREDITOR_ID, LINKED_ACCOUNT_ID);
 
             ArgumentCaptor<ContractAccountDTO> captor = ArgumentCaptor.forClass(ContractAccountDTO.class);
             verify(contractAccountMapper).insertContractAccount(captor.capture());
@@ -106,7 +106,7 @@ class ContractAccountServiceTest {
         @Test
         @DisplayName("연동 계좌 ID가 null이면 아무 것도 하지 않는다")
         void setupContractAccountDoesNothingWhenLinkedAccountIdIsNull() {
-            contractAccountService.setupContractAccount(CONTRACT_ID, CREDITOR_ID, null);
+            contractAccountService.createContractAccount(CONTRACT_ID, CREDITOR_ID, null);
 
             verify(linkedBankAccountService, never()).getLinkedAccounts(any());
             verify(contractAccountMapper, never()).insertContractAccount(any());
@@ -120,7 +120,7 @@ class ContractAccountServiceTest {
             ));
 
             assertThatThrownBy(() ->
-                    contractAccountService.setupContractAccount(CONTRACT_ID, CREDITOR_ID, LINKED_ACCOUNT_ID)
+                    contractAccountService.createContractAccount(CONTRACT_ID, CREDITOR_ID, LINKED_ACCOUNT_ID)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
