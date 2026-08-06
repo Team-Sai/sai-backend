@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.settlement.dto;
 import lombok.*;
 import org.teamsai.saibackend.domain.settlement.type.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -21,6 +22,7 @@ public class SettlementDTO {
     private String settlementCategory;
     private String title;
     private SplitType splitType;
+    private BigDecimal totalAmount;
     private LocalDate dueDate;
 
     // 정기정산에서 사용

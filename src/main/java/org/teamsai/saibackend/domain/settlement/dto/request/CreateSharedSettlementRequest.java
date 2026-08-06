@@ -1,16 +1,15 @@
 package org.teamsai.saibackend.domain.settlement.dto.request;
 
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.teamsai.saibackend.domain.settlement.type.SplitType;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
@@ -25,10 +24,17 @@ public class CreateSharedSettlementRequest {
     @Size(max = 200, message = "정산명은 200자 이하로 입력해 주세요.")
     private String title;
 
-    @NotNull(message = "분배 방식을 선택해 주세요.")
-    private SplitType splitType;
-
     @NotNull(message = "납부 기한을 입력해 주세요.")
     @FutureOrPresent(message = "납부 기한은 오늘 이후여야 합니다.")
     private LocalDate dueDate;
+
+    @NotNull(message = "총 금액을 입력해 주세요.")
+    @DecimalMin(value = "1", message = "총 금액은 1원 이상이어야 합니다.")
+    @Digits(integer = 13, fraction = 0, message = "총 금액은 원 단위로 입력해 주세요.")
+    private BigDecimal totalAmount;
+
+
+    @Valid
+    @NotEmpty(message = "납부자를 한 명 이상 선택해 주세요.")
+    private List<CreateSettlementInvitationRequest> invitations;
 }

@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO;
 import org.teamsai.saibackend.domain.payment.type.PaymentStatus;
+import org.teamsai.saibackend.domain.payment.type.ReviewStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +25,13 @@ public interface PaymentObligationMapper {
     List<MatchingCandidate> findMatchCandidatesByLinkedAccountId(
             @Param("linkedAccountId") Long linkedAccountId,
             @Param("transactionAt") LocalDateTime transactionAt
+    );
+
+    int insert(PaymentObligationDTO paymentObligation);
+
+    int updateReviewStatusByInvitationId(
+            @Param("invitationId") Long invitationId,
+            @Param("reviewStatus")ReviewStatus reviewStatus
     );
 }
 

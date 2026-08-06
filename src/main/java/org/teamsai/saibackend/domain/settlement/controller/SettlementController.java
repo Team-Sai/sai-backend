@@ -1,7 +1,6 @@
 package org.teamsai.saibackend.domain.settlement.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSharedSettlementResponse;
 import org.teamsai.saibackend.domain.settlement.service.SharedSettlementService;
+import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 @Tag(
         name = "정산 API",
@@ -65,16 +65,18 @@ public class SettlementController {
     @PostMapping("/api/settlements/shared")
     public ResponseEntity<CreateSharedSettlementResponse>
     createSharedSettlement(
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal(expression = "userId")
-            Long userId,
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
 
             @Valid
             @RequestBody
             CreateSharedSettlementRequest request
     ) {
         CreateSharedSettlementResponse response =
-                sharedSettlementService.create(userId, request);
+                sharedSettlementService.create(
+                        userDetails.getUserId(),
+                        request
+                );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
