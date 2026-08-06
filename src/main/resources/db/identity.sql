@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXITSTS identity (
+CREATE TABLE IF NOT EXISTS identity (
                             identity_id bigint NOT NULL AUTO_INCREMENT,
                             identity_verification_id varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
                             user_id bigint NOT NULL,

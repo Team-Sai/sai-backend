@@ -34,6 +34,7 @@ class TransactionSyncFacadeTest {
     @InjectMocks
     private TransactionSyncFacade transactionSyncFacade;
 
+    private static final Long USER_ID = 10L;
     private static final Long LINKED_ACCOUNT_ID = 1L;
 
     @Test
@@ -46,15 +47,15 @@ class TransactionSyncFacadeTest {
                 1, 0, 0, 1, 0, 0, List.of(transactionResult)
         );
 
-        given(transactionSyncService.syncTransactions(LINKED_ACCOUNT_ID)).willReturn(1);
+        given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(1);
         given(bankMatchingService.execute(LINKED_ACCOUNT_ID)).willReturn(expectedResult);
 
-        AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(LINKED_ACCOUNT_ID);
+        AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID);
 
         assertThat(result).isEqualTo(expectedResult);
 
         InOrder inOrder = inOrder(transactionSyncService, bankMatchingService);
-        inOrder.verify(transactionSyncService).syncTransactions(LINKED_ACCOUNT_ID);
+        inOrder.verify(transactionSyncService).syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
         inOrder.verify(bankMatchingService).execute(LINKED_ACCOUNT_ID);
     }
 
@@ -65,10 +66,10 @@ class TransactionSyncFacadeTest {
                 0, 0, 0, 0, 0, 0, List.of()
         );
 
-        given(transactionSyncService.syncTransactions(LINKED_ACCOUNT_ID)).willReturn(0);
+        given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(0);
         given(bankMatchingService.execute(LINKED_ACCOUNT_ID)).willReturn(emptyResult);
 
-        AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(LINKED_ACCOUNT_ID);
+        AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID);
 
         assertThat(result.totalTransactionCount()).isZero();
         verify(bankMatchingService).execute(LINKED_ACCOUNT_ID);
