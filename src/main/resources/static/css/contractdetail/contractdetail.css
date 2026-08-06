@@ -1,0 +1,57 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, "Malgun Gothic", sans-serif;
+    background-color: #f5f6f7;
+    margin: 0;
+    padding: 40px;
+}
+
+.page {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.page h1 {
+    font-size: 28px;
+}
+
+.page > p {
+    color: #666;
+    margin-bottom: 32px;
+}
+
+.contract-card {
+    background: #FFFFFF;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.contract-card dl {
+    margin: 0;
+}
+
+.contract-card dt {
+    font-size: 13px;
+    color: #888;
+    margin-top: 16px;
+}
+
+.contract-card dd {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 4px 0 0;
+}
+
+#changeButton {
+    margin-top: 24px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    background: #0b3d2e;
+    color: white;
+    cursor: pointer;
+}

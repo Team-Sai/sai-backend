@@ -6,14 +6,17 @@ import org.springframework.stereotype.Service;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingResult;
+import org.teamsai.saibackend.domain.matching.model.AutoMatchingTransactionResult;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.policy.AutoMatchingJudge;
+import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.service.PaymentService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,6 +41,8 @@ public class AutoMatchingService {
         int duplicateCount = 0;
         int failedCount = 0;
         Set<AppliedCandidateKey> appliedCandidateKeys = new HashSet<>();
+        List<AutoMatchingTransactionResult> transactionResults =
+                new ArrayList<>();
 
         for (MatchingTransaction transaction : transactions) {
             List<MatchingCandidate> availableCandidates =
@@ -45,6 +50,13 @@ public class AutoMatchingService {
 
             AutoMatchingProcessResult processResult =
                     processTransactionSafely(transaction, availableCandidates);
+
+            transactionResults.add(
+                    new AutoMatchingTransactionResult(
+                            transaction.transactionId(),
+                            processResult.status()
+                    )
+            );
 
             switch (processResult.status()) {
                 case APPLIED -> {
@@ -66,7 +78,8 @@ public class AutoMatchingService {
                 needsCheckCount,
                 unmatchedCount,
                 duplicateCount,
-                failedCount
+                failedCount,
+                transactionResults
         );
     }
 
@@ -248,13 +261,5 @@ public class AutoMatchingService {
                     null
             );
         }
-    }
-
-    private enum AutoMatchingProcessStatus {
-        APPLIED,
-        NEEDS_CHECK,
-        UNMATCHED,
-        DUPLICATE,
-        FAILED
     }
 }
