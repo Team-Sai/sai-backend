@@ -1,0 +1,172 @@
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  font-size: 14px;
+  background-color: #f2f2f2;
+  color: #111827;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+
+.success-container {
+  width: 100%;
+  max-width: 540px;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+
+.success-header {
+  margin-bottom: 24px;
+}
+
+.success-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.success-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+  word-break: keep-all;
+}
+
+.success-description {
+  font-size: 15px;
+  color: #424754;
+  word-break: keep-all;
+}
+
+
+.contract-card {
+  position: relative;
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 32px 24px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  margin-bottom: 32px;
+}
+
+.contract-card__badge-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
+
+.badge__icon {
+  width: 12px;
+  height: 12px;
+}
+
+.badge--digital {
+  background-color: #111827;
+  color: #ffffff;
+}
+
+.badge--completed {
+  background-color: #fee2e2;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.contract-card__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  letter-spacing: 4px;
+  margin-bottom: 24px;
+}
+
+
+.contract-card__decorations {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0.3;
+}
+
+.decor-line {
+  height: 8px;
+  background-color: #d1d5db;
+  border-radius: 9999px;
+  width: 100%;
+}
+
+.decor-line:nth-child(1) { width: 70%; margin: 0 auto; }
+.decor-line:nth-child(3) { width: 85%; margin: 0 auto; }
+.decor-line:nth-child(4) { width: 60%; margin: 0 auto; }
+
+
+.action-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.btn__icon {
+  width: 18px;
+  height: 18px;
+}
+
+.btn--primary {
+  background-color: #006c49;
+  color: #ffffff;
+}
+
+.btn--primary:hover {
+  background-color: #005439;
+}
+
+.btn--secondary {
+  background-color: #e5e7eb;
+  color: #424754;
+}
+
+.btn--secondary:hover {
+  background-color: #d1d5db;
+}
