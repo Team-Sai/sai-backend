@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 public record AccountDetailResponse(
         Long accountId,
         String bankCode,
-        String accountNumber,
+        String maskedAccountNumber,
         String accountName,
         String accountHolderName,
         BigDecimal balance,
