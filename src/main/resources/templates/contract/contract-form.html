@@ -7,9 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="../../static/css/contract/contract-form.css" />
+  <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="./contract-form.css" />
+  <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
 </head>
 <body>
+
 
 <header class="topnav">
   <div class="topnav__inner">
@@ -31,14 +33,11 @@
   </div>
 </header>
 
+
 <div class="stepper-wrap">
   <ol class="stepper">
     <li class="stepper__step is-done">
-      <span class="stepper__circle">
-        <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
-          <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </span>
+      <span class="stepper__circle"><svg viewBox="0 0 16 16" width="12" height="12" fill="none"><path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <span class="stepper__label">본인인증</span>
     </li>
     <li class="stepper__step is-active">
@@ -61,10 +60,21 @@
 </div>
 
 <main class="page">
+
   <form class="doc" id="contractForm" data-contract-id="">
+
     <h1 class="doc__title">금 전 차 용 계 약 서</h1>
 
     <p class="doc__status-banner" id="statusBanner" hidden></p>
+
+    <section class="identity-panel" id="identityPanel">
+      <div class="identity-panel__info">
+        <strong>본인인증</strong>
+        <span class="identity-panel__status" id="identityStatusText">본인인증 후 계약서를 작성할 수 있습니다.</span>
+      </div>
+      <button type="button" class="btn btn--primary" id="btnIdentityVerify">본인인증 시작</button>
+    </section>
+
     <input type="hidden" id="identityVerificationId" name="identityVerificationId" />
 
     <section class="doc__article">
@@ -169,8 +179,10 @@
           <input type="text" class="parties__input" id="creditorAddress" name="creditorAddress" placeholder="주소를 입력하세요" />
         </td>
       </tr>
+
       <tr>
         <th rowspan="2" class="parties__role">채무자</th>
+
         <td class="parties__label">성 명</td>
         <td class="parties__value" colspan="3">
           <input type="text" class="parties__input" id="debtorName" disabled placeholder="채무자 확인 후 자동 입력됩니다" />
@@ -184,7 +196,6 @@
       </tr>
       </tbody>
     </table>
-
     <p class="doc__hint">채무자 정보는 채무자가 직접 확인·서명하는 단계에서 채워지며, 현재 화면에서는 입력할 수 없습니다.</p>
 
     <div class="doc__actions">
@@ -195,6 +206,6 @@
   </form>
 </main>
 
-<script th:src="@{/js/contract/contract-form.js}" src="../../static/js/contract/contract-form.js"></script>
+<script th:src="@{/js/contract/contract-form.js}" src="./contract-form.js"></script>
 </body>
 </html>
