@@ -14,9 +14,11 @@ import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractRes
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
 import org.teamsai.saibackend.domain.user.service.UserService;
+
 
 import java.util.Objects;
 
@@ -29,6 +31,7 @@ public class LoanContractService {
     private final ContractAccountService contractAccountService;
     private final UserService userService;
     private final IdentityService identityService;
+    private final RepaymentScheduleService repaymentScheduleService;
 
     @Transactional
     public Long createContract(LoanContractRequest request, Long userId) {
@@ -44,6 +47,8 @@ public class LoanContractService {
         contractMapper.insertByContract(request, userId);
 
         contractAccountService.createContractAccount(request.getContractId(), userId, request.getSelectedLinkedAccountId());
+
+        repaymentScheduleService.generateSchedule(request.getContractId());
 
         return request.getContractId();
     }
