@@ -8,15 +8,13 @@
   const statusBanner = document.getElementById("statusBanner");
   const nextBtn = document.getElementById("btnNext");
   const identityVerificationIdInput = document.getElementById("identityVerificationId");
+  const selectedLinkedAccountIdSelect = document.getElementById("selectedLinkedAccountId");
 
   if (!form) return;
 
   const params = new URLSearchParams(window.location.search);
   let contractId = params.get("contractId") || null;
   const viewMode = Boolean(contractId);
-
-  const identityVerificationId = params.get("identityVerificationId") || null;
-  if (identityVerificationIdInput) identityVerificationIdInput.value = identityVerificationId || "";
 
   const FIELD_IDS = [
     "principalAmount",
@@ -28,6 +26,7 @@
     "contractAlias",
     "terms",
     "identityVerificationId",
+    "selectedLinkedAccountId",
   ];
 
   function authHeaders(extra) {
@@ -64,6 +63,9 @@
     }
     if (data.repaymentDay) {
       data.repaymentDay = Number(data.repaymentDay);
+    }
+    if (data.selectedLinkedAccountId) {
+      data.selectedLinkedAccountId = Number(data.selectedLinkedAccountId);
     }
     if (!data.terms) {
       data.terms = null;
@@ -122,6 +124,11 @@
       contractAlias.focus();
       return false;
     }
+    if (!selectedLinkedAccountIdSelect || !selectedLinkedAccountIdSelect.value) {
+      showStatus("대출금을 지급할 계좌를 선택해 주세요.", true);
+      selectedLinkedAccountIdSelect?.focus();
+      return false;
+    }
     return true;
   }
 
@@ -136,10 +143,6 @@
   }
 
   nextBtn?.addEventListener("click", () => {
-    if (!identityVerificationIdInput?.value) {
-      showStatus("본인인증이 완료되지 않았습니다. 본인인증 후 다시 시도해 주세요.", true);
-      return;
-    }
     if (!validate()) return;
 
     try {
@@ -177,6 +180,51 @@
       document.getElementById("creditorBirthDateCell").textContent = user.birthDate || "-";
     } catch (err) {
       /* leave the "-" placeholders in place */
+    }
+  }
+
+  async function loadSelectableAccounts() {
+    if (!selectedLinkedAccountIdSelect) return;
+
+    try {
+      const response = await fetch("/api/contracts/accounts", {
+        method: "GET",
+        headers: authHeaders({ Accept: "application/json" }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const accounts = await response.json();
+
+      selectedLinkedAccountIdSelect.innerHTML = "";
+
+      if (!accounts || accounts.length === 0) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "연동된 활성 계좌가 없습니다. 마이페이지에서 계좌를 연동해 주세요.";
+        selectedLinkedAccountIdSelect.appendChild(option);
+        selectedLinkedAccountIdSelect.disabled = true;
+        return;
+      }
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "계좌를 선택하세요";
+      selectedLinkedAccountIdSelect.appendChild(placeholder);
+
+      accounts.forEach((account) => {
+        const option = document.createElement("option");
+        option.value = account.linkedAccountId;
+        option.textContent = `${account.bankName} ${account.maskedAccountNumber} (${account.accountHolderName})`;
+        selectedLinkedAccountIdSelect.appendChild(option);
+      });
+
+      selectedLinkedAccountIdSelect.disabled = false;
+    } catch (err) {
+      selectedLinkedAccountIdSelect.innerHTML = "";
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "계좌 목록을 불러오지 못했습니다.";
+      selectedLinkedAccountIdSelect.appendChild(option);
+      selectedLinkedAccountIdSelect.disabled = true;
     }
   }
 
@@ -223,10 +271,11 @@
   if (viewMode) {
     loadExistingContract();
   } else {
-    loadCreditorInfo();
-    if (nextBtn) nextBtn.disabled = !identityVerificationId;
-    if (!identityVerificationId) {
-      showStatus("본인인증이 완료되지 않았습니다. 본인인증 후 다시 시도해 주세요.", true);
+    const identityVerificationId = params.get("identityVerificationId");
+    if (identityVerificationIdInput && identityVerificationId) {
+      identityVerificationIdInput.value = identityVerificationId;
     }
+    loadCreditorInfo();
+    loadSelectableAccounts();
   }
 })();

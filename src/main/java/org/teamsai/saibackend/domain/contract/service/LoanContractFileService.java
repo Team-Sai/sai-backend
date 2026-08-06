@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.contract.service.contract;
+package org.teamsai.saibackend.domain.contract.service;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
