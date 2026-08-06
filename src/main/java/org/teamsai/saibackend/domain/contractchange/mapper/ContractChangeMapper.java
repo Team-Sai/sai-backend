@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 
 import java.util.List;
+import java.util.Optional;
 
 @Mapper
 public interface ContractChangeMapper {
@@ -16,6 +17,10 @@ public interface ContractChangeMapper {
 
     List<LoanContractChangeDTO> findByContractId(
             @Param("contractId") Long contractId
+    );
+
+    Optional<LoanContractChangeDTO> findByChangeRequestId(
+            @Param("changeRequestId") Long changeRequestId
     );
 
 
