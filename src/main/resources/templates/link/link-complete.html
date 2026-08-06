@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>계좌 연동</title>
+    <style>
+        body {
+            font-family: "Pretendard", sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: #f6f5fb;
+        }
+        p { color: #191b23; font-size: 15px; }
+    </style>
+</head>
+<body>
+<p th:if="${success}">계좌 연동이 완료되었습니다. 창이 자동으로 닫힙니다...</p>
+<p th:unless="${success}" th:text="${errorMessage}">연동에 실패했습니다.</p>
+
+<script th:inline="javascript">
+    const success = true;
+
+    if (window.opener) {
+        window.opener.postMessage(
+            { type: "SAI_BANK_LINK_COMPLETE", success: success },
+            "http://localhost:8080"
+        );
+    }
+
+    setTimeout(() => window.close(), success ? 800 : 2000);
+</script>
+</body>
+</html>
