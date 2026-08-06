@@ -63,7 +63,7 @@ public class ContractAccountController {
             @Parameter(hidden = true)
             @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
-        contractAccountService.deactivateContractAccount(contractId, userId);
+        contractAccountService.deleteContractAccount(contractId, userId);
         return ResponseEntity.noContent().build();
     }
 }
