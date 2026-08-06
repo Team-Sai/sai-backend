@@ -18,6 +18,7 @@ import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
 import org.teamsai.saibackend.domain.contract.service.ContractAccountService;
 import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.identity.exception.IdentityErrorCode;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
@@ -47,6 +48,9 @@ class LoanContractServiceTest {
     private static final String DEBTOR_EMAIL = "debtor@example.com";
     private static final Long CONTRACT_ID = 1L;
     private static final String IDENTITY_VERIFICATION_ID = "identity-verification-abc123";
+
+    @Mock
+    private RepaymentScheduleService repaymentScheduleService;
 
     @Mock
     private LoanContractMapper contractMapper;
