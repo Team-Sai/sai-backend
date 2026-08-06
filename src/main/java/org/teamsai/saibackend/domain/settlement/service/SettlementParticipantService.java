@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.settlement.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
@@ -33,5 +34,18 @@ public class SettlementParticipantService {
 
         return participant.getParticipantId();
 
+    }@Transactional
+    public void removeByInvitationId(Long invitationId) {
+        int updatedCount =
+                settlementParticipantMapper.updateStatusByInvitationId(
+                        invitationId,
+                        SettlementParticipantStatus.REMOVED
+                );
+
+        if (updatedCount != 1) {
+            throw SettlementErrorCode
+                    .SETTLEMENT_PARTICIPANT_STATUS_UPDATE_FAILED
+                    .toException();
+        }
     }
 }

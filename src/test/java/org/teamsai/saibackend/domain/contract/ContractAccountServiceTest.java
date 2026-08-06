@@ -271,7 +271,7 @@ class ContractAccountServiceTest {
             given(contractAccountMapper.updateContractAccountStatus(CONTRACT_ID, ContractAccountStatus.DISABLED))
                     .willReturn(1);
 
-            contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID);
+            contractAccountService.deleteContractAccount(CONTRACT_ID, CREDITOR_ID);
 
             verify(contractAccountMapper).updateContractAccountStatus(CONTRACT_ID, ContractAccountStatus.DISABLED);
         }
@@ -282,7 +282,7 @@ class ContractAccountServiceTest {
             given(loanContractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
+                    contractAccountService.deleteContractAccount(CONTRACT_ID, CREDITOR_ID)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -300,7 +300,7 @@ class ContractAccountServiceTest {
                     .willReturn(Optional.of(createContract(ContractStatus.PENDING)));
 
             assertThatThrownBy(() ->
-                    contractAccountService.deactivateContractAccount(CONTRACT_ID, OTHER_USER_ID)
+                    contractAccountService.deleteContractAccount(CONTRACT_ID, OTHER_USER_ID)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -318,7 +318,7 @@ class ContractAccountServiceTest {
                     .willReturn(Optional.of(createContract(ContractStatus.COMPLETED)));
 
             assertThatThrownBy(() ->
-                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
+                    contractAccountService.deleteContractAccount(CONTRACT_ID, CREDITOR_ID)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -338,7 +338,7 @@ class ContractAccountServiceTest {
                     .willReturn(0);
 
             assertThatThrownBy(() ->
-                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
+                    contractAccountService.deleteContractAccount(CONTRACT_ID, CREDITOR_ID)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,

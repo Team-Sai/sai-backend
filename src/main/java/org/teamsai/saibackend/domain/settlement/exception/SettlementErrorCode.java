@@ -83,6 +83,10 @@ public enum SettlementErrorCode implements BaseErrorCode<DomainException> {
     INVALID_SETTLEMENT_INVITEE(
             HttpStatus.BAD_REQUEST,
             "초대할 사용자 정보가 올바르지 않습니다."
+    ),
+    SETTLEMENT_PARTICIPANT_STATUS_UPDATE_FAILED(
+            HttpStatus.BAD_REQUEST,
+            "참여자 상태 변경에 실패했습니다."
     );
 
     private final HttpStatus httpStatus;

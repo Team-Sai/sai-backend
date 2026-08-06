@@ -12,8 +12,10 @@ import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementInvitationMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
+import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
 import org.teamsai.saibackend.domain.settlement.service.SettlementInvitationResponseService;
 import org.teamsai.saibackend.domain.settlement.service.SettlementInvitationValidator;
+import org.teamsai.saibackend.domain.settlement.service.SettlementParticipantService;
 import org.teamsai.saibackend.domain.settlement.type.SettlementInvitationStatus;
 import org.teamsai.saibackend.global.exception.DomainException;
 
@@ -25,10 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SettlementInvitationResponseService 단위 테스트")
@@ -49,6 +48,9 @@ class SettlementInvitationResponseServiceTest {
 
     @Mock
     private PaymentService paymentService;
+
+    @Mock
+    private SettlementParticipantService participantService;
 
     @InjectMocks
     private SettlementInvitationResponseService responseService;
@@ -178,7 +180,7 @@ class SettlementInvitationResponseServiceTest {
 
     @Test
     @DisplayName(
-            "정산 초대를 거절하면 초대 상태를 변경하고 납부 의무를 확인 필요 상태로 변경한다"
+            "정산 초대를 거절하면 참여자를 제거하고 납부 의무를 확인 필요 상태로 변경한다"
     )
     void rejectSuccess() {
         SettlementInvitationDTO invitation =
@@ -204,6 +206,11 @@ class SettlementInvitationResponseServiceTest {
         verify(invitationMapper)
                 .reject(INVITATION_ID);
 
+        verify(participantService)
+                .removeByInvitationId(
+                        INVITATION_ID
+                );
+
         verify(paymentService)
                 .markObligationNeedsCheckByInvitationId(
                         INVITATION_ID
@@ -214,7 +221,7 @@ class SettlementInvitationResponseServiceTest {
 
     @Test
     @DisplayName(
-            "초대 거절 상태 변경에 실패하면 납부 의무 상태를 변경하지 않는다"
+            "초대 거절 상태 변경에 실패하면 참여자와 납부 의무를 변경하지 않는다"
     )
     void rejectFailWhenInvitationUpdateFailed() {
         SettlementInvitationDTO invitation =
@@ -238,10 +245,50 @@ class SettlementInvitationResponseServiceTest {
 
         verifyNoInteractions(
                 settlementMapper,
+                participantService,
                 paymentService
         );
     }
+    @Test
+    @DisplayName(
+            "초대 거절 후 참여자 제거에 실패하면 납부 의무 상태를 변경하지 않는다"
+    )
+    void rejectFailWhenParticipantRemovalFails() {
+        SettlementInvitationDTO invitation =
+                createInvitation();
 
+        when(invitationMapper.findById(INVITATION_ID))
+                .thenReturn(Optional.of(invitation));
+
+        when(invitationMapper.reject(INVITATION_ID))
+                .thenReturn(1);
+
+        doThrow(DomainException.class)
+                .when(participantService)
+                .removeByInvitationId(
+                        INVITATION_ID
+                );
+
+        assertThatThrownBy(
+                () -> responseService.reject(
+                        USER_ID,
+                        INVITATION_ID
+                )
+        ).isInstanceOf(DomainException.class);
+
+        verify(invitationMapper)
+                .reject(INVITATION_ID);
+
+        verify(participantService)
+                .removeByInvitationId(
+                        INVITATION_ID
+                );
+
+        verify(paymentService, never())
+                .markObligationNeedsCheckByInvitationId(
+                        anyLong()
+                );
+    }
     @Test
     @DisplayName("정산 초대 수락 시 정산을 잠금 조회한다")
     void acceptUsesSettlementForUpdate() {

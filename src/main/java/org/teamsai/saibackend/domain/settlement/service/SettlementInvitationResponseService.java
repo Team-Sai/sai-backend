@@ -20,6 +20,7 @@ public class SettlementInvitationResponseService {
     private final SettlementMapper settlementMapper;
     private final SettlementInvitationValidator invitationValidator;
     private final PaymentService paymentService;
+    private final SettlementParticipantService participantService;
 
     @Transactional
     public void accept(Long userId, Long invitationId){
@@ -48,7 +49,7 @@ public class SettlementInvitationResponseService {
         if(updatedCount !=1 ){
             throw SettlementErrorCode.INVITATION_ALREADY_PROCESSED.toException();
         }
-
+        participantService.removeByInvitationId(invitationId);
         paymentService.markObligationNeedsCheckByInvitationId(invitationId);
     }
 

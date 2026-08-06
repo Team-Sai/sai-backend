@@ -8,7 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
+import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractdetail.dto.response.ContractDetailResponse;
 import org.teamsai.saibackend.domain.contractdetail.service.ContractDetailService;
 
