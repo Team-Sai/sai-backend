@@ -174,7 +174,8 @@ public class AutoMatchingService {
 
         MatchingCandidate candidate = result.matchedCandidate();
 
-        if (candidate.targetType() != MatchingTargetType.SETTLEMENT) {
+        if (candidate.targetType() != MatchingTargetType.SETTLEMENT
+                && candidate.targetType() != MatchingTargetType.LOAN) {
             return AutoMatchingProcessResult.needsCheck();
         }
 
