@@ -38,6 +38,11 @@ class PaymentServiceTest {
 
     private static final Long PAYMENT_OBLIGATION_ID = 1L;
     private static final Long BANK_TRANSACTION_ID = 101L;
+    private static final Long PARTICIPANT_ID = 11L;
+    private static final Long INVITATION_ID = 21L;
+
+    private static final BigDecimal EXPECTED_AMOUNT =
+            new BigDecimal("150000");
 
     @Mock
     private PaymentObligationMapper paymentObligationMapper;
@@ -346,6 +351,157 @@ class PaymentServiceTest {
                     ),
                     PaymentErrorCode.PAYMENT_STATUS_UPDATE_FAILED
             );
+        }
+        @Nested
+        @DisplayName("납부 의무 생성")
+        class CreatePaymentObligation {
+
+            @Test
+            @DisplayName("참여자별 예정 원금과 초기 상태로 납부 의무를 생성한다")
+            void createObligationSucceeds() {
+                given(paymentObligationMapper.insert(
+                        any(PaymentObligationDTO.class)
+                )).willReturn(1);
+
+                paymentService.createObligation(
+                        PARTICIPANT_ID,
+                        EXPECTED_AMOUNT
+                );
+
+                ArgumentCaptor<PaymentObligationDTO> captor =
+                        ArgumentCaptor.forClass(
+                                PaymentObligationDTO.class
+                        );
+
+                verify(paymentObligationMapper)
+                        .insert(captor.capture());
+
+                PaymentObligationDTO savedObligation =
+                        captor.getValue();
+
+                assertThat(savedObligation.getParticipantId())
+                        .isEqualTo(PARTICIPANT_ID);
+
+                assertThat(savedObligation.getExpectedAmount())
+                        .isEqualByComparingTo(EXPECTED_AMOUNT);
+
+                assertThat(savedObligation.getPaymentStatus())
+                        .isEqualTo(PaymentStatus.UNPAID);
+
+                assertThat(savedObligation.getReviewStatus())
+                        .isEqualTo(ReviewStatus.NORMAL);
+
+                assertThat(savedObligation.getObligationStatus())
+                        .isEqualTo(ObligationStatus.ACTIVE);
+            }
+
+            @Test
+            @DisplayName("참여자 ID가 없으면 납부 의무를 생성하지 않는다")
+            void createObligationFailsWhenParticipantIdIsNull() {
+                assertPaymentExceptionThrownBy(
+                        () -> paymentService.createObligation(
+                                null,
+                                EXPECTED_AMOUNT
+                        ),
+                        PaymentErrorCode.INVALID_PAYMENT_OBLIGATION_REQUEST
+                );
+
+                verify(paymentObligationMapper, never())
+                        .insert(any(PaymentObligationDTO.class));
+            }
+
+            @Test
+            @DisplayName("예정 원금이 없으면 납부 의무를 생성하지 않는다")
+            void createObligationFailsWhenExpectedAmountIsNull() {
+                assertPaymentExceptionThrownBy(
+                        () -> paymentService.createObligation(
+                                PARTICIPANT_ID,
+                                null
+                        ),
+                        PaymentErrorCode.INVALID_PAYMENT_OBLIGATION_REQUEST
+                );
+
+                verify(paymentObligationMapper, never())
+                        .insert(any(PaymentObligationDTO.class));
+            }
+
+            @Test
+            @DisplayName("예정 원금이 0 이하이면 납부 의무를 생성하지 않는다")
+            void createObligationFailsWhenExpectedAmountIsNotPositive() {
+                assertPaymentExceptionThrownBy(
+                        () -> paymentService.createObligation(
+                                PARTICIPANT_ID,
+                                BigDecimal.ZERO
+                        ),
+                        PaymentErrorCode.INVALID_PAYMENT_OBLIGATION_REQUEST
+                );
+
+                verify(paymentObligationMapper, never())
+                        .insert(any(PaymentObligationDTO.class));
+            }
+
+            @Test
+            @DisplayName("납부 의무 INSERT 결과가 1건이 아니면 예외가 발생한다")
+            void createObligationFailsWhenInsertCountIsInvalid() {
+                given(paymentObligationMapper.insert(
+                        any(PaymentObligationDTO.class)
+                )).willReturn(0);
+
+                assertPaymentExceptionThrownBy(
+                        () -> paymentService.createObligation(
+                                PARTICIPANT_ID,
+                                EXPECTED_AMOUNT
+                        ),
+                        PaymentErrorCode.PAYMENT_OBLIGATION_CREATE_FAILED
+                );
+            }
+        }
+
+        @Nested
+        @DisplayName("납부 의무 검토 상태 변경")
+        class UpdatePaymentObligationReviewStatus {
+
+            @Test
+            @DisplayName("초대 거절 시 납부 의무를 확인 필요 상태로 변경한다")
+            void markObligationNeedsCheckSucceeds() {
+                given(
+                        paymentObligationMapper
+                                .updateReviewStatusByInvitationId(
+                                        INVITATION_ID,
+                                        ReviewStatus.NEEDS_CHECK
+                                )
+                ).willReturn(1);
+
+                paymentService.markObligationNeedsCheckByInvitationId(
+                        INVITATION_ID
+                );
+
+                verify(paymentObligationMapper)
+                        .updateReviewStatusByInvitationId(
+                                INVITATION_ID,
+                                ReviewStatus.NEEDS_CHECK
+                        );
+            }
+
+            @Test
+            @DisplayName("초대에 연결된 납부 의무가 없으면 예외가 발생한다")
+            void markObligationNeedsCheckFailsWhenObligationDoesNotExist() {
+                given(
+                        paymentObligationMapper
+                                .updateReviewStatusByInvitationId(
+                                        INVITATION_ID,
+                                        ReviewStatus.NEEDS_CHECK
+                                )
+                ).willReturn(0);
+
+                assertPaymentExceptionThrownBy(
+                        () -> paymentService
+                                .markObligationNeedsCheckByInvitationId(
+                                        INVITATION_ID
+                                ),
+                        PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND
+                );
+            }
         }
     }
 

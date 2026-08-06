@@ -37,6 +37,14 @@ public class BankTransactionService {
         return bankTransactionMapper.findPendingDeposits();
     }
 
+    public List<BankTransactionDTO> findPendingDepositsByLinkedAccountId(
+            Long linkedAccountId
+    ) {
+        return bankTransactionMapper.findPendingDepositsByLinkedAccountId(
+                linkedAccountId
+        );
+    }
+
     @Transactional
     public void updateStatus(
             Long bankTransactionId,

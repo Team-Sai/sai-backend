@@ -3,9 +3,11 @@ package org.teamsai.saibackend.domain.settlement.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
+import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementInvitationMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
+import org.teamsai.saibackend.domain.settlement.type.SettlementInvitationStatus;
 import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
 
 import java.util.Objects;
@@ -40,6 +42,20 @@ public class SettlementInvitationValidator {
         );
     }
 
+    public void validateRespondableInvitation(
+            SettlementInvitationDTO invitation,
+            Long userId
+    ) {
+        validateInvitedUser(invitation, userId);
+        validatePendingStatus(invitation);
+    }
+
+    public void validateAcceptableSettlement(
+            SettlementDTO settlement
+    ) {
+        validateInProgress(settlement);
+    }
+
     private void validateOwner(
             SettlementDTO settlement,
             Long ownerId
@@ -54,12 +70,36 @@ public class SettlementInvitationValidator {
         }
     }
 
+    private void validateInvitedUser(
+            SettlementInvitationDTO invitation,
+            Long userId
+    ) {
+        if (!Objects.equals(
+                invitation.getInvitedUserId(),
+                userId
+        )) {
+            throw SettlementErrorCode
+                    .INVITATION_ACCESS_DENIED
+                    .toException();
+        }
+    }
+
+    private void validatePendingStatus(
+            SettlementInvitationDTO invitation
+    ) {
+        if (invitation.getInvitationStatus()
+                != SettlementInvitationStatus.INVITED) {
+            throw SettlementErrorCode
+                    .INVITATION_ALREADY_PROCESSED
+                    .toException();
+        }
+    }
+
     private void validateInProgress(
             SettlementDTO settlement
     ) {
         if (settlement.getSettlementStatus()
                 == SettlementStatus.CLOSED) {
-
             throw SettlementErrorCode
                     .ALREADY_CLOSED_SETTLEMENT
                     .toException();
