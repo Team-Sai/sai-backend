@@ -8,7 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
+import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
+import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleSummaryResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
@@ -19,10 +20,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
@@ -34,7 +35,7 @@ class RepaymentScheduleServiceTest {
     private RepaymentScheduleMapper repaymentScheduleMapper;
 
     @Mock
-    private LoanContractMapper loanContractMapper;
+    private LoanContractService loanContractService;
 
     @InjectMocks
     private RepaymentScheduleService repaymentScheduleService;
@@ -52,7 +53,7 @@ class RepaymentScheduleServiceTest {
                 .maturityDate(LocalDate.of(2027, 1, 1))
                 .build();
 
-        when(loanContractMapper.findContractById(contractId)).thenReturn(Optional.of(contract));
+        when(loanContractService.getContractForInternalUse(contractId)).thenReturn(contract);
 
         repaymentScheduleService.generateSchedule(contractId);
 
@@ -63,7 +64,29 @@ class RepaymentScheduleServiceTest {
     @DisplayName("존재하지 않는 계약이면 예외를 던지고 저장하지 않는다")
     void generateSchedule_throwsWhenContractNotFound() {
         Long contractId = 999L;
-        when(loanContractMapper.findContractById(contractId)).thenReturn(Optional.empty());
+        when(loanContractService.getContractForInternalUse(contractId))
+                .thenThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND.toException());
+
+        assertThatThrownBy(() -> repaymentScheduleService.generateSchedule(contractId))
+                .isInstanceOf(DomainException.class);
+
+        verify(repaymentScheduleMapper, never()).insertAll(anyList());
+    }
+
+    @Test
+    @DisplayName("대출 기간이 1개월 미만이면 예외를 던지고 저장하지 않는다")
+    void generateSchedule_throwsWhenPeriodLessThanOneMonth() {
+        Long contractId = 1L;
+        LoanContractResponse contract = LoanContractResponse.builder()
+                .contractId(contractId)
+                .principalAmount(BigDecimal.valueOf(10_000_000))
+                .interestRate(BigDecimal.valueOf(12))
+                .repaymentType(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST)
+                .startDate(LocalDate.of(2026, 1, 1))
+                .maturityDate(LocalDate.of(2026, 1, 15))
+                .build();
+
+        when(loanContractService.getContractForInternalUse(contractId)).thenReturn(contract);
 
         assertThatThrownBy(() -> repaymentScheduleService.generateSchedule(contractId))
                 .isInstanceOf(DomainException.class);
@@ -75,6 +98,11 @@ class RepaymentScheduleServiceTest {
     @DisplayName("요약 조회 시 PAID 건만 누적 납부액에 합산된다")
     void getScheduleSummary_calculatesCorrectly() {
         Long contractId = 1L;
+        Long userId = 10L;
+
+        when(loanContractService.findContract(contractId, userId))
+                .thenReturn(LoanContractResponse.builder().contractId(contractId).creditorId(userId).build());
+
         List<RepaymentScheduleDTO> schedules = List.of(
                 buildRow(1, "PAID", "800000"),
                 buildRow(2, "PAID", "800000"),
@@ -83,7 +111,7 @@ class RepaymentScheduleServiceTest {
         );
         when(repaymentScheduleMapper.findByContractId(contractId)).thenReturn(schedules);
 
-        RepaymentScheduleSummaryResponse summary = repaymentScheduleService.getScheduleSummary(contractId);
+        RepaymentScheduleSummaryResponse summary = repaymentScheduleService.getScheduleSummary(contractId, userId);
 
         assertThat(summary.getTotalScheduledAmount()).isEqualByComparingTo("3200000");
         assertThat(summary.getPaidAmount()).isEqualByComparingTo("1600000");
@@ -91,6 +119,21 @@ class RepaymentScheduleServiceTest {
         assertThat(summary.getPaidCount()).isEqualTo(2);
         assertThat(summary.getTotalCount()).isEqualTo(4);
         assertThat(summary.getSchedules()).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("계약 당사자가 아니면 예외를 던지고 조회하지 않는다")
+    void getScheduleSummary_throwsWhenUserIsNotParty() {
+        Long contractId = 1L;
+        Long otherUserId = 999L;
+
+        when(loanContractService.findContract(contractId, otherUserId))
+                .thenThrow(LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException());
+
+        assertThatThrownBy(() -> repaymentScheduleService.getScheduleSummary(contractId, otherUserId))
+                .isInstanceOf(DomainException.class);
+
+        verify(repaymentScheduleMapper, never()).findByContractId(any());
     }
 
     @Test

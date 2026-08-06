@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.contract.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -12,13 +13,12 @@ import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLink
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
 import org.teamsai.saibackend.domain.user.service.UserService;
-
 
 import java.util.Objects;
 
@@ -31,7 +31,7 @@ public class LoanContractService {
     private final ContractAccountService contractAccountService;
     private final UserService userService;
     private final IdentityService identityService;
-    private final RepaymentScheduleService repaymentScheduleService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long createContract(LoanContractRequest request, Long userId) {
@@ -48,7 +48,7 @@ public class LoanContractService {
 
         contractAccountService.createContractAccount(request.getContractId(), userId, request.getSelectedLinkedAccountId());
 
-        repaymentScheduleService.generateSchedule(request.getContractId());
+        eventPublisher.publishEvent(new ContractCreatedEvent(request.getContractId()));   // 방송만 함
 
         return request.getContractId();
     }
@@ -144,6 +144,11 @@ public class LoanContractService {
     @Transactional
     public void insertChangedContract(ChangeLoanContractResponse changedContract) {
         contractMapper.insertChangedContract(changedContract);
+    }
+
+    public LoanContractResponse getContractForInternalUse(Long contractId) {
+        return contractMapper.findContractById(contractId)
+                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
     }
 
 }

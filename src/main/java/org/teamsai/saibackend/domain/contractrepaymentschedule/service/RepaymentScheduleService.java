@@ -1,14 +1,16 @@
 package org.teamsai.saibackend.domain.contractrepaymentschedule.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
-import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
+import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
+import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleSummaryResponse;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.util.ScheduleGenerator;
 
@@ -24,22 +26,31 @@ import java.util.Optional;
 public class RepaymentScheduleService {
 
     private final RepaymentScheduleMapper repaymentScheduleMapper;
-    private final LoanContractMapper loanContractMapper;
+    private final LoanContractService loanContractService;
+
+    @EventListener
+    @Transactional
+    public void onContractCreated(ContractCreatedEvent event) {
+        generateSchedule(event.contractId());
+    }
 
     @Transactional
-    public void generateSchedule(Long contractId){
-    LoanContractResponse contract = loanContractMapper.findContractById(contractId)
-            .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+    public void generateSchedule(Long contractId) {
+        LoanContractResponse contract = loanContractService.getContractForInternalUse(contractId);
 
-    Period period = Period.between(contract.getStartDate(), contract.getMaturityDate());
-    int months = period.getYears() * 12 + period.getMonths();
+        Period period = Period.between(contract.getStartDate(), contract.getMaturityDate());
+        int months = period.getYears() * 12 + period.getMonths();
 
-    List<RepaymentScheduleDTO> schedules = switch (contract.getRepaymentType()) {
-        case EQUAL_PRINCIPAL_AND_INTEREST -> ScheduleGenerator.generateEqualPrincipalAndInterest(
+        if (months <= 0) {
+            throw RepaymentScheduleErrorCode.INVALID_CONTRACT_PERIOD.toException();
+        }
+
+        List<RepaymentScheduleDTO> schedules = switch (contract.getRepaymentType()) {
+            case EQUAL_PRINCIPAL_AND_INTEREST -> ScheduleGenerator.generateEqualPrincipalAndInterest(
                     contractId, contract.getPrincipalAmount(), contract.getInterestRate(), months, contract.getStartDate());
-        case EQUAL_PRINCIPAL -> ScheduleGenerator.generateEqualPrincipal(
+            case EQUAL_PRINCIPAL -> ScheduleGenerator.generateEqualPrincipal(
                     contractId, contract.getPrincipalAmount(), contract.getInterestRate(), months, contract.getStartDate());
-        case BULLET_REPAYMENT -> ScheduleGenerator.generateBulletRepayment(
+            case BULLET_REPAYMENT -> ScheduleGenerator.generateBulletRepayment(
                     contractId, contract.getPrincipalAmount(), contract.getInterestRate(), months, contract.getStartDate());
         };
 
@@ -57,10 +68,11 @@ public class RepaymentScheduleService {
     @Transactional
     public void markAsPaid(Long scheduleId, LocalDateTime paidAt) {
         repaymentScheduleMapper.updateStatusToPaid(scheduleId, paidAt);
-
     }
 
-    public RepaymentScheduleSummaryResponse getScheduleSummary(Long contractId) {
+    public RepaymentScheduleSummaryResponse getScheduleSummary(Long contractId, Long userId) {
+        loanContractService.findContract(contractId, userId);   // 존재확인 + 당사자검증, 한번에
+
         List<RepaymentScheduleDTO> schedules = repaymentScheduleMapper.findByContractId(contractId);
 
         BigDecimal totalScheduledAmount = schedules.stream().map(RepaymentScheduleDTO::getTotalPaymentDue)
@@ -71,9 +83,7 @@ public class RepaymentScheduleService {
 
         BigDecimal remainingAmount = totalScheduledAmount.subtract(paidAmount);
 
-        int paidCount = (int)schedules.stream().filter(s -> "PAID".equals(s.getStatus()))
-                .count();
-
+        int paidCount = (int) schedules.stream().filter(s -> "PAID".equals(s.getStatus())).count();
         int totalCount = schedules.size();
 
         List<RepaymentScheduleResponse> scheduleResponses = schedules.stream()
@@ -89,5 +99,4 @@ public class RepaymentScheduleService {
                 .schedules(scheduleResponses)
                 .build();
     }
-
 }
