@@ -16,8 +16,10 @@ import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentS
 import org.teamsai.saibackend.domain.contractrepaymentschedule.util.ScheduleGenerator;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -99,5 +101,42 @@ public class RepaymentScheduleService {
                 .totalCount(totalCount)
                 .schedules(scheduleResponses)
                 .build();
+    }
+
+    @Transactional
+    public void generateChangedSchedule(Long v1ContractId, Long v2ContractId) {
+        List<RepaymentScheduleDTO> v1Schedules = repaymentScheduleMapper.findByContractId(v1ContractId);
+
+        Optional<RepaymentScheduleDTO> lastPaid = v1Schedules.stream()
+                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID)
+                .max(Comparator.comparing(RepaymentScheduleDTO::getSequence));
+
+        LoanContractResponse v1 = loanContractService.getContractForInternalUse(v1ContractId);
+        LoanContractResponse v2 = loanContractService.getContractForInternalUse(v2ContractId);
+
+        BigDecimal openingPrincipal = lastPaid.map(RepaymentScheduleDTO::getRemainingPrincipal)
+                .orElse(v1.getPrincipalAmount());
+        LocalDate baseDate = lastPaid.map(RepaymentScheduleDTO::getDueDate)
+                .orElse(v1.getStartDate());
+
+        repaymentScheduleMapper.deletePendingByContractId(v1ContractId);
+
+        Period period = Period.between(baseDate, v2.getMaturityDate());
+        int months = period.getYears() * 12 + period.getMonths();
+
+        if (months <= 0) {
+            throw RepaymentScheduleErrorCode.INVALID_CONTRACT_PERIOD.toException();
+        }
+
+        List<RepaymentScheduleDTO> newSchedules = switch (v2.getRepaymentType()) {
+            case EQUAL_PRINCIPAL_AND_INTEREST -> ScheduleGenerator.generateEqualPrincipalAndInterest(
+                    v2ContractId, openingPrincipal, v2.getInterestRate(), months, baseDate);
+            case EQUAL_PRINCIPAL -> ScheduleGenerator.generateEqualPrincipal(
+                    v2ContractId, openingPrincipal, v2.getInterestRate(), months, baseDate);
+            case BULLET_REPAYMENT -> ScheduleGenerator.generateBulletRepayment(
+                    v2ContractId, openingPrincipal, v2.getInterestRate(), months, baseDate);
+        };
+
+        repaymentScheduleMapper.insertAll(newSchedules);
     }
 }

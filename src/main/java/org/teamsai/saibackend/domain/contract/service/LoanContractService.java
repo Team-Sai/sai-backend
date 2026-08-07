@@ -107,6 +107,11 @@ public class LoanContractService {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
 
+        if (contract.getStatus() == ContractStatus.COMPLETED) {
+            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();   // ← 추가
+        }
+
+
         String savedPath = fileService.saveSignatureFile(contractId, signature);
         contractMapper.updateDebtorSignature(contractId, debtorAddress, savedPath, ContractStatus.COMPLETED);
 

@@ -11,6 +11,8 @@ import java.util.Optional;
 @Mapper
 public interface RepaymentScheduleMapper {
 
+    int deletePendingByContractId(@Param("contractId") Long contractId);
+
     int insertAll(
             @Param("list") List<RepaymentScheduleDTO> schedules);
 

@@ -58,4 +58,11 @@
         paid_at = #{paidAt}
         WHERE schedule_id = #{scheduleId}
     </update>
+
+    <delete id="deletePendingByContractId">
+        DELETE FROM repayment_schedule
+        WHERE contract_id = #{contractId}
+        AND status = 'PENDING'
+    </delete>
+
 </mapper>
