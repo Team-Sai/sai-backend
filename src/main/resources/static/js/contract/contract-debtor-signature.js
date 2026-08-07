@@ -105,7 +105,7 @@
     formData.append("debtorAddress", draft.debtorAddress);
     formData.append("signature", blob, "signature.png");
 
-    const response = await fetch(`/contracts/${contractId}/approve`, {
+    const response = await fetch(`/api/contracts/${contractId}/approve`, {
       method: "PATCH",
       headers: authHeaders(),
       body: formData,
