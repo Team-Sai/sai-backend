@@ -8,6 +8,7 @@ import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleSummaryResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
@@ -78,12 +79,12 @@ public class RepaymentScheduleService {
         BigDecimal totalScheduledAmount = schedules.stream().map(RepaymentScheduleDTO::getTotalPaymentDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal paidAmount = schedules.stream().filter(s -> "PAID".equals(s.getStatus()))
+        BigDecimal paidAmount = schedules.stream().filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID)
                 .map(RepaymentScheduleDTO::getTotalPaymentDue).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal remainingAmount = totalScheduledAmount.subtract(paidAmount);
 
-        int paidCount = (int) schedules.stream().filter(s -> "PAID".equals(s.getStatus())).count();
+        int paidCount = (int) schedules.stream().filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID).count();
         int totalCount = schedules.size();
 
         List<RepaymentScheduleResponse> scheduleResponses = schedules.stream()

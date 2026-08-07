@@ -35,6 +35,7 @@
         created_at            AS createdAt
         FROM repayment_schedule
         WHERE contract_id = #{contractId}
+        ORDER BY sequence ASC
     </select>
 
     <select id="findEarliestPendingByContractId"

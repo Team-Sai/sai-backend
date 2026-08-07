@@ -22,7 +22,7 @@ public class RepaymentScheduleDTO {
     private BigDecimal interestDue;
     private BigDecimal totalPaymentDue;
     private BigDecimal remainingPrincipal;
-    private String status;
+    private RepaymentScheduleStatus status;
     private LocalDateTime paidAt;
     private LocalDateTime createdAt;
 }

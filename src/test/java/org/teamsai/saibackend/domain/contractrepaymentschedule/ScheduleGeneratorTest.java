@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.contractrepaymentschedule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.util.ScheduleGenerator;
 
 import java.math.BigDecimal;
@@ -127,7 +128,7 @@ class ScheduleGeneratorTest {
         for (int i = 0; i < schedules.size(); i++) {
             assertThat(schedules.get(i).getContractId()).isEqualTo(contractId);
             assertThat(schedules.get(i).getSequence()).isEqualTo(i + 1);
-            assertThat(schedules.get(i).getStatus()).isEqualTo("PENDING");
+            assertThat(schedules.get(i).getStatus()).isEqualTo(RepaymentScheduleStatus.PENDING);
         }
     }
 }

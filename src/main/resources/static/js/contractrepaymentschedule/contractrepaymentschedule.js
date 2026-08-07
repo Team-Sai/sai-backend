@@ -1,8 +1,16 @@
+function authHeaders(extra) {
+    const token = sessionStorage.getItem("accessToken");
+    return Object.assign(
+        token ? { Authorization: `Bearer ${token}` } : {},
+        extra || {}
+    );
+}
+
 const contractId = document.getElementById('contractId').value;
 
 Promise.all([
-    fetch(`/api/contracts/${contractId}/schedules`),
-    fetch(`/api/contracts/${contractId}/contract-detail`)
+    fetch(`/api/contracts/${contractId}/schedules`, { headers: authHeaders() }),
+    fetch(`/api/contracts/${contractId}/contract-detail`, { headers: authHeaders() })
 ])
     .then(([scheduleRes, contractRes]) => {
         if (!scheduleRes.ok || !contractRes.ok) {
@@ -25,7 +33,9 @@ Promise.all([
         document.getElementById('progressLabel').textContent =
             `${scheduleData.paidCount} / ${scheduleData.totalCount}회차`;
 
-        const progressPercent = (scheduleData.paidCount / scheduleData.totalCount) * 100;
+        const progressPercent = scheduleData.totalCount === 0
+            ? 0
+            : (scheduleData.paidCount / scheduleData.totalCount) * 100;
         document.getElementById('progressBarFill').style.width = `${progressPercent}%`;
 
         document.getElementById('createdAt').textContent = contract.createdAt;

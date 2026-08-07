@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface RepaymentScheduleMapper {
 
     int insertAll(
-            List<RepaymentScheduleDTO> repaymentScheduleDTO);
+            @Param("list") List<RepaymentScheduleDTO> schedules);
 
     List<RepaymentScheduleDTO> findByContractId(
             @Param("contractId") Long contractID

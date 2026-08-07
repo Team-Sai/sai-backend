@@ -261,28 +261,28 @@ class ContractAccountServiceTest {
 
     @Nested
     @DisplayName("계약 계좌 비활성화")
-    class deleteContractAccount {
+    class deactivateContractAccount {
 
         @Test
         @DisplayName("계약 소유자가 요청하면 계좌 상태를 DISABLED로 변경한다")
-        void deleteContractAccountSuccess() {
+        void deactivateContractAccountSuccess() {
             given(loanContractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createContract(ContractStatus.PENDING)));
             given(contractAccountMapper.updateContractAccountStatus(CONTRACT_ID, ContractAccountStatus.DISABLED))
                     .willReturn(1);
 
-            contractAccountService.deleteContractAccount(CONTRACT_ID, CREDITOR_ID);
+            contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID);
 
             verify(contractAccountMapper).updateContractAccountStatus(CONTRACT_ID, ContractAccountStatus.DISABLED);
         }
 
         @Test
         @DisplayName("계약서를 찾을 수 없으면 예외가 발생하고 비활성화하지 않는다")
-        void deleteContractAccountFailsWhenContractNotFound() {
+        void deactivateContractAccountFailsWhenContractNotFound() {
             given(loanContractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    contractAccountService.deleteContractAccount(CONTRACT_ID, CREDITOR_ID)
+                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -295,12 +295,12 @@ class ContractAccountServiceTest {
 
         @Test
         @DisplayName("계약 당사자가 아니면 예외가 발생하고 비활성화하지 않는다")
-        void deleteContractAccountFailsWhenUserIsNotOwner() {
+        void deactivateContractAccountFailsWhenUserIsNotOwner() {
             given(loanContractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createContract(ContractStatus.PENDING)));
 
             assertThatThrownBy(() ->
-                    contractAccountService.deleteContractAccount(CONTRACT_ID, OTHER_USER_ID)
+                    contractAccountService.deactivateContractAccount(CONTRACT_ID, OTHER_USER_ID)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -313,12 +313,12 @@ class ContractAccountServiceTest {
 
         @Test
         @DisplayName("계약이 이미 완료 상태면 예외가 발생하고 비활성화하지 않는다")
-        void deleteContractAccountFailsWhenContractCompleted() {
+        void deactivateContractAccountFailsWhenContractCompleted() {
             given(loanContractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createContract(ContractStatus.COMPLETED)));
 
             assertThatThrownBy(() ->
-                    contractAccountService.deleteContractAccount(CONTRACT_ID, CREDITOR_ID)
+                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -331,14 +331,14 @@ class ContractAccountServiceTest {
 
         @Test
         @DisplayName("활성화된 계좌가 없으면 예외가 발생한다")
-        void deleteContractAccountFailsWhenNoActiveAccount() {
+        void deactivateContractAccountFailsWhenNoActiveAccount() {
             given(loanContractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createContract(ContractStatus.PENDING)));
             given(contractAccountMapper.updateContractAccountStatus(CONTRACT_ID, ContractAccountStatus.DISABLED))
                     .willReturn(0);
 
             assertThatThrownBy(() ->
-                    contractAccountService.deleteContractAccount(CONTRACT_ID, CREDITOR_ID)
+                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,

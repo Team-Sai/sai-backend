@@ -11,6 +11,7 @@ import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleSummaryResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
@@ -104,10 +105,10 @@ class RepaymentScheduleServiceTest {
                 .thenReturn(LoanContractResponse.builder().contractId(contractId).creditorId(userId).build());
 
         List<RepaymentScheduleDTO> schedules = List.of(
-                buildRow(1, "PAID", "800000"),
-                buildRow(2, "PAID", "800000"),
-                buildRow(3, "PENDING", "800000"),
-                buildRow(4, "PENDING", "800000")
+                buildRow(1, RepaymentScheduleStatus.PAID, "800000"),
+                buildRow(2, RepaymentScheduleStatus.PAID, "800000"),
+                buildRow(3, RepaymentScheduleStatus.PENDING, "800000"),
+                buildRow(4, RepaymentScheduleStatus.PENDING, "800000")
         );
         when(repaymentScheduleMapper.findByContractId(contractId)).thenReturn(schedules);
 
@@ -147,7 +148,7 @@ class RepaymentScheduleServiceTest {
         verify(repaymentScheduleMapper).updateStatusToPaid(scheduleId, paidAt);
     }
 
-    private RepaymentScheduleDTO buildRow(int sequence, String status, String totalPaymentDue) {
+    private RepaymentScheduleDTO buildRow(int sequence, RepaymentScheduleStatus status, String totalPaymentDue) {
         return RepaymentScheduleDTO.builder()
                 .scheduleId((long) sequence)
                 .contractId(1L)
