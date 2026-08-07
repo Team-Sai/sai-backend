@@ -38,4 +38,11 @@
         WHERE change_request_id = #{changeRequestId}
     </select>
 
+    <update id="updateStatus">
+        UPDATE loan_contract_change_request
+        SET status = #{status},
+        updated_at = NOW()
+        WHERE change_request_id = #{changeRequestId}
+    </update>
+
 </mapper>

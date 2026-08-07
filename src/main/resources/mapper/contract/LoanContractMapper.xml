@@ -94,6 +94,7 @@
     <select id="findContractById" resultType="org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse">
         SELECT
         lc.contract_id        AS contractId,
+        lc.previous_contract_id AS previousContractId,
         lc.creditor_id        AS creditorId,
         lc.debtor_id          AS debtorId,
         lc.creditor_address   AS creditorAddress,

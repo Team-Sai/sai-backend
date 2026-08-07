@@ -13,6 +13,7 @@ import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLink
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
 import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
@@ -108,6 +109,10 @@ public class LoanContractService {
 
         String savedPath = fileService.saveSignatureFile(contractId, signature);
         contractMapper.updateDebtorSignature(contractId, debtorAddress, savedPath, ContractStatus.COMPLETED);
+
+        if (contract.getPreviousContractId() != null) {
+            eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));   // ← 추가
+        }
 
         return ContractStatus.COMPLETED;
     }

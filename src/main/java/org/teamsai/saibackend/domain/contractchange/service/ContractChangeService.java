@@ -3,18 +3,21 @@ package org.teamsai.saibackend.domain.contractchange.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
-import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 
 import java.time.LocalDateTime;
 
@@ -26,6 +29,7 @@ public class ContractChangeService {
 
     private final ContractChangeMapper contractChangeMapper;
     private final LoanContractService loanContractService;
+    private final RepaymentScheduleService repaymentScheduleService;
 
 
     public void checkAccess(Long contractId, Long userId) {
@@ -120,5 +124,26 @@ public class ContractChangeService {
                 contractId, userId);
 
         return changeDTO;
+    }
+
+    @EventListener
+    @Transactional
+    public void onContractChangeApproved(ContractChangeApprovedEvent event) {
+        Long v2ContractId = event.newContractId();
+
+        LoanContractResponse v2 = loanContractService.getContractForInternalUse(v2ContractId);
+        Long v1ContractId = v2.getPreviousContractId();
+
+        LoanContractChangeDTO pendingRequest = contractChangeMapper.findByContractId(v1ContractId).stream()
+                .filter(r -> r.getStatus() == ChangeRequestStatus.PENDING)
+                .findFirst()
+                .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
+
+        contractChangeMapper.updateStatus(pendingRequest.getChangeRequestId(), ChangeRequestStatus.APPROVED);
+
+        repaymentScheduleService.generateSchedule(v2ContractId);
+
+        log.info("계약 변경 승인 처리 완료: v1ContractId={}, v2ContractId={}, changeRequestId={}",
+                v1ContractId, v2ContractId, pendingRequest.getChangeRequestId());
     }
 }

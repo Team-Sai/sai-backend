@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 public class LoanContractResponse {
 
     private Long contractId;
+    private Long previousContractId;
 
     @JsonIgnore
     private Long creditorId;
