@@ -104,10 +104,10 @@
         WHERE user_id = #{userId}
     </select>
 
-    <update id="updateUserKey">
+    <update id="updateUserKeyByUserId">
         UPDATE users
         SET user_key = #{userKey}
-        WHERE user_token = #{userToken}
+        WHERE user_id = #{userId}
     </update>
 
     <delete id="deleteById">
@@ -130,15 +130,6 @@
         FROM users
         WHERE user_token = #{userToken}
         )
-
-    </select>
-
-    <select id="findUserKeyById"
-            resultType="string">
-
-        SELECT user_key
-        FROM users
-        WHERE user_id = #{userId}
 
     </select>
 

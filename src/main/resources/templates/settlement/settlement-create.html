@@ -6,6 +6,7 @@
     <title>새로운 정산 만들기 | 사이원장</title>
     <link rel="stylesheet" href="/css/settlement/settlement-common.css">
     <link rel="stylesheet" href="/css/settlement/settlement-create.css">
+    <link rel="stylesheet" href="/css/settlement/settlement-create-payer.css">
     <script src="/js/settlement/settlement-create.js" defer></script>
 </head>
 <body>
@@ -36,7 +37,7 @@
 
     <div class="create-heading">
         <h1>새로운 정산 만들기</h1>
-        <p>공동정산의 기본 정보를 먼저 생성한 뒤 참여자 초대와 계좌 설정을 이어서 진행합니다.</p>
+        <p>총 금액과 납부자를 선택하면 참여자별 납부 예정 금액을 균등하게 계산합니다.</p>
     </div>
 
     <div class="settlement-type-tabs" role="tablist">
@@ -108,32 +109,76 @@
                     <label class="choice-card selected">
                         <input type="radio" name="splitType" value="EQUAL" checked>
                         <span class="choice-title">균등 분배</span>
-                        <span class="choice-description">참여자에게 동일한 금액을 분배합니다.</span>
+                        <span class="choice-description">총 금액을 생성자와 납부자 수로 균등하게 나눕니다.</span>
                     </label>
 
-                    <label class="choice-card">
-                        <input type="radio" name="splitType" value="CUSTOM">
+                    <label class="choice-card disabled" aria-disabled="true">
+                        <input type="radio" name="splitType" value="CUSTOM" disabled>
                         <span class="choice-title">직접 설정</span>
-                        <span class="choice-description">참여자별 금액을 이후 단계에서 입력합니다.</span>
+                        <span class="choice-description">참여자별 금액 설정은 추후 지원할 예정입니다.</span>
                     </label>
                 </div>
             </section>
 
-            <section class="form-card pending-card">
-                <div class="card-title card-title-between">
-                    <div>
-                        <span class="card-icon">♙</span>
-                        <h2>납부자</h2>
-                    </div>
-                    <button type="button" class="inline-action" disabled>＋ 납부자 추가</button>
+            <section class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">▣</span>
+                    <h2>총 금액</h2>
                 </div>
 
-                <div class="participant-chips">
+                <label class="form-field">
+                    <span>총 금액 <em>(필수)</em></span>
+                    <input
+                            id="total-amount"
+                            name="totalAmount"
+                            type="text"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            maxlength="17"
+                            placeholder="예: 450,000"
+                            required
+                    >
+                    <small>원 단위로 입력해 주세요.</small>
+                    <small class="field-error" data-error-for="totalAmount"></small>
+                </label>
+            </section>
+
+            <section class="form-card payer-card">
+                <div class="card-title">
+                    <span class="card-icon">♙</span>
+                    <h2>납부자</h2>
+                </div>
+
+                <div class="participant-lookup">
+                    <label class="form-field participant-token-field" for="participant-token">
+                        <span>회원 코드로 납부자 조회</span>
+                        <input
+                                id="participant-token"
+                                type="text"
+                                maxlength="100"
+                                autocomplete="off"
+                                placeholder="예: SAI_ABCD1234"
+                        >
+                    </label>
+                    <button
+                            id="lookup-participant-button"
+                            type="button"
+                            class="button button-primary participant-lookup-button"
+                    >
+                        조회 후 추가
+                    </button>
+                </div>
+
+                <small class="field-error" data-error-for="participantLookup"></small>
+
+                <div id="participant-chips" class="participant-chips" aria-live="polite">
                     <span id="owner-chip" class="participant-chip owner">나 (생성자)</span>
                 </div>
-                <p class="pending-message">
-                    공동정산 생성 후 회원토큰 기반 초대 기능에서 참여자를 추가합니다.
+
+                <p id="participant-empty-message" class="participant-help">
+                    생성자를 제외하고 납부자를 한 명 이상 추가해 주세요.
                 </p>
+                <small class="field-error" data-error-for="invitations"></small>
             </section>
 
             <section class="form-card pending-card">
@@ -153,18 +198,6 @@
                     </div>
                 </div>
             </section>
-
-            <section class="form-card pending-card">
-                <div class="card-title">
-                    <span class="card-icon">▣</span>
-                    <h2>총 금액</h2>
-                </div>
-
-                <label class="form-field">
-                    <span>총 금액</span>
-                    <input type="text" value="정산 금액 설정 기능 구현 후 입력 가능" disabled>
-                </label>
-            </section>
         </form>
 
         <aside class="summary-panel">
@@ -182,11 +215,19 @@
                     </div>
                     <div>
                         <dt>참여자 수</dt>
-                        <dd>1명 (본인)</dd>
+                        <dd id="summary-participant-count">1명 (본인)</dd>
                     </div>
                     <div>
                         <dt>분배 방식</dt>
                         <dd id="summary-split-type">균등 분배</dd>
+                    </div>
+                    <div>
+                        <dt>총 금액</dt>
+                        <dd id="summary-total-amount">입력 전</dd>
+                    </div>
+                    <div>
+                        <dt>예상 1인당 금액</dt>
+                        <dd id="summary-per-person-amount">계산 전</dd>
                     </div>
                 </dl>
 
@@ -218,7 +259,7 @@
                 </button>
 
                 <p class="submit-description">
-                    생성이 완료되면 정산 목록으로 이동합니다.
+                    생성이 완료되면 선택한 납부자에게 정산 요청이 전송됩니다.
                 </p>
             </div>
         </aside>

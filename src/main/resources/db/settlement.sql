@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS settlement (
     title VARCHAR(200) NOT NULL,
 
     split_type ENUM('EQUAL', 'CUSTOM') NULL,
+
+    total_amount DECIMAL(19, 2) NOT NULL
+    CHECK (total_amount > 0),
     due_date DATE NULL,
 
     cycle_rule ENUM('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY') NULL,

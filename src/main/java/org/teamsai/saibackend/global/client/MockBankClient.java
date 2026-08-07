@@ -17,9 +17,11 @@ import java.util.List;
 @Component
 public class MockBankClient {
 
+    private static final String USER_KEY_HEADER = "X-User-Key";
+
     private final RestClient restClient;
 
-    public MockBankClient(@Value("${mock-bank.base-url}") String baseUrl) {
+    public MockBankClient(@Value("${sai.mock-bank.base-url}") String baseUrl) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000);
         requestFactory.setReadTimeout(5000);
@@ -29,6 +31,7 @@ public class MockBankClient {
                 .requestFactory(requestFactory)
                 .build();
     }
+
     private <T> T requireBody(T body) {
         if (body == null) {
             throw AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
@@ -52,10 +55,8 @@ public class MockBankClient {
     public List<LinkableAccountResponse> getAccountsByUserKey(String userKey) {
         return requireBody(
                 restClient.get()
-                        .uri(uriBuilder -> uriBuilder
-                                .path("/api/mock-bank/accounts")
-                                .queryParam("userKey", userKey)
-                                .build())
+                        .uri("/api/mock-bank/accounts")
+                        .header(USER_KEY_HEADER, userKey)
                         .retrieve()
                         .body(new ParameterizedTypeReference<List<LinkableAccountResponse>>() {})
         );
@@ -64,10 +65,8 @@ public class MockBankClient {
     public AccountDetailResponse getAccountDetail(Long accountId, String userKey) {
         return requireBody(
                 restClient.get()
-                        .uri(uriBuilder -> uriBuilder
-                                .path("/api/mock-bank/accounts/{accountId}")
-                                .queryParam("userKey", userKey)
-                                .build(accountId))
+                        .uri("/api/mock-bank/accounts/{accountId}", accountId)
+                        .header(USER_KEY_HEADER, userKey)
                         .retrieve()
                         .body(AccountDetailResponse.class)
         );
