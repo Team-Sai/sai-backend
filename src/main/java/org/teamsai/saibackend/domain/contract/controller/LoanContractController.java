@@ -39,10 +39,8 @@ public class LoanContractController {
     }
 
     @Operation(hidden = true)
-    @GetMapping("/contracts/{contractId}/signature")
-    public String contractSignaturePage(
-            @PathVariable Long contractId
-    ) {
+    @GetMapping("/contracts/signature")
+    public String contractSignaturePage() {
         return "contract/contract-signature";
     }
 

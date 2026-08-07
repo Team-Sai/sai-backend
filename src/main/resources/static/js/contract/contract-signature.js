@@ -45,7 +45,8 @@
   }
 
   if (!draft) {
-    window.location.href = "/contracts";
+    alert("작성 중인 차용증 정보가 없습니다. 처음부터 다시 시도해 주세요.");
+    window.location.href = "/contracts/new";
     return;
   }
 
