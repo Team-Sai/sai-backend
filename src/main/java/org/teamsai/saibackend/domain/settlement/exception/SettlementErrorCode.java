@@ -87,7 +87,26 @@ public enum SettlementErrorCode implements BaseErrorCode<DomainException> {
     SETTLEMENT_PARTICIPANT_STATUS_UPDATE_FAILED(
             HttpStatus.BAD_REQUEST,
             "참여자 상태 변경에 실패했습니다."
+    ),SETTLEMENT_ACCOUNT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "정산 수취 계좌가 설정되어 있지 않습니다."
+    ),
+
+    INVALID_SETTLEMENT_ACCOUNT(
+            HttpStatus.BAD_REQUEST,
+            "본인에게 연동된 계좌만 정산 수취 계좌로 설정할 수 있습니다."
+    ),
+
+    SETTLEMENT_ACCOUNT_CREATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 수취 계좌 설정에 실패했습니다."
+    ),
+
+    SETTLEMENT_ACCOUNT_UPDATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 수취 계좌 변경에 실패했습니다."
     );
+
 
     private final HttpStatus httpStatus;
     private final String message;
