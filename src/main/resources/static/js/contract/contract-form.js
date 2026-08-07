@@ -25,7 +25,6 @@
     "creditorAddress",
     "contractAlias",
     "terms",
-    "identityVerificationId",
     "selectedLinkedAccountId",
   ];
 
@@ -108,8 +107,17 @@
       maturityDate.focus();
       return false;
     }
-    const day = Number(repaymentDay.value);
-    if (!day || day < 1 || day > 31) {
+    const dayValue = repaymentDay.value.trim();
+
+    if (dayValue === "" || isNaN(dayValue)) {
+      showStatus("상환일을 입력해 주세요.", true);
+      repaymentDay.focus();
+      return false;
+    }
+
+    const day = Number(dayValue);
+
+    if (day < 1 || day > 31) {
       showStatus("상환일은 1일에서 31일 사이여야 합니다.", true);
       repaymentDay.focus();
       return false;
@@ -142,17 +150,25 @@
     });
   }
 
-  nextBtn?.addEventListener("click", () => {
+  nextBtn?.addEventListener("click", async () => {
     if (!validate()) return;
 
     try {
-      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(serializeForm()));
-    } catch (err) {
-      showStatus("작성 내용을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.", true);
-      return;
-    }
 
-    window.location.href = "/api/contracts/signature";
+      const response = await fetch("/api/contracts/write", {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(serializeForm())
+      });
+
+      if (!response.ok) throw new Error("차용증 생성 실패");
+
+      const contractId = await response.json();
+      window.location.href = `/contracts/${contractId}/signature`;
+
+    } catch (err) {
+      showStatus("차용증 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.", true);
+    }
   });
 
   const principalInput = document.getElementById("principalAmount");
@@ -179,7 +195,7 @@
       document.getElementById("creditorNameCell").textContent = user.name || "-";
       document.getElementById("creditorBirthDateCell").textContent = user.birthDate || "-";
     } catch (err) {
-      /* leave the "-" placeholders in place */
+
     }
   }
 
@@ -271,10 +287,6 @@
   if (viewMode) {
     loadExistingContract();
   } else {
-    const identityVerificationId = params.get("identityVerificationId");
-    if (identityVerificationIdInput && identityVerificationId) {
-      identityVerificationIdInput.value = identityVerificationId;
-    }
     loadCreditorInfo();
     loadSelectableAccounts();
   }

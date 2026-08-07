@@ -4,9 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>금전차용계약서 작성</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
   <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="../../static/css/contract/contract-form.css" />
 </head>
 <body>
@@ -31,36 +30,36 @@
   </div>
 </header>
 
-<div class="stepper-wrap">
-  <ol class="stepper">
-    <li class="stepper__step is-done">
-      <span class="stepper__circle">
-        <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
-          <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </span>
-      <span class="stepper__label">본인인증</span>
-    </li>
-    <li class="stepper__step is-active">
-      <span class="stepper__circle">2</span>
-      <span class="stepper__label">차용증 작성</span>
-    </li>
-    <li class="stepper__step">
-      <span class="stepper__circle">3</span>
-      <span class="stepper__label">상대확인</span>
-    </li>
-    <li class="stepper__step">
-      <span class="stepper__circle">4</span>
-      <span class="stepper__label">서명날인</span>
-    </li>
-    <li class="stepper__step">
-      <span class="stepper__circle">5</span>
-      <span class="stepper__label">저장</span>
-    </li>
-  </ol>
-</div>
-
 <main class="page">
+  <div class="stepper-card">
+    <ol class="stepper">
+      <li class="stepper__step is-done">
+        <span class="stepper__circle">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
+            <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="stepper__label">본인인증</span>
+      </li>
+      <li class="stepper__step is-active">
+        <span class="stepper__circle">2</span>
+        <span class="stepper__label">차용증 작성</span>
+      </li>
+      <li class="stepper__step">
+        <span class="stepper__circle">3</span>
+        <span class="stepper__label">상대확인</span>
+      </li>
+      <li class="stepper__step">
+        <span class="stepper__circle">4</span>
+        <span class="stepper__label">서명날인</span>
+      </li>
+      <li class="stepper__step">
+        <span class="stepper__circle">5</span>
+        <span class="stepper__label">저장</span>
+      </li>
+    </ol>
+  </div>
+
   <form class="doc" id="contractForm" data-contract-id="">
     <h1 class="doc__title">금 전 차 용 계 약 서</h1>
 
@@ -69,28 +68,57 @@
 
     <section class="doc__article">
       <span class="doc__clause">제1조(당사자)</span>
-      <span class="doc__text">
-        채권자 <strong id="creditorNameDisplay" class="doc__readonly">-</strong>(이하 "갑"이라고 함)는
-      </span>
-      <span class="doc__text doc__text--indent">
-        금
-        <input type="text" inputmode="numeric" class="doc__inline-input doc__inline-input--amount" id="principalAmount" name="principalAmount" placeholder="0" />
-        원을 채무자(이하 "을"이라고 함)에게 대여하고 을은 이를 차용한다.
-      </span>
+      <div class="doc__body">
+        <span class="doc__text">
+          채권자 <strong id="creditorNameDisplay" class="doc__readonly">-</strong>(이하 "갑"이라고 함)는
+        </span>
+        <span class="doc__text doc__text--indent">
+          금
+          <input type="text" inputmode="numeric" class="doc__inline-input doc__inline-input--amount" id="principalAmount" name="principalAmount" placeholder="0" />
+          원을 채무자(이하 "을"이라고 함)에게 대여하고 을은 이를 차용한다.
+        </span>
+
+        <div class="loan-account">
+          <div class="loan-account__title">대출금 지급 계좌</div>
+          <select id="selectedLinkedAccountId" name="selectedLinkedAccountId">
+            <option value="">계좌 목록을 불러오는 중...</option>
+          </select>
+
+
+          <table class="loan-account__summary" id="loanAccountSummary" hidden>
+            <tbody>
+              <tr>
+                <th>은 행</th>
+                <td id="loanAccountBank">-</td>
+              </tr>
+              <tr>
+                <th>계좌번호</th>
+                <td id="loanAccountNumber">-</td>
+              </tr>
+              <tr>
+                <th>예금주</th>
+                <td id="loanAccountHolder">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <section class="doc__article">
       <span class="doc__clause">제2조(대출기간)</span>
-      <span class="doc__text">
-        대출 시작일은
-        <input type="date" class="doc__inline-input doc__inline-input--date" id="startDate" name="startDate" />
-        로 한다.
-      </span>
-      <span class="doc__text doc__text--indent">
-        차용금의 변제기한(만기일)은
-        <input type="date" class="doc__inline-input doc__inline-input--date" id="maturityDate" name="maturityDate" />
-        로 한다.
-      </span>
+      <div class="doc__body">
+        <span class="doc__text">
+          대출 시작일은
+          <input type="date" class="doc__inline-input doc__inline-input--date" id="startDate" name="startDate" />
+          로 한다.
+        </span>
+        <span class="doc__text doc__text--indent">
+          차용금의 변제기한(만기일)은
+          <input type="date" class="doc__inline-input doc__inline-input--date" id="maturityDate" name="maturityDate" />
+          로 한다.
+        </span>
+      </div>
     </section>
 
     <section class="doc__article">
@@ -104,14 +132,16 @@
 
     <section class="doc__article">
       <span class="doc__clause">제4조(변제방법)</span>
-      <span class="doc__text">
-        채무의 변제는 갑의 주소 또는 갑이 지정하는 장소에 지참 또는 송금해서 지불하며,
-      </span>
-      <span class="doc__text doc__text--indent">
-        매월
-        <input type="number" min="1" max="31" class="doc__inline-input doc__inline-input--day" id="repaymentDay" name="repaymentDay" placeholder="1" />
-        일에 지급하기로 한다.
-      </span>
+      <div class="doc__body">
+        <span class="doc__text">
+          채무의 변제는 갑의 주소 또는 갑이 지정하는 장소에 지참 또는 송금해서 지불하며,
+        </span>
+        <span class="doc__text doc__text--indent">
+          매월
+          <input type="number" min="1" max="31" class="doc__inline-input doc__inline-input--day" id="repaymentDay" name="repaymentDay" placeholder="1" />
+          일에 지급하기로 한다.
+        </span>
+      </div>
     </section>
 
     <section class="doc__article">
@@ -151,9 +181,18 @@
     </p>
 
     <table class="parties">
+      <colgroup>
+        <col style="width: 9%">
+        <col style="width: 9%">
+        <col style="width: 14%">
+        <col style="width: 11%">
+        <col style="width: 14%">
+        <col style="width: 7%">
+        <col style="width: 36%">
+      </colgroup>
       <tbody>
       <tr>
-        <th rowspan="2" class="parties__role">채권자</th>
+        <th class="parties__role">채권자</th>
         <td class="parties__label">성 명</td>
         <td class="parties__value">
           <strong id="creditorNameCell" class="doc__readonly">-</strong>
@@ -162,23 +201,23 @@
         <td class="parties__value">
           <strong id="creditorBirthDateCell" class="doc__readonly">-</strong>
         </td>
-      </tr>
-      <tr>
         <td class="parties__label">주 소</td>
-        <td class="parties__value" colspan="3">
+        <td class="parties__value">
           <input type="text" class="parties__input" id="creditorAddress" name="creditorAddress" placeholder="주소를 입력하세요" />
         </td>
       </tr>
       <tr>
-        <th rowspan="2" class="parties__role">채무자</th>
+        <th class="parties__role">채무자</th>
         <td class="parties__label">성 명</td>
-        <td class="parties__value" colspan="3">
-          <input type="text" class="parties__input" id="debtorName" disabled placeholder="채무자 확인 후 자동 입력됩니다" />
+        <td class="parties__value">
+          <input type="text" class="parties__input" id="debtorName" disabled placeholder="자동 입력" />
         </td>
-      </tr>
-      <tr>
+        <td class="parties__label">생년월일</td>
+        <td class="parties__value">
+          <input type="text" class="parties__input" id="debtorBirthDate" disabled placeholder="자동 입력" />
+        </td>
         <td class="parties__label">주 소</td>
-        <td class="parties__value" colspan="3">
+        <td class="parties__value">
           <input type="text" class="parties__input" id="debtorAddress" disabled placeholder="채무자 확인 후 자동 입력됩니다" />
         </td>
       </tr>
