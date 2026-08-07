@@ -48,6 +48,11 @@ public enum LoanContractErrorCode implements BaseErrorCode<DomainException> {
     CONTRACT_ACCOUNT_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "해당 차용증에 연결된 계좌가 없습니다."
+    ),
+
+    CONTRACT_ALREADY_COMPLETED(
+            HttpStatus.CONFLICT,
+            "이미 완료된 계약입니다."
     );
 
     private final HttpStatus httpStatus;

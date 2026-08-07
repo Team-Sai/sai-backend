@@ -1,0 +1,142 @@
+package org.teamsai.saibackend.domain.contractrepaymentschedule.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
+import org.teamsai.saibackend.domain.contract.service.LoanContractService;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleStatus;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleResponse;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleSummaryResponse;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.util.ScheduleGenerator;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class RepaymentScheduleService {
+
+    private final RepaymentScheduleMapper repaymentScheduleMapper;
+    private final LoanContractService loanContractService;
+
+    @EventListener
+    @Transactional
+    public void onContractCreated(ContractCreatedEvent event) {
+        generateSchedule(event.contractId());
+    }
+
+    @Transactional
+    public void generateSchedule(Long contractId) {
+        LoanContractResponse contract = loanContractService.getContractForInternalUse(contractId);
+
+        Period period = Period.between(contract.getStartDate(), contract.getMaturityDate());
+        int months = period.getYears() * 12 + period.getMonths();
+
+        if (months <= 0) {
+            throw RepaymentScheduleErrorCode.INVALID_CONTRACT_PERIOD.toException();
+        }
+
+        List<RepaymentScheduleDTO> schedules = switch (contract.getRepaymentType()) {
+            case EQUAL_PRINCIPAL_AND_INTEREST -> ScheduleGenerator.generateEqualPrincipalAndInterest(
+                    contractId, contract.getPrincipalAmount(), contract.getInterestRate(), months, contract.getStartDate());
+            case EQUAL_PRINCIPAL -> ScheduleGenerator.generateEqualPrincipal(
+                    contractId, contract.getPrincipalAmount(), contract.getInterestRate(), months, contract.getStartDate());
+            case BULLET_REPAYMENT -> ScheduleGenerator.generateBulletRepayment(
+                    contractId, contract.getPrincipalAmount(), contract.getInterestRate(), months, contract.getStartDate());
+        };
+
+        repaymentScheduleMapper.insertAll(schedules);
+    }
+
+    public List<RepaymentScheduleDTO> getSchedule(Long contractId) {
+        return repaymentScheduleMapper.findByContractId(contractId);
+    }
+
+    public Optional<RepaymentScheduleDTO> findNextPendingSchedule(Long contractId) {
+        return repaymentScheduleMapper.findEarliestPendingByContractId(contractId);
+    }
+
+    @Transactional
+    public void markAsPaid(Long scheduleId, LocalDateTime paidAt) {
+        repaymentScheduleMapper.updateStatusToPaid(scheduleId, paidAt);
+    }
+
+    public RepaymentScheduleSummaryResponse getScheduleSummary(Long contractId, Long userId) {
+        loanContractService.findContract(contractId, userId);   // 존재확인 + 당사자검증, 한번에
+
+        List<RepaymentScheduleDTO> schedules = repaymentScheduleMapper.findByContractId(contractId);
+
+        BigDecimal totalScheduledAmount = schedules.stream().map(RepaymentScheduleDTO::getTotalPaymentDue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal paidAmount = schedules.stream().filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID)
+                .map(RepaymentScheduleDTO::getTotalPaymentDue).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal remainingAmount = totalScheduledAmount.subtract(paidAmount);
+
+        int paidCount = (int) schedules.stream().filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID).count();
+        int totalCount = schedules.size();
+
+        List<RepaymentScheduleResponse> scheduleResponses = schedules.stream()
+                .map(RepaymentScheduleResponse::from)
+                .toList();
+
+        return RepaymentScheduleSummaryResponse.builder()
+                .totalScheduledAmount(totalScheduledAmount)
+                .paidAmount(paidAmount)
+                .remainingAmount(remainingAmount)
+                .paidCount(paidCount)
+                .totalCount(totalCount)
+                .schedules(scheduleResponses)
+                .build();
+    }
+
+    @Transactional
+    public void generateChangedSchedule(Long v1ContractId, Long v2ContractId) {
+        List<RepaymentScheduleDTO> v1Schedules = repaymentScheduleMapper.findByContractId(v1ContractId);
+
+        Optional<RepaymentScheduleDTO> lastPaid = v1Schedules.stream()
+                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID)
+                .max(Comparator.comparing(RepaymentScheduleDTO::getSequence));
+
+        LoanContractResponse v1 = loanContractService.getContractForInternalUse(v1ContractId);
+        LoanContractResponse v2 = loanContractService.getContractForInternalUse(v2ContractId);
+
+        BigDecimal openingPrincipal = lastPaid.map(RepaymentScheduleDTO::getRemainingPrincipal)
+                .orElse(v1.getPrincipalAmount());
+        LocalDate baseDate = lastPaid.map(RepaymentScheduleDTO::getDueDate)
+                .orElse(v1.getStartDate());
+
+        repaymentScheduleMapper.deletePendingByContractId(v1ContractId);
+
+        Period period = Period.between(baseDate, v2.getMaturityDate());
+        int months = period.getYears() * 12 + period.getMonths();
+
+        if (months <= 0) {
+            throw RepaymentScheduleErrorCode.INVALID_CONTRACT_PERIOD.toException();
+        }
+
+        List<RepaymentScheduleDTO> newSchedules = switch (v2.getRepaymentType()) {
+            case EQUAL_PRINCIPAL_AND_INTEREST -> ScheduleGenerator.generateEqualPrincipalAndInterest(
+                    v2ContractId, openingPrincipal, v2.getInterestRate(), months, baseDate);
+            case EQUAL_PRINCIPAL -> ScheduleGenerator.generateEqualPrincipal(
+                    v2ContractId, openingPrincipal, v2.getInterestRate(), months, baseDate);
+            case BULLET_REPAYMENT -> ScheduleGenerator.generateBulletRepayment(
+                    v2ContractId, openingPrincipal, v2.getInterestRate(), months, baseDate);
+        };
+
+        repaymentScheduleMapper.insertAll(newSchedules);
+    }
+}

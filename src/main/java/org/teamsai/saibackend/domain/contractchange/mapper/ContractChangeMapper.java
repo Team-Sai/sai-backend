@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.contractchange.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 
 import java.util.List;
@@ -21,6 +22,11 @@ public interface ContractChangeMapper {
 
     Optional<LoanContractChangeDTO> findByChangeRequestId(
             @Param("changeRequestId") Long changeRequestId
+    );
+
+    int updateStatus(
+            @Param("changeRequestId") Long changeRequestId,
+            @Param("status") ChangeRequestStatus status
     );
 
 
