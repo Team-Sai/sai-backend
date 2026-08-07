@@ -31,7 +31,7 @@
   }
 
   if (!draft || !draft.debtorAddress) {
-    window.location.href = `/api/contracts/${contractId}/approve`;
+    window.location.href = `/contracts/${contractId}/approve`;
     return;
   }
 
@@ -105,7 +105,7 @@
     formData.append("debtorAddress", draft.debtorAddress);
     formData.append("signature", blob, "signature.png");
 
-    const response = await fetch(`/api/contracts/${contractId}/approve`, {
+    const response = await fetch(`/contracts/${contractId}/approve`, {
       method: "PATCH",
       headers: authHeaders(),
       body: formData,
