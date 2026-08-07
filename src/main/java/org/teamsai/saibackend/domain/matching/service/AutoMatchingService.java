@@ -178,6 +178,7 @@ public class AutoMatchingService {
             return AutoMatchingProcessResult.needsCheck();
         }
 
+
         paymentService.applyAutoMatchedPayment(
                 candidate.obligationId(),
                 transaction.transactionId(),

@@ -35,6 +35,16 @@ public enum PaymentErrorCode implements BaseErrorCode<DomainException> {
             "납부 금액이 올바르지 않습니다."
     ),
 
+    INVALID_PAYMENT_TARGET(
+            HttpStatus.BAD_REQUEST,
+            "납부 대상 정보가 올바르지 않습니다."
+    ),
+
+    INVALID_PAYMENT_SOURCE_TYPE(
+            HttpStatus.BAD_REQUEST,
+            "납부 기록 출처가 올바르지 않습니다."
+    ),
+
     PAYMENT_AMOUNT_EXCEEDS_REMAINING_AMOUNT(
             HttpStatus.BAD_REQUEST,
             "납부 금액이 남은 금액을 초과합니다."
