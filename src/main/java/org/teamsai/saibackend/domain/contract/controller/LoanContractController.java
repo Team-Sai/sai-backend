@@ -35,12 +35,8 @@ public class LoanContractController {
     @Operation(hidden = true)
     @GetMapping("/contracts/new")
     public String contractFormPage(
-            @RequestParam(name = "identityVerificationId", required = false) String identityVerificationId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        if (identityVerificationId == null || identityVerificationId.isBlank()) {
-            return "redirect:/identity-test";
-        }
         return "contract/contract-form";
     }
 

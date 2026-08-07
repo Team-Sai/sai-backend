@@ -271,10 +271,6 @@
   if (viewMode) {
     loadExistingContract();
   } else {
-    const identityVerificationId = params.get("identityVerificationId");
-    if (identityVerificationIdInput && identityVerificationId) {
-      identityVerificationIdInput.value = identityVerificationId;
-    }
     loadCreditorInfo();
     loadSelectableAccounts();
   }
