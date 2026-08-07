@@ -67,6 +67,7 @@ public class SecurityConfig {
                                         "/identity-test",
 
 
+
                                         "/accounts/**",
                                         "/settlements",
                                         "/settlements/**",

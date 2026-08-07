@@ -59,7 +59,7 @@ public class ContractAccountController {
             @PathVariable("contractId") Long contractId,
             @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
-        contractAccountService.deleteContractAccount(contractId, userId);
+        contractAccountService.deactivateContractAccount(contractId, userId);
         return ResponseEntity.noContent().build();
     }
 }

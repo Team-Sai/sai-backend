@@ -7,12 +7,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
 import org.teamsai.saibackend.domain.contract.service.ContractAccountService;
@@ -47,6 +49,9 @@ class LoanContractServiceTest {
     private static final String DEBTOR_EMAIL = "debtor@example.com";
     private static final Long CONTRACT_ID = 1L;
     private static final String IDENTITY_VERIFICATION_ID = "identity-verification-abc123";
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Mock
     private LoanContractMapper contractMapper;
@@ -502,5 +507,20 @@ class LoanContractServiceTest {
                 .contractAlias("생활비 차용")
                 .status(ContractStatus.DRAFT)
                 .build();
+    }
+
+    @Test
+    @DisplayName("채권자 본인 확인 후 계약서를 생성한다")
+    void createContractSuccess() {
+        LoanContractRequest request = createRequest();
+
+        loanContractService.createContract(request, CREDITOR_ID);
+
+        verify(identityService).consume(
+                CREDITOR_ID, IDENTITY_VERIFICATION_ID, IdentityPurpose.LOAN_CONTRACT
+        );
+        verify(userService).getMyInfo(CREDITOR_ID);
+        verify(contractMapper).insertByContract(request, CREDITOR_ID);
+        verify(eventPublisher).publishEvent(any(ContractCreatedEvent.class));   // 추가
     }
 }
