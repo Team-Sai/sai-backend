@@ -21,7 +21,14 @@ Promise.all([
     .then(([scheduleData, contractData]) => {
         const contract = contractData.contract;
 
-        document.getElementById('statusBadge').textContent = contract.status;
+        const CONTRACT_STATUS_LABELS = {
+            DRAFT: '작성중',
+            PENDING: '서명대기',
+            COMPLETED: '진행중'
+        };
+
+        document.getElementById('statusBadge').textContent =
+            CONTRACT_STATUS_LABELS[contract.status] || contract.status;
         document.getElementById('contractAlias').textContent = contract.contractAlias;
 
         document.getElementById('totalScheduledAmount').textContent =
@@ -41,7 +48,14 @@ Promise.all([
         document.getElementById('createdAt').textContent = contract.createdAt;
         document.getElementById('interestRate').textContent = contract.interestRate + '%';
         document.getElementById('maturityDate').textContent = contract.maturityDate;
-        document.getElementById('repaymentType').textContent = contract.repaymentType;
+        const REPAYMENT_TYPE_LABELS = {
+            EQUAL_PRINCIPAL_AND_INTEREST: '원리금균등상환',
+            EQUAL_PRINCIPAL: '원금균등상환',
+            BULLET_REPAYMENT: '만기일시상환'
+        };
+
+        document.getElementById('repaymentType').textContent =
+            REPAYMENT_TYPE_LABELS[contract.repaymentType] || contract.repaymentType;
 
         const tbody = document.getElementById('scheduleTableBody');
         scheduleData.schedules.forEach(s => {
