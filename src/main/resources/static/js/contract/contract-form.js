@@ -152,7 +152,7 @@
       return;
     }
 
-    window.location.href = "/api/contracts/signature";
+    window.location.href = `/contracts/signature`;
   });
 
   const principalInput = document.getElementById("principalAmount");
@@ -179,7 +179,7 @@
       document.getElementById("creditorNameCell").textContent = user.name || "-";
       document.getElementById("creditorBirthDateCell").textContent = user.birthDate || "-";
     } catch (err) {
-      /* leave the "-" placeholders in place */
+
     }
   }
 

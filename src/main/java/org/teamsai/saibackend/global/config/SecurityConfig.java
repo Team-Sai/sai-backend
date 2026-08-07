@@ -69,7 +69,8 @@ public class SecurityConfig {
 
                                         "/accounts/**",
                                         "/settlements",
-                                        "/settlements/**"
+                                        "/settlements/**",
+                                        "/contracts/**"
 
                                 )
                                 .permitAll()
@@ -82,6 +83,8 @@ public class SecurityConfig {
                                         "/error"
                                 )
                                 .permitAll()
+                                .requestMatchers("/api/**")
+                                .authenticated()
                                 .anyRequest()
                                 .authenticated()
                 )

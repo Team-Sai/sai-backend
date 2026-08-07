@@ -61,6 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
             printResult(
                 "본인인증이 완료되었습니다."
             );
+            setTimeout(() => {
+                window.location.href = `/api/contracts?identityVerificationId=${prepare.identityVerificationId}`;
+            }, 1000);
 
         } catch (error) {
             console.error(error);
