@@ -34,17 +34,14 @@ public class LoanContractController {
 
     @Operation(hidden = true)
     @GetMapping("/contracts/new")
-    public String contractFormPage(
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
+    public String contractFormPage() {
         return "contract/contract-form";
     }
 
     @Operation(hidden = true)
     @GetMapping("/contracts/{contractId}/signature")
     public String contractSignaturePage(
-            @PathVariable Long contractId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable Long contractId
     ) {
         return "contract/contract-signature";
     }
@@ -53,8 +50,7 @@ public class LoanContractController {
     @GetMapping("/contracts/{contractId}/approve")
     public String contractDebtorApprovePage(
             @PathVariable Long contractId,
-            Model model,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            Model model
     ) {
         model.addAttribute("contractId", contractId);
         return "contract/contract-debtor-form";
@@ -64,8 +60,7 @@ public class LoanContractController {
     @GetMapping("/contracts/{contractId}/approve/signature")
     public String contractDebtorSignaturePage(
             @PathVariable Long contractId,
-            Model model,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            Model model
     ) {
         model.addAttribute("contractId", contractId);
         return "contract/contract-debtor-signature";

@@ -25,7 +25,6 @@
     "creditorAddress",
     "contractAlias",
     "terms",
-    "identityVerificationId",
     "selectedLinkedAccountId",
   ];
 
