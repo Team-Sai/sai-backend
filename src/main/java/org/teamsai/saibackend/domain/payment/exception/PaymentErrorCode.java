@@ -58,6 +58,15 @@ public enum PaymentErrorCode implements BaseErrorCode<DomainException> {
     PAYMENT_STATUS_UPDATE_FAILED(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "납부 상태 변경에 실패했습니다."
+    ),
+    INVALID_PAYMENT_OBLIGATION_REQUEST(
+            HttpStatus.BAD_REQUEST,
+            "납부의무 생성 정보가 올바르지 않습니다."
+    ),
+
+    PAYMENT_OBLIGATION_CREATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "납부의무 생성에 실패했습니다."
     );
 
     private final HttpStatus httpStatus;

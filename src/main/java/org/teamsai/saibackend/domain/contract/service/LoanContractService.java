@@ -1,17 +1,20 @@
-package org.teamsai.saibackend.domain.contract.service.contract;
+package org.teamsai.saibackend.domain.contract.service;
 
 
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
+import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
@@ -26,8 +29,10 @@ import java.util.Objects;
 public class LoanContractService {
     private final LoanContractMapper contractMapper;
     private final LoanContractFileService fileService;
+    private final ContractAccountService contractAccountService;
     private final UserService userService;
     private final IdentityService identityService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long createContract(LoanContractRequest request, Long userId) {
@@ -42,7 +47,26 @@ public class LoanContractService {
 
         contractMapper.insertByContract(request, userId);
 
+        contractAccountService.createContractAccount(request.getContractId(), userId, request.getSelectedLinkedAccountId());
+
+        eventPublisher.publishEvent(new ContractCreatedEvent(request.getContractId()));   // 방송만 함
+
         return request.getContractId();
+    }
+
+    @Transactional
+    public ContractStatus submitCreditorSignature(Long contractId, Long userId, MultipartFile signature) {
+        LoanContractResponse contract = contractMapper.findContractById(contractId)
+                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+
+        if (!contract.getCreditorId().equals(userId)) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+        }
+
+        String savedPath = fileService.saveSignatureFile(contractId, signature);
+        contractMapper.updateCreditorSignature(contractId, savedPath, ContractStatus.PENDING);
+
+        return ContractStatus.PENDING;
     }
 
     @Transactional
@@ -64,27 +88,17 @@ public class LoanContractService {
                 IdentityPurpose.LOAN_CONTRACT
         );
 
+        userService.getMyInfo(userId);
+
         contractMapper.updateDebtorId(contractId, userId);
     }
 
     @Transactional
-    public ContractStatus submitCreditorSignature(Long contractId, Long userId, MultipartFile signature) {
-        LoanContractResponse contract = contractMapper.findContractById(contractId)
-                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
-
-        if (!contract.getCreditorId().equals(userId)) {
-            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
-        }
-
-        String savedPath = fileService.saveSignatureFile(contractId, signature);
-        contractMapper.updateCreditorSignature(contractId, savedPath, ContractStatus.PENDING);
-
-        return ContractStatus.PENDING;
-    }
-
-
-    @Transactional
     public ContractStatus submitDebtorSignature(Long contractId, Long userId, String debtorAddress, MultipartFile signature) {
+
+        if (!StringUtils.hasText(debtorAddress)) {
+            throw LoanContractErrorCode.DEBTOR_ADDRESS_REQUIRED.toException();
+        }
 
         LoanContractResponse contract = contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
@@ -93,8 +107,17 @@ public class LoanContractService {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
 
+        if (contract.getStatus() == ContractStatus.COMPLETED) {
+            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();   // ← 추가
+        }
+
+
         String savedPath = fileService.saveSignatureFile(contractId, signature);
         contractMapper.updateDebtorSignature(contractId, debtorAddress, savedPath, ContractStatus.COMPLETED);
+
+        if (contract.getPreviousContractId() != null) {
+            eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));   // ← 추가
+        }
 
         return ContractStatus.COMPLETED;
     }
@@ -108,12 +131,34 @@ public class LoanContractService {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
 
-        return contract;
+        return withPartyInfo(contract);
+    }
+
+    private LoanContractResponse withPartyInfo(LoanContractResponse contract) {
+        var creditor = userService.getMyInfo(contract.getCreditorId());
+
+        LoanContractResponse.LoanContractResponseBuilder enriched = contract.toBuilder()
+                .creditorName(creditor.getName())
+                .creditorBirthDate(creditor.getBirthDate().toString());
+
+        if (contract.getDebtorId() != null) {
+            var debtor = userService.getMyInfo(contract.getDebtorId());
+
+            enriched.debtorName(debtor.getName())
+                    .debtorBirthDate(debtor.getBirthDate().toString());
+        }
+
+        return enriched.build();
     }
 
     @Transactional
     public void insertChangedContract(ChangeLoanContractResponse changedContract) {
         contractMapper.insertChangedContract(changedContract);
+    }
+
+    public LoanContractResponse getContractForInternalUse(Long contractId) {
+        return contractMapper.findContractById(contractId)
+                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
     }
 
 }

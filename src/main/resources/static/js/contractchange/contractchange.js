@@ -43,7 +43,7 @@ document.getElementById('changeRequestForm').addEventListener('submit', function
             return response.json();
         })
         .then(() => {
-            alert('변경 요청이 접수되었습니다.');
+            window.location.href = `/contracts/edit-complete?contractId=${encodeURIComponent(contractId)}`;
         })
         .catch(() => {
             alert('변경 요청 중 오류가 발생했습니다.');

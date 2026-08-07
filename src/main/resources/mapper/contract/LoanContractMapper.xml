@@ -94,14 +94,11 @@
     <select id="findContractById" resultType="org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse">
         SELECT
         lc.contract_id        AS contractId,
+        lc.previous_contract_id AS previousContractId,
         lc.creditor_id        AS creditorId,
         lc.debtor_id          AS debtorId,
-        creditor.name         AS creditorName,
-        creditor.birth_date   AS creditorBirthDate,
         lc.creditor_address   AS creditorAddress,
         lc.creditor_signature AS creditorSignature,
-        debtor.name           AS debtorName,
-        debtor.birth_date     AS debtorBirthDate,
         lc.debtor_address     AS debtorAddress,
         lc.debtor_signature   AS debtorSignature,
         lc.principal_amount   AS principalAmount,
@@ -112,10 +109,9 @@
         lc.repayment_day      AS repaymentDay,
         lc.contract_alias     AS contractAlias,
         lc.terms              AS terms,
-        lc.status             AS status
+        lc.status             AS status,
+        lc.created_at         AS createdAt
         FROM loan_contract lc
-        JOIN users creditor ON creditor.user_id = lc.creditor_id
-        LEFT JOIN users debtor ON debtor.user_id = lc.debtor_id
         WHERE lc.contract_id = #{contractId}
     </select>
 
@@ -164,5 +160,7 @@
         #{updatedAt}
         )
     </insert>
+
+
 
 </mapper>

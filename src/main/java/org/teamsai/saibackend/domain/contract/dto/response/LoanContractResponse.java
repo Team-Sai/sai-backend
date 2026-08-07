@@ -1,21 +1,25 @@
 package org.teamsai.saibackend.domain.contract.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class LoanContractResponse {
 
     private Long contractId;
+    private Long previousContractId;
 
     @JsonIgnore
     private Long creditorId;
@@ -45,4 +49,5 @@ public class LoanContractResponse {
     private String terms;
 
     private ContractStatus status;
+    private LocalDateTime createdAt;
 }

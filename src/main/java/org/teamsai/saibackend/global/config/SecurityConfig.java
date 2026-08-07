@@ -3,7 +3,6 @@ package org.teamsai.saibackend.global.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -68,9 +67,14 @@ public class SecurityConfig {
                                         "/identity-test",
 
 
+
                                         "/accounts/**",
                                         "/settlements",
-                                        "/settlements/**"
+                                        "/settlements/**",
+                                        "/contracts/new",
+                                        "/contracts/signature",
+                                        "/contracts/*/approve",
+                                        "/contracts/*/approve/signature"
 
                                 )
                                 .permitAll()
@@ -83,6 +87,8 @@ public class SecurityConfig {
                                         "/error"
                                 )
                                 .permitAll()
+                                .requestMatchers("/api/**")
+                                .authenticated()
                                 .anyRequest()
                                 .authenticated()
                 )

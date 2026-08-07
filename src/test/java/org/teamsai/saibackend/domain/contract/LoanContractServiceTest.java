@@ -7,19 +7,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
-import org.teamsai.saibackend.domain.contract.service.contract.LoanContractFileService;
-import org.teamsai.saibackend.domain.contract.service.contract.LoanContractService;
+import org.teamsai.saibackend.domain.contract.service.ContractAccountService;
+import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
+import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.identity.exception.IdentityErrorCode;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
+import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.exception.DomainException;
@@ -47,10 +51,16 @@ class LoanContractServiceTest {
     private static final String IDENTITY_VERIFICATION_ID = "identity-verification-abc123";
 
     @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
     private LoanContractMapper contractMapper;
 
     @Mock
     private LoanContractFileService fileService;
+
+    @Mock
+    private ContractAccountService contractAccountService;
 
     @Mock
     private UserService userService;
@@ -167,7 +177,7 @@ class LoanContractServiceTest {
         }
 
         @Test
-        @DisplayName("이미 채무자가 연결되어 있으면 예외가 발생하고 본인인증을 소비하지 않는다")
+        @DisplayName("이미 채무자가 연결되어 있으면 예외가 발생하고 본인인증을 실행하지 않는다")
         void linkDebtorFailsWhenAlreadyLinked() {
             given(contractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createResponse()));
@@ -303,33 +313,39 @@ class LoanContractServiceTest {
         }
 
         @Test
-        @DisplayName("채무자 주소가 빈 문자열이어도 그대로 전달되어 저장된다")
-        void submitDebtorSignatureWithBlankAddress() {
+        @DisplayName("채무자 주소가 빈 문자열이면 예외가 발생하고 저장되지 않는다")
+        void submitDebtorSignatureFailsWhenAddressIsBlank() {
             MultipartFile signature = mock(MultipartFile.class);
-            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
-            given(fileService.saveSignatureFile(CONTRACT_ID, signature))
-                    .willReturn("uploads/signatures/1_signature.png");
 
-            loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, "", signature);
+            assertThatThrownBy(() ->
+                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, "", signature)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.DEBTOR_ADDRESS_REQUIRED)
+                    );
 
-            verify(contractMapper).updateDebtorSignature(
-                    CONTRACT_ID, "", "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
-            );
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractMapper, never()).updateDebtorSignature(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("채무자 주소가 null이어도 그대로 전달되어 저장된다")
-        void submitDebtorSignatureWithNullAddress() {
+        @DisplayName("채무자 주소가 null이면 예외가 발생하고 저장되지 않는다")
+        void submitDebtorSignatureFailsWhenAddressIsNull() {
             MultipartFile signature = mock(MultipartFile.class);
-            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
-            given(fileService.saveSignatureFile(CONTRACT_ID, signature))
-                    .willReturn("uploads/signatures/1_signature.png");
 
-            loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, null, signature);
+            assertThatThrownBy(() ->
+                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, null, signature)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.DEBTOR_ADDRESS_REQUIRED)
+                    );
 
-            verify(contractMapper).updateDebtorSignature(
-                    CONTRACT_ID, null, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
-            );
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractMapper, never()).updateDebtorSignature(any(), any(), any(), any());
         }
 
         @Test
@@ -380,10 +396,16 @@ class LoanContractServiceTest {
         void findContractSuccessAsCreditor() {
             LoanContractResponse response = createResponse();
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(response));
+            given(userService.getMyInfo(CREDITOR_ID)).willReturn(
+                    UserResponse.builder().name("김채권").birthDate(LocalDate.of(1995, 5, 5)).build()
+            );
+            given(userService.getMyInfo(DEBTOR_ID)).willReturn(
+                    UserResponse.builder().name("이채무").birthDate(LocalDate.of(1996, 6, 6)).build()
+            );
 
             LoanContractResponse result = loanContractService.findContract(CONTRACT_ID, CREDITOR_ID);
 
-            assertThat(result).isEqualTo(response);
+            assertThat(result).usingRecursiveComparison().isEqualTo(response);
         }
 
         @Test
@@ -391,10 +413,16 @@ class LoanContractServiceTest {
         void findContractSuccessAsDebtor() {
             LoanContractResponse response = createResponse();
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(response));
+            given(userService.getMyInfo(CREDITOR_ID)).willReturn(
+                    UserResponse.builder().name("김채권").birthDate(LocalDate.of(1995, 5, 5)).build()
+            );
+            given(userService.getMyInfo(DEBTOR_ID)).willReturn(
+                    UserResponse.builder().name("이채무").birthDate(LocalDate.of(1996, 6, 6)).build()
+            );
 
             LoanContractResponse result = loanContractService.findContract(CONTRACT_ID, DEBTOR_ID);
 
-            assertThat(result).isEqualTo(response);
+            assertThat(result).usingRecursiveComparison().isEqualTo(response);
         }
 
         @Test
@@ -479,5 +507,20 @@ class LoanContractServiceTest {
                 .contractAlias("생활비 차용")
                 .status(ContractStatus.DRAFT)
                 .build();
+    }
+
+    @Test
+    @DisplayName("채권자 본인 확인 후 계약서를 생성한다")
+    void createContractSuccess() {
+        LoanContractRequest request = createRequest();
+
+        loanContractService.createContract(request, CREDITOR_ID);
+
+        verify(identityService).consume(
+                CREDITOR_ID, IDENTITY_VERIFICATION_ID, IdentityPurpose.LOAN_CONTRACT
+        );
+        verify(userService).getMyInfo(CREDITOR_ID);
+        verify(contractMapper).insertByContract(request, CREDITOR_ID);
+        verify(eventPublisher).publishEvent(any(ContractCreatedEvent.class));   // 추가
     }
 }
