@@ -32,7 +32,7 @@
         )
     </insert>
 
-    <select id="findById">
+    <select id="findById" resultType="org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO">>
         SELECT
         linked_account_id,
         user_id AS userId,
@@ -57,5 +57,6 @@
         UPDATE linked_bank_account
         SET last_synced_transaction_id = #{transactionId}
         WHERE linked_account_id = #{linkedAccountId}
+        AND (last_synced_transaction_id IS NULL OR last_synced_transaction_id &lt; #{transactionId})
     </update>
 </mapper>
