@@ -1,0 +1,32 @@
+package org.teamsai.saibackend.domain.contractdashboard.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Builder;
+import lombok.Getter;
+import org.teamsai.saibackend.domain.contractdashboard.type.ContractRole;
+import org.teamsai.saibackend.domain.contractdashboard.type.DashboardContractStatus;
+import org.teamsai.saibackend.domain.contractdashboard.type.DashboardPaymentStatus;
+import org.teamsai.saibackend.domain.contractdashboard.type.TransactionCategory;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Getter
+@Builder
+public class DashboardContractRowResponse {
+
+    private Long contractId;
+    private String contractAlias;
+    private ContractRole role;
+    private TransactionCategory category;
+    private BigDecimal principalAmount;
+    private BigDecimal totalRemainingAmount;
+    private BigDecimal thisMonthDueAmount;
+    private String maskedAccount;
+    private DashboardContractStatus contractStatus;
+    private DashboardPaymentStatus paymentStatus;
+    private LocalDate maturityDate;
+
+    @JsonIgnore
+    private LocalDate nearestScheduleDueDate;
+}

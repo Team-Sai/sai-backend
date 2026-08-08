@@ -7,6 +7,7 @@ import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -37,6 +38,8 @@ public interface LoanContractMapper {
     );
 
     Optional<LoanContractResponse> findContractById(@Param("contractId") Long contractId);
+
+    List<LoanContractResponse> findContractsByUser(@Param("userId") Long userID);
 
     void insertChangedContract(ChangeLoanContractResponse contract);
 

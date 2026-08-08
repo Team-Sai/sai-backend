@@ -21,6 +21,7 @@ import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
 import org.teamsai.saibackend.domain.user.service.UserService;
 
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -159,6 +160,10 @@ public class LoanContractService {
     public LoanContractResponse getContractForInternalUse(Long contractId) {
         return contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+    }
+
+    public List<LoanContractResponse> findContractsByUser(Long userId) {
+        return contractMapper.findContractsByUser(userId);
     }
 
 }

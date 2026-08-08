@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.contractchange.dto;
 
 
 import lombok.*;
+import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

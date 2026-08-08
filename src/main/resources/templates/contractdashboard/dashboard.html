@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>계약대시보드</title>
+    <link rel="stylesheet" th:href="@{/css/contractdashboard/contract-dashboard.css}">
+</head>
+<body>
+
+<div class="dashboard-page">
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="dashboard-title">내 계약</h1>
+            <div class="role-toggle">
+                <button type="button" data-role="ALL" id="roleAll">전체</button>
+                <button type="button" data-role="LENT" id="roleLent">빌려준 돈</button>
+                <button type="button" data-role="BORROWED" id="roleBorrowed">내가 빌린 돈</button>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="btn" disabled>거래내역 동기화</button>
+            <button type="button" class="btn btn--primary" disabled>+ 계약 생성</button>
+        </div>
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-card__label">총 계약 수</div>
+            <div class="summary-card__value" id="totalContractCount"></div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-card__label">빌려준 돈</div>
+            <div class="summary-card__value" id="totalLentAmount"></div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-card__label">빌린 돈</div>
+            <div class="summary-card__value" id="totalBorrowedAmount"></div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-card__label">
+                <span>이번 달 상환예정금</span>
+                <span class="d-day-badge" id="dDayBadge"></span>
+            </div>
+            <div class="summary-card__value" id="thisMonthDueAmount"></div>
+        </div>
+    </div>
+
+    <div class="control-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="계약명 검색">
+        <select id="sortSelect">
+            <option value="">정렬</option>
+            <option value="ALPHABET">가나다순</option>
+            <option value="ROLE">역할순</option>
+            <option value="CATEGORY">구분순</option>
+            <option value="AMOUNT_DESC">거래금액 큰순</option>
+            <option value="AMOUNT_ASC">거래금액 작은순</option>
+            <option value="STATUS">상태순</option>
+            <option value="DEADLINE">마감일순</option>
+        </select>
+    </div>
+
+    <div class="contract-table-wrap">
+        <table class="contract-table">
+            <thead>
+            <tr>
+                <th>계약명</th>
+                <th>역할</th>
+                <th>구분</th>
+                <th>거래 금액(원금/잔액)</th>
+                <th>이번달 낼 돈</th>
+                <th>계좌</th>
+
+                <th>계약상태</th>
+                <th>납부상태</th>
+                <th>마감일</th>
+                <th>상세</th>
+            </tr>
+            </thead>
+            <tbody id="contractTableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+
+</div>
+
+<script th:src="@{/js/contractdashboard/contract-dashboard.js}"></script>
+</body>
+</html>
