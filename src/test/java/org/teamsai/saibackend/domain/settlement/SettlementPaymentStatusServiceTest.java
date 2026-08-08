@@ -29,6 +29,8 @@ import static org.mockito.BDDMockito.given;
 class SettlementPaymentStatusServiceTest {
 
     private static final Long SETTLEMENT_ID = 1L;
+    private static final Long OWNER_ID = 10L;
+    private static final Long OTHER_USER_ID = 20L;
 
     @Mock
     private SettlementMapper settlementMapper;
@@ -53,7 +55,10 @@ class SettlementPaymentStatusServiceTest {
         ));
 
         SettlementPaymentStatusResponse response =
-                paymentStatusService.getPaymentStatus(SETTLEMENT_ID);
+                paymentStatusService.getPaymentStatus(
+                        SETTLEMENT_ID,
+                        OWNER_ID
+                );
 
         assertThat(response.getTotalExpectedAmount())
                 .isEqualByComparingTo("30000");
@@ -79,7 +84,10 @@ class SettlementPaymentStatusServiceTest {
         ));
 
         SettlementPaymentStatusResponse response =
-                paymentStatusService.getPaymentStatus(SETTLEMENT_ID);
+                paymentStatusService.getPaymentStatus(
+                        SETTLEMENT_ID,
+                        OWNER_ID
+                );
 
         assertThat(response.isClosable()).isTrue();
         assertThat(response.getProgressRate())
@@ -93,7 +101,10 @@ class SettlementPaymentStatusServiceTest {
                 .willReturn(Optional.empty());
 
         assertThatThrownBy(
-                () -> paymentStatusService.getPaymentStatus(SETTLEMENT_ID)
+                () -> paymentStatusService.getPaymentStatus(
+                        SETTLEMENT_ID,
+                        OWNER_ID
+                )
         ).isInstanceOfSatisfying(
                 DomainException.class,
                 exception -> assertThat(exception.getErrorCode())
@@ -101,9 +112,30 @@ class SettlementPaymentStatusServiceTest {
         );
     }
 
+    @Test
+    @DisplayName("정산 owner가 아니면 납부 현황을 조회할 수 없다")
+    void getPaymentStatusFailsWhenUserIsNotOwner() {
+        given(settlementMapper.findById(SETTLEMENT_ID))
+                .willReturn(Optional.of(createSettlement()));
+
+        assertThatThrownBy(
+                () -> paymentStatusService.getPaymentStatus(
+                        SETTLEMENT_ID,
+                        OTHER_USER_ID
+                )
+        ).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(
+                                SettlementErrorCode.SETTLEMENT_ACCESS_DENIED
+                        )
+        );
+    }
+
     private SettlementDTO createSettlement() {
         return SettlementDTO.builder()
                 .settlementId(SETTLEMENT_ID)
+                .ownerId(OWNER_ID)
                 .build();
     }
 

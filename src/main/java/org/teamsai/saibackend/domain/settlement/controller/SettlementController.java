@@ -100,6 +100,10 @@ public class SettlementController {
                     description = "인증되지 않은 사용자"
             ),
             @ApiResponse(
+                    responseCode = "403",
+                    description = "정산 소유자가 아님"
+            ),
+            @ApiResponse(
                     responseCode = "404",
                     description = "정산을 찾을 수 없음"
             )
@@ -108,11 +112,15 @@ public class SettlementController {
     @ResponseBody
     public ResponseEntity<SettlementPaymentStatusResponse>
     getPaymentStatus(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
             @PathVariable Long settlementId
     ){
         SettlementPaymentStatusResponse response =
                 settlementPaymentStatusService.getPaymentStatus(
-                        settlementId
+                        settlementId,
+                        userDetails.getUserId()
                 );
         return ResponseEntity.ok(response);
     }

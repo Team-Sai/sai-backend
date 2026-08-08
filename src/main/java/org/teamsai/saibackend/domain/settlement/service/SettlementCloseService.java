@@ -47,7 +47,8 @@ public class SettlementCloseService {
 
         SettlementPaymentStatusResponse paymentStatus =
                 paymentStatusService.getPaymentStatus(
-                        settlementId
+                        settlementId,
+                        settlement.getOwnerId()
                 );
 
         if(!paymentStatus.isClosable()){

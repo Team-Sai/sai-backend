@@ -49,7 +49,10 @@ class SettlementCloseServiceTest {
     void closeSettlementSucceedsForOwnerWhenClosable() {
         given(settlementMapper.findByIdForUpdate(SETTLEMENT_ID))
                 .willReturn(Optional.of(inProgressSettlement()));
-        given(paymentStatusService.getPaymentStatus(SETTLEMENT_ID))
+        given(paymentStatusService.getPaymentStatus(
+                SETTLEMENT_ID,
+                OWNER_ID
+        ))
                 .willReturn(closableStatus());
         given(settlementMapper.closeSettlement(
                 eq(SETTLEMENT_ID),
@@ -84,7 +87,10 @@ class SettlementCloseServiceTest {
         );
 
         verify(paymentStatusService, never())
-                .getPaymentStatus(SETTLEMENT_ID);
+                .getPaymentStatus(
+                        SETTLEMENT_ID,
+                        OWNER_ID
+                );
         verify(settlementMapper, never())
                 .closeSettlement(any(), any());
     }
@@ -94,7 +100,10 @@ class SettlementCloseServiceTest {
     void closeSettlementFailsWhenNotClosable() {
         given(settlementMapper.findByIdForUpdate(SETTLEMENT_ID))
                 .willReturn(Optional.of(inProgressSettlement()));
-        given(paymentStatusService.getPaymentStatus(SETTLEMENT_ID))
+        given(paymentStatusService.getPaymentStatus(
+                SETTLEMENT_ID,
+                OWNER_ID
+        ))
                 .willReturn(
                         SettlementPaymentStatusResponse.builder()
                                 .settlementId(SETTLEMENT_ID)
@@ -135,7 +144,10 @@ class SettlementCloseServiceTest {
         );
 
         verify(paymentStatusService, never())
-                .getPaymentStatus(SETTLEMENT_ID);
+                .getPaymentStatus(
+                        SETTLEMENT_ID,
+                        OWNER_ID
+                );
     }
 
     private SettlementDTO inProgressSettlement() {

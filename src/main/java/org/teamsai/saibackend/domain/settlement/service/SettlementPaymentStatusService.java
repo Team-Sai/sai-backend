@@ -28,7 +28,8 @@ public class SettlementPaymentStatusService {
 
     @Transactional(readOnly = true)
     public SettlementPaymentStatusResponse getPaymentStatus(
-            Long settlementId
+            Long settlementId,
+            Long userId
     ) {
         SettlementDTO settlement =
                 settlementMapper.findById(settlementId)
@@ -37,6 +38,12 @@ public class SettlementPaymentStatusService {
                                         .SETTLEMENT_NOT_FOUND
                                         ::toException
                         );
+
+        if(!settlement.getOwnerId().equals(userId)){
+            throw SettlementErrorCode
+                    .SETTLEMENT_ACCESS_DENIED
+                        .toException();
+        }
 
         List<SettlementPaymentObligationResponse> obligations =
 

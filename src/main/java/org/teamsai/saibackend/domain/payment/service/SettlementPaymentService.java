@@ -39,6 +39,7 @@ public class SettlementPaymentService {
     ) {
         validatePaymentAmount(amount);
         validateBankTransactionId(bankTransactionId);
+        validateNotDuplicatePaymentRecord(bankTransactionId);
 
         PaymentObligationDTO obligation =
                 paymentObligationMapper.findByIdForUpdate(paymentObligationId)
@@ -126,6 +127,18 @@ public class SettlementPaymentService {
     ) {
         if (bankTransactionId == null) {
             throw PaymentErrorCode.INVALID_BANK_TRANSACTION_ID.toException();
+        }
+    }
+
+    private void validateNotDuplicatePaymentRecord(
+            Long bankTransactionId
+    ) {
+        if (paymentRecordService.existsByBankTransactionId(
+                bankTransactionId
+        )) {
+            throw PaymentErrorCode
+                    .DUPLICATE_PAYMENT_RECORD
+                    .toException();
         }
     }
 
