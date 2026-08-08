@@ -1,59 +1,85 @@
 package org.teamsai.saibackend.domain.transaction;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.web.client.RestClientException;
+import org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO;
 import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
 import org.teamsai.saibackend.domain.account.mapper.LinkedBankAccountMapper;
-import org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO;
 import org.teamsai.saibackend.domain.transaction.dto.response.BankTransactionResponse;
-import org.teamsai.saibackend.domain.transaction.mapper.BankTransactionMapper;
 import org.teamsai.saibackend.domain.transaction.service.BankTransactionPersistenceService;
-import org.teamsai.saibackend.domain.transaction.type.BankTransactionType;
+import org.teamsai.saibackend.domain.transaction.service.TransactionSyncService;
+import org.teamsai.saibackend.domain.user.service.UserService;
+import org.teamsai.saibackend.global.client.MockBankClient;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+/**
+ * TransactionSyncService 단위 테스트.
+ *
+ * 소유권 검증, 커서 조회, 사이은행 API 호출 조율만 담당하므로
+ * 실제 DB 저장 로직은 목으로 대체하고,
+ * "저장 서비스가 올바른 인자로 호출되는지"까지만 검증한다.
+ * 저장/커서 갱신 로직 자체의 검증은 BankTransactionPersistenceServiceTest에서 다룬다.
+ */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("BankTransactionPersistenceService 단위 테스트")
-class TransactionPersistenceServiceTest {
-
-    @Mock
-    private BankTransactionMapper bankTransactionMapper;
+@DisplayName("TransactionSyncService 단위 테스트")
+class TransactionSyncServiceTest {
 
     @Mock
     private LinkedBankAccountMapper linkedBankAccountMapper;
 
-    @InjectMocks
+    @Mock
+    private MockBankClient mockBankClient;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
     private BankTransactionPersistenceService bankTransactionPersistenceService;
 
-    private static final Long LINKED_ACCOUNT_ID = 1L;
-    private static final Long BANK_ACCOUNT_ID = 3L;
+    @InjectMocks
+    private TransactionSyncService transactionSyncService;
 
-    private BankTransactionResponse createTransactionResponse(
-            Long transactionId, String transactionKey, String transactionType
-    ) {
+    private static final Long LINKED_ACCOUNT_ID = 1L;
+    private static final Long USER_ID = 10L;
+    private static final Long OTHER_USER_ID = 99L;
+    private static final Long BANK_ACCOUNT_ID = 3L;
+    private static final String USER_KEY = "mb_rawUserKey1234";
+
+    private LinkedBankAccountDTO createLinkedAccount() {
+        return LinkedBankAccountDTO.builder()
+                .linkedAccountId(LINKED_ACCOUNT_ID)
+                .userId(USER_ID)
+                .accountId(BANK_ACCOUNT_ID)
+                .build();
+    }
+
+    private BankTransactionResponse createTransactionResponse(Long transactionId, String transactionKey) {
         return new BankTransactionResponse(
                 transactionId,
                 transactionKey,
                 BANK_ACCOUNT_ID,
-                transactionType,
+                "DEPOSIT",
                 BigDecimal.valueOf(50_000),
                 BigDecimal.valueOf(150_000),
                 "홍길동",
@@ -64,122 +90,122 @@ class TransactionPersistenceServiceTest {
         );
     }
 
-    @Test
-    @DisplayName("빈 리스트가 들어오면 저장/커서 갱신 없이 0을 반환한다")
-    void returnsZeroWhenTransactionsEmpty() {
-        int result = bankTransactionPersistenceService.saveAndAdvanceCursor(LINKED_ACCOUNT_ID, List.of());
+    @Nested
+    @DisplayName("syncTransactions(userId, linkedAccountId)")
+    class SyncTransactions {
 
-        assertThat(result).isZero();
-        verify(bankTransactionMapper, never()).insertOrGetId(any());
-        verify(linkedBankAccountMapper, never()).updateLastSyncedTransactionId(any(), any());
-    }
+        @Test
+        @DisplayName("커서가 없으면(null) 0부터 조회하고, 조회 결과를 저장 서비스에 그대로 위임한다")
+        void syncsNewTransactionsWhenNoCursorExists() {
+            LinkedBankAccountDTO linkedAccount = createLinkedAccount();
+            List<BankTransactionResponse> transactions = List.of(
+                    createTransactionResponse(6L, "MOCK-TX-0001"),
+                    createTransactionResponse(7L, "MOCK-TX-0002")
+            );
 
-    @Test
-    @DisplayName("모든 거래를 저장하고, 응답 순서와 무관하게 실제 최댓값 transactionId로 커서를 갱신한다")
-    void savesAllAndAdvancesCursorToMaxTransactionId() {
-        // 정렬을 일부러 깨서 응답: 리스트 마지막 원소는 12, 실제 최댓값은 13
-        List<BankTransactionResponse> transactions = List.of(
-                createTransactionResponse(11L, "MOCK-TX-A", "DEPOSIT"),
-                createTransactionResponse(13L, "MOCK-TX-B", "DEPOSIT"),
-                createTransactionResponse(12L, "MOCK-TX-C", "WITHDRAWAL")
-        );
+            given(linkedBankAccountMapper.findById(LINKED_ACCOUNT_ID)).willReturn(Optional.of(linkedAccount));
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
+            given(linkedBankAccountMapper.findLastSyncedTransactionIdById(LINKED_ACCOUNT_ID)).willReturn(null);
+            given(mockBankClient.getTransactions(BANK_ACCOUNT_ID, USER_KEY, 0L)).willReturn(transactions);
+            given(bankTransactionPersistenceService.saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions))
+                    .willReturn(2);
 
-        int result = bankTransactionPersistenceService.saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions);
+            int result = transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
 
-        assertThat(result).isEqualTo(3);
+            assertThat(result).isEqualTo(2);
+            verify(bankTransactionPersistenceService).saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions);
+        }
 
-        ArgumentCaptor<BankTransactionDTO> dtoCaptor = ArgumentCaptor.forClass(BankTransactionDTO.class);
-        verify(bankTransactionMapper, times(3)).insertOrGetId(dtoCaptor.capture());
+        @Test
+        @DisplayName("이미 커서가 있으면 그 값 이후로만 조회한다")
+        void usesExistingCursorAsAfterTransactionId() {
+            LinkedBankAccountDTO linkedAccount = createLinkedAccount();
 
-        List<BankTransactionDTO> savedDtos = dtoCaptor.getAllValues();
-        assertThat(savedDtos)
-                .extracting(BankTransactionDTO::getExternalTransactionId)
-                .containsExactlyInAnyOrder("MOCK-TX-A", "MOCK-TX-B", "MOCK-TX-C");
-        assertThat(savedDtos)
-                .allMatch(dto -> dto.getLinkedAccountId().equals(LINKED_ACCOUNT_ID))
-                .allMatch(dto -> dto.getSyncedAt() != null);
+            given(linkedBankAccountMapper.findById(LINKED_ACCOUNT_ID)).willReturn(Optional.of(linkedAccount));
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
+            given(linkedBankAccountMapper.findLastSyncedTransactionIdById(LINKED_ACCOUNT_ID)).willReturn(5L);
+            given(mockBankClient.getTransactions(BANK_ACCOUNT_ID, USER_KEY, 5L)).willReturn(List.of());
+            given(bankTransactionPersistenceService.saveAndAdvanceCursor(eq(LINKED_ACCOUNT_ID), any()))
+                    .willReturn(0);
 
-        // 마지막 원소(12)가 아니라 실제 최댓값(13)으로 갱신되어야 한다.
-        verify(linkedBankAccountMapper).updateLastSyncedTransactionId(eq(LINKED_ACCOUNT_ID), eq(13L));
-    }
+            transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
 
-    @Test
-    @DisplayName("거래유형 문자열이 올바르지 않으면 INVALID_BANK_RESPONSE 예외를 던지고 커서는 갱신하지 않는다")
-    void throwsInvalidBankResponseWhenTransactionTypeIsUnknown() {
-        List<BankTransactionResponse> transactions = List.of(
-                createTransactionResponse(11L, "MOCK-TX-A", "DEPOSIT"),
-                createTransactionResponse(12L, "MOCK-TX-B", "UNKNOWN_TYPE") // 잘못된 값
-        );
+            verify(mockBankClient).getTransactions(BANK_ACCOUNT_ID, USER_KEY, 5L);
+        }
 
-        assertThatThrownBy(() ->
-                bankTransactionPersistenceService.saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions)
-        )
-                .isInstanceOf(DomainException.class)
-                .extracting("errorCode")
-                .isEqualTo(AccountErrorCode.INVALID_BANK_RESPONSE);
+        @Test
+        @DisplayName("연동계좌를 찾을 수 없으면 LINKED_ACCOUNT_NOT_FOUND 예외를 던지고 이후 로직은 실행되지 않는다")
+        void throwsWhenLinkedAccountNotFound() {
+            given(linkedBankAccountMapper.findById(LINKED_ACCOUNT_ID)).willReturn(Optional.empty());
 
-        verify(linkedBankAccountMapper, never()).updateLastSyncedTransactionId(any(), any());
-    }
+            assertThatThrownBy(() -> transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID))
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.LINKED_ACCOUNT_NOT_FOUND);
 
-    @Test
-    @DisplayName("정상적으로 정의된 거래유형(DEPOSIT/WITHDRAWAL)은 올바르게 매핑된다")
-    void mapsKnownTransactionTypesCorrectly() {
-        List<BankTransactionResponse> transactions = List.of(
-                createTransactionResponse(1L, "MOCK-TX-A", "DEPOSIT"),
-                createTransactionResponse(2L, "MOCK-TX-B", "WITHDRAWAL")
-        );
+            verify(userService, never()).getUserKeyByUserId(any());
+            verify(mockBankClient, never()).getTransactions(any(), any(), any());
+            verify(bankTransactionPersistenceService, never()).saveAndAdvanceCursor(any(), any());
+        }
 
-        bankTransactionPersistenceService.saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions);
+        @Test
+        @DisplayName("요청자가 연동계좌의 소유자가 아니면 ACCOUNT_ACCESS_DENIED 예외를 던지고 이후 로직은 실행되지 않는다")
+        void throwsWhenRequesterIsNotOwner() {
+            LinkedBankAccountDTO linkedAccount = createLinkedAccount(); // userId = USER_ID(10L) 소유
 
-        ArgumentCaptor<BankTransactionDTO> dtoCaptor = ArgumentCaptor.forClass(BankTransactionDTO.class);
-        verify(bankTransactionMapper, times(2)).insertOrGetId(dtoCaptor.capture());
+            given(linkedBankAccountMapper.findById(LINKED_ACCOUNT_ID)).willReturn(Optional.of(linkedAccount));
 
-        List<BankTransactionDTO> savedDtos = dtoCaptor.getAllValues();
-        assertThat(savedDtos.get(0).getTransactionType()).isEqualTo(BankTransactionType.DEPOSIT);
-        assertThat(savedDtos.get(1).getTransactionType()).isEqualTo(BankTransactionType.WITHDRAWAL);
-    }
+            assertThatThrownBy(() -> transactionSyncService.syncTransactions(OTHER_USER_ID, LINKED_ACCOUNT_ID))
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.ACCOUNT_ACCESS_DENIED);
 
-    @Test
-    @DisplayName("거래 저장(insertOrGetId) 중 DB 예외가 발생하면 그대로 전파하고 커서는 갱신하지 않는다")
-    void propagatesExceptionWhenInsertFails() {
-        List<BankTransactionResponse> transactions = List.of(
-                createTransactionResponse(11L, "MOCK-TX-A", "DEPOSIT"),
-                createTransactionResponse(12L, "MOCK-TX-B", "DEPOSIT")
-        );
-        DataIntegrityViolationException insertFailure =
-                new DataIntegrityViolationException("제약 위반");
+            verify(userService, never()).getUserKeyByUserId(any());
+            verify(mockBankClient, never()).getTransactions(any(), any(), any());
+            verify(bankTransactionPersistenceService, never()).saveAndAdvanceCursor(any(), any());
+        }
 
-        willThrow(insertFailure).given(bankTransactionMapper).insertOrGetId(any());
+        @Test
+        @DisplayName("사이은행 통신 실패 시 BANK_SERVER_UNAVAILABLE 예외로 변환하고 저장은 시도하지 않는다")
+        void throwsWhenBankServerUnavailable() {
+            LinkedBankAccountDTO linkedAccount = createLinkedAccount();
 
-        assertThatThrownBy(() ->
-                bankTransactionPersistenceService.saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions)
-        )
-                .isSameAs(insertFailure);
+            given(linkedBankAccountMapper.findById(LINKED_ACCOUNT_ID)).willReturn(Optional.of(linkedAccount));
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
+            given(linkedBankAccountMapper.findLastSyncedTransactionIdById(LINKED_ACCOUNT_ID)).willReturn(0L);
+            given(mockBankClient.getTransactions(BANK_ACCOUNT_ID, USER_KEY, 0L))
+                    .willThrow(new RestClientException("연결 실패"));
 
-        // 첫 거래 저장 시점에 이미 실패했으므로, 커서는 절대 갱신되지 않아야 한다.
-        verify(linkedBankAccountMapper, never()).updateLastSyncedTransactionId(any(), any());
-    }
+            assertThatThrownBy(() -> transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID))
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.BANK_SERVER_UNAVAILABLE);
 
-    @Test
-    @DisplayName("커서 갱신(updateLastSyncedTransactionId) 중 DB 예외가 발생하면 그대로 전파한다")
-    void propagatesExceptionWhenCursorUpdateFails() {
-        List<BankTransactionResponse> transactions = List.of(
-                createTransactionResponse(11L, "MOCK-TX-A", "DEPOSIT")
-        );
-        DataIntegrityViolationException cursorUpdateFailure =
-                new DataIntegrityViolationException("커서 갱신 실패");
+            verify(bankTransactionPersistenceService, never()).saveAndAdvanceCursor(any(), any());
+        }
 
-        willThrow(cursorUpdateFailure)
-                .given(linkedBankAccountMapper)
-                .updateLastSyncedTransactionId(eq(LINKED_ACCOUNT_ID), eq(11L));
+        @Test
+        @DisplayName("저장 단계(BankTransactionPersistenceService)에서 예외가 발생하면 그대로 전파한다")
+        void propagatesExceptionWhenPersistenceFails() {
+            LinkedBankAccountDTO linkedAccount = createLinkedAccount();
+            List<BankTransactionResponse> transactions = List.of(
+                    createTransactionResponse(6L, "MOCK-TX-0001")
+            );
+            DomainException persistenceFailure = mock(DomainException.class);
 
-        assertThatThrownBy(() ->
-                bankTransactionPersistenceService.saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions)
-        )
-                .isSameAs(cursorUpdateFailure);
+            given(linkedBankAccountMapper.findById(LINKED_ACCOUNT_ID)).willReturn(Optional.of(linkedAccount));
+            given(userService.getUserKeyByUserId(USER_ID)).willReturn(USER_KEY);
+            given(linkedBankAccountMapper.findLastSyncedTransactionIdById(LINKED_ACCOUNT_ID)).willReturn(5L);
+            given(mockBankClient.getTransactions(BANK_ACCOUNT_ID, USER_KEY, 5L)).willReturn(transactions);
+            willThrow(persistenceFailure)
+                    .given(bankTransactionPersistenceService)
+                    .saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions);
 
-        // 거래 저장 자체는 커서 갱신 이전에 이미 시도되었어야 한다.
-        // (단일 트랜잭션이므로 이 예외로 인해 저장분도 함께 롤백되는 것은 호출부의 @Transactional이 보장한다.)
-        verify(bankTransactionMapper).insertOrGetId(any());
+            assertThatThrownBy(() -> transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID))
+                    .isSameAs(persistenceFailure);
+
+            // 사이은행 조회 자체는 이미 성공적으로 끝난 뒤, 저장 단계에서만 실패한 상황임을 확인한다.
+            verify(mockBankClient).getTransactions(BANK_ACCOUNT_ID, USER_KEY, 5L);
+        }
     }
 }
