@@ -13,6 +13,7 @@ import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardContractRowResponse;
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardResponse;
 import org.teamsai.saibackend.domain.contractdashboard.service.DashboardService;
+import org.teamsai.saibackend.domain.contractdashboard.type.ContractRole;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
@@ -202,5 +203,79 @@ class DashboardServiceTest {
                 .remainingPrincipal(BigDecimal.valueOf(amount))
                 .dueDate(dueDate)
                 .build();
+    }
+
+    @Test
+    @DisplayName("sortType이 null이면 예외 없이 최신 계약순(contractId 내림차순)으로 처리된다")
+    void getDashboard_handlesNullSortTypeSafely() {
+        LoanContractResponse older = buildContract(80L, null, ContractStatus.COMPLETED, "먼저생성", 1L, 2L);
+        LoanContractResponse newer = buildContract(81L, null, ContractStatus.COMPLETED, "나중생성", 1L, 2L);
+
+        when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(older, newer));
+        when(repaymentScheduleService.getSchedule(80L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedule(81L)).thenReturn(List.of());
+
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+
+        assertThat(response.getContracts()).hasSize(2);
+        assertThat(response.getContracts().get(0).getContractId()).isEqualTo(81L);
+        assertThat(response.getContracts().get(1).getContractId()).isEqualTo(80L);
+    }
+
+    @Test
+    @DisplayName("page가 0 이하로 들어와도 예외 없이 1페이지로 처리된다")
+    void getDashboard_handlesInvalidPageSafely() {
+        LoanContractResponse contract = buildContract(90L, null, ContractStatus.COMPLETED, "테스트계약", 1L, 2L);
+
+        when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(contract));
+        when(repaymentScheduleService.getSchedule(90L)).thenReturn(List.of());
+
+        DashboardResponse responseZero = dashboardService.getDashboard(USER_ID, null, "ALL", null, 0);
+        DashboardResponse responseNegative = dashboardService.getDashboard(USER_ID, null, "ALL", null, -5);
+
+        assertThat(responseZero.getContracts()).hasSize(1);
+        assertThat(responseNegative.getContracts()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("빌려준 돈이 더 많으면 defaultFilter는 LENT다")
+    void getDashboard_defaultFilterIsLentWhenLentIsGreater() {
+        LoanContractResponse lentContract = buildContract(100L, null, ContractStatus.COMPLETED, "빌려준계약", 1L, 2L);
+        LoanContractResponse borrowedContract = buildContract(101L, null, ContractStatus.COMPLETED, "빌린계약", 3L, 1L);
+
+        when(loanContractService.findContractsByUser(USER_ID))
+                .thenReturn(List.of(lentContract, borrowedContract));
+        when(repaymentScheduleService.getSchedule(100L))
+                .thenReturn(List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 5_000_000, LocalDate.now())));
+        when(repaymentScheduleService.getSchedule(101L))
+                .thenReturn(List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 100_000, LocalDate.now())));
+
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+
+        assertThat(response.getSummary().getDefaultFilter()).isEqualTo("LENT");
+    }
+
+    @Test
+    @DisplayName("정렬 기준(역할순/구분순/상태순/마감일순/가나다순)이 각각 정확히 적용된다")
+    void getDashboard_sortsByEachCriteriaCorrectly() {
+        LoanContractResponse creditorContract = buildContract(110L, null, ContractStatus.COMPLETED, "가나다1", 1L, 2L);
+        LoanContractResponse debtorContract = buildContract(111L, null, ContractStatus.COMPLETED, "나다라2", 3L, 1L);
+
+        when(loanContractService.findContractsByUser(USER_ID))
+                .thenReturn(List.of(debtorContract, creditorContract));
+        when(repaymentScheduleService.getSchedule(110L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedule(111L)).thenReturn(List.of());
+
+        DashboardResponse alphabetSorted = dashboardService.getDashboard(USER_ID, null, "ALL", "ALPHABET", 1);
+        assertThat(alphabetSorted.getContracts().get(0).getContractAlias()).isEqualTo("가나다1");
+
+        DashboardResponse roleSorted = dashboardService.getDashboard(USER_ID, null, "ALL", "ROLE", 1);
+        assertThat(roleSorted.getContracts().get(0).getRole()).isEqualTo(ContractRole.CREDITOR);
+
+        DashboardResponse categorySorted = dashboardService.getDashboard(USER_ID, null, "ALL", "CATEGORY", 1);
+        assertThat(categorySorted.getContracts().get(0).getCategory().name()).isEqualTo("RECEIVE");
+
+        DashboardResponse deadlineSorted = dashboardService.getDashboard(USER_ID, null, "ALL", "DEADLINE", 1);
+        assertThat(deadlineSorted.getContracts()).hasSize(2);
     }
 }
