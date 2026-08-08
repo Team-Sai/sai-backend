@@ -19,7 +19,6 @@ public class PaymentRecordDTO {
     private Long paymentRecordId;
 
     private Long bankTransactionId;
-    private Long obligationId;
     private PaymentTargetType paymentTargetType;
     private Long targetId;
 

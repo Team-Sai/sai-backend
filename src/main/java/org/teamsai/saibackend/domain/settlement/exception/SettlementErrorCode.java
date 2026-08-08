@@ -28,6 +28,16 @@ public enum SettlementErrorCode implements BaseErrorCode<DomainException> {
             "이미 종료된 정산입니다."
     ),
 
+    SETTLEMENT_CLOSE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 종료 처리에 실패했습니다."
+    ),
+
+    SETTLEMENT_NOT_CLOSABLE(
+            HttpStatus.CONFLICT,
+            "모든 납부의무가 완료되지 않아 정산을 종료할 수 없습니다."
+    ),
+
     ALREADY_SETTLEMENT_PARTICIPANT(
             HttpStatus.CONFLICT,
             "이미 참여 중인 회원입니다."

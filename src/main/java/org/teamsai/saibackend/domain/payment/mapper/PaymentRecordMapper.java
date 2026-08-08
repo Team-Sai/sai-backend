@@ -10,9 +10,6 @@ import java.math.BigDecimal;
 @Mapper
 public interface PaymentRecordMapper {
 
-    BigDecimal sumConfirmedAmountByObligationId(
-            @Param("obligationId") Long obligationId
-    );
 
     BigDecimal sumConfirmedAmountByTarget(
             @Param("paymentTargetType") PaymentTargetType paymentTargetType,
