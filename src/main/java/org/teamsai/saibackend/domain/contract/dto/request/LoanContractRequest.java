@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Period;
 
 @Getter
 @Setter
@@ -60,5 +61,13 @@ public class LoanContractRequest {
     public boolean isValidMaturityDate() {
         if (startDate == null || maturityDate == null) return true;
         return maturityDate.isAfter(startDate);
+    }
+
+    @AssertTrue(message = "대출 기간은 최소 1개월 이상이어야 합니다.")
+    public boolean isValidMinimumPeriod() {
+        if (startDate == null || maturityDate == null) return true;
+        Period period = Period.between(startDate, maturityDate);
+        int months = period.getYears() * 12 + period.getMonths();
+        return months >= 1;
     }
 }

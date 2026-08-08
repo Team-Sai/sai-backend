@@ -60,7 +60,7 @@ public class ContractAccountService {
     }
 
     @Transactional
-    public void deleteContractAccount(Long contractId, Long userId) {
+    public void deactivateContractAccount(Long contractId, Long userId) {
         contractAccountMapper.selectContractForUpdate(contractId);
 
         validateContractOwner(contractId, userId);

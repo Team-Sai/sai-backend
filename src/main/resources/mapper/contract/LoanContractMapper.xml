@@ -94,6 +94,7 @@
     <select id="findContractById" resultType="org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse">
         SELECT
         lc.contract_id        AS contractId,
+        lc.previous_contract_id AS previousContractId,
         lc.creditor_id        AS creditorId,
         lc.debtor_id          AS debtorId,
         lc.creditor_address   AS creditorAddress,
@@ -108,7 +109,8 @@
         lc.repayment_day      AS repaymentDay,
         lc.contract_alias     AS contractAlias,
         lc.terms              AS terms,
-        lc.status             AS status
+        lc.status             AS status,
+        lc.created_at         AS createdAt
         FROM loan_contract lc
         WHERE lc.contract_id = #{contractId}
     </select>

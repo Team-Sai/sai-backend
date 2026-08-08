@@ -191,7 +191,7 @@
       return;
     }
 
-    window.location.href = `/api/contracts/${contractId}/approve/signature`;
+    window.location.href = `/contracts/${contractId}/approve/signature`;
   });
 
   loadContract()

@@ -67,9 +67,14 @@ public class SecurityConfig {
                                         "/identity-test",
 
 
+
                                         "/accounts/**",
                                         "/settlements",
-                                        "/settlements/**"
+                                        "/settlements/**",
+                                        "/contracts/new",
+                                        "/contracts/signature",
+                                        "/contracts/*/approve",
+                                        "/contracts/*/approve/signature"
 
                                 )
                                 .permitAll()
@@ -82,6 +87,8 @@ public class SecurityConfig {
                                         "/error"
                                 )
                                 .permitAll()
+                                .requestMatchers("/api/**")
+                                .authenticated()
                                 .anyRequest()
                                 .authenticated()
                 )

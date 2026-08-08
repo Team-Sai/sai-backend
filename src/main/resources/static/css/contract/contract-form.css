@@ -1,8 +1,3 @@
-/* =========================================================
-   금전소비대차 · Contract Form
-   user/login.css, user/mypage.css 와 동일한 팔레트·폰트를 사용합니다.
-   ========================================================= */
-
 :root {
   --page: #F7F8FB;
   --surface: #FFFFFF;
@@ -13,7 +8,7 @@
   --primary-bright: #00C853;
   --error: #BA1A1A;
 
-  --font-ui: "Noto Sans KR", sans-serif;
+  --font-ui: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
 
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -33,7 +28,6 @@ html, body {
 
 button { font-family: inherit; }
 
-/* ===================== TOP NAV ===================== */
 .topnav {
   background: var(--surface);
   border-bottom: 1px solid var(--line);
@@ -112,29 +106,31 @@ button { font-family: inherit; }
   color: var(--primary);
 }
 
-/* ===================== STEPPER ===================== */
-.stepper-wrap {
+.stepper-card {
   background: var(--surface);
-  border-bottom: 1px solid var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  margin-bottom: 20px;
 }
 
 .stepper {
-  max-width: 640px;
-  margin: 0 auto;
   list-style: none;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 22px 24px;
+  margin: 0;
+  padding: 0;
   position: relative;
 }
 
 .stepper::before {
   content: "";
   position: absolute;
-  top: 33px;
-  left: 60px;
-  right: 60px;
+  top: 12px;
+  left: 36px;
+  right: 36px;
   height: 1px;
   background: var(--line);
   z-index: 0;
@@ -149,6 +145,7 @@ button { font-family: inherit; }
   gap: 8px;
   flex: 1;
 }
+
 
 .stepper__circle {
   width: 24px;
@@ -192,9 +189,9 @@ button { font-family: inherit; }
   font-weight: 700;
 }
 
-/* ===================== PAGE / DOC CARD ===================== */
+
 .page {
-  max-width: 760px;
+  max-width: 900px;
   margin: 32px auto 80px;
   padding: 0 20px;
 }
@@ -204,7 +201,7 @@ button { font-family: inherit; }
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  padding: 48px 56px 40px;
+  padding: 48px 44px 40px;
 }
 
 .doc__title {
@@ -228,9 +225,14 @@ button { font-family: inherit; }
 
 .doc__clause {
   flex: 0 0 auto;
-  min-width: 128px;
+  min-width: 112px;
   color: var(--primary);
   font-weight: 700;
+}
+
+.doc__body {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .doc__text {
@@ -269,7 +271,7 @@ button { font-family: inherit; }
   margin: 0 0 28px;
 }
 
-/* ---- inline document inputs ---- */
+
 .doc__inline-input {
   font-family: inherit;
   font-size: 13.5px;
@@ -295,7 +297,7 @@ button { font-family: inherit; }
 .doc__inline-input--day { width: 44px; }
 .doc__inline-input--alias { width: 100%; text-align: left; }
 
-/* ---- identity verification panel ---- */
+
 .identity-panel {
   display: flex;
   align-items: center;
@@ -333,7 +335,7 @@ button { font-family: inherit; }
   font-weight: 600;
 }
 
-/* ---- read-only document values (filled from the logged-in user's account) ---- */
+
 .doc__readonly {
   color: var(--primary);
   font-weight: 600;
@@ -341,7 +343,7 @@ button { font-family: inherit; }
   padding: 1px 4px;
 }
 
-/* ---- optional free-text terms ---- */
+
 .doc__textarea {
   width: 100%;
   font-family: inherit;
@@ -359,7 +361,6 @@ button { font-family: inherit; }
   background: rgba(0, 200, 83, 0.05);
 }
 
-/* ---- current-status banner (view mode) ---- */
 .doc__status-banner {
   text-align: center;
   font-size: 13px;
@@ -379,7 +380,7 @@ button { font-family: inherit; }
   text-align: center;
 }
 
-/* ---- radio group ---- */
+
 .doc__radio-group {
   display: flex;
   gap: 22px;
@@ -427,10 +428,68 @@ button { font-family: inherit; }
   transform: scale(1);
 }
 
-/* ===================== PARTIES TABLE ===================== */
+
+.loan-account {
+  margin-top: 10px;
+}
+
+.loan-account__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.doc__body select#selectedLinkedAccountId {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  background: var(--surface);
+}
+
+.doc__body select#selectedLinkedAccountId:focus {
+  outline: none;
+  border-color: var(--primary-bright);
+  background: rgba(0, 200, 83, 0.05);
+}
+
+
+.loan-account__summary {
+  margin-top: 10px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.loan-account__summary th,
+.loan-account__summary td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.loan-account__summary th {
+  width: 25%;
+  background: #f3f4f5;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.loan-account__summary[hidden] {
+  display: none;
+}
+
+
 .parties {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   margin-top: 8px;
   border-top: 2px solid var(--primary);
   font-size: 13px;
@@ -440,19 +499,19 @@ button { font-family: inherit; }
 .parties td {
   border: 1px solid var(--line);
   padding: 10px 12px;
+  overflow: hidden;
 }
 
 .parties__role {
-  width: 64px;
   background: rgba(0, 110, 42, 0.04);
   color: var(--primary);
   font-weight: 700;
   text-align: center;
-  letter-spacing: 0.15em;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .parties__label {
-  width: 84px;
   background: #f3f4f5;
   color: var(--muted);
   font-weight: 600;
@@ -505,7 +564,7 @@ button { font-family: inherit; }
   vertical-align: middle;
 }
 
-/* ===================== ACTIONS ===================== */
+
 .doc__actions {
   display: flex;
   justify-content: flex-end;
@@ -559,12 +618,17 @@ button { font-family: inherit; }
   color: var(--error);
 }
 
-/* ===================== RESPONSIVE ===================== */
 @media (max-width: 640px) {
   .doc { padding: 32px 20px; }
   .doc__article { flex-direction: column; gap: 4px; }
   .doc__clause { min-width: 0; }
   .stepper__label { font-size: 11px; }
   .topnav__menu { gap: 16px; overflow-x: auto; }
-  .parties__role { width: 48px; }
+
+
+  .parties, .parties tbody, .parties tr, .parties th, .parties td {
+    display: block;
+    width: 100% !important;
+  }
+  .parties tr { margin-bottom: 8px; }
 }

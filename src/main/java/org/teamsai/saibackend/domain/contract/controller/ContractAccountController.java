@@ -1,7 +1,6 @@
 package org.teamsai.saibackend.domain.contract.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,6 @@ public class ContractAccountController {
     )
     @GetMapping
     public ResponseEntity<List<LinkedBankAccountResponse>> getSelectableAccounts(
-            @Parameter(hidden = true)
             @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
         return ResponseEntity.ok(contractAccountService.getSelectableAccounts(userId));
@@ -46,7 +44,6 @@ public class ContractAccountController {
     public ResponseEntity<Void> changeContractAccount(
             @PathVariable("contractId") Long contractId,
             @Valid @RequestBody ContractAccountChangeRequest request,
-            @Parameter(hidden = true)
             @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
         contractAccountService.changeContractAccount(contractId, userId, request.linkedAccountId());
@@ -60,10 +57,9 @@ public class ContractAccountController {
     @DeleteMapping("/{contractId}/deactivateaccount")
     public ResponseEntity<Void> deactivateContractAccount(
             @PathVariable("contractId") Long contractId,
-            @Parameter(hidden = true)
             @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
-        contractAccountService.deleteContractAccount(contractId, userId);
+        contractAccountService.deactivateContractAccount(contractId, userId);
         return ResponseEntity.noContent().build();
     }
 }
