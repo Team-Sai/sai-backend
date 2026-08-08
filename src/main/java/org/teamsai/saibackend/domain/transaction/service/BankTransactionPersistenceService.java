@@ -22,6 +22,14 @@ public class BankTransactionPersistenceService {
     private final BankTransactionMapper bankTransactionMapper;
     private final LinkedBankAccountMapper linkedBankAccountMapper;
 
+
+    /**
+     * 이번 동기화 요청에서 조회/처리한 거래 건수를 반환한다.
+     *
+     * insertOrGetId()는 이미 저장된 거래(external_transaction_id 중복)를 만나면
+     * 새로 INSERT하지 않고 기존 row를 재사용하는 멱등 upsert
+     * 반환값은 "이번 요청에서 처리 대상이었던 거래 건수"를 의미한다.
+     */
     @Transactional
     public int saveAndAdvanceCursor(Long linkedAccountId, List<BankTransactionResponse> transactions) {
         if (transactions.isEmpty()) {
@@ -34,7 +42,6 @@ public class BankTransactionPersistenceService {
             bankTransactionMapper.insertOrGetId(toDto(linkedAccountId, tx, now));
         }
 
-        // 정렬 순서(응답 리스트 순서)에 의존하지 않고, 실제 최댓값을 기준으로 커서를 갱신한다.
         Long latestTransactionId = transactions.stream()
                 .map(BankTransactionResponse::transactionId)
                 .max(Long::compareTo)

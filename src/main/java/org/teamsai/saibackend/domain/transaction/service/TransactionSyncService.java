@@ -23,6 +23,10 @@ public class TransactionSyncService {
     private final UserService userService;
     private final BankTransactionPersistenceService bankTransactionPersistenceService;
 
+    /**
+     * 이번 동기화 요청에서 처리한 거래 건수를 반환한다.
+     * (신규 저장 건수를 의미하지 않는다.
+    **/
     public int syncTransactions(Long userId, Long linkedAccountId) {
         LinkedBankAccountDTO linkedAccount = linkedBankAccountMapper.findById(linkedAccountId)
                 .orElseThrow(AccountErrorCode.LINKED_ACCOUNT_NOT_FOUND::toException);

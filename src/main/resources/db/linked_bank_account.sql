@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS linked_bank_account (
                                        PRIMARY KEY (linked_account_id),
                                        UNIQUE KEY uq_user_account (user_id,account_id),
                                        KEY idx_user_id (user_id)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

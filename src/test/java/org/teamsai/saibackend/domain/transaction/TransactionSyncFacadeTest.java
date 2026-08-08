@@ -13,13 +13,15 @@ import org.teamsai.saibackend.domain.matching.service.BankMatchingService;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
 import org.teamsai.saibackend.domain.transaction.service.TransactionSyncFacade;
 import org.teamsai.saibackend.domain.transaction.service.TransactionSyncService;
+import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TransactionSyncFacade 단위 테스트")
@@ -73,5 +75,34 @@ class TransactionSyncFacadeTest {
 
         assertThat(result.totalTransactionCount()).isZero();
         verify(bankMatchingService).execute(LINKED_ACCOUNT_ID);
+    }
+
+    @Test
+    @DisplayName("동기화 단계에서 예외가 발생하면 매칭을 실행하지 않고 예외를 그대로 전파한다")
+    void propagatesExceptionWhenSyncFails() {
+        DomainException syncFailure = mock(DomainException.class);
+
+        willThrow(syncFailure)
+                .given(transactionSyncService).syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
+
+        assertThatThrownBy(() -> transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID))
+                .isSameAs(syncFailure);
+
+        verify(bankMatchingService, never()).execute(any());
+    }
+
+    @Test
+    @DisplayName("동기화는 성공했지만 매칭 단계에서 예외가 발생하면 예외를 그대로 전파한다")
+    void propagatesExceptionWhenMatchingFails() {
+        DomainException matchingFailure = mock(DomainException.class);
+
+        given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(2);
+        willThrow(matchingFailure)
+                .given(bankMatchingService).execute(LINKED_ACCOUNT_ID);
+
+        assertThatThrownBy(() -> transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID))
+                .isSameAs(matchingFailure);
+        
+        verify(transactionSyncService).syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
     }
 }
