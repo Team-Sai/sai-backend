@@ -31,7 +31,7 @@
   }
 
   if (!draft || !draft.debtorAddress) {
-    window.location.href = `/api/contracts/${contractId}/approve`;
+    window.location.href = `/contracts/${contractId}/approve`;
     return;
   }
 
