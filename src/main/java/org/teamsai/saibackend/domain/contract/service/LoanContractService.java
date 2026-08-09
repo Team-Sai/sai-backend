@@ -62,9 +62,9 @@ public class LoanContractService {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
 
-        String savedPath = fileService.saveSignatureFile(contractId, signature);
-
         Long debtorId = userService.findRequestTarget(userId, debtorUserToken).getUserId();
+
+        String savedPath = fileService.saveSignatureFile(contractId, signature);
 
         contractMapper.updateCreditorSignature(contractId, savedPath, debtorId, ContractStatus.PENDING);
 
@@ -76,17 +76,18 @@ public class LoanContractService {
         LoanContractResponse contract = contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
 
-        if (contract.getDebtorId() != null) {
-            throw LoanContractErrorCode.DEBTOR_ALREADY_LINKED.toException();
-        }
-
         if (userId.equals(contract.getCreditorId())) {
             throw LoanContractErrorCode.CANNOT_CREATE_CONTRACT_TO_SELF.toException();
         }
 
-        userService.getMyInfo(userId);
+        if (contract.getDebtorId() != null && !contract.getDebtorId().equals(userId)) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+        }
 
-        contractMapper.updateDebtorId(contractId, userId);
+        if (contract.getDebtorId() == null) {
+            userService.getMyInfo(userId);
+            contractMapper.updateDebtorId(contractId, userId);
+        }
     }
 
     @Transactional
