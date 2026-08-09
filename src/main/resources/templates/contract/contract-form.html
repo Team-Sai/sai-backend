@@ -21,12 +21,13 @@
       <a class="topnav__link" href="#">거래 일정</a>
     </nav>
 
-    <button class="topnav__bell" type="button" aria-label="알림">
+    <a class="topnav__bell" href="/notifications" aria-label="알림">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
         <path d="M12 3a6 6 0 0 0-6 6v3.2c0 .5-.18 1-.5 1.4L4 15.5c-.6.7-.1 1.8.8 1.8h14.4c.9 0 1.4-1.1.8-1.8l-1.5-1.9a2.2 2.2 0 0 1-.5-1.4V9a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
         <path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
       </svg>
-    </button>
+      <span class="topnav__bell-badge" id="topnavBellBadge" hidden></span>
+    </a>
   </div>
 </header>
 
@@ -47,14 +48,10 @@
       </li>
       <li class="stepper__step">
         <span class="stepper__circle">3</span>
-        <span class="stepper__label">상대확인</span>
+        <span class="stepper__label">서명 날인</span>
       </li>
       <li class="stepper__step">
         <span class="stepper__circle">4</span>
-        <span class="stepper__label">서명날인</span>
-      </li>
-      <li class="stepper__step">
-        <span class="stepper__circle">5</span>
         <span class="stepper__label">저장</span>
       </li>
     </ol>
@@ -80,10 +77,11 @@
 
         <div class="loan-account">
           <div class="loan-account__title">대출금 지급 계좌</div>
+          <!-- 계좌 연동(마이데이터) 연동이 아직 해결되지 않아 임시로 주석 처리.
+               연동이 정상화되면 아래 select 기반 계좌 선택 UI로 복구할 것.
           <select id="selectedLinkedAccountId" name="selectedLinkedAccountId">
             <option value="">계좌 목록을 불러오는 중...</option>
           </select>
-
 
           <table class="loan-account__summary" id="loanAccountSummary" hidden>
             <tbody>
@@ -101,6 +99,8 @@
               </tr>
             </tbody>
           </table>
+          -->
+          <input type="text" class="doc__inline-input doc__inline-input--account" id="manualAccountInfo" name="manualAccountInfo" placeholder="입금받을 계좌정보를 직접 입력하세요" />
         </div>
       </div>
     </section>
@@ -234,6 +234,21 @@
   </form>
 </main>
 
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <strong>사이원장</strong>
+      <p>© Sai-Wonjang. All rights reserved.</p>
+    </div>
+    <nav>
+      <a href="#">이용약관</a>
+      <a href="#">개인정보처리방침</a>
+      <a href="#">고객센터</a>
+    </nav>
+  </div>
+</footer>
+
+<script th:src="@{/js/notification/topnav-notifications.js}" src="../../static/js/notification/topnav-notifications.js"></script>
 <script th:src="@{/js/contract/contract-form.js}" src="../../static/js/contract/contract-form.js"></script>
 </body>
 </html>
