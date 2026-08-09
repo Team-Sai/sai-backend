@@ -17,9 +17,10 @@
 
         COALESCE(SUM(pr.amount), 0) AS paidAmount,
 
-        po.expected_amount
-        - COALESCE(SUM(pr.amount), 0)
-        AS remainingAmount,
+        GREATEST(
+        po.expected_amount - COALESCE(SUM(pr.amount), 0),
+        0
+        ) AS remainingAmount,
 
         CASE
         WHEN COALESCE(SUM(pr.amount), 0) = 0

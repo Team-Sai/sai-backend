@@ -69,11 +69,17 @@ public class SettlementPaymentStatusService {
                         totalPaidAmount
                 );
 
+
+        if(progressRate.compareTo(HUNDRED) > 0){
+            progressRate = HUNDRED;
+        }
+
         boolean closable = !obligations.isEmpty()
                 && obligations.stream()
                 .allMatch(obligation ->
-                        obligation.getRemainingAmount()
-                                .compareTo(BigDecimal.ZERO) == 0
+                        obligation.getPaidAmount()
+                                .compareTo(obligation.getExpectedAmount())
+                                ==0
                 );
 
         return SettlementPaymentStatusResponse.builder()

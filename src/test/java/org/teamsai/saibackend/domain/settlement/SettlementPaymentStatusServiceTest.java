@@ -95,6 +95,31 @@ class SettlementPaymentStatusServiceTest {
     }
 
     @Test
+    @DisplayName("초과 납부가 있어도 진행률은 100을 넘지 않고 마감할 수 없다")
+    void getPaymentStatusIsNotClosableWhenPaymentExceedsExpectedAmount() {
+        given(settlementMapper.findById(SETTLEMENT_ID))
+                .willReturn(Optional.of(createSettlement()));
+
+        given(paymentStatusMapper.findPaymentObligationsBySettlementId(
+                SETTLEMENT_ID
+        )).willReturn(List.of(
+                obligation(10000, 11000, 0, PaymentStatus.PAID)
+        ));
+
+        SettlementPaymentStatusResponse response =
+                paymentStatusService.getPaymentStatus(
+                        SETTLEMENT_ID,
+                        OWNER_ID
+                );
+
+        assertThat(response.getProgressRate())
+                .isEqualByComparingTo("100.00");
+        assertThat(response.getTotalRemainingAmount())
+                .isEqualByComparingTo("0");
+        assertThat(response.isClosable()).isFalse();
+    }
+
+    @Test
     @DisplayName("정산이 없으면 현황 조회에 실패한다")
     void getPaymentStatusFailsWhenSettlementDoesNotExist() {
         given(settlementMapper.findById(SETTLEMENT_ID))
