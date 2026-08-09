@@ -74,7 +74,9 @@ public class SecurityConfig {
                                         "/contracts/new",
                                         "/contracts/signature",
                                         "/contracts/*/approve",
-                                        "/contracts/*/approve/signature"
+                                        "/contracts/*/approve/signature",
+                                        "/contracts/complete",
+                                        "/notifications"
 
                                 )
                                 .permitAll()

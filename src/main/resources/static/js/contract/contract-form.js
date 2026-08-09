@@ -8,7 +8,8 @@
   const statusBanner = document.getElementById("statusBanner");
   const nextBtn = document.getElementById("btnNext");
   const identityVerificationIdInput = document.getElementById("identityVerificationId");
-  const selectedLinkedAccountIdSelect = document.getElementById("selectedLinkedAccountId");
+  // 계좌 연동이 아직 해결되지 않아 임시로 주석 처리 (사용자가 계좌정보를 직접 입력하는 것으로 대체)
+  // const selectedLinkedAccountIdSelect = document.getElementById("selectedLinkedAccountId");
 
   if (!form) return;
 
@@ -17,6 +18,7 @@
   const viewMode = Boolean(contractId);
 
   const FIELD_IDS = [
+    "identityVerificationId",
     "principalAmount",
     "interestRate",
     "startDate",
@@ -25,7 +27,7 @@
     "creditorAddress",
     "contractAlias",
     "terms",
-    "selectedLinkedAccountId",
+    // "selectedLinkedAccountId", // 계좌 연동이 아직 해결되지 않아 임시로 주석 처리
   ];
 
   function authHeaders(extra) {
@@ -132,11 +134,12 @@
       contractAlias.focus();
       return false;
     }
-    if (!selectedLinkedAccountIdSelect || !selectedLinkedAccountIdSelect.value) {
-      showStatus("대출금을 지급할 계좌를 선택해 주세요.", true);
-      selectedLinkedAccountIdSelect?.focus();
-      return false;
-    }
+    // 계좌 연동이 아직 해결되지 않아 임시로 주석 처리 (사용자가 계좌정보를 직접 입력)
+    // if (!selectedLinkedAccountIdSelect || !selectedLinkedAccountIdSelect.value) {
+    //   showStatus("대출금을 지급할 계좌를 선택해 주세요.", true);
+    //   selectedLinkedAccountIdSelect?.focus();
+    //   return false;
+    // }
     return true;
   }
 
@@ -150,25 +153,11 @@
     });
   }
 
-  nextBtn?.addEventListener("click", async () => {
+  nextBtn?.addEventListener("click", () => {
     if (!validate()) return;
 
-    try {
-
-      const response = await fetch("/api/contracts/write", {
-        method: "POST",
-        headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify(serializeForm())
-      });
-
-      if (!response.ok) throw new Error("차용증 생성 실패");
-
-      const contractId = await response.json();
-      window.location.href = `/contracts/${contractId}/signature`;
-
-    } catch (err) {
-      showStatus("차용증 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.", true);
-    }
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(serializeForm()));
+    window.location.href = "/contracts/signature";
   });
 
   const principalInput = document.getElementById("principalAmount");
@@ -199,50 +188,71 @@
     }
   }
 
-  async function loadSelectableAccounts() {
-    if (!selectedLinkedAccountIdSelect) return;
+  // TEST ONLY: mock 계정(sai.mock.identity.verified-user-ids)의 본인인증을 자동으로 채운다.
+  // 나중에 mock 관련 코드 지울 때 이 함수와 호출부도 함께 제거할 것.
+  async function autoFillMockIdentityVerification() {
+    if (!identityVerificationIdInput) return;
 
     try {
-      const response = await fetch("/api/contracts/accounts", {
-        method: "GET",
-        headers: authHeaders({ Accept: "application/json" }),
+      const response = await fetch("/api/mock/identity-verifications/complete", {
+        method: "POST",
+        headers: authHeaders(),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const accounts = await response.json();
-
-      selectedLinkedAccountIdSelect.innerHTML = "";
-
-      if (!accounts || accounts.length === 0) {
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = "연동된 활성 계좌가 없습니다. 마이페이지에서 계좌를 연동해 주세요.";
-        selectedLinkedAccountIdSelect.appendChild(option);
-        selectedLinkedAccountIdSelect.disabled = true;
-        return;
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data.identityVerificationId) {
+        identityVerificationIdInput.value = data.identityVerificationId;
       }
-
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "계좌를 선택하세요";
-      selectedLinkedAccountIdSelect.appendChild(placeholder);
-
-      accounts.forEach((account) => {
-        const option = document.createElement("option");
-        option.value = account.linkedAccountId;
-        option.textContent = `${account.bankName} ${account.maskedAccountNumber} (${account.accountHolderName})`;
-        selectedLinkedAccountIdSelect.appendChild(option);
-      });
-
-      selectedLinkedAccountIdSelect.disabled = false;
     } catch (err) {
-      selectedLinkedAccountIdSelect.innerHTML = "";
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "계좌 목록을 불러오지 못했습니다.";
-      selectedLinkedAccountIdSelect.appendChild(option);
-      selectedLinkedAccountIdSelect.disabled = true;
+      // mock 엔드포인트가 없는 환경(dev 프로필이 아닌 경우 등)에서는 조용히 무시
     }
   }
+
+  // 계좌 연동이 아직 해결되지 않아 임시로 주석 처리 (사용자가 계좌정보를 직접 입력하는 것으로 대체)
+  // async function loadSelectableAccounts() {
+  //   if (!selectedLinkedAccountIdSelect) return;
+  //
+  //   try {
+  //     const response = await fetch("/api/contracts/accounts", {
+  //       method: "GET",
+  //       headers: authHeaders({ Accept: "application/json" }),
+  //     });
+  //     if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  //     const accounts = await response.json();
+  //
+  //     selectedLinkedAccountIdSelect.innerHTML = "";
+  //
+  //     if (!accounts || accounts.length === 0) {
+  //       const option = document.createElement("option");
+  //       option.value = "";
+  //       option.textContent = "연동된 활성 계좌가 없습니다. 마이페이지에서 계좌를 연동해 주세요.";
+  //       selectedLinkedAccountIdSelect.appendChild(option);
+  //       selectedLinkedAccountIdSelect.disabled = true;
+  //       return;
+  //     }
+  //
+  //     const placeholder = document.createElement("option");
+  //     placeholder.value = "";
+  //     placeholder.textContent = "계좌를 선택하세요";
+  //     selectedLinkedAccountIdSelect.appendChild(placeholder);
+  //
+  //     accounts.forEach((account) => {
+  //       const option = document.createElement("option");
+  //       option.value = account.linkedAccountId;
+  //       option.textContent = `${account.bankName} ${account.maskedAccountNumber} (${account.accountHolderName})`;
+  //       selectedLinkedAccountIdSelect.appendChild(option);
+  //     });
+  //
+  //     selectedLinkedAccountIdSelect.disabled = false;
+  //   } catch (err) {
+  //     selectedLinkedAccountIdSelect.innerHTML = "";
+  //     const option = document.createElement("option");
+  //     option.value = "";
+  //     option.textContent = "계좌 목록을 불러오지 못했습니다.";
+  //     selectedLinkedAccountIdSelect.appendChild(option);
+  //     selectedLinkedAccountIdSelect.disabled = true;
+  //   }
+  // }
 
   async function loadExistingContract() {
     nextBtn.hidden = true;
@@ -288,6 +298,8 @@
     loadExistingContract();
   } else {
     loadCreditorInfo();
-    loadSelectableAccounts();
+    autoFillMockIdentityVerification(); // TEST ONLY
+    // 계좌 연동이 아직 해결되지 않아 임시로 주석 처리
+    // loadSelectableAccounts();
   }
 })();

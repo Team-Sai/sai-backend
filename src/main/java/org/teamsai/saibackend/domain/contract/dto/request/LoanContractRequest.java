@@ -45,16 +45,13 @@ public class LoanContractRequest {
     @NotBlank(message = "주소를 입력해주세요.")
     private String creditorAddress;
 
-    @NotBlank(message = "채무자 이메일을 입력해주세요.")
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
-    private String debtorEmail;
-
     @NotBlank(message = "계약의 목적을 입력해주세요.")
     private String contractAlias;
 
     private String terms;
 
-    @NotNull(message = "대출금을 받을 계좌를 선택해주세요.")
+    // 계좌 연동이 아직 해결되지 않아 임시 주석 처리. 연동 정상화되면 복구할 것.
+    // @NotNull(message = "대출금을 받을 계좌를 선택해주세요.")
     private Long selectedLinkedAccountId;
 
     @AssertTrue(message = "대출 만기일은 시작일 이후여야 합니다.")

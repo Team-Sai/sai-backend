@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
-import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
@@ -21,6 +20,7 @@ import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
 import org.teamsai.saibackend.domain.user.service.UserService;
 
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -55,7 +55,7 @@ public class LoanContractService {
     }
 
     @Transactional
-    public ContractStatus submitCreditorSignature(Long contractId, Long userId, MultipartFile signature) {
+    public ContractStatus submitCreditorSignature(Long contractId, Long userId, String debtorUserToken, MultipartFile signature) {
         LoanContractResponse contract = contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
 
@@ -64,13 +64,22 @@ public class LoanContractService {
         }
 
         String savedPath = fileService.saveSignatureFile(contractId, signature);
-        contractMapper.updateCreditorSignature(contractId, savedPath, ContractStatus.PENDING);
+
+        Long debtorId = userService.findRequestTarget(userId, debtorUserToken).getUserId();
+
+        contractMapper.updateCreditorSignature(contractId, savedPath, debtorId, ContractStatus.PENDING);
 
         return ContractStatus.PENDING;
     }
 
+    //알림센터를 위한 코드, 채권자가 채무자에게 차용증을 전송한 상태
+    @Transactional(readOnly = true)
+    public List<LoanContractResponse> findPendingContractsByDebtorId(Long debtorId) {
+        return contractMapper.findPendingContractsByDebtorId(debtorId);
+    }
+
     @Transactional
-    public void linkDebtor(Long contractId, Long userId, LoanContractDebtorLinkRequest request) {
+    public void linkDebtor(Long contractId, Long userId) {
         LoanContractResponse contract = contractMapper.findContractById(contractId)
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
 
@@ -81,12 +90,6 @@ public class LoanContractService {
         if (userId.equals(contract.getCreditorId())) {
             throw LoanContractErrorCode.CANNOT_CREATE_CONTRACT_TO_SELF.toException();
         }
-
-        identityService.consume(
-                userId,
-                request.identityVerificationId(),
-                IdentityPurpose.LOAN_CONTRACT
-        );
 
         userService.getMyInfo(userId);
 
@@ -108,7 +111,7 @@ public class LoanContractService {
         }
 
         if (contract.getStatus() == ContractStatus.COMPLETED) {
-            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();   // ← 추가
+            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
         }
 
 
@@ -116,7 +119,7 @@ public class LoanContractService {
         contractMapper.updateDebtorSignature(contractId, debtorAddress, savedPath, ContractStatus.COMPLETED);
 
         if (contract.getPreviousContractId() != null) {
-            eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));   // ← 추가
+            eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));
         }
 
         return ContractStatus.COMPLETED;

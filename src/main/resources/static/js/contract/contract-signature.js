@@ -3,14 +3,15 @@
 
   const DRAFT_KEY = "loanContractDraft";
 
-  const closeBtn = document.getElementById("button");
-  const debtorEmailInput = document.getElementById("debtorEmail");
+  const debtorUserTokenInput = document.getElementById("debtorUserToken");
   const canvas = document.getElementById("signatureCanvas");
-  const signPlaceholder = document.getElementById("container7");
-  const clearBtn = document.getElementById("button2");
+  const signPlaceholder = document.getElementById("signPlaceholder");
+  const clearBtn = document.getElementById("clearSignature");
   const agreeCheckbox = document.getElementById("agreeCheckbox");
-  const submitBtn = document.getElementById("button3");
+  const submitBtn = document.getElementById("btnSubmit");
+  const cancelBtn = document.getElementById("btnCancel");
   const statusEl = document.getElementById("formStatus");
+  const creditorInfoEl = document.getElementById("creditorInfo");
 
   if (!canvas) return;
 
@@ -32,10 +33,8 @@
 
   function showStatus(message, isError) {
     statusEl.textContent = message;
-    statusEl.hidden = !message;
     statusEl.classList.toggle("is-error", Boolean(isError));
   }
-
 
   let draft = null;
   try {
@@ -50,9 +49,26 @@
     return;
   }
 
-  closeBtn?.addEventListener("click", () => {
-    window.location.href = "/contracts";
+  cancelBtn?.addEventListener("click", () => {
+    window.location.href = "/contracts/new";
   });
+
+  async function loadCreditorInfo() {
+    try {
+      const response = await fetch("/api/users/me", {
+        method: "GET",
+        headers: authHeaders({ Accept: "application/json" }),
+      });
+      if (!response.ok) return;
+      const user = await response.json();
+
+      creditorInfoEl.textContent = user.name || "-";
+    } catch (err) {
+      // 표시용 정보이므로 실패해도 흐름을 막지 않는다.
+    }
+  }
+
+  loadCreditorInfo();
 
   function canvasPoint(event) {
     const rect = canvas.getBoundingClientRect();
@@ -107,9 +123,7 @@
     const response = await fetch("/api/contracts/write", {
       method: "POST",
       headers: authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify(
-        Object.assign({}, draft, { debtorEmail: debtorEmailInput.value.trim() })
-      ),
+      body: JSON.stringify(draft),
     });
 
     if (!response.ok) {
@@ -126,6 +140,7 @@
   async function submitSignature(contractId) {
     const blob = await canvasToBlob();
     const formData = new FormData();
+    formData.append("debtorUserToken", debtorUserTokenInput.value.trim());
     formData.append("signature", blob, "signature.png");
 
     const response = await fetch(`/api/contracts/${contractId}/signature`, {
@@ -142,13 +157,11 @@
   }
 
   submitBtn?.addEventListener("click", async () => {
-    if (!debtorEmailInput.value.trim() || !debtorEmailInput.checkValidity()) {
-      debtorEmailInput.classList.add("is-invalid");
-      showStatus("채무자의 이메일을 올바르게 입력해 주세요.", true);
-      debtorEmailInput.focus();
+    if (!debtorUserTokenInput.value.trim()) {
+      showStatus("차용증을 받을 채무자의 회원 토큰을 입력해 주세요.", true);
+      debtorUserTokenInput.focus();
       return;
     }
-    debtorEmailInput.classList.remove("is-invalid");
 
     if (!hasSignature) {
       showStatus("서명 패드에 서명을 남겨 주세요.", true);
@@ -161,16 +174,17 @@
     }
 
     submitBtn.disabled = true;
-    showStatus("서명을 제출하는 중입니다...", false);
+    showStatus("차용증을 전송하는 중입니다...", false);
 
     try {
       const contractId = await createContract();
       await submitSignature(contractId);
 
       sessionStorage.removeItem(DRAFT_KEY);
-      showStatus("서명이 제출되었습니다. 채무자에게 전송되었습니다.", false);
+      alert("차용증이 전송되었습니다.");
+      window.location.href = "/mypage";
     } catch (err) {
-      showStatus(err.message || "서명 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.", true);
+      showStatus(err.message || "차용증 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.", true);
       submitBtn.disabled = false;
     }
   });

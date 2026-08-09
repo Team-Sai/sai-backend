@@ -90,9 +90,9 @@ public class AutoMatchingService {
         if (transactions == null
                 || candidates == null
                 || transactions.stream()
-                        .anyMatch(transaction -> transaction == null)
+                .anyMatch(transaction -> transaction == null)
                 || candidates.stream()
-                        .anyMatch(candidate -> candidate == null)) {
+                .anyMatch(candidate -> candidate == null)) {
             throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
         }
     }
