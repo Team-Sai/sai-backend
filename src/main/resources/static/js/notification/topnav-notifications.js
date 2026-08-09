@@ -9,10 +9,6 @@
     );
   }
 
-  // Each source resolves to a count of pending items for the current user.
-  // The bell badge lights up red if any source has a pending count > 0.
-  // To make the bell react to a new kind of request (e.g. 차용증 변경 요청),
-  // add another entry here once its backend list endpoint exists.
   const NOTIFICATION_SOURCES = [
     {
       key: "contract-signature",

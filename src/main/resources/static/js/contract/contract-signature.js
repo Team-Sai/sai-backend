@@ -25,8 +25,8 @@
   function authHeaders(extra) {
     const token = sessionStorage.getItem("accessToken");
     return Object.assign(
-      token ? { Authorization: `Bearer ${token}` } : {},
-      extra || {}
+        token ? { Authorization: `Bearer ${token}` } : {},
+        extra || {}
     );
   }
 
@@ -102,10 +102,26 @@
   clearBtn?.addEventListener("click", clearSignature);
 
   async function createContract() {
+
+    const verificationId = draft.identityVerificationId || draft.verificationId;
+
+    if (!verificationId) {
+      throw new Error("본인인증 정보를 찾을 수 없습니다. 처음부터 다시 진행해 주세요.");
+    }
+
+    const payload = {
+      ...draft,
+      identityVerificationId: verificationId
+    };
+
+    if (payload.verificationId) {
+      delete payload.verificationId;
+    }
+
     const response = await fetch("/api/contracts/write", {
       method: "POST",
       headers: authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify(draft),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
