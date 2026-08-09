@@ -108,7 +108,8 @@ class SettlementAccountServiceTest {
                     settlementAccountService.selectAccount(
                             OWNER_ID,
                             SETTLEMENT_ID,
-                            request
+                        request.getLinkedAccountId()
+
                     );
 
             ArgumentCaptor<SettlementAccountDTO> captor =
@@ -188,7 +189,7 @@ class SettlementAccountServiceTest {
                     settlementAccountService.selectAccount(
                             OWNER_ID,
                             SETTLEMENT_ID,
-                            request
+                            request.getLinkedAccountId()
                     );
 
             assertThat(response.getSettlementAccountId())
@@ -264,7 +265,7 @@ class SettlementAccountServiceTest {
                     settlementAccountService.selectAccount(
                             OWNER_ID,
                             SETTLEMENT_ID,
-                            request
+                            request.getLinkedAccountId()
                     );
 
             ArgumentCaptor<LocalDateTime> endedAtCaptor =
@@ -325,7 +326,7 @@ class SettlementAccountServiceTest {
                             .selectAccount(
                                     OTHER_USER_ID,
                                     SETTLEMENT_ID,
-                                    request
+                                    request.getLinkedAccountId()
                             )
             ).isInstanceOf(DomainException.class);
 
@@ -357,7 +358,7 @@ class SettlementAccountServiceTest {
                             .selectAccount(
                                     OWNER_ID,
                                     SETTLEMENT_ID,
-                                    request
+                                    request.getLinkedAccountId()
                             )
             ).isInstanceOf(DomainException.class);
 
@@ -380,7 +381,7 @@ class SettlementAccountServiceTest {
                             .selectAccount(
                                     OWNER_ID,
                                     SETTLEMENT_ID,
-                                    request
+                                    request.getLinkedAccountId()
                             )
             ).isInstanceOf(DomainException.class);
 
@@ -432,7 +433,7 @@ class SettlementAccountServiceTest {
                             .selectAccount(
                                     OWNER_ID,
                                     SETTLEMENT_ID,
-                                    request
+                                    request.getLinkedAccountId()
                             )
             ).isInstanceOf(DomainException.class);
 
@@ -473,7 +474,7 @@ class SettlementAccountServiceTest {
                             .selectAccount(
                                     OWNER_ID,
                                     SETTLEMENT_ID,
-                                    request
+                                    request.getLinkedAccountId()
                             )
             ).isInstanceOf(DomainException.class);
         }

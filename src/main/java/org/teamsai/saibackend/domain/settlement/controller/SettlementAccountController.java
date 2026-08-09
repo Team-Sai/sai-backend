@@ -84,7 +84,7 @@ public class SettlementAccountController {
                         .selectAccount(
                                 userId,
                                 settlementId,
-                                request
+                                request.getLinkedAccountId()
                         );
 
         return ResponseEntity.ok(response);

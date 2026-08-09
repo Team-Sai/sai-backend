@@ -33,6 +33,9 @@ public class CreateSharedSettlementRequest {
     @Digits(integer = 13, fraction = 0, message = "총 금액은 원 단위로 입력해 주세요.")
     private BigDecimal totalAmount;
 
+    @NotNull(message = "정산 수취 계좌를 선택해 주세요.")
+    private Long linkedAccountId;
+
 
     @Valid
     @NotEmpty(message = "납부자를 한 명 이상 선택해 주세요.")

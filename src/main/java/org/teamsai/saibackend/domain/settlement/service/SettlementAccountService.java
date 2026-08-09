@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementAccountDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
-import org.teamsai.saibackend.domain.settlement.dto.request.SelectSettlementAccountRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementAccountResponse;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementAccountMapper;
@@ -14,7 +13,6 @@ import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.type.SettlementAccountStatus;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -26,16 +24,16 @@ public class SettlementAccountService {
     private final LinkedBankAccountService linkedBankAccountService;
 
     @Transactional
-    public SettlementAccountResponse selectAccount(Long userId, Long settlementId, SelectSettlementAccountRequest request){
+    public SettlementAccountResponse selectAccount(Long userId, Long settlementId, Long linkedAccountId){
 
         SettlementDTO settlement = findSettlement(settlementId);
 
         validatorOwner(settlement, userId);
-        validateLinkedAccountOwner(userId, request.getLinkedAccountId());
+        validateLinkedAccountOwner(userId, linkedAccountId);
 
         Optional<SettlementAccountDTO> currentAccount = settlementAccountMapper.findActiveBySettlementIdForUpdate(settlementId);
 
-        if(currentAccount.isPresent() && currentAccount.get().getLinkedAccountId().equals(request.getLinkedAccountId())){
+        if(currentAccount.isPresent() && currentAccount.get().getLinkedAccountId().equals(linkedAccountId)){
             return SettlementAccountResponse.from(currentAccount.get());
         }
 
@@ -45,7 +43,7 @@ public class SettlementAccountService {
 
         SettlementAccountDTO newAccount = SettlementAccountDTO.builder()
                 .settlementId(settlementId)
-                .linkedAccountId(request.getLinkedAccountId())
+                .linkedAccountId(linkedAccountId)
                 .accountStatus(SettlementAccountStatus.ACTIVE)
                 .selectedAt(now)
                 .endedAt(null)

@@ -366,12 +366,19 @@ document.addEventListener("DOMContentLoaded", () => {
             settlementCategory: categorySelect.value,
             title: titleInput.value.trim(),
             dueDate: dueDateInput.value,
-            totalAmount: rawTotalAmount ? Number(rawTotalAmount) : null,
-            invitations: Array.from(selectedParticipants.values()).map(
-                (participant) => ({
-                    userToken: participant.userToken
-                })
-            )
+            totalAmount: rawTotalAmount
+                ? Number(rawTotalAmount)
+                : null,
+
+            linkedAccountId: settlementAccountSelect.value
+                ? Number(settlementAccountSelect.value)
+                : null,
+
+            invitations:
+                Array.from(selectedParticipants.values())
+                    .map((participant) => ({
+                        userToken: participant.userToken
+                    }))
         };
 
         if (!validate(payload)) {
@@ -416,13 +423,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
             }
 
-            await selectSettlementAccount(
-                responseBody.settlementId,
-                Number(settlementAccountSelect.value),
-                token
-            );
-
-
             const recentSettlement = {
                 ...responseBody,
                 settlementCategory:
@@ -432,10 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 totalAmount: payload.totalAmount,
                 participantCount:
                     payload.invitations.length + 1,
-                linkedAccountId:
-                    Number(
-                        settlementAccountSelect.value
-                    )
+                linkedAccountId:payload.linkedAccountId
             };
 
             sessionStorage.setItem(
@@ -489,7 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
             valid = false;
         }
 
-        if (!settlementAccountSelect.value) {
+        if (!payload.linkedAccountId) {
             setError(
                 "linkedAccountId",
                 "정산 수취 계좌를 선택해 주세요."
@@ -582,57 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function selectSettlementAccount(
-        settlementId,
-        linkedAccountId,
-        token
-    ) {
-      console.log(
-                          "수취계좌 설정 요청:",
-                          {
-                              settlementId,
-                              linkedAccountId
-                          }
-                      );
-        const response = await fetch(
-            `/api/settlements/${settlementId}/account`,
-            {
-                method: "PUT",
-                headers: {
-                    "Content-Type":
-                        "application/json",
-                    Authorization:
-                        `Bearer ${token}`
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    linkedAccountId:
-                        linkedAccountId
-                })
-            }
-        );
 
-        if (response.status === 401) {
-            clearStoredAuth();
-            window.location.href =
-                "/login?required=true";
-            throw new Error(
-                "로그인이 필요합니다."
-            );
-        }
-
-        const responseBody =
-            await readJsonSafely(response);
-
-        if (!response.ok) {
-            throw new Error(
-                responseBody?.message ||
-                "정산 수취 계좌 설정에 실패했습니다."
-            );
-        }
-
-        return responseBody;
-    }
 
     function formatDate(value) {
         if (!value) {
