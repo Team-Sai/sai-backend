@@ -94,9 +94,11 @@ button { font-family: inherit; }
 }
 
 .topnav__bell {
+  position: relative;
   background: transparent;
   border: none;
   color: #414756;
+  text-decoration: none;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -110,6 +112,17 @@ button { font-family: inherit; }
 .topnav__bell:hover {
   background: #f1f3f7;
   color: var(--primary);
+}
+
+.topnav__bell-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--error);
+  border: 1.5px solid var(--surface);
 }
 
 .stepper-card {
@@ -216,6 +229,7 @@ button { font-family: inherit; }
 
 
 .page {
+  width: 100%;
   max-width: 900px;
   margin: 32px auto 80px;
   padding: 0 20px;

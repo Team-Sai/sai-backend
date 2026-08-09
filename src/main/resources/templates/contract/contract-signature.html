@@ -22,43 +22,50 @@
       <a class="topnav__link" href="#">거래 일정</a>
     </nav>
 
-    <button class="topnav__bell" type="button" aria-label="알림">
+    <a class="topnav__bell" href="/notifications" aria-label="알림">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
         <path d="M12 3a6 6 0 0 0-6 6v3.2c0 .5-.18 1-.5 1.4L4 15.5c-.6.7-.1 1.8.8 1.8h14.4c.9 0 1.4-1.1.8-1.8l-1.5-1.9a2.2 2.2 0 0 1-.5-1.4V9a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
         <path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
       </svg>
-    </button>
+      <span class="topnav__bell-badge" id="topnavBellBadge" hidden></span>
+    </a>
   </div>
 </header>
 
-<div class="stepper-wrap">
-  <ol class="stepper">
-    <li class="stepper__step is-done">
-      <span class="stepper__circle"><svg viewBox="0 0 16 16" width="12" height="12" fill="none"><path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <span class="stepper__label">본인인증</span>
-    </li>
-    <li class="stepper__step is-done">
-      <span class="stepper__circle"><svg viewBox="0 0 16 16" width="12" height="12" fill="none"><path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <span class="stepper__label">차용증 작성</span>
-    </li>
-    <li class="stepper__step is-active">
-      <span class="stepper__circle">3</span>
-      <span class="stepper__label">서명 날인</span>
-    </li>
-    <li class="stepper__step">
-      <span class="stepper__circle">4</span>
-      <span class="stepper__label">저장</span>
-    </li>
-  </ol>
-</div>
-
 <main class="page">
+
+  <div class="stepper-card">
+    <ol class="stepper">
+      <li class="stepper__step is-done">
+        <span class="stepper__circle">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
+            <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="stepper__label">본인인증</span>
+      </li>
+      <li class="stepper__step is-done">
+        <span class="stepper__circle">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
+            <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="stepper__label">차용증 작성</span>
+      </li>
+      <li class="stepper__step is-active">
+        <span class="stepper__circle">3</span>
+        <span class="stepper__label">서명 날인</span>
+      </li>
+      <li class="stepper__step">
+        <span class="stepper__circle">4</span>
+        <span class="stepper__label">저장</span>
+      </li>
+    </ol>
+  </div>
 
   <div class="doc" id="signatureCard">
 
     <h1 class="doc__title">금 전 차 용 계 약 서</h1>
-
-    <p class="doc__hint">차용증을 받을 사람의 토큰을 입력해주세요. 전송 버튼 클릭시 차용증이 전송됩니다.</p>
 
     <section class="doc__article">
       <span class="doc__clause">상대방 지정</span>
@@ -87,23 +94,6 @@
       </div>
     </section>
 
-    <table class="parties">
-      <colgroup>
-        <col style="width: 12%">
-        <col style="width: 12%">
-        <col style="width: 76%">
-      </colgroup>
-      <tbody>
-      <tr>
-        <th class="parties__role">채권자</th>
-        <td class="parties__label">성 명</td>
-        <td class="parties__value">
-          <strong id="creditorInfo" class="doc__readonly">-</strong>
-        </td>
-      </tr>
-      </tbody>
-    </table>
-
     <div class="agreement">
       <input type="checkbox" class="agreement__checkbox" id="agreeCheckbox" />
       <label class="agreement__label" for="agreeCheckbox">
@@ -113,7 +103,7 @@
 
     <div class="doc__actions">
       <button type="button" class="btn btn--ghost" id="btnCancel">취소</button>
-      <button type="button" class="btn btn--primary" id="btnSubmit">서명 제출 및 차용증 전송</button>
+      <button type="button" class="btn btn--primary" id="btnSubmit">전송</button>
     </div>
 
     <p class="doc__status" id="formStatus" role="status" aria-live="polite"></p>
@@ -134,6 +124,7 @@
   </div>
 </footer>
 
+<script th:src="@{/js/notification/topnav-notifications.js}" src="../../static/js/notification/topnav-notifications.js"></script>
 <script th:src="@{/js/contract/contract-signature.js}" src="../../static/js/contract/contract-signature.js"></script>
 </body>
 </html>

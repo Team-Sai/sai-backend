@@ -11,7 +11,6 @@
   const submitBtn = document.getElementById("btnSubmit");
   const cancelBtn = document.getElementById("btnCancel");
   const statusEl = document.getElementById("formStatus");
-  const creditorInfoEl = document.getElementById("creditorInfo");
 
   if (!canvas) return;
 
@@ -52,23 +51,6 @@
   cancelBtn?.addEventListener("click", () => {
     window.location.href = "/contracts/new";
   });
-
-  async function loadCreditorInfo() {
-    try {
-      const response = await fetch("/api/users/me", {
-        method: "GET",
-        headers: authHeaders({ Accept: "application/json" }),
-      });
-      if (!response.ok) return;
-      const user = await response.json();
-
-      creditorInfoEl.textContent = user.name || "-";
-    } catch (err) {
-      // 표시용 정보이므로 실패해도 흐름을 막지 않는다.
-    }
-  }
-
-  loadCreditorInfo();
 
   function canvasPoint(event) {
     const rect = canvas.getBoundingClientRect();

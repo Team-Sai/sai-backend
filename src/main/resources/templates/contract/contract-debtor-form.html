@@ -23,12 +23,13 @@
       <a class="topnav__link" href="#">거래 일정</a>
     </nav>
 
-    <button class="topnav__bell" type="button" aria-label="알림">
+    <a class="topnav__bell" href="/notifications" aria-label="알림">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
         <path d="M12 3a6 6 0 0 0-6 6v3.2c0 .5-.18 1-.5 1.4L4 15.5c-.6.7-.1 1.8.8 1.8h14.4c.9 0 1.4-1.1.8-1.8l-1.5-1.9a2.2 2.2 0 0 1-.5-1.4V9a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
         <path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
       </svg>
-    </button>
+      <span class="topnav__bell-badge" id="topnavBellBadge" hidden></span>
+    </a>
   </div>
 </header>
 
@@ -212,6 +213,7 @@
   </div>
 </footer>
 
+<script th:src="@{/js/notification/topnav-notifications.js}" src="../../static/js/notification/topnav-notifications.js"></script>
 <script th:src="@{/js/contract/contract-debtor-form.js}" src="../../static/js/contract/contract-debtor-form.js"></script>
 </body>
 </html>
