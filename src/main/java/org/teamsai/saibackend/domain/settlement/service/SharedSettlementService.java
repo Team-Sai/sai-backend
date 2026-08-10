@@ -28,6 +28,7 @@ public class SharedSettlementService {
 
     private final SettlementMapper settlementMapper;
     private final SettlementInvitationService invitationService;
+    private final SettlementAccountService settlementAccountService;
 
     @Transactional
     public CreateSharedSettlementResponse create(
@@ -78,6 +79,10 @@ public class SharedSettlementService {
                 settlement.getSettlementId(),
                 request.getInvitations(),
                 perPersonAmount
+        );
+
+        settlementAccountService.selectAccount(
+            ownerId,settlement.getSettlementId(),request.getLinkedAccountId()
         );
 
         return CreateSharedSettlementResponse.builder()

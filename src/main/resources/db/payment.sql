@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS payment_obligation (
     payment_obligation_id BIGINT NOT NULL AUTO_INCREMENT,
     participant_id BIGINT NOT NULL,
-    expected_amount DECIMAL(15, 2) NOT NULL CHECK (expected_amount > 0),
+    expected_amount DECIMAL(19, 2) NOT NULL CHECK (expected_amount > 0),
     payment_status VARCHAR(30) NOT NULL CHECK (
         payment_status IN ('UNPAID', 'PARTIALLY_PAID', 'PAID')
     ),
@@ -20,8 +20,13 @@ COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS payment_record (
     payment_record_id BIGINT NOT NULL AUTO_INCREMENT,
     bank_transaction_id BIGINT NOT NULL,
-    obligation_id BIGINT NOT NULL,
-    amount DECIMAL(15, 2) NOT NULL CHECK (amount > 0),
+
+    payment_target_type VARCHAR(30) NOT NULL CHECK (
+        payment_target_type IN ('SETTLEMENT', 'LOAN')
+    ),
+    target_id BIGINT NOT NULL,
+
+    amount DECIMAL(19, 2) NOT NULL CHECK (amount > 0),
     source_type VARCHAR(30) NOT NULL CHECK (
         source_type IN ('AUTO_MATCH', 'MANUAL')
     ),
@@ -35,7 +40,13 @@ CREATE TABLE IF NOT EXISTS payment_record (
 
     PRIMARY KEY (payment_record_id),
     CONSTRAINT uk_payment_record_bank_transaction
-        UNIQUE (bank_transaction_id)
+        UNIQUE (bank_transaction_id),
+
+    INDEX idx_payment_target_target(
+        payment_target_type,
+        target_id,
+        record_status
+        )
 ) ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_unicode_ci;

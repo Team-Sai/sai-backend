@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.teamsai.saibackend.domain.payment.type.PaymentTargetType;
 import org.teamsai.saibackend.domain.payment.type.RecordStatus;
 import org.teamsai.saibackend.domain.payment.type.SourceType;
 
@@ -18,7 +19,8 @@ public class PaymentRecordDTO {
     private Long paymentRecordId;
 
     private Long bankTransactionId;
-    private Long obligationId;
+    private PaymentTargetType paymentTargetType;
+    private Long targetId;
 
     private BigDecimal amount;
 

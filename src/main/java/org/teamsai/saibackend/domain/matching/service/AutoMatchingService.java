@@ -13,7 +13,7 @@ import org.teamsai.saibackend.domain.matching.policy.AutoMatchingJudge;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
-import org.teamsai.saibackend.domain.payment.service.PaymentService;
+import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ import java.util.Set;
 public class AutoMatchingService {
 
     private final AutoMatchingJudge autoMatchingJudge;
-    private final PaymentService paymentService;
+    private final SettlementPaymentService settlementPaymentService;
 
     public AutoMatchingExecutionResult execute(
             List<MatchingTransaction> transactions,
@@ -174,12 +174,11 @@ public class AutoMatchingService {
 
         MatchingCandidate candidate = result.matchedCandidate();
 
-        if (candidate.targetType() != MatchingTargetType.SETTLEMENT
-                && candidate.targetType() != MatchingTargetType.LOAN) {
+        if (candidate.targetType() != MatchingTargetType.SETTLEMENT) {
             return AutoMatchingProcessResult.needsCheck();
         }
 
-        paymentService.applyAutoMatchedPayment(
+        settlementPaymentService.applyAutoMatchedPayment(
                 candidate.obligationId(),
                 transaction.transactionId(),
                 transaction.amount()

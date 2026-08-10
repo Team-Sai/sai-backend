@@ -3,7 +3,7 @@ package org.teamsai.saibackend.domain.settlement.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.teamsai.saibackend.domain.payment.service.PaymentService;
+import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
@@ -19,7 +19,7 @@ public class SettlementInvitationResponseService {
     private final SettlementInvitationMapper invitationMapper;
     private final SettlementMapper settlementMapper;
     private final SettlementInvitationValidator invitationValidator;
-    private final PaymentService paymentService;
+    private final SettlementPaymentService settlementPaymentService;
     private final SettlementParticipantService participantService;
 
     @Transactional
@@ -50,7 +50,7 @@ public class SettlementInvitationResponseService {
             throw SettlementErrorCode.INVITATION_ALREADY_PROCESSED.toException();
         }
         participantService.removeByInvitationId(invitationId);
-        paymentService.markObligationNeedsCheckByInvitationId(invitationId);
+        settlementPaymentService.markObligationNeedsCheckByInvitationId(invitationId);
     }
 
     private SettlementInvitationDTO findInvitation(Long invitationId){

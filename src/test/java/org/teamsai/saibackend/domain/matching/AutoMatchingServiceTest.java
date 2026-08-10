@@ -17,7 +17,7 @@ import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
-import org.teamsai.saibackend.domain.payment.service.PaymentService;
+import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 class AutoMatchingServiceTest {
 
     @Mock
-    private PaymentService paymentService;
+    private SettlementPaymentService paymentService;
 
     private final AutoMatchingJudge autoMatchingJudge = new AutoMatchingJudge();
 

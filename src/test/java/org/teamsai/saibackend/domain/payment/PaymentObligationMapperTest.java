@@ -171,9 +171,10 @@ class PaymentObligationMapperTest {
                     settlement_status,
                     settlement_category,
                     title,
+                    total_amount,
                     created_at
                 )
-                VALUES (?, ?, 'SHARED', ?, 'FOOD', ?, NOW())
+                VALUES (?, ?, 'SHARED', ?, 'FOOD', ?, 100000, NOW())
                 """,
                 settlementId,
                 ownerId,
@@ -305,13 +306,14 @@ class PaymentObligationMapperTest {
                 INSERT INTO payment_record (
                     payment_record_id,
                     bank_transaction_id,
-                    obligation_id,
+                    payment_target_type,
+                    target_id,
                     amount,
                     source_type,
                     record_status,
                     recorded_at
                 )
-                VALUES (?, ?, ?, ?, 'AUTO_MATCH', ?, NOW())
+                VALUES (?, ?, 'SETTLEMENT', ?, ?, 'AUTO_MATCH', ?, NOW())
                 """,
                 paymentRecordId,
                 paymentRecordId,

@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const categorySelect = document.getElementById("settlement-category");
     const dueDateInput = document.getElementById("due-date");
     const totalAmountInput = document.getElementById("total-amount");
+    const settlementAccountSelect = document.getElementById("settlement-account");
+    const summaryAccount = document.getElementById("summary-account");
     const participantTokenInput = document.getElementById("participant-token");
     const lookupParticipantButton = document.getElementById("lookup-participant-button");
     const participantChips = document.getElementById("participant-chips");
@@ -29,8 +31,10 @@ document.addEventListener("DOMContentLoaded", () => {
     bindChoiceCards();
     bindTotalAmount();
     bindParticipantLookup();
+    bindSettlementAccount();
     updateParticipantView();
     loadCurrentUser();
+    loadLinkedAccounts();
 
     form.addEventListener("submit", submitSharedSettlement);
 
@@ -187,6 +191,72 @@ document.addEventListener("DOMContentLoaded", () => {
             setParticipantLookupLoading(false);
         }
     }
+    async function loadLinkedAccounts() {
+        const token = getAccessToken();
+
+        if (!token) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                "/api/linked-accounts",
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (response.status === 401 || response.status === 403) {
+                clearStoredAuth();
+                window.location.href = "/login?required=true";
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    "연동 계좌를 불러오지 못했습니다."
+                );
+            }
+
+            const responseBody = await readJsonSafely(response);
+
+            const accounts =
+                responseBody?.data ??
+                responseBody ??
+                [];
+
+            settlementAccountSelect.innerHTML =
+                '<option value="">계좌를 선택해 주세요</option>';
+
+            accounts.forEach((account) => {
+                const option =
+                    document.createElement("option");
+
+                option.value =
+                    account.linkedAccountId;
+
+                option.textContent = [
+                    account.bankName,
+                    account.accountAlias,
+                    account.maskedAccountNumber
+                ]
+                    .filter(Boolean)
+                    .join(" ");
+
+                settlementAccountSelect.appendChild(option);
+            });
+
+        } catch (error) {
+            console.error(
+                "연동 계좌 조회 실패",
+                error
+            );
+        }
+    }
 
     function normalizeLookupUser(user, requestedToken) {
         return {
@@ -296,12 +366,19 @@ document.addEventListener("DOMContentLoaded", () => {
             settlementCategory: categorySelect.value,
             title: titleInput.value.trim(),
             dueDate: dueDateInput.value,
-            totalAmount: rawTotalAmount ? Number(rawTotalAmount) : null,
-            invitations: Array.from(selectedParticipants.values()).map(
-                (participant) => ({
-                    userToken: participant.userToken
-                })
-            )
+            totalAmount: rawTotalAmount
+                ? Number(rawTotalAmount)
+                : null,
+
+            linkedAccountId: settlementAccountSelect.value
+                ? Number(settlementAccountSelect.value)
+                : null,
+
+            invitations:
+                Array.from(selectedParticipants.values())
+                    .map((participant) => ({
+                        userToken: participant.userToken
+                    }))
         };
 
         if (!validate(payload)) {
@@ -335,7 +412,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const responseBody = await readJsonSafely(response);
+            const responseBody =
+                await readJsonSafely(response);
 
             if (!response.ok) {
                 throw new Error(
@@ -347,11 +425,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const recentSettlement = {
                 ...responseBody,
-                settlementCategory: payload.settlementCategory,
+                settlementCategory:
+                    payload.settlementCategory,
                 splitType: "EQUAL",
                 dueDate: payload.dueDate,
                 totalAmount: payload.totalAmount,
-                participantCount: payload.invitations.length + 1
+                participantCount:
+                    payload.invitations.length + 1,
+                linkedAccountId:payload.linkedAccountId
             };
 
             sessionStorage.setItem(
@@ -360,7 +441,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             window.location.href =
-                `/settlements?created=${encodeURIComponent(responseBody.settlementId)}`;
+                `/settlements?created=${encodeURIComponent(
+                    responseBody.settlementId
+                )}`;
         } catch (error) {
             showToast(error.message || "요청 처리 중 오류가 발생했습니다.", true);
         } finally {
@@ -400,6 +483,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!Array.isArray(payload.invitations) || payload.invitations.length === 0) {
             setError("invitations", "납부자를 한 명 이상 추가해 주세요.");
+            valid = false;
+        }
+
+        if (!payload.linkedAccountId) {
+            setError(
+                "linkedAccountId",
+                "정산 수취 계좌를 선택해 주세요."
+            );
             valid = false;
         }
 
@@ -488,6 +579,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+
+
     function formatDate(value) {
         if (!value) {
             return "";
@@ -506,5 +599,22 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast.timer = window.setTimeout(() => {
             toast.classList.remove("visible");
         }, 3000);
+    }
+
+    function bindSettlementAccount() {
+        settlementAccountSelect.addEventListener(
+            "change",
+            () => {
+                const selectedOption =
+                    settlementAccountSelect.options[
+                        settlementAccountSelect.selectedIndex
+                    ];
+
+                summaryAccount.textContent =
+                    settlementAccountSelect.value
+                        ? selectedOption.text
+                        : "아직 설정되지 않음";
+            }
+        );
     }
 });
