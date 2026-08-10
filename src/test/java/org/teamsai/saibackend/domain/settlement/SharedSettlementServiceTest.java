@@ -11,6 +11,7 @@ import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSharedSettlementResponse;
+import org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.service.SettlementAccountService;
@@ -27,15 +28,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SharedSettlementService 단위 테스트")
@@ -384,6 +380,48 @@ class SharedSettlementServiceTest {
                 SETTLEMENT_ID,
                 LINKED_ACCOUNT_ID
             );
+    }
+
+    @Test
+    @DisplayName("사용자의 정산 목록을 조회한다")
+    void getSettlementListSuccess() {
+        Long userId = 1L;
+
+        List<SettlementListResponse> expected =
+                List.of(
+                        mock(SettlementListResponse.class),
+                        mock(SettlementListResponse.class)
+                );
+
+        when(settlementMapper.findAllByUserId(userId))
+                .thenReturn(expected);
+
+        List<SettlementListResponse> result =
+                sharedSettlementService.getSettlementList(userId);
+
+        assertThat(result)
+                .isEqualTo(expected);
+
+        verify(settlementMapper)
+                .findAllByUserId(userId);
+    }
+
+    @Test
+    @DisplayName("조회되는 정산이 없으면 빈 목록을 반환한다")
+    void getSettlementListReturnsEmptyList() {
+        Long userId = 1L;
+
+        when(settlementMapper.findAllByUserId(userId))
+                .thenReturn(List.of());
+
+        List<SettlementListResponse> result =
+                sharedSettlementService.getSettlementList(userId);
+
+        assertThat(result)
+                .isEmpty();
+
+        verify(settlementMapper)
+                .findAllByUserId(userId);
     }
 
     private CreateSettlementInvitationRequest invitation(
