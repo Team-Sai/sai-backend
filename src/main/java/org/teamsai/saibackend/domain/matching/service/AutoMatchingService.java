@@ -28,6 +28,7 @@ public class AutoMatchingService {
 
     private final AutoMatchingJudge autoMatchingJudge;
     private final SettlementPaymentService settlementPaymentService;
+    private final LoanPaymentService loanPaymentService;
 
     public AutoMatchingExecutionResult execute(
             List<MatchingTransaction> transactions,
@@ -174,24 +175,32 @@ public class AutoMatchingService {
 
         MatchingCandidate candidate = result.matchedCandidate();
 
-        if (candidate.targetType() != MatchingTargetType.SETTLEMENT) {
-            return AutoMatchingProcessResult.needsCheck();
+        // 1. SETTLEMENT(정산) 타입 처리
+        if (candidate.targetType() == MatchingTargetType.SETTLEMENT) {
+            settlementPaymentService.applyAutoMatchedPayment(
+                    candidate.targetId(), // 👈 obligationId -> targetId 로 수정
+                    transaction.transactionId(),
+                    transaction.amount()
+            );
+            return AutoMatchingProcessResult.applied(AppliedCandidateKey.from(candidate));
         }
 
-        settlementPaymentService.applyAutoMatchedPayment(
-                candidate.obligationId(),
-                transaction.transactionId(),
-                transaction.amount()
-        );
+        // 2. LOAN(차용증) 타입 처리
+        if (candidate.targetType() == MatchingTargetType.LOAN) {
+            loanPaymentService.applyAutoMatchedPayment(
+                    candidate.targetId(), // 👈 repayment_schedule의 schedule_id가 들어옴
+                    transaction.transactionId(),
+                    transaction.amount()
+            );
+            return AutoMatchingProcessResult.applied(AppliedCandidateKey.from(candidate));
+        }
 
-        return AutoMatchingProcessResult.applied(
-                AppliedCandidateKey.from(candidate)
-        );
+        return AutoMatchingProcessResult.needsCheck();
     }
 
     private record AppliedCandidateKey(
             MatchingTargetType targetType,
-            Long obligationId
+            Long targetId
     ) {
 
         private static AppliedCandidateKey from(
@@ -199,7 +208,7 @@ public class AutoMatchingService {
         ) {
             return new AppliedCandidateKey(
                     candidate.targetType(),
-                    candidate.obligationId()
+                    candidate.targetId()
             );
         }
     }
