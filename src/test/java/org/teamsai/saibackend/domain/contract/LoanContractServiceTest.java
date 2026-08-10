@@ -30,6 +30,7 @@ import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -264,6 +265,32 @@ class LoanContractServiceTest {
 
             verify(fileService, never()).saveSignatureFile(any(), any());
             verify(contractMapper, never()).updateCreditorSignature(any(), any(), any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("수신 차용증 목록 조회")
+    class FindPendingContractsByDebtorId {
+
+        @Test
+        @DisplayName("채무자로 지정된 서명 대기 중인 차용증 목록을 반환한다")
+        void findPendingContractsByDebtorIdSuccess() {
+            List<LoanContractResponse> pendingContracts = List.of(createResponse());
+            given(contractMapper.findPendingContractsByDebtorId(DEBTOR_ID)).willReturn(pendingContracts);
+
+            List<LoanContractResponse> result = loanContractService.findPendingContractsByDebtorId(DEBTOR_ID);
+
+            assertThat(result).isEqualTo(pendingContracts);
+        }
+
+        @Test
+        @DisplayName("서명 대기 중인 차용증이 없으면 빈 목록을 반환한다")
+        void findPendingContractsByDebtorIdReturnsEmptyList() {
+            given(contractMapper.findPendingContractsByDebtorId(DEBTOR_ID)).willReturn(List.of());
+
+            List<LoanContractResponse> result = loanContractService.findPendingContractsByDebtorId(DEBTOR_ID);
+
+            assertThat(result).isEmpty();
         }
     }
 
