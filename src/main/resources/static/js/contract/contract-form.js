@@ -2,13 +2,13 @@
   "use strict";
 
   const DRAFT_KEY = "loanContractDraft";
+  const IDENTITY_KEY = "identityVerificationId";
 
   const form = document.getElementById("contractForm");
   const statusEl = document.getElementById("formStatus");
   const statusBanner = document.getElementById("statusBanner");
   const nextBtn = document.getElementById("btnNext");
   const identityVerificationIdInput = document.getElementById("identityVerificationId");
-  const selectedLinkedAccountIdSelect = document.getElementById("selectedLinkedAccountId");
 
   if (!form) return;
 
@@ -16,7 +16,16 @@
   let contractId = params.get("contractId") || null;
   const viewMode = Boolean(contractId);
 
+  const identityVerificationIdFromUrl = params.get("identityVerificationId");
+  if (identityVerificationIdFromUrl) {
+    if (identityVerificationIdInput) {
+      identityVerificationIdInput.value = identityVerificationIdFromUrl;
+    }
+    sessionStorage.setItem(IDENTITY_KEY, identityVerificationIdFromUrl);
+  }
+
   const FIELD_IDS = [
+    "identityVerificationId",
     "principalAmount",
     "interestRate",
     "startDate",
@@ -25,14 +34,13 @@
     "creditorAddress",
     "contractAlias",
     "terms",
-    "selectedLinkedAccountId",
   ];
 
   function authHeaders(extra) {
     const token = sessionStorage.getItem("accessToken");
     return Object.assign(
-      token ? { Authorization: `Bearer ${token}` } : {},
-      extra || {}
+        token ? { Authorization: `Bearer ${token}` } : {},
+        extra || {}
     );
   }
 
@@ -46,6 +54,15 @@
     statusBanner.hidden = !text;
   }
 
+  function getSavedVerificationId() {
+
+    if (identityVerificationIdInput && identityVerificationIdInput.value.trim()) {
+      return identityVerificationIdInput.value.trim();
+    }
+
+    return sessionStorage.getItem(IDENTITY_KEY) || sessionStorage.getItem("verificationId") || "";
+  }
+
   function serializeForm() {
     const data = {};
     FIELD_IDS.forEach((id) => {
@@ -53,6 +70,9 @@
       if (!field) return;
       data[id] = field.value.trim();
     });
+
+
+    data.identityVerificationId = getSavedVerificationId();
 
     const checkedType = form.querySelector('input[name="repaymentType"]:checked');
     data.repaymentType = checkedType ? checkedType.value : null;
@@ -62,9 +82,6 @@
     }
     if (data.repaymentDay) {
       data.repaymentDay = Number(data.repaymentDay);
-    }
-    if (data.selectedLinkedAccountId) {
-      data.selectedLinkedAccountId = Number(data.selectedLinkedAccountId);
     }
     if (!data.terms) {
       data.terms = null;
@@ -83,11 +100,14 @@
     const creditorAddress = document.getElementById("creditorAddress");
     const contractAlias = document.getElementById("contractAlias");
 
-    if (!principal.value || Number(principal.value.replace(/,/g, "")) <= 0) {
+
+    const rawPrincipal = principal.value ? principal.value.replace(/,/g, "") : "";
+    if (!rawPrincipal || Number(rawPrincipal) <= 0) {
       showStatus("대출원금을 입력해 주세요.", true);
       principal.focus();
       return false;
     }
+
     if (!interestRate.value || Number(interestRate.value) <= 0 || Number(interestRate.value) > 20) {
       showStatus("연이자율은 0보다 크고 20% 이하여야 합니다.", true);
       interestRate.focus();
@@ -132,11 +152,7 @@
       contractAlias.focus();
       return false;
     }
-    if (!selectedLinkedAccountIdSelect || !selectedLinkedAccountIdSelect.value) {
-      showStatus("대출금을 지급할 계좌를 선택해 주세요.", true);
-      selectedLinkedAccountIdSelect?.focus();
-      return false;
-    }
+
     return true;
   }
 
@@ -150,25 +166,12 @@
     });
   }
 
-  nextBtn?.addEventListener("click", async () => {
+  nextBtn?.addEventListener("click", () => {
     if (!validate()) return;
 
-    try {
-
-      const response = await fetch("/api/contracts/write", {
-        method: "POST",
-        headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify(serializeForm())
-      });
-
-      if (!response.ok) throw new Error("차용증 생성 실패");
-
-      const contractId = await response.json();
-      window.location.href = `/contracts/${contractId}/signature`;
-
-    } catch (err) {
-      showStatus("차용증 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.", true);
-    }
+    
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(serializeForm()));
+    window.location.href = "/contracts/signature";
   });
 
   const principalInput = document.getElementById("principalAmount");
@@ -196,51 +199,6 @@
       document.getElementById("creditorBirthDateCell").textContent = user.birthDate || "-";
     } catch (err) {
 
-    }
-  }
-
-  async function loadSelectableAccounts() {
-    if (!selectedLinkedAccountIdSelect) return;
-
-    try {
-      const response = await fetch("/api/contracts/accounts", {
-        method: "GET",
-        headers: authHeaders({ Accept: "application/json" }),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const accounts = await response.json();
-
-      selectedLinkedAccountIdSelect.innerHTML = "";
-
-      if (!accounts || accounts.length === 0) {
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = "연동된 활성 계좌가 없습니다. 마이페이지에서 계좌를 연동해 주세요.";
-        selectedLinkedAccountIdSelect.appendChild(option);
-        selectedLinkedAccountIdSelect.disabled = true;
-        return;
-      }
-
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "계좌를 선택하세요";
-      selectedLinkedAccountIdSelect.appendChild(placeholder);
-
-      accounts.forEach((account) => {
-        const option = document.createElement("option");
-        option.value = account.linkedAccountId;
-        option.textContent = `${account.bankName} ${account.maskedAccountNumber} (${account.accountHolderName})`;
-        selectedLinkedAccountIdSelect.appendChild(option);
-      });
-
-      selectedLinkedAccountIdSelect.disabled = false;
-    } catch (err) {
-      selectedLinkedAccountIdSelect.innerHTML = "";
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "계좌 목록을 불러오지 못했습니다.";
-      selectedLinkedAccountIdSelect.appendChild(option);
-      selectedLinkedAccountIdSelect.disabled = true;
     }
   }
 
@@ -288,6 +246,5 @@
     loadExistingContract();
   } else {
     loadCreditorInfo();
-    loadSelectableAccounts();
   }
 })();

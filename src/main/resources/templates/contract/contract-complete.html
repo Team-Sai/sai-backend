@@ -5,9 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>금전소비대차계약 체결 완료</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="../../static/css/contract/contract-form.css" />
     <link rel="stylesheet" th:href="@{/css/contract/contract-complete.css}" href="../../static/css/contract/contract-complete.css" />
 </head>
 <body>
+
+<header class="topnav">
+  <div class="topnav__inner">
+    <div class="topnav__logo">사이월렛</div>
+
+    <nav class="topnav__menu">
+      <a class="topnav__link" href="#">서비스 소개</a>
+      <a class="topnav__link is-active" href="#">금전소비대차</a>
+      <a class="topnav__link" href="#">정산관리</a>
+      <a class="topnav__link" href="#">거래 일정</a>
+    </nav>
+
+    <a class="topnav__bell" href="/notifications" aria-label="알림">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+        <path d="M12 3a6 6 0 0 0-6 6v3.2c0 .5-.18 1-.5 1.4L4 15.5c-.6.7-.1 1.8.8 1.8h14.4c.9 0 1.4-1.1.8-1.8l-1.5-1.9a2.2 2.2 0 0 1-.5-1.4V9a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span class="topnav__bell-badge" id="topnavBellBadge" hidden></span>
+    </a>
+  </div>
+</header>
 
 <main class="success-container">
     <header class="success-header">
@@ -64,6 +86,21 @@
     </footer>
 </main>
 
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <strong>사이원장</strong>
+      <p>© Sai-Wonjang. All rights reserved.</p>
+    </div>
+    <nav>
+      <a href="#">이용약관</a>
+      <a href="#">개인정보처리방침</a>
+      <a href="#">고객센터</a>
+    </nav>
+  </div>
+</footer>
+
+<script th:src="@{/js/notification/topnav-notifications.js}" src="../../static/js/notification/topnav-notifications.js"></script>
 <script th:src="@{/js/contract/contract-complete.js}" src="../../static/js/contract/contract-complete.js"></script>
 </body>
 </html>
