@@ -1,7 +1,15 @@
 const contractId = document.getElementById('contractId').value;
 const canRequestChange = document.getElementById('canRequestChange').value === 'true';
 
-fetch(`/api/contracts/${contractId}/contract-detail`)
+function authHeaders(extra) {
+    const token = sessionStorage.getItem("accessToken");
+    return Object.assign(
+        token ? { Authorization: `Bearer ${token}` } : {},
+        extra || {}
+    );
+}
+
+fetch(`/api/contracts/${contractId}/contract-detail`, { headers: authHeaders() })
     .then(response => {
         if(!response.ok) {
             throw new Error("금전차용계약서 조회 실패")
