@@ -11,20 +11,18 @@ body {
   font-size: 14px;
   background-color: #f4f5f7;
   color: #111827;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
 }
 
 .success-container {
   width: 100%;
   max-width: 520px;
+  margin: 32px auto 80px;
   padding: 40px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  flex: 1 0 auto;
 }
 
 .success-header {

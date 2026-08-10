@@ -1,6 +1,14 @@
 const contractId = document.getElementById('contractId').value;
 
-fetch(`/api/contracts/${contractId}`)
+function authHeaders(extra) {
+    const token = sessionStorage.getItem("accessToken");
+    return Object.assign(
+        token ? { Authorization: `Bearer ${token}` } : {},
+        extra || {}
+    );
+}
+
+fetch(`/api/contracts/${contractId}`, { headers: authHeaders() })
     .then(response => {
         if (!response.ok) {
             throw new Error(('계약 조회 실패'));
@@ -33,7 +41,7 @@ document.getElementById('changeRequestForm').addEventListener('submit', function
 
     fetch(`/api/contracts/${contractId}/change-requests`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(requestBody)
     })
         .then(response => {
