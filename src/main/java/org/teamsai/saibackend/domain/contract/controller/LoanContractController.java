@@ -170,4 +170,13 @@ public class LoanContractController {
     ) {
         return contractService.findContract(contractId, userDetails.getUserId());
     }
+
+    @ResponseBody
+    @GetMapping("/api/contracts/{contractId}")
+    public LoanContractResponse getContract(
+            @PathVariable Long contractId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return contractService.findContract(contractId, userDetails.getUserId());
+    }
 }

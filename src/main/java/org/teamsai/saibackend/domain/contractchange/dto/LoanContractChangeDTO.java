@@ -20,6 +20,7 @@ public class LoanContractChangeDTO {
     private BigDecimal newInterestRate;
     private String newRepaymentType;
     private Integer newRepaymentDate;
+    private String newTerms;
     private ChangeRequestStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -182,7 +182,7 @@ class LoanContractServiceTest {
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
-                                    .isEqualTo(LoanContractErrorCode.DEBTOR_ALREADY_LINKED)
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
                     );
 
             verify(contractMapper, never()).updateDebtorId(any(), any());

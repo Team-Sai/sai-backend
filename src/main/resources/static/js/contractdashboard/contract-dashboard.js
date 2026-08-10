@@ -141,6 +141,10 @@ document.getElementById('sortSelect').addEventListener('change', (e) => {
     fetchDashboard();
 });
 
+document.getElementById('btnCreateContract').addEventListener('click', () => {
+    window.location.href = '/identity-test';
+})
+
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)

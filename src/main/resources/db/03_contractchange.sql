@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS loan_contract_change_request (
     new_interest_rate DECIMAL(5, 2) NULL CHECK (new_interest_rate >= 0),
     new_repayment_type VARCHAR(20) NULL,
     new_repayment_date INT NULL,
+    new_terms TEXT NULL,
     status VARCHAR(20) NOT NULL CHECK (
     status IN ('PENDING', 'APPROVED', 'REJECTED')
     ),
@@ -21,3 +22,6 @@ CREATE TABLE IF NOT EXISTS loan_contract_change_request (
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE loan_contract_change_request
+    ADD COLUMN IF NOT EXISTS new_terms TEXT NULL AFTER new_repayment_date;
