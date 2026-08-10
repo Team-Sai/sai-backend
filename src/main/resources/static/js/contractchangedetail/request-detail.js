@@ -1,7 +1,15 @@
 const contractId = document.getElementById('contractId').value;
 const changeRequestId = document.getElementById('changeRequestId').value;
 
-fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}`)
+function authHeaders(extra) {
+    const token = sessionStorage.getItem("accessToken");
+    return Object.assign(
+        token ? { Authorization: `Bearer ${token}` } : {},
+        extra || {}
+    );
+}
+
+fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}`, { headers: authHeaders() })
     .then(response => {
         if (!response.ok) {
             throw new Error('변경 요청 조회 실패');
