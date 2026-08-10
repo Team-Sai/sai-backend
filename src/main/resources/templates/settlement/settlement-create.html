@@ -181,22 +181,32 @@
                 <small class="field-error" data-error-for="invitations"></small>
             </section>
 
-            <section class="form-card pending-card">
-                <div class="card-title card-title-between">
-                    <div>
-                        <span class="card-icon">▥</span>
-                        <h2>정산 확인 계좌</h2>
-                    </div>
-                    <button type="button" class="inline-action" disabled>계좌 선택</button>
+            <section class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">▥</span>
+                    <h2>정산 수취 계좌</h2>
                 </div>
 
-                <div class="disabled-account">
-                    <span class="account-icon">▣</span>
-                    <div>
-                        <strong>정산 생성 후 계좌를 설정합니다.</strong>
-                        <p>SettlementAccount 기능이 연결되면 연동 계좌를 선택할 수 있습니다.</p>
-                    </div>
-                </div>
+                <label class="form-field">
+                    <span>수취 계좌 <em>(필수)</em></span>
+
+                    <select
+                        id="settlement-account"
+                        name="linkedAccountId"
+                        required
+                    >
+                        <option value="">계좌를 선택해 주세요</option>
+                    </select>
+
+                    <small>
+                        사이원장에 연동한 본인 계좌 중 정산금을 받을 계좌를 선택해 주세요.
+                    </small>
+
+                    <small
+                        class="field-error"
+                        data-error-for="linkedAccountId"
+                    ></small>
+                </label>
             </section>
         </form>
 
@@ -235,7 +245,9 @@
 
                 <div class="account-summary">
                     <span>▣ 정산 계좌</span>
-                    <strong>아직 설정되지 않음</strong>
+                    <strong id="summary-account">
+                        아직 설정되지 않음
+                    </strong>
                 </div>
 
                 <dl class="summary-list compact">

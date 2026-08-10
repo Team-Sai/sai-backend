@@ -1,25 +1,21 @@
 package org.teamsai.saibackend.domain.payment.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO;
-import org.teamsai.saibackend.domain.payment.dto.PaymentRecordDTO;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
-import org.teamsai.saibackend.domain.payment.mapper.PaymentRecordMapper;
 import org.teamsai.saibackend.domain.payment.type.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-public class PaymentService {
+public class SettlementPaymentService {
 
     private final PaymentObligationMapper paymentObligationMapper;
-    private final PaymentRecordMapper paymentRecordMapper;
+    private final PaymentRecordService paymentRecordService;
 
     @Transactional
     public void applyAutoMatchedPayment(
@@ -43,16 +39,17 @@ public class PaymentService {
     ) {
         validatePaymentAmount(amount);
         validateBankTransactionId(bankTransactionId);
+        validateNotDuplicatePaymentRecord(bankTransactionId);
 
         PaymentObligationDTO obligation =
                 paymentObligationMapper.findByIdForUpdate(paymentObligationId)
                         .orElseThrow(PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND::toException);
 
         validateActiveObligation(obligation);
-        validateNotDuplicatePaymentRecord(bankTransactionId);
 
-        BigDecimal paidAmount = paymentRecordMapper
-                .sumConfirmedAmountByObligationId(paymentObligationId);
+        BigDecimal paidAmount = paymentRecordService
+                .sumConfirmedAmountByTarget(PaymentTargetType.SETTLEMENT,
+                        paymentObligationId);
 
         BigDecimal remainingAmount =
                 obligation.getExpectedAmount().subtract(paidAmount);
@@ -61,23 +58,13 @@ public class PaymentService {
             throw PaymentErrorCode.PAYMENT_AMOUNT_EXCEEDS_REMAINING_AMOUNT.toException();
         }
 
-        PaymentRecordDTO paymentRecord = PaymentRecordDTO.builder()
-                .bankTransactionId(bankTransactionId)
-                .obligationId(paymentObligationId)
-                .amount(amount)
-                .sourceType(sourceType)
-                .recordStatus(RecordStatus.CONFIRMED)
-                .recordedAt(LocalDateTime.now())
-                .build();
-
-        try {
-            int insertedCount = paymentRecordMapper.insert(paymentRecord);
-            if (insertedCount != 1) {
-                throw PaymentErrorCode.PAYMENT_RECORD_CREATE_FAILED.toException();
-            }
-        } catch (DuplicateKeyException exception) {
-            throw PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException();
-        }
+        paymentRecordService.createConfirmedRecord(
+                bankTransactionId,
+                PaymentTargetType.SETTLEMENT,
+                paymentObligationId,
+                amount,
+                sourceType
+        );
 
         BigDecimal newPaidAmount = paidAmount.add(amount);
         PaymentStatus newPaymentStatus = calculatePaymentStatus(
@@ -146,10 +133,12 @@ public class PaymentService {
     private void validateNotDuplicatePaymentRecord(
             Long bankTransactionId
     ) {
-        if (paymentRecordMapper.existsByBankTransactionId(
+        if (paymentRecordService.existsByBankTransactionId(
                 bankTransactionId
         )) {
-            throw PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException();
+            throw PaymentErrorCode
+                    .DUPLICATE_PAYMENT_RECORD
+                    .toException();
         }
     }
 

@@ -28,6 +28,16 @@ public enum SettlementErrorCode implements BaseErrorCode<DomainException> {
             "이미 종료된 정산입니다."
     ),
 
+    SETTLEMENT_CLOSE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 종료 처리에 실패했습니다."
+    ),
+
+    SETTLEMENT_NOT_CLOSABLE(
+            HttpStatus.CONFLICT,
+            "모든 납부의무가 완료되지 않아 정산을 종료할 수 없습니다."
+    ),
+
     ALREADY_SETTLEMENT_PARTICIPANT(
             HttpStatus.CONFLICT,
             "이미 참여 중인 회원입니다."
@@ -87,7 +97,26 @@ public enum SettlementErrorCode implements BaseErrorCode<DomainException> {
     SETTLEMENT_PARTICIPANT_STATUS_UPDATE_FAILED(
             HttpStatus.BAD_REQUEST,
             "참여자 상태 변경에 실패했습니다."
+    ),SETTLEMENT_ACCOUNT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "정산 수취 계좌가 설정되어 있지 않습니다."
+    ),
+
+    INVALID_SETTLEMENT_ACCOUNT(
+            HttpStatus.BAD_REQUEST,
+            "본인에게 연동된 계좌만 정산 수취 계좌로 설정할 수 있습니다."
+    ),
+
+    SETTLEMENT_ACCOUNT_CREATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 수취 계좌 설정에 실패했습니다."
+    ),
+
+    SETTLEMENT_ACCOUNT_UPDATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 수취 계좌 변경에 실패했습니다."
     );
+
 
     private final HttpStatus httpStatus;
     private final String message;

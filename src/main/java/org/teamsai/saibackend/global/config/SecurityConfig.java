@@ -73,10 +73,8 @@ public class SecurityConfig {
                                         "/dashboard",
                                         "/settlements",
                                         "/settlements/**",
-                                        "/contracts/new",
-                                        "/contracts/signature",
-                                        "/contracts/*/approve",
-                                        "/contracts/*/approve/signature"
+                                        "/contracts/**",
+                                        "/notifications"
 
                                 )
                                 .permitAll()

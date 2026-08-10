@@ -27,8 +27,11 @@ public interface LoanContractMapper {
     void updateCreditorSignature(
             @Param("contractId") Long contractId,
             @Param("signatureData") String signatureData,
+            @Param("debtorId") Long debtorId,
             @Param("status") ContractStatus status
     );
+
+    List<LoanContractResponse> findPendingContractsByDebtorId(@Param("debtorId") Long debtorId);
 
     void updateDebtorSignature(
             @Param("contractId") Long contractId,

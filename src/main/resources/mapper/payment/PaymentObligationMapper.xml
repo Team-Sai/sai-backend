@@ -71,7 +71,8 @@
         JOIN users u
         ON u.user_id = si.user_id
         LEFT JOIN payment_record pr
-        ON pr.obligation_id = po.payment_obligation_id
+        ON pr.payment_target_type = 'SETTLEMENT'
+        AND pr.target_id = po.payment_obligation_id
         AND pr.record_status = 'CONFIRMED'
         WHERE sa.linked_account_id = #{linkedAccountId}
         AND sa.selected_at &lt;= #{transactionAt}
