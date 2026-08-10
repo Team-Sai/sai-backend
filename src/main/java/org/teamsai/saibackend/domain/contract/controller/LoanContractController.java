@@ -15,7 +15,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
-import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
@@ -91,30 +90,31 @@ public class LoanContractController {
     @PatchMapping(value = "/api/contracts/{contractId}/signature", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ContractStatus submitSignature(
             @PathVariable Long contractId,
+            @Parameter(description = "채무자 회원 토큰", example = "SAI_ABCD1234")
+            @RequestParam("debtorUserToken") String debtorUserToken,
             @RequestParam("signature") MultipartFile signature,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return contractService.submitCreditorSignature(contractId, userDetails.getUserId(), signature);
+        return contractService.submitCreditorSignature(contractId, userDetails.getUserId(), debtorUserToken, signature);
     }
 
     @Operation(
             summary = "채무자 계약 합류",
-            description = "본인인증을 완료한 채무자가 차용증에 채무자로 연결됩니다."
+            description = "로그인한 사용자를 차용증의 채무자로 연결합니다. 이미 로그인 세션에서 본인 확인이 되어 있으므로 별도의 본인인증 절차 없이 사용자 토큰(인증 정보)만으로 연결합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "채무자 연결 성공"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
             @ApiResponse(responseCode = "404", description = "차용증을 찾을 수 없음"),
-            @ApiResponse(responseCode = "409", description = "이미 채무자가 연결되었거나 본인인증이 완료되지 않음")
+            @ApiResponse(responseCode = "409", description = "이미 채무자가 연결되었거나 채권자 본인이 채무자로 연결을 시도함")
     })
     @ResponseBody
     @PatchMapping("/api/contracts/{contractId}/debtor")
     public void linkDebtor(
             @PathVariable Long contractId,
-            @Valid @RequestBody LoanContractDebtorLinkRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        contractService.linkDebtor(contractId, userDetails.getUserId(), request);
+        contractService.linkDebtor(contractId, userDetails.getUserId());
     }
 
     @Operation(
