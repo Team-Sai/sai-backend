@@ -14,11 +14,14 @@ import org.springframework.web.bind.annotation.*;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSharedSettlementResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementCloseResponse;
+import org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementPaymentStatusResponse;
 import org.teamsai.saibackend.domain.settlement.service.SettlementCloseService;
 import org.teamsai.saibackend.domain.settlement.service.SettlementPaymentStatusService;
 import org.teamsai.saibackend.domain.settlement.service.SharedSettlementService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
+
+import java.util.List;
 
 @Tag(
         name = "정산 API",
@@ -171,6 +174,35 @@ public class SettlementController {
                 settlementId,
                 userDetails.getUserId()
         );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "내 정산 목록 조회",
+            description = "현재 로그인한 사용자가 생성하거나 참여 중인 정산 목록을 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "정산 목록 조회 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자"
+            )
+    })
+    @GetMapping("/api/settlements")
+    @ResponseBody
+    public ResponseEntity<List<SettlementListResponse>>
+    getSettlementList(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails
+    ) {
+        List<SettlementListResponse> response =
+                sharedSettlementService.getSettlementList(
+                        userDetails.getUserId()
+                );
 
         return ResponseEntity.ok(response);
     }
