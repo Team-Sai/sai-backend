@@ -7,7 +7,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.teamsai.saibackend.domain.payment.service.PaymentService;
+import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementInvitationMapper;
@@ -47,7 +47,7 @@ class SettlementInvitationResponseServiceTest {
     private SettlementInvitationValidator invitationValidator;
 
     @Mock
-    private PaymentService paymentService;
+    private SettlementPaymentService paymentService;
 
     @Mock
     private SettlementParticipantService participantService;

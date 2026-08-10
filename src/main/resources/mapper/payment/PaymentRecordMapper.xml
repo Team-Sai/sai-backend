@@ -5,11 +5,12 @@
 
 <mapper namespace="org.teamsai.saibackend.domain.payment.mapper.PaymentRecordMapper">
 
-    <select id="sumConfirmedAmountByObligationId"
+    <select id="sumConfirmedAmountByTarget"
             resultType="java.math.BigDecimal">
         SELECT COALESCE(SUM(amount), 0)
         FROM payment_record
-        WHERE obligation_id = #{obligationId}
+        WHERE payment_target_type = #{paymentTargetType}
+        AND target_id = #{targetId}
         AND record_status = 'CONFIRMED'
     </select>
 
@@ -29,7 +30,8 @@
             keyColumn="payment_record_id">
         INSERT INTO payment_record (
         bank_transaction_id,
-        obligation_id,
+        payment_target_type,
+        target_id,
         amount,
         source_type,
         record_status,
@@ -37,7 +39,8 @@
         )
         VALUES (
         #{bankTransactionId},
-        #{obligationId},
+        #{paymentTargetType},
+        #{targetId},
         #{amount},
         #{sourceType},
         #{recordStatus},

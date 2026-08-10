@@ -8,7 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.teamsai.saibackend.domain.payment.service.PaymentService;
+import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
@@ -75,7 +75,7 @@ class SettlementInvitationServiceTest {
     private SettlementParticipantService participantService;
 
     @Mock
-    private PaymentService paymentService;
+    private SettlementPaymentService paymentService;
 
     @InjectMocks
     private SettlementInvitationService settlementInvitationService;
