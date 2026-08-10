@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS repayment_schedule (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (schedule_id),
-    CONSTRAINT fk_repayment_schedule_contract FOREIGN KEY (contract_id) REFERENCES loan_contract(contract_id)
+    CONSTRAINT fk_repayment_schedule_contract FOREIGN KEY (contract_id) REFERENCES loan_contract(contract_id) ON DELETE CASCADE
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;
