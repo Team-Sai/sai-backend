@@ -147,4 +147,9 @@ public class RepaymentScheduleService {
 
         repaymentScheduleMapper.insertAll(newSchedules);
     }
+
+    public RepaymentScheduleDTO getScheduleByScheduleId(Long scheduleId) {
+        return repaymentScheduleMapper.findById(scheduleId)
+                .orElseThrow(() -> RepaymentScheduleErrorCode.SCHEDULE_NOT_FOUND.toException());
+    }
 }

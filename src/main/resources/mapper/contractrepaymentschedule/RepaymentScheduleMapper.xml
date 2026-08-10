@@ -65,4 +65,19 @@
         AND status = 'PENDING'
     </delete>
 
+    <select id="findById" resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
+        SELECT
+            schedule_id            AS scheduleId,
+            contract_id            AS contractId,
+            sequence               AS sequence,
+            due_date               AS dueDate,
+            principal_due          AS principalDue,
+            interest_due           AS interestDue,
+            total_payment_due      AS totalPaymentDue,
+            remaining_principal    AS remainingPrincipal,
+            status                 AS status,
+            paid_at                AS paidAt
+        FROM repayment_schedule
+        WHERE schedule_id = #{scheduleId}
+    </select>
 </mapper>

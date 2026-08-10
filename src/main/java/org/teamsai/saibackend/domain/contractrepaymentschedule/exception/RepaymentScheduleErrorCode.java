@@ -10,7 +10,9 @@ import org.teamsai.saibackend.global.exception.DomainException;
 @RequiredArgsConstructor
 public enum RepaymentScheduleErrorCode implements BaseErrorCode<DomainException> {
 
-    INVALID_CONTRACT_PERIOD(HttpStatus.BAD_REQUEST, "대출 기간은 최소 1개월 이상이어야 합니다.");
+    INVALID_CONTRACT_PERIOD(HttpStatus.BAD_REQUEST, "대출 기간은 최소 1개월 이상이어야 합니다."),
+
+    SCHEDULE_NOT_FOUND(HttpStatus.BAD_REQUEST,"상환 스케줄을 찾을 수 없습니다");
 
     private final HttpStatus httpStatus;
     private final String message;

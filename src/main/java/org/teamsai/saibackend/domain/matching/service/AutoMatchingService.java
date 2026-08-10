@@ -178,7 +178,7 @@ public class AutoMatchingService {
         // 1. SETTLEMENT(정산) 타입 처리
         if (candidate.targetType() == MatchingTargetType.SETTLEMENT) {
             settlementPaymentService.applyAutoMatchedPayment(
-                    candidate.targetId(), // 👈 obligationId -> targetId 로 수정
+                    candidate.targetId(),
                     transaction.transactionId(),
                     transaction.amount()
             );

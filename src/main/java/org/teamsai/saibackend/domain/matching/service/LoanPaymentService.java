@@ -13,7 +13,6 @@ import org.teamsai.saibackend.domain.payment.type.SourceType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -26,16 +25,10 @@ public class LoanPaymentService {
     @Transactional
     public void applyAutoMatchedPayment(Long targetId, Long bankTransactionId, BigDecimal amount) {
 
-        Optional<RepaymentScheduleDTO> scheduleOpt = repaymentScheduleService.findNextPendingSchedule(targetId);
-
-        if (scheduleOpt.isEmpty()) {
-            throw new IllegalArgumentException("유효한 상환 스케줄이 존재하지 않습니다. scheduleId=" + targetId);
-        }
-
-        RepaymentScheduleDTO schedule = scheduleOpt.get();
+        RepaymentScheduleDTO schedule = repaymentScheduleService.getScheduleByScheduleId(targetId);
 
         if (schedule.getStatus() != RepaymentScheduleStatus.PENDING) {
-            throw new IllegalStateException("이미 상환 완료되었거나 처리 불가능한 스케줄입니다.");
+            throw new IllegalStateException("이미 상환 완료되었거나 처리 불가능한 스케줄입니다. scheduleId=" + targetId);
         }
 
         BigDecimal existingConfirmedAmount = paymentRecordService.sumConfirmedAmountByTarget(
@@ -47,9 +40,9 @@ public class LoanPaymentService {
             existingConfirmedAmount = BigDecimal.ZERO;
         }
 
-        // 4. 초과 상환 검증 (기존 납부금 + 이번 입금액 > 상환 예정 금액)
         BigDecimal expectedTotalAmount = schedule.getTotalPaymentDue();
         BigDecimal totalPaidAfterThis = existingConfirmedAmount.add(amount);
+
 
         if (totalPaidAfterThis.compareTo(expectedTotalAmount) > 0) {
             log.warn("[LoanPaymentService] 초과 상환 발생 - scheduleId: {}, 예정금액: {}, 시도금액: {}",
@@ -57,18 +50,21 @@ public class LoanPaymentService {
             throw new IllegalArgumentException("상환 예정 금액을 초과하여 결제할 수 없습니다.");
         }
 
-        // 5. PaymentRecord 저장 (PaymentRecordService의 실제 메서드 createConfirmedRecord 사용)
+        if (totalPaidAfterThis.compareTo(expectedTotalAmount) < 0) {
+            log.info("[LoanPaymentService] 회차 금액 미달 (부분 납부 기록만 생성) - scheduleId: {}, 누적납부액: {}, 예정액: {}",
+                    targetId, totalPaidAfterThis, expectedTotalAmount);
+        }
+
         Long paymentRecordId = paymentRecordService.createConfirmedRecord(
-                bankTransactionId,       // 은행 거래 내역 ID
-                PaymentTargetType.LOAN,  // LOAN
-                targetId,               // schedule_id
-                amount,                 // 상환 금액
-                SourceType.AUTO         // 자동 매칭인 경우 SourceType.AUTO (상황에 맞춰 SourceType 지정)
+                bankTransactionId,
+                PaymentTargetType.LOAN,
+                targetId,
+                amount,
+                SourceType.AUTO_MATCH
         );
 
         log.info("[LoanPaymentService] PaymentRecord 생성 완료 - paymentRecordId: {}", paymentRecordId);
 
-        // 6. 완납 조건 충족 시 RepaymentScheduleService를 통한 상태 변경 (PAID)
         if (totalPaidAfterThis.compareTo(expectedTotalAmount) == 0) {
             repaymentScheduleService.markAsPaid(targetId, LocalDateTime.now());
             log.info("[LoanPaymentService] 상환 상태 완료(PAID) 처리 - scheduleId: {}", targetId);
