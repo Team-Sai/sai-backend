@@ -9,6 +9,7 @@ import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardContractRowResponse;
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardResponse;
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardSummaryResponse;
+import org.teamsai.saibackend.domain.contractdashboard.exception.DashboardErrorCode;
 import org.teamsai.saibackend.domain.contractdashboard.type.ContractRole;
 import org.teamsai.saibackend.domain.contractdashboard.type.DashboardContractStatus;
 import org.teamsai.saibackend.domain.contractdashboard.type.DashboardPaymentStatus;
@@ -43,32 +44,28 @@ public class DashboardService {
                 .map(c -> c.getPreviousContractId())
                 .collect(Collectors.toSet());
 
-        List<LoanContractResponse> visibleContracts = contract.stream()
+        return contract.stream()
                 .filter(c -> !supersededIds.contains(c.getContractId()) && c.getStatus() == ContractStatus.COMPLETED)
                 .toList();
-
-
-        return visibleContracts;
     }
 
     private BigDecimal calculateTotalRemaining(List<RepaymentScheduleDTO> schedules) {
-        BigDecimal totalRemaining = schedules.stream()
+
+        return schedules.stream()
                 .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING)
                 .map(RepaymentScheduleDTO::getTotalPaymentDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return totalRemaining;
     }
 
     private BigDecimal calculateThisMonthDue(List<RepaymentScheduleDTO> schedules) {
         YearMonth thisMonth = YearMonth.now();
-        BigDecimal thisMonthDue = schedules.stream()
+        return schedules.stream()
                 .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING
                         && YearMonth.from(s.getDueDate()).equals(thisMonth))
                 .map(RepaymentScheduleDTO::getTotalPaymentDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return thisMonthDue;
+
     }
 
     private DashboardPaymentStatus determinePaymentStatus(BigDecimal totalRemaining, BigDecimal thisMonthDue) {
@@ -77,7 +74,7 @@ public class DashboardService {
         } else if (thisMonthDue.compareTo(BigDecimal.ZERO) > 0) {
             return DashboardPaymentStatus.WAITING;
         }
-        return DashboardPaymentStatus.PAID;
+        return DashboardPaymentStatus.NO_DUE_THIS_MONTH;
     }
 
     private DashboardContractStatus determineContractStatus(BigDecimal totalRemaining) {
@@ -167,14 +164,13 @@ public class DashboardService {
     }
 
     private LocalDate calculateNearestDueDate(List<RepaymentScheduleDTO> schedules) {
-        YearMonth thisMonth = YearMonth.now();
-        LocalDate thisMonthDue = schedules.stream()
-                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING
-                        && YearMonth.from(s.getDueDate()).equals(thisMonth))
+        return schedules.stream()
+                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING)
                 .map(RepaymentScheduleDTO::getDueDate)
-                .findFirst().orElse(null);
+                .min(LocalDate::compareTo)
+                .orElse(null);
 
-        return thisMonthDue;
+
 
 
     }
@@ -182,10 +178,14 @@ public class DashboardService {
     private List<DashboardContractRowResponse> filterByKeyword(List<DashboardContractRowResponse> rows, String keyword) {
         if(keyword == null || keyword.isEmpty()) {
             return rows;
-        }else {
-            return rows.stream().filter(c -> c.getContractAlias().contains(keyword))
-                    .toList();
         }
+        String lowerKeyword = keyword.toLowerCase();
+
+            return rows.stream()
+                    .filter(c -> c.getContractAlias() != null &&
+                            c.getContractAlias().toLowerCase().contains(lowerKeyword))
+                    .toList();
+
     }
 
     private List<DashboardContractRowResponse> filterByRole(List<DashboardContractRowResponse> rows, String filterType) {
@@ -200,14 +200,15 @@ public class DashboardService {
                     .filter(c -> c.getRole() == ContractRole.DEBTOR)
                     .toList();
         }
-        return rows;
+        throw DashboardErrorCode.INVALID_ROLE_FILTER.toException();
     }
 
     private List<DashboardContractRowResponse> sortRows(List<DashboardContractRowResponse> rows, String sortType) {
         List<DashboardContractRowResponse> sorted = new ArrayList<>(rows);
 
-        if (sortType == null) {
-            sortType = "";
+        if (sortType == null || sortType.isEmpty()) {
+            sorted.sort(Comparator.comparing(DashboardContractRowResponse::getContractId).reversed());
+            return sorted;
         }
 
 
@@ -219,7 +220,7 @@ public class DashboardService {
             case "AMOUNT_ASC" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getTotalRemainingAmount));
             case "STATUS" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getContractStatus));
             case "DEADLINE" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getMaturityDate));
-            default -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getContractId).reversed());
+            default -> throw DashboardErrorCode.INVALID_SORT_TYPE.toException();
         }
         return sorted;
     }
@@ -248,7 +249,7 @@ public class DashboardService {
         List<DashboardContractRowResponse> filtered = filterByKeyword(allRows, keyword);
         List<DashboardContractRowResponse> roleFiltered = filterByRole(filtered, roleFilter);
         List<DashboardContractRowResponse> sorted = sortRows(roleFiltered, sortType);
-        int totalCount = sorted.size();
+        long totalCount = sorted.size();
         List<DashboardContractRowResponse> pagedRows = paginate(sorted, page, 5);
         int totalPages = (int) Math.ceil((double) totalCount / 5);
 
