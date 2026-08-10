@@ -19,7 +19,7 @@ public class ContractChangeRequest {
     @Future(message = "변경 만기일은 오늘 이후 날짜여야 합니다.")
     private LocalDate newMaturityDate;
 
-    @DecimalMin(value = "0", message = "이율은 0 이상이어야 합니다.")
+    @DecimalMin(value = "0", inclusive = false, message = "이율은 0보다 커야 합니다.")
     @DecimalMax(value = "20", message = "이율은 20% 이하여야 합니다.")
     @Digits(integer = 2, fraction = 2, message = "이율은 소수점 둘째 자리까지만 입력 가능합니다.")
     private BigDecimal newInterestRate;
