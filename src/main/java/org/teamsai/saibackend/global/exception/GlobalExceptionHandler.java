@@ -8,6 +8,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -33,6 +34,34 @@ public class GlobalExceptionHandler {
                         ErrorResponse.of(
                                 httpStatus.value(),
                                 exception.getMessage()
+                        )
+                );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException exception
+    ) {
+        log.warn(
+                "요청 파라미터 타입 불일치: name={}, value={}, requiredType={}",
+                exception.getName(),
+                exception.getValue(),
+                exception.getRequiredType() != null
+                        ? exception.getRequiredType().getSimpleName()
+                        : "unknown"
+        );
+
+        String message = String.format(
+                "요청 파라미터 '%s'의 값이 올바르지 않습니다.",
+                exception.getName()
+        );
+
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        ErrorResponse.of(
+                                HttpStatus.BAD_REQUEST.value(),
+                                message
                         )
                 );
     }
