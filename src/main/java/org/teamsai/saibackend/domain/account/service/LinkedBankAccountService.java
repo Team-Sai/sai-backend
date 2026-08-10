@@ -106,6 +106,34 @@ public class LinkedBankAccountService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public boolean isOwnedLinkedAccount(
+        Long userId,
+        Long linkedAccountId
+    ) {
+        if (userId == null || linkedAccountId == null) {
+            return false;
+        }
+
+        List<LinkedBankAccountDTO> linkedAccounts =
+            linkedBankAccountMapper
+                .selectLinkedAccountsByUserId(userId);
+
+        if (linkedAccounts == null) {
+            return false;
+        }
+
+        return linkedAccounts.stream()
+            .anyMatch(account ->
+                Objects.equals(
+                    account.getLinkedAccountId(),
+                    linkedAccountId
+                )
+                    && account.getConnectionStatus()
+                    == ConnectionStatus.AVAILABLE
+            );
+    }
+
     private List<LinkedBankAccountDTO> insertAllSkippingDuplicates(List<LinkedBankAccountDTO> candidates) {
         List<LinkedBankAccountDTO> savedDtos = new ArrayList<>();
 

@@ -13,6 +13,7 @@ import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettleme
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSharedSettlementResponse;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
+import org.teamsai.saibackend.domain.settlement.service.SettlementAccountService;
 import org.teamsai.saibackend.domain.settlement.service.SettlementInvitationService;
 import org.teamsai.saibackend.domain.settlement.service.SharedSettlementService;
 import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
@@ -29,6 +30,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -41,11 +44,16 @@ class SharedSettlementServiceTest {
     private static final Long OWNER_ID = 1L;
     private static final Long SETTLEMENT_ID = 15L;
 
+    private static final Long LINKED_ACCOUNT_ID = 10L;
+
     @Mock
     private SettlementMapper settlementMapper;
 
     @Mock
     private SettlementInvitationService invitationService;
+
+    @Mock
+    private SettlementAccountService settlementAccountService;
 
     @InjectMocks
     private SharedSettlementService sharedSettlementService;
@@ -138,6 +146,12 @@ class SharedSettlementServiceTest {
                         same(request.getInvitations()),
                         expectedAmountCaptor.capture()
                 );
+        verify(settlementAccountService)
+            .selectAccount(
+                OWNER_ID,
+                SETTLEMENT_ID,
+                LINKED_ACCOUNT_ID
+            );
 
         assertThat(expectedAmountCaptor.getValue())
                 .isEqualByComparingTo("150000");
@@ -305,8 +319,71 @@ class SharedSettlementServiceTest {
                 .title("제주도 여행비 정산")
                 .dueDate(LocalDate.now().plusDays(7))
                 .totalAmount(totalAmount)
+                .linkedAccountId(LINKED_ACCOUNT_ID)
                 .invitations(invitations)
                 .build();
+    }
+
+    @Test
+    @DisplayName("수취 계좌 설정에 실패하면 정산 생성에 실패한다")
+    void failsWhenSettlementAccountSelectionFails() {
+
+        CreateSharedSettlementRequest request =
+            createRequest(
+                new BigDecimal("30000"),
+                List.of(
+                    invitation("SAI_USER_A")
+                )
+            );
+
+        given(settlementMapper
+            .insertSettlement(any(SettlementDTO.class)))
+            .willAnswer(invocation -> {
+                SettlementDTO settlement =
+                    invocation.getArgument(0);
+
+                settlement.setSettlementId(
+                    SETTLEMENT_ID
+                );
+
+                return 1;
+            });
+
+        given(
+            settlementAccountService.selectAccount(
+                OWNER_ID,
+                SETTLEMENT_ID,
+                LINKED_ACCOUNT_ID
+            )
+        ).willThrow(
+            SettlementErrorCode
+                .SETTLEMENT_ACCOUNT_CREATE_FAILED
+                .toException()
+        );
+
+        assertThatThrownBy(() ->
+            sharedSettlementService.create(
+                OWNER_ID,
+                request
+            )
+        ).isInstanceOf(DomainException.class);
+
+        then(invitationService)
+            .should()
+            .inviteAll(
+                OWNER_ID,
+                SETTLEMENT_ID,
+                request.getInvitations(),
+                new BigDecimal("15000")
+            );
+
+        then(settlementAccountService)
+            .should()
+            .selectAccount(
+                OWNER_ID,
+                SETTLEMENT_ID,
+                LINKED_ACCOUNT_ID
+            );
     }
 
     private CreateSettlementInvitationRequest invitation(
