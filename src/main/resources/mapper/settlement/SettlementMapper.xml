@@ -64,6 +64,7 @@
         settlement_category,
         title,
         split_type,
+        total_amount,
         due_date,
         cycle_rule,
         start_date,
@@ -89,6 +90,7 @@
         settlement_category,
         title,
         split_type,
+        total_amount,
         due_date,
         cycle_rule,
         start_date,
@@ -143,6 +145,43 @@
         )
 
         ORDER BY s.settlement_id DESC
+
+    </select>
+    <select id="findDetailById"
+            resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse">
+
+        SELECT
+        s.settlement_id AS settlementId,
+        s.title AS title,
+        s.settlement_category AS settlementCategory,
+        s.settlement_type AS settlementType,
+        s.settlement_status AS settlementStatus,
+        s.split_type AS splitType,
+        s.due_date AS dueDate,
+        s.created_at AS createdAt,
+
+        CASE
+        WHEN s.owner_id = #{userId}
+        THEN 'OWNER'
+
+        WHEN EXISTS (
+        SELECT 1
+        FROM settlement_invitation si
+        JOIN settlement_participant sp
+        ON sp.invitation_id = si.invitation_id
+
+        WHERE si.settlement_id = s.settlement_id
+        AND si.user_id = #{userId}
+        AND si.invitation_status = 'ACCEPTED'
+        AND sp.participant_status = 'ACTIVE'
+        )
+        THEN 'MEMBER'
+
+        ELSE 'NONE'
+        END AS role
+
+        FROM settlement s
+        WHERE s.settlement_id = #{settlementId}
 
     </select>
 
