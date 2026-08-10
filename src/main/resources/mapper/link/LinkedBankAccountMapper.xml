@@ -31,4 +31,32 @@
         #{connectionStatus}, #{createdAt}, #{updatedAt}
         )
     </insert>
+
+    <select id="findById" resultType="org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO">
+        SELECT
+        linked_account_id,
+        user_id AS userId,
+        account_id AS accountId,
+        account_number AS accountNumber,
+        bank_code AS bankCode,
+        account_holder_name AS accountHolderName,
+        connection_status AS connectionStatus,
+        balance AS balance,
+        created_at AS createdAt
+        FROM linked_bank_account
+        WHERE linked_account_id = #{linkedAccountId}
+    </select>
+
+    <select id="findLastSyncedTransactionIdById" resultType="java.lang.Long">
+        SELECT last_synced_transaction_id
+        FROM linked_bank_account
+        WHERE linked_account_id = #{linkedAccountId}
+    </select>
+
+    <update id="updateLastSyncedTransactionId">
+        UPDATE linked_bank_account
+        SET last_synced_transaction_id = #{transactionId}
+        WHERE linked_account_id = #{linkedAccountId}
+        AND (last_synced_transaction_id IS NULL OR last_synced_transaction_id &lt; #{transactionId})
+    </update>
 </mapper>
