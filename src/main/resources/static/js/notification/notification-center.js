@@ -28,6 +28,43 @@ function initNotificationCenter() {
         );
     }
 
+    function escapeHtml(value) {
+        if (value == null) {
+            return '';
+        }
+
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function loadDeletedIds() {
+        try {
+            return JSON.parse(sessionStorage.getItem('deletedNotificationIds') || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveDeletedIds(ids) {
+        const merged = new Set([...loadDeletedIds(), ...ids]);
+        sessionStorage.setItem('deletedNotificationIds', JSON.stringify(Array.from(merged)));
+    }
+
+    function formatTimeLabel(dateStr) {
+        if (!dateStr) return '';
+        const diffMs = Math.max(Date.now() - new Date(dateStr).getTime(), 0);
+        const minutes = Math.floor(diffMs / (60 * 1000));
+        const hours = Math.floor(diffMs / (60 * 60 * 1000));
+        const days = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+        if (days > 0) return `${days}일 전`;
+        if (hours > 0) return `${hours}시간 전`;
+        return `${minutes}분 전`;
+    }
+
     async function fetchNotifications() {
         try {
             const response = await fetch('/api/contracts/incoming', {
@@ -37,15 +74,16 @@ function initNotificationCenter() {
             if (!response.ok) throw new Error('불러오기 실패');
 
             const contracts = await response.json();
+            const deletedIds = loadDeletedIds();
+            const visibleContracts = contracts.filter(c => !deletedIds.includes(c.contractId));
 
-
-            state.notifications = contracts.map(c => ({
+            state.notifications = visibleContracts.map(c => ({
                 id: c.contractId,
                 category: 'SIGN',
                 type: 'contract_sent_to_debtor',
                 title: '서명 요청 알림',
-                description: `${c.creditorName || '채권자'}님과의 차용증 계약서에 서명이 필요합니다. 지금 확인하고 진행해 주세요.`,
-                time_label: '방금 전',
+                description: `${escapeHtml(c.creditorName) || '채권자'}님과의 차용증 계약서에 서명이 필요합니다. 지금 확인하고 진행해 주세요.`,
+                time_label: formatTimeLabel(c.updatedAt),
                 is_read: false,
                 cta_label: '서명하러 가기',
                 cta_url: `/contracts/${c.contractId}/approve`
@@ -189,9 +227,14 @@ function initNotificationCenter() {
         }
 
         if (confirm(`선택한 ${state.selectedIds.size}개의 알림을 삭제하시겠습니까?`)) {
+            const deletedArray = Array.from(state.selectedIds);
+
+            saveDeletedIds(deletedArray);
+
             state.notifications = state.notifications.filter(n => !state.selectedIds.has(n.id));
             state.selectedIds.clear();
             state.isDeleteMode = false;
+            
             render();
         }
     });

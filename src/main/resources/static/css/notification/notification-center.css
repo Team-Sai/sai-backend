@@ -26,7 +26,8 @@ body { margin: 0; background: var(--page); font-family: 'Pretendard', sans-serif
 .topnav__menu { display: flex; gap: 20px; flex: 1; }
 .topnav__link { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 600; }
 .topnav__link.is-active { color: var(--primary); }
-.topnav__bell { background: none; border: none; cursor: pointer; color: var(--muted); }
+.topnav__bell { position: relative; background: none; border: none; cursor: pointer; color: var(--muted); }
+.topnav__badge { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
 
 .page { max-width: 900px; margin: 32px auto 80px; padding: 0 20px; }
 .page-title { font-size: 24px; font-weight: 700; margin: 0 0 6px; }

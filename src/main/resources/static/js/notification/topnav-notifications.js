@@ -24,6 +24,15 @@
     },
   ];
 
+  function initTopnavBellClick() {
+    const bell = document.querySelector(".topnav__bell");
+    if (!bell) return;
+
+    bell.addEventListener("click", () => {
+      location.href = "/notifications";
+    });
+  }
+
   async function initTopnavBellBadge() {
     const badge = document.getElementById("topnavBellBadge");
     if (!badge) return;
@@ -39,9 +48,14 @@
     badge.hidden = total === 0;
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initTopnavBellBadge);
-  } else {
+  function init() {
+    initTopnavBellClick();
     initTopnavBellBadge();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
   }
 })();
