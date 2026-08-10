@@ -109,7 +109,7 @@ public class LoanContractController {
 
     @Operation(
             summary = "채무자 계약 합류",
-            description = "로그인한 사용자를 차용증의 채무자로 연결합니다. 이미 로그인 세션에서 본인 확인이 되어 있으므로 별도의 본인인증 절차 없이 사용자 토큰(인증 정보)만으로 연결합니다."
+            description = "로그인한 사용자를 차용증의 채무자로 연결합니다. 이미 로그인 세션에서 본인 확인이 되어 있으므로 별도의 본인인증 절차 없이 사용자 토큰(인증 정보)만으로 연결합니다. 본인인증은 이후 전자서명 제출 단계에서 검증합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "채무자 연결 성공"),
@@ -145,17 +145,23 @@ public class LoanContractController {
 
     @Operation(
             summary = "채무자 승인 및 전자서명 제출",
-            description = "채무자가 본인 주소를 입력하고 수기로 남긴 서명 이미지를 저장한 뒤, 상태를 완료(COMPLETED)로 변경합니다."
+            description = "채무자가 본인 주소를 입력하고 수기로 남긴 서명 이미지를 저장한 뒤, 상태를 완료(COMPLETED)로 변경합니다. 제출 직전 본인인증을 완료한 identityVerificationId를 소비하여 검증합니다."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "서명 제출 성공"),
+            @ApiResponse(responseCode = "400", description = "본인인증이 완료되지 않았거나 유효하지 않음"),
+    })
     @ResponseBody
     @PatchMapping(value = "/api/contracts/{contractId}/approve", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ContractStatus approveByDebtor(
             @PathVariable Long contractId,
             @Parameter(description = "채무자 본인 주소") @RequestParam("debtorAddress") String debtorAddress,
             @Parameter(description = "채무자 서명 이미지 파일") @RequestParam("signature") MultipartFile signature,
+            @Parameter(description = "본인인증 요청 식별값", example = "identity-verification-a1b2c3d4")
+            @RequestParam String identityVerificationId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return contractService.submitDebtorSignature(contractId, userDetails.getUserId(), debtorAddress, signature);
+        return contractService.submitDebtorSignature(contractId, userDetails.getUserId(), debtorAddress, signature, identityVerificationId);
     }
 
     @Operation(
