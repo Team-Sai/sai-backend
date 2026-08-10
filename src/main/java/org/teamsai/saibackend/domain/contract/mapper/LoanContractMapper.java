@@ -7,6 +7,7 @@ import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -26,8 +27,11 @@ public interface LoanContractMapper {
     void updateCreditorSignature(
             @Param("contractId") Long contractId,
             @Param("signatureData") String signatureData,
+            @Param("debtorId") Long debtorId,
             @Param("status") ContractStatus status
     );
+
+    List<LoanContractResponse> findPendingContractsByDebtorId(@Param("debtorId") Long debtorId);
 
     void updateDebtorSignature(
             @Param("contractId") Long contractId,

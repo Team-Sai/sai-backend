@@ -109,6 +109,16 @@ button { font-family: inherit; }
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+.topnav__badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
 .topnav__bell:hover {
   background: #f1f3f7;
   color: var(--primary);
