@@ -49,8 +49,7 @@ public class LoanContractRequest {
 
     private String terms;
 
-    // 계좌 연동이 아직 해결되지 않아 임시 주석 처리. 연동 정상화되면 복구할 것.
-    // @NotNull(message = "대출금을 받을 계좌를 선택해주세요.")
+    @NotNull(message = "대출금을 받을 계좌를 선택해주세요.")
     private Long selectedLinkedAccountId;
 
     @AssertTrue(message = "대출 만기일은 시작일 이후여야 합니다.")

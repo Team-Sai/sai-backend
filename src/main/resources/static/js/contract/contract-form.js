@@ -34,7 +34,14 @@
     "creditorAddress",
     "contractAlias",
     "terms",
+    "selectedLinkedAccountId",
   ];
+
+  const linkedAccountSelect = document.getElementById("selectedLinkedAccountId");
+  const loanAccountSummary = document.getElementById("loanAccountSummary");
+  const loanAccountBank = document.getElementById("loanAccountBank");
+  const loanAccountNumber = document.getElementById("loanAccountNumber");
+  const loanAccountHolder = document.getElementById("loanAccountHolder");
 
   function authHeaders(extra) {
     const token = sessionStorage.getItem("accessToken");
@@ -185,6 +192,62 @@
     });
   }
 
+  function escapeHtml(value) {
+    if (value == null) return "";
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+  }
+
+  function updateLoanAccountSummary(account) {
+    if (!account) {
+      loanAccountSummary.hidden = true;
+      return;
+    }
+    loanAccountBank.textContent = account.bankName || "-";
+    loanAccountNumber.textContent = account.maskedAccountNumber || "-";
+    loanAccountHolder.textContent = account.accountHolderName || "-";
+    loanAccountSummary.hidden = false;
+  }
+
+  async function loadLinkedAccounts() {
+    if (!linkedAccountSelect) return;
+
+    try {
+      const response = await fetch("/api/contracts/accounts", {
+        method: "GET",
+        headers: authHeaders({ Accept: "application/json" }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const accounts = await response.json();
+
+      if (!Array.isArray(accounts) || accounts.length === 0) {
+        linkedAccountSelect.innerHTML = '<option value="">연동된 계좌가 없습니다</option>';
+        return;
+      }
+
+      linkedAccountSelect.innerHTML =
+          '<option value="">계좌를 선택해 주세요</option>' +
+          accounts.map((account) => `
+            <option value="${account.linkedAccountId}">
+              ${escapeHtml(account.bankName)} · ${escapeHtml(account.accountHolderName)} · ${escapeHtml(account.maskedAccountNumber)}
+            </option>
+          `).join("");
+
+      linkedAccountSelect.addEventListener("change", () => {
+        const selected = accounts.find(
+            (account) => String(account.linkedAccountId) === linkedAccountSelect.value
+        );
+        updateLoanAccountSummary(selected);
+      });
+    } catch (err) {
+      linkedAccountSelect.innerHTML = '<option value="">계좌 목록을 불러오지 못했습니다</option>';
+    }
+  }
+
   async function loadCreditorInfo() {
     try {
       const response = await fetch("/api/users/me", {
@@ -241,6 +304,8 @@
       showStatus("차용증 조회에 실패했습니다.", true);
     }
   }
+
+  loadLinkedAccounts();
 
   if (viewMode) {
     loadExistingContract();
