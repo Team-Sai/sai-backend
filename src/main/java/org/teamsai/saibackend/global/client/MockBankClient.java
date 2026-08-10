@@ -10,6 +10,7 @@ import org.springframework.web.client.RestClient;
 import org.teamsai.saibackend.domain.account.dto.response.AccountDetailResponse;
 import org.teamsai.saibackend.domain.account.dto.response.LinkableAccountResponse;
 import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
+import org.teamsai.saibackend.domain.transaction.dto.response.BankTransactionResponse;
 
 import java.util.List;
 
@@ -70,6 +71,19 @@ public class MockBankClient {
                         .retrieve()
                         .body(AccountDetailResponse.class)
         );
+    }
+
+    public List<BankTransactionResponse> getTransactions(Long accountId, String userKey, Long afterTransactionId) {
+        List<BankTransactionResponse> response = restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/mock-bank/accounts/{accountId}/transactions")
+                        .queryParam("afterTransactionId", afterTransactionId)
+                        .build(accountId))
+                .header(USER_KEY_HEADER, userKey)
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<BankTransactionResponse>>() {});
+
+        return requireBody(response);
     }
 
     private record MockBankLinkRequest(String name, String userToken) {}
