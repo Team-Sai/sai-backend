@@ -21,6 +21,7 @@ import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
 import org.teamsai.saibackend.domain.user.service.UserService;
 
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -67,6 +68,12 @@ public class LoanContractService {
         contractMapper.updateCreditorSignature(contractId, savedPath, ContractStatus.PENDING);
 
         return ContractStatus.PENDING;
+    }
+
+    //알림센터를 위한 코드, 채권자가 채무자에게 차용증을 전송한 상태
+    @Transactional(readOnly = true)
+    public List<LoanContractResponse> findPendingContractsByDebtorId(Long debtorId) {
+        return contractMapper.findPendingContractsByDebtorId(debtorId);
     }
 
     @Transactional
