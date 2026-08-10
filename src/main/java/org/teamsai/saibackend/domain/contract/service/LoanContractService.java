@@ -108,7 +108,7 @@ public class LoanContractService {
         }
 
         if (contract.getStatus() == ContractStatus.COMPLETED) {
-            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();   // ← 추가
+            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
         }
 
 
@@ -116,7 +116,7 @@ public class LoanContractService {
         contractMapper.updateDebtorSignature(contractId, debtorAddress, savedPath, ContractStatus.COMPLETED);
 
         if (contract.getPreviousContractId() != null) {
-            eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));   // ← 추가
+            eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));
         }
 
         return ContractStatus.COMPLETED;

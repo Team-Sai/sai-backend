@@ -10,6 +10,9 @@ import java.util.List;
 @Builder
 public class RepaymentScheduleSummaryResponse {
 
+    private String creditorName;
+    private String debtorName;
+
     private BigDecimal totalScheduledAmount;
     private BigDecimal paidAmount;
     private BigDecimal remainingAmount;
