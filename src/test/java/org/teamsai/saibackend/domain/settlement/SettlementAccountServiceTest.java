@@ -21,17 +21,13 @@ import org.teamsai.saibackend.domain.settlement.type.SettlementAccountStatus;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SettlementAccountService 단위 테스트")
@@ -76,11 +72,10 @@ class SettlementAccountServiceTest {
             when(settlementMapper.findById(SETTLEMENT_ID))
                     .thenReturn(Optional.of(settlement));
 
-            when(linkedBankAccountService.getLinkedAccountIds(OWNER_ID))
-                    .thenReturn(List.of(
-                            FIRST_LINKED_ACCOUNT_ID,
-                            SECOND_LINKED_ACCOUNT_ID
-                    ));
+            when(linkedBankAccountService.isOwnedLinkedAccount(
+                    OWNER_ID,
+                    FIRST_LINKED_ACCOUNT_ID
+            )).thenReturn(true);
 
             when(
                     settlementAccountMapper
@@ -173,10 +168,10 @@ class SettlementAccountServiceTest {
             when(settlementMapper.findById(SETTLEMENT_ID))
                     .thenReturn(Optional.of(settlement));
 
-            when(linkedBankAccountService.getLinkedAccountIds(OWNER_ID))
-                    .thenReturn(List.of(
-                            FIRST_LINKED_ACCOUNT_ID
-                    ));
+            when(linkedBankAccountService.isOwnedLinkedAccount(
+                    OWNER_ID,
+                    FIRST_LINKED_ACCOUNT_ID
+            )).thenReturn(true);
 
             when(
                     settlementAccountMapper
@@ -227,11 +222,10 @@ class SettlementAccountServiceTest {
             when(settlementMapper.findById(SETTLEMENT_ID))
                     .thenReturn(Optional.of(settlement));
 
-            when(linkedBankAccountService.getLinkedAccountIds(OWNER_ID))
-                    .thenReturn(List.of(
-                            FIRST_LINKED_ACCOUNT_ID,
-                            SECOND_LINKED_ACCOUNT_ID
-                    ));
+            when(linkedBankAccountService.isOwnedLinkedAccount(
+                    OWNER_ID,
+                    SECOND_LINKED_ACCOUNT_ID
+            )).thenReturn(true);
 
             when(
                     settlementAccountMapper
@@ -348,10 +342,10 @@ class SettlementAccountServiceTest {
             when(settlementMapper.findById(SETTLEMENT_ID))
                     .thenReturn(Optional.of(settlement));
 
-            when(linkedBankAccountService.getLinkedAccountIds(OWNER_ID))
-                    .thenReturn(List.of(
-                            FIRST_LINKED_ACCOUNT_ID
-                    ));
+            when(linkedBankAccountService.isOwnedLinkedAccount(
+                    OWNER_ID,
+                    SECOND_LINKED_ACCOUNT_ID
+            )).thenReturn(false);
 
             assertThatThrownBy(
                     () -> settlementAccountService
@@ -409,11 +403,10 @@ class SettlementAccountServiceTest {
             when(settlementMapper.findById(SETTLEMENT_ID))
                     .thenReturn(Optional.of(settlement));
 
-            when(linkedBankAccountService.getLinkedAccountIds(OWNER_ID))
-                    .thenReturn(List.of(
-                            FIRST_LINKED_ACCOUNT_ID,
-                            SECOND_LINKED_ACCOUNT_ID
-                    ));
+            when(linkedBankAccountService.isOwnedLinkedAccount(
+                    OWNER_ID,
+                    SECOND_LINKED_ACCOUNT_ID
+            )).thenReturn(true);
 
             when(
                     settlementAccountMapper
@@ -453,10 +446,10 @@ class SettlementAccountServiceTest {
             when(settlementMapper.findById(SETTLEMENT_ID))
                     .thenReturn(Optional.of(settlement));
 
-            when(linkedBankAccountService.getLinkedAccountIds(OWNER_ID))
-                    .thenReturn(List.of(
-                            FIRST_LINKED_ACCOUNT_ID
-                    ));
+            when(linkedBankAccountService.isOwnedLinkedAccount(
+                    OWNER_ID,
+                    FIRST_LINKED_ACCOUNT_ID
+            )).thenReturn(true);
 
             when(
                     settlementAccountMapper
