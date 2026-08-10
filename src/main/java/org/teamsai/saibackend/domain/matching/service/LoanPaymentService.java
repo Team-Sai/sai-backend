@@ -6,7 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleStatus;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
+import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.service.PaymentRecordService;
 import org.teamsai.saibackend.domain.payment.type.PaymentTargetType;
 import org.teamsai.saibackend.domain.payment.type.SourceType;
@@ -28,7 +30,8 @@ public class LoanPaymentService {
         RepaymentScheduleDTO schedule = repaymentScheduleService.getScheduleByScheduleId(targetId);
 
         if (schedule.getStatus() != RepaymentScheduleStatus.PENDING) {
-            throw new IllegalStateException("이미 상환 완료되었거나 처리 불가능한 스케줄입니다. scheduleId=" + targetId);
+            log.warn("[LoanPaymentService] 처리 불가능한 스케줄 상태 - scheduleId: {}, status: {}", targetId, schedule.getStatus());
+            throw RepaymentScheduleErrorCode.SCHEDULE_NOT_PENDING.toException();
         }
 
         BigDecimal existingConfirmedAmount = paymentRecordService.sumConfirmedAmountByTarget(
@@ -47,7 +50,7 @@ public class LoanPaymentService {
         if (totalPaidAfterThis.compareTo(expectedTotalAmount) > 0) {
             log.warn("[LoanPaymentService] 초과 상환 발생 - scheduleId: {}, 예정금액: {}, 시도금액: {}",
                     targetId, expectedTotalAmount, totalPaidAfterThis);
-            throw new IllegalArgumentException("상환 예정 금액을 초과하여 결제할 수 없습니다.");
+            throw PaymentErrorCode.PAYMENT_AMOUNT_EXCEEDS_REMAINING_AMOUNT.toException();
         }
 
         if (totalPaidAfterThis.compareTo(expectedTotalAmount) < 0) {

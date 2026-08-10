@@ -12,7 +12,9 @@ public enum RepaymentScheduleErrorCode implements BaseErrorCode<DomainException>
 
     INVALID_CONTRACT_PERIOD(HttpStatus.BAD_REQUEST, "대출 기간은 최소 1개월 이상이어야 합니다."),
 
-    SCHEDULE_NOT_FOUND(HttpStatus.BAD_REQUEST,"상환 스케줄을 찾을 수 없습니다");
+    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND,"상환 스케줄을 찾을 수 없습니다"),
+
+    SCHEDULE_NOT_PENDING(HttpStatus.CONFLICT, "이미 상환 완료되었거나 처리 불가능한 스케줄입니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

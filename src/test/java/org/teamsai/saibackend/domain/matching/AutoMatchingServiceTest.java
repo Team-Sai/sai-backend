@@ -13,6 +13,7 @@ import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.policy.AutoMatchingJudge;
 import org.teamsai.saibackend.domain.matching.service.AutoMatchingService;
+import org.teamsai.saibackend.domain.matching.service.LoanPaymentService;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
@@ -39,6 +40,9 @@ class AutoMatchingServiceTest {
     @Mock
     private SettlementPaymentService paymentService;
 
+    @Mock
+    private LoanPaymentService loanPaymentService;
+
     private final AutoMatchingJudge autoMatchingJudge = new AutoMatchingJudge();
 
     private AutoMatchingService autoMatchingService;
@@ -47,7 +51,8 @@ class AutoMatchingServiceTest {
     void setUp() {
         autoMatchingService = new AutoMatchingService(
                 autoMatchingJudge,
-                paymentService
+                paymentService,
+                loanPaymentService
         );
     }
 
@@ -203,8 +208,8 @@ class AutoMatchingServiceTest {
         }
 
         @Test
-        @DisplayName("매칭 가능한 후보가 대여금이면 자동 납부 반영을 호출하지 않고 확인 필요로 처리한다")
-        void executeDoesNotApplyPaymentWhenLoanCandidateIsMatchable() {
+        @DisplayName("매칭 가능한 후보가 대여금이면 대여금 납부 서비스를 통해 자동 반영을 호출한다")
+        void executeAppliesLoanPaymentWhenLoanCandidateIsMatchable() {
             MatchingTransaction transaction = transaction(
                     101L,
                     AutoMatchingTransactionType.DEPOSIT,
@@ -224,10 +229,57 @@ class AutoMatchingServiceTest {
                     List.of(candidate)
             );
 
+            verify(loanPaymentService).applyAutoMatchedPayment(
+                    1L,
+                    101L,
+                    new BigDecimal("10000")
+            );
             verify(paymentService, never()).applyAutoMatchedPayment(
                     org.mockito.ArgumentMatchers.any(),
                     org.mockito.ArgumentMatchers.any(),
                     org.mockito.ArgumentMatchers.any()
+            );
+
+            assertThat(result.totalTransactionCount()).isEqualTo(1);
+            assertThat(result.appliedCount()).isEqualTo(1);
+            assertThat(result.needsCheckCount()).isZero();
+            assertThat(result.unmatchedCount()).isZero();
+        }
+
+        @Test
+        @DisplayName("대여금 납부 반영 중 비즈니스 예외가 발생하면 확인 필요로 분류한다")
+        void executeClassifiesLoanPaymentBusinessExceptionAsNeedsCheck() {
+            MatchingTransaction transaction = transaction(
+                    101L,
+                    AutoMatchingTransactionType.DEPOSIT,
+                    "HongGilDong",
+                    "10000"
+            );
+
+            MatchingCandidate candidate = candidate(
+                    MatchingTargetType.LOAN,
+                    1L,
+                    "HongGilDong",
+                    "10000"
+            );
+
+            doThrow(PaymentErrorCode.PAYMENT_OBLIGATION_NOT_ACTIVE.toException())
+                    .when(loanPaymentService)
+                    .applyAutoMatchedPayment(
+                            1L,
+                            101L,
+                            new BigDecimal("10000")
+                    );
+
+            AutoMatchingExecutionResult result = autoMatchingService.execute(
+                    List.of(transaction),
+                    List.of(candidate)
+            );
+
+            verify(loanPaymentService).applyAutoMatchedPayment(
+                    1L,
+                    101L,
+                    new BigDecimal("10000")
             );
 
             assertThat(result.totalTransactionCount()).isEqualTo(1);
@@ -315,10 +367,15 @@ class AutoMatchingServiceTest {
                     101L,
                     new BigDecimal("10000")
             );
+            verify(loanPaymentService, times(1)).applyAutoMatchedPayment(
+                    1L,
+                    102L,
+                    new BigDecimal("20000")
+            );
 
             assertThat(result.totalTransactionCount()).isEqualTo(2);
-            assertThat(result.appliedCount()).isEqualTo(1);
-            assertThat(result.needsCheckCount()).isEqualTo(1);
+            assertThat(result.appliedCount()).isEqualTo(2);
+            assertThat(result.needsCheckCount()).isZero();
             assertThat(result.unmatchedCount()).isZero();
         }
 

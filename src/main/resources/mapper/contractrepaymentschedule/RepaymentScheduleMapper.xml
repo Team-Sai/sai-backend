@@ -79,5 +79,6 @@
             paid_at                AS paidAt
         FROM repayment_schedule
         WHERE schedule_id = #{scheduleId}
+        FOR UPDATE
     </select>
 </mapper>

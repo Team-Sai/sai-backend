@@ -10,11 +10,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleStatus;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.matching.service.LoanPaymentService;
+import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.service.PaymentRecordService;
 import org.teamsai.saibackend.domain.payment.type.PaymentTargetType;
 import org.teamsai.saibackend.domain.payment.type.SourceType;
+import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -134,7 +137,11 @@ class LoanPaymentServiceTest {
 
             assertThatThrownBy(() -> loanPaymentService.applyAutoMatchedPayment(
                     SCHEDULE_ID, BANK_TRANSACTION_ID, new BigDecimal("10000")
-            )).isInstanceOf(IllegalStateException.class);
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(RepaymentScheduleErrorCode.SCHEDULE_NOT_PENDING)
+            );
 
             verify(paymentRecordService, never()).createConfirmedRecord(any(), any(), any(), any(), any());
             verify(repaymentScheduleService, never()).markAsPaid(any(), any());
@@ -151,7 +158,11 @@ class LoanPaymentServiceTest {
 
             assertThatThrownBy(() -> loanPaymentService.applyAutoMatchedPayment(
                     SCHEDULE_ID, BANK_TRANSACTION_ID, new BigDecimal("40000")
-            )).isInstanceOf(IllegalArgumentException.class);
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(PaymentErrorCode.PAYMENT_AMOUNT_EXCEEDS_REMAINING_AMOUNT)
+            );
 
             verify(paymentRecordService, never()).createConfirmedRecord(any(), any(), any(), any(), any());
             verify(repaymentScheduleService, never()).markAsPaid(any(), any());
