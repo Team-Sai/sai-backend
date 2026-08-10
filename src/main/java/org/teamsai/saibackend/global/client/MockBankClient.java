@@ -77,9 +77,9 @@ public class MockBankClient {
         List<BankTransactionResponse> response = restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/mock-bank/accounts/{accountId}/transactions")
-                        .queryParam("userKey", userKey)
                         .queryParam("afterTransactionId", afterTransactionId)
                         .build(accountId))
+                .header(USER_KEY_HEADER, userKey)
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<BankTransactionResponse>>() {});
 

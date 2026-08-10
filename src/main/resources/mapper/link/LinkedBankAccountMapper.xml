@@ -32,7 +32,7 @@
         )
     </insert>
 
-    <select id="findById" resultType="org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO">>
+    <select id="findById" resultType="org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO">
         SELECT
         linked_account_id,
         user_id AS userId,
