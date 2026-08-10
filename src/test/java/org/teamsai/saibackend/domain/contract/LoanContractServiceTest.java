@@ -10,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
-import org.teamsai.saibackend.domain.contract.dto.request.LoanContractDebtorLinkRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
@@ -23,6 +22,7 @@ import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.identity.exception.IdentityErrorCode;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.service.UserService;
@@ -47,7 +47,7 @@ class LoanContractServiceTest {
     private static final Long CREDITOR_ID = 1L;
     private static final Long DEBTOR_ID = 2L;
     private static final Long OTHER_USER_ID = 999L;
-    private static final String DEBTOR_EMAIL = "debtor@example.com";
+    private static final String DEBTOR_USER_TOKEN = "SAI_ABCD1234";
     private static final Long CONTRACT_ID = 1L;
     private static final String IDENTITY_VERIFICATION_ID = "identity-verification-abc123";
 
@@ -145,20 +145,15 @@ class LoanContractServiceTest {
     @DisplayName("채무자 계약 합류")
     class LinkDebtor {
 
-        private final LoanContractDebtorLinkRequest linkRequest =
-                new LoanContractDebtorLinkRequest(IDENTITY_VERIFICATION_ID);
-
         @Test
-        @DisplayName("본인인증을 마친 채무자를 계약에 연결한다")
+        @DisplayName("로그인한 사용자를 본인인증 없이 채무자로 계약에 연결한다")
         void linkDebtorSuccess() {
             given(contractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createResponseWithoutDebtor()));
 
-            loanContractService.linkDebtor(CONTRACT_ID, DEBTOR_ID, linkRequest);
+            loanContractService.linkDebtor(CONTRACT_ID, DEBTOR_ID);
 
-            verify(identityService).consume(
-                    DEBTOR_ID, IDENTITY_VERIFICATION_ID, IdentityPurpose.LOAN_CONTRACT
-            );
+            verify(identityService, never()).consume(any(), any(), any());
             verify(contractMapper).updateDebtorId(CONTRACT_ID, DEBTOR_ID);
         }
 
@@ -167,7 +162,7 @@ class LoanContractServiceTest {
         void linkDebtorFailsWhenContractNotFound() {
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> loanContractService.linkDebtor(CONTRACT_ID, DEBTOR_ID, linkRequest))
+            assertThatThrownBy(() -> loanContractService.linkDebtor(CONTRACT_ID, DEBTOR_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
@@ -178,19 +173,18 @@ class LoanContractServiceTest {
         }
 
         @Test
-        @DisplayName("이미 채무자가 연결되어 있으면 예외가 발생하고 본인인증을 실행하지 않는다")
+        @DisplayName("이미 채무자가 연결되어 있으면 예외가 발생하고 연결하지 않는다")
         void linkDebtorFailsWhenAlreadyLinked() {
             given(contractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createResponse()));
 
-            assertThatThrownBy(() -> loanContractService.linkDebtor(CONTRACT_ID, OTHER_USER_ID, linkRequest))
+            assertThatThrownBy(() -> loanContractService.linkDebtor(CONTRACT_ID, OTHER_USER_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
                                     .isEqualTo(LoanContractErrorCode.DEBTOR_ALREADY_LINKED)
                     );
 
-            verify(identityService, never()).consume(any(), any(), any());
             verify(contractMapper, never()).updateDebtorId(any(), any());
         }
 
@@ -200,32 +194,11 @@ class LoanContractServiceTest {
             given(contractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createResponseWithoutDebtor()));
 
-            assertThatThrownBy(() -> loanContractService.linkDebtor(CONTRACT_ID, CREDITOR_ID, linkRequest))
+            assertThatThrownBy(() -> loanContractService.linkDebtor(CONTRACT_ID, CREDITOR_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
                                     .isEqualTo(LoanContractErrorCode.CANNOT_CREATE_CONTRACT_TO_SELF)
-                    );
-
-            verify(identityService, never()).consume(any(), any(), any());
-            verify(contractMapper, never()).updateDebtorId(any(), any());
-        }
-
-        @Test
-        @DisplayName("본인인증을 완료하지 않았으면 예외가 발생하고 연결하지 않는다")
-        void linkDebtorFailsWhenIdentityNotVerified() {
-            given(contractMapper.findContractById(CONTRACT_ID))
-                    .willReturn(Optional.of(createResponseWithoutDebtor()));
-
-            willThrow(IdentityErrorCode.IDENTITY_VERIFICATION_CONSUME_FAILED.toException())
-                    .given(identityService)
-                    .consume(DEBTOR_ID, IDENTITY_VERIFICATION_ID, IdentityPurpose.LOAN_CONTRACT);
-
-            assertThatThrownBy(() -> loanContractService.linkDebtor(CONTRACT_ID, DEBTOR_ID, linkRequest))
-                    .isInstanceOfSatisfying(
-                            DomainException.class,
-                            exception -> assertThat(exception.getErrorCode())
-                                    .isEqualTo(IdentityErrorCode.IDENTITY_VERIFICATION_CONSUME_FAILED)
                     );
 
             verify(contractMapper, never()).updateDebtorId(any(), any());
@@ -243,11 +216,15 @@ class LoanContractServiceTest {
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
             given(fileService.saveSignatureFile(CONTRACT_ID, signature))
                     .willReturn("uploads/signatures/1_signature.png");
+            given(userService.findRequestTarget(CREDITOR_ID, DEBTOR_USER_TOKEN))
+                    .willReturn(UserDTO.builder().userId(DEBTOR_ID).build());
 
-            ContractStatus status = loanContractService.submitCreditorSignature(CONTRACT_ID, CREDITOR_ID, signature);
+            ContractStatus status = loanContractService.submitCreditorSignature(
+                    CONTRACT_ID, CREDITOR_ID, DEBTOR_USER_TOKEN, signature
+            );
 
             verify(contractMapper).updateCreditorSignature(
-                    CONTRACT_ID, "uploads/signatures/1_signature.png", ContractStatus.PENDING
+                    CONTRACT_ID, "uploads/signatures/1_signature.png", DEBTOR_ID, ContractStatus.PENDING
             );
             assertThat(status).isEqualTo(ContractStatus.PENDING);
         }
@@ -259,7 +236,7 @@ class LoanContractServiceTest {
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
 
             assertThatThrownBy(() ->
-                    loanContractService.submitCreditorSignature(CONTRACT_ID, OTHER_USER_ID, signature)
+                    loanContractService.submitCreditorSignature(CONTRACT_ID, OTHER_USER_ID, DEBTOR_USER_TOKEN, signature)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -268,7 +245,7 @@ class LoanContractServiceTest {
                     );
 
             verify(fileService, never()).saveSignatureFile(any(), any());
-            verify(contractMapper, never()).updateCreditorSignature(any(), any(), any());
+            verify(contractMapper, never()).updateCreditorSignature(any(), any(), any(), any());
         }
 
         @Test
@@ -278,7 +255,7 @@ class LoanContractServiceTest {
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    loanContractService.submitCreditorSignature(CONTRACT_ID, CREDITOR_ID, signature)
+                    loanContractService.submitCreditorSignature(CONTRACT_ID, CREDITOR_ID, DEBTOR_USER_TOKEN, signature)
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -287,7 +264,7 @@ class LoanContractServiceTest {
                     );
 
             verify(fileService, never()).saveSignatureFile(any(), any());
-            verify(contractMapper, never()).updateCreditorSignature(any(), any(), any());
+            verify(contractMapper, never()).updateCreditorSignature(any(), any(), any(), any());
         }
     }
 
@@ -490,7 +467,6 @@ class LoanContractServiceTest {
                 .maturityDate(LocalDate.of(2027, 1, 1))
                 .repaymentDay(15)
                 .creditorAddress("서울특별시 강남구 테헤란로 123")
-                .debtorEmail(DEBTOR_EMAIL)
                 .contractAlias("생활비 차용")
                 .terms(null)
                 .build();
@@ -548,6 +524,6 @@ class LoanContractServiceTest {
         );
         verify(userService).getMyInfo(CREDITOR_ID);
         verify(contractMapper).insertByContract(request, CREDITOR_ID);
-        verify(eventPublisher).publishEvent(any(ContractCreatedEvent.class));   // 추가
+        verify(eventPublisher).publishEvent(any(ContractCreatedEvent.class));
     }
 }

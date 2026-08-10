@@ -76,6 +76,7 @@
         UPDATE loan_contract
         SET
         creditor_signature = #{signatureData},
+        debtor_id = #{debtorId},
         status = #{status},
         updated_at = NOW()
         WHERE contract_id = #{contractId}
