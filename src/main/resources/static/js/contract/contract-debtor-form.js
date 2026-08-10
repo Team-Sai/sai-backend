@@ -157,8 +157,7 @@
       setIdentityStatus("계약서에 채무자로 연결하는 중입니다.");
       const linkResponse = await fetch(`/api/contracts/${contractId}/debtor`, {
         method: "PATCH",
-        headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ identityVerificationId: prepare.identityVerificationId }),
+        headers: authHeaders(),
       });
       if (!linkResponse.ok) {
         const body = await linkResponse.json().catch(() => null);
