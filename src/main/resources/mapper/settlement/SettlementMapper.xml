@@ -104,4 +104,13 @@
 
     </select>
 
+    <update id="closeSettlement">
+        UPDATE settlement
+        SET
+        settlement_status = 'CLOSED',
+        closed_at = #{closedAt}
+        WHERE settlement_id = #{settlementId}
+        AND settlement_status = 'IN_PROGRESS'
+    </update>
+
 </mapper>

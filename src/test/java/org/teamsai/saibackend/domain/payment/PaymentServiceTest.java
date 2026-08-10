@@ -8,16 +8,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DuplicateKeyException;
 import org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO;
-import org.teamsai.saibackend.domain.payment.dto.PaymentRecordDTO;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
-import org.teamsai.saibackend.domain.payment.mapper.PaymentRecordMapper;
-import org.teamsai.saibackend.domain.payment.service.PaymentService;
+import org.teamsai.saibackend.domain.payment.service.PaymentRecordService;
+import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.domain.payment.type.ObligationStatus;
 import org.teamsai.saibackend.domain.payment.type.PaymentStatus;
-import org.teamsai.saibackend.domain.payment.type.RecordStatus;
+import org.teamsai.saibackend.domain.payment.type.PaymentTargetType;
 import org.teamsai.saibackend.domain.payment.type.ReviewStatus;
 import org.teamsai.saibackend.domain.payment.type.SourceType;
 import org.teamsai.saibackend.global.exception.DomainException;
@@ -28,12 +26,14 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PaymentService 단위 테스트")
+@DisplayName("SettlementPaymentService 단위 테스트")
 class PaymentServiceTest {
 
     private static final Long PAYMENT_OBLIGATION_ID = 1L;
@@ -48,10 +48,10 @@ class PaymentServiceTest {
     private PaymentObligationMapper paymentObligationMapper;
 
     @Mock
-    private PaymentRecordMapper paymentRecordMapper;
+    private PaymentRecordService paymentRecordService;
 
     @InjectMocks
-    private PaymentService paymentService;
+    private SettlementPaymentService paymentService;
 
     @Nested
     @DisplayName("납부 반영")
@@ -65,12 +65,10 @@ class PaymentServiceTest {
             given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
-            given(paymentRecordMapper.sumConfirmedAmountByObligationId(
+            given(paymentRecordService.sumConfirmedAmountByTarget(
+                    PaymentTargetType.SETTLEMENT,
                     PAYMENT_OBLIGATION_ID
             )).willReturn(new BigDecimal("30000"));
-
-            given(paymentRecordMapper.insert(any(PaymentRecordDTO.class)))
-                    .willReturn(1);
 
             given(paymentObligationMapper.updatePaymentStatus(
                     PAYMENT_OBLIGATION_ID,
@@ -83,27 +81,13 @@ class PaymentServiceTest {
                     amount
             );
 
-            ArgumentCaptor<PaymentRecordDTO> paymentRecordCaptor =
-                    ArgumentCaptor.forClass(PaymentRecordDTO.class);
-
-            verify(paymentRecordMapper)
-                    .insert(paymentRecordCaptor.capture());
-
-            PaymentRecordDTO paymentRecord =
-                    paymentRecordCaptor.getValue();
-
-            assertThat(paymentRecord.getObligationId())
-                    .isEqualTo(PAYMENT_OBLIGATION_ID);
-            assertThat(paymentRecord.getBankTransactionId())
-                    .isEqualTo(BANK_TRANSACTION_ID);
-            assertThat(paymentRecord.getAmount())
-                    .isEqualByComparingTo(amount);
-            assertThat(paymentRecord.getSourceType())
-                    .isEqualTo(SourceType.AUTO_MATCH);
-            assertThat(paymentRecord.getRecordStatus())
-                    .isEqualTo(RecordStatus.CONFIRMED);
-            assertThat(paymentRecord.getRecordedAt())
-                    .isNotNull();
+            verify(paymentRecordService).createConfirmedRecord(
+                    BANK_TRANSACTION_ID,
+                    PaymentTargetType.SETTLEMENT,
+                    PAYMENT_OBLIGATION_ID,
+                    amount,
+                    SourceType.AUTO_MATCH
+            );
 
             verify(paymentObligationMapper).updatePaymentStatus(
                     PAYMENT_OBLIGATION_ID,
@@ -119,12 +103,10 @@ class PaymentServiceTest {
             given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
-            given(paymentRecordMapper.sumConfirmedAmountByObligationId(
+            given(paymentRecordService.sumConfirmedAmountByTarget(
+                    PaymentTargetType.SETTLEMENT,
                     PAYMENT_OBLIGATION_ID
             )).willReturn(new BigDecimal("30000"));
-
-            given(paymentRecordMapper.insert(any(PaymentRecordDTO.class)))
-                    .willReturn(1);
 
             given(paymentObligationMapper.updatePaymentStatus(
                     PAYMENT_OBLIGATION_ID,
@@ -163,8 +145,9 @@ class PaymentServiceTest {
                     PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND
             );
 
-            verify(paymentRecordMapper, never())
-                    .insert(any(PaymentRecordDTO.class));
+            verify(paymentRecordService, never()).createConfirmedRecord(
+                    any(), any(), any(), any(), any()
+            );
         }
 
         @Test
@@ -184,8 +167,9 @@ class PaymentServiceTest {
                     PaymentErrorCode.PAYMENT_OBLIGATION_NOT_ACTIVE
             );
 
-            verify(paymentRecordMapper, never())
-                    .insert(any(PaymentRecordDTO.class));
+            verify(paymentRecordService, never()).createConfirmedRecord(
+                    any(), any(), any(), any(), any()
+            );
         }
 
         @Test
@@ -200,8 +184,9 @@ class PaymentServiceTest {
                     PaymentErrorCode.INVALID_PAYMENT_AMOUNT
             );
 
-            verify(paymentRecordMapper, never())
-                    .insert(any(PaymentRecordDTO.class));
+            verify(paymentRecordService, never()).createConfirmedRecord(
+                    any(), any(), any(), any(), any()
+            );
             verify(paymentObligationMapper, never())
                     .findByIdForUpdate(PAYMENT_OBLIGATION_ID);
         }
@@ -218,8 +203,9 @@ class PaymentServiceTest {
                     PaymentErrorCode.INVALID_BANK_TRANSACTION_ID
             );
 
-            verify(paymentRecordMapper, never())
-                    .insert(any(PaymentRecordDTO.class));
+            verify(paymentRecordService, never()).createConfirmedRecord(
+                    any(), any(), any(), any(), any()
+            );
             verify(paymentObligationMapper, never())
                     .findByIdForUpdate(PAYMENT_OBLIGATION_ID);
         }
@@ -230,9 +216,16 @@ class PaymentServiceTest {
             given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
-            given(paymentRecordMapper.existsByBankTransactionId(
-                    BANK_TRANSACTION_ID
-            )).willReturn(true);
+            given(paymentRecordService.sumConfirmedAmountByTarget(
+                    PaymentTargetType.SETTLEMENT,
+                    PAYMENT_OBLIGATION_ID
+            )).willReturn(BigDecimal.ZERO);
+
+            willThrow(
+                    PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException()
+            ).given(paymentRecordService).createConfirmedRecord(
+                    any(), any(), any(), any(), any()
+            );
 
             assertPaymentExceptionThrownBy(
                     () -> paymentService.applyAutoMatchedPayment(
@@ -243,8 +236,13 @@ class PaymentServiceTest {
                     PaymentErrorCode.DUPLICATE_PAYMENT_RECORD
             );
 
-            verify(paymentRecordMapper, never())
-                    .insert(any(PaymentRecordDTO.class));
+            verify(paymentRecordService).createConfirmedRecord(
+                    eq(BANK_TRANSACTION_ID),
+                    eq(PaymentTargetType.SETTLEMENT),
+                    eq(PAYMENT_OBLIGATION_ID),
+                    eq(new BigDecimal("10000")),
+                    eq(SourceType.AUTO_MATCH)
+            );
         }
 
         @Test
@@ -253,7 +251,8 @@ class PaymentServiceTest {
             given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
-            given(paymentRecordMapper.sumConfirmedAmountByObligationId(
+            given(paymentRecordService.sumConfirmedAmountByTarget(
+                    PaymentTargetType.SETTLEMENT,
                     PAYMENT_OBLIGATION_ID
             )).willReturn(new BigDecimal("30000"));
 
@@ -266,8 +265,9 @@ class PaymentServiceTest {
                     PaymentErrorCode.PAYMENT_AMOUNT_EXCEEDS_REMAINING_AMOUNT
             );
 
-            verify(paymentRecordMapper, never())
-                    .insert(any(PaymentRecordDTO.class));
+            verify(paymentRecordService, never()).createConfirmedRecord(
+                    any(), any(), any(), any(), any()
+            );
         }
 
         @Test
@@ -276,12 +276,16 @@ class PaymentServiceTest {
             given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
-            given(paymentRecordMapper.sumConfirmedAmountByObligationId(
+            given(paymentRecordService.sumConfirmedAmountByTarget(
+                    PaymentTargetType.SETTLEMENT,
                     PAYMENT_OBLIGATION_ID
             )).willReturn(BigDecimal.ZERO);
 
-            given(paymentRecordMapper.insert(any(PaymentRecordDTO.class)))
-                    .willReturn(0);
+            willThrow(
+                    PaymentErrorCode.PAYMENT_RECORD_CREATE_FAILED.toException()
+            ).given(paymentRecordService).createConfirmedRecord(
+                    any(), any(), any(), any(), any()
+            );
 
             assertPaymentExceptionThrownBy(
                     () -> paymentService.applyAutoMatchedPayment(
@@ -305,12 +309,16 @@ class PaymentServiceTest {
             given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
-            given(paymentRecordMapper.sumConfirmedAmountByObligationId(
+            given(paymentRecordService.sumConfirmedAmountByTarget(
+                    PaymentTargetType.SETTLEMENT,
                     PAYMENT_OBLIGATION_ID
             )).willReturn(BigDecimal.ZERO);
 
-            given(paymentRecordMapper.insert(any(PaymentRecordDTO.class)))
-                    .willThrow(new DuplicateKeyException("duplicate payment record"));
+            willThrow(
+                    PaymentErrorCode.DUPLICATE_PAYMENT_RECORD.toException()
+            ).given(paymentRecordService).createConfirmedRecord(
+                    any(), any(), any(), any(), any()
+            );
 
             assertPaymentExceptionThrownBy(
                     () -> paymentService.applyAutoMatchedPayment(
@@ -331,12 +339,10 @@ class PaymentServiceTest {
             given(paymentObligationMapper.findByIdForUpdate(PAYMENT_OBLIGATION_ID))
                     .willReturn(Optional.of(createActiveObligation()));
 
-            given(paymentRecordMapper.sumConfirmedAmountByObligationId(
+            given(paymentRecordService.sumConfirmedAmountByTarget(
+                    PaymentTargetType.SETTLEMENT,
                     PAYMENT_OBLIGATION_ID
             )).willReturn(BigDecimal.ZERO);
-
-            given(paymentRecordMapper.insert(any(PaymentRecordDTO.class)))
-                    .willReturn(1);
 
             given(paymentObligationMapper.updatePaymentStatus(
                     PAYMENT_OBLIGATION_ID,

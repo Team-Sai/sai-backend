@@ -3,7 +3,7 @@ package org.teamsai.saibackend.domain.settlement.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.teamsai.saibackend.domain.payment.service.PaymentService;
+import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementInvitationDTO;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
@@ -29,7 +29,7 @@ public class SettlementInvitationService {
     private final SettlementInvitationMapper invitationMapper;
     private final UserService userService;
     private final SettlementInvitationValidator invitationValidator;
-    private final PaymentService paymentService;
+    private final SettlementPaymentService settlementPaymentService;
     private final SettlementParticipantService participantService;
 
     @Transactional
@@ -150,7 +150,7 @@ public class SettlementInvitationService {
                         invitation.getInvitationId()
                 );
 
-        paymentService.createObligation(
+        settlementPaymentService.createObligation(
                 participantId,
                 expectedAmount
         );

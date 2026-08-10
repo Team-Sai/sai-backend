@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+        namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementPaymentStatusMapper">
+
+    <select id="findPaymentObligationsBySettlementId"
+
+            resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementPaymentObligationResponse">
+
+        SELECT
+        po.payment_obligation_id AS paymentObligationId,
+        po.participant_id AS participantId,
+        po.expected_amount AS expectedAmount,
+
+        COALESCE(SUM(pr.amount), 0) AS paidAmount,
+
+        GREATEST(
+        po.expected_amount - COALESCE(SUM(pr.amount), 0),
+        0
+        ) AS remainingAmount,
+
+        CASE
+        WHEN COALESCE(SUM(pr.amount), 0) = 0
+            THEN 'UNPAID'
+        WHEN COALESCE(SUM(pr.amount), 0) &lt; po.expected_amount
+            THEN 'PARTIALLY_PAID'
+        ELSE 'PAID'
+        END AS paymentStatus
+
+        FROM payment_obligation po
+
+        JOIN settlement_participant sp
+        ON sp.participant_id = po.participant_id
+
+        JOIN settlement_invitation si
+        ON si.invitation_id = sp.invitation_id
+
+        JOIN settlement s
+        ON s.settlement_id = si.settlement_id
+
+        LEFT JOIN payment_record pr
+        ON pr.payment_target_type = 'SETTLEMENT'
+        AND pr.target_id = po.payment_obligation_id
+        AND pr.record_status = 'CONFIRMED'
+
+        WHERE s.settlement_id = #{settlementId}
+        AND sp.participant_status = 'ACTIVE'
+        AND po.obligation_status = 'ACTIVE'
+
+        GROUP BY
+        po.payment_obligation_id,
+        po.participant_id,
+        po.expected_amount
+        ORDER BY po.payment_obligation_id
+
+    </select>
+</mapper>
