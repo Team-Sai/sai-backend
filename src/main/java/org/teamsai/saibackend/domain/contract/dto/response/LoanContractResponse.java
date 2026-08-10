@@ -50,4 +50,5 @@ public class LoanContractResponse {
 
     private ContractStatus status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
