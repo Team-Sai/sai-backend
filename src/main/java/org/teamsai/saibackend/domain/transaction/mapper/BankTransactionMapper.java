@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.transaction.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO;
+import org.teamsai.saibackend.domain.transaction.dto.request.BankTransactionSearchCondition;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionProcessingStatus;
 
 import java.util.List;
@@ -35,4 +36,12 @@ public interface BankTransactionMapper {
             @Param("nextStatus")
             BankTransactionProcessingStatus nextStatus
     );
+
+    List<BankTransactionDTO> search(@Param("linkedAccountId") Long linkedAccountId,
+                                    @Param("condition")BankTransactionSearchCondition condition);
+
+    long countBySearch(@Param("linkedAccountId") Long linkedAccountId,
+                       @Param("condition") BankTransactionSearchCondition condition);
+
+    Optional<BankTransactionDTO> findByIdAndLinkedAccountId(@Param("bankTransactionId") Long bankTransactionId, @Param("linkedAccountId") Long linkedAccountId);
 }
