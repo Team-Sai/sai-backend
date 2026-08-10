@@ -1,7 +1,9 @@
 package org.teamsai.saibackend.domain.contract.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 
@@ -34,8 +36,8 @@ public class LoanContractDTO {
     private String contractAlias;
     private String terms;
 
-    private Long creditorId;            // (FK)
-    private Long debtorId;              // (FK)
+    private String creditorId;            // (FK)
+    private String debtorId;              // (FK)
 
     private String creditorSignature;
     private String debtorSignature;
