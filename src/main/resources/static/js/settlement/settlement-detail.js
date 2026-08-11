@@ -48,16 +48,42 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
-
-    if (changeAccountButton) {
-        changeAccountButton.addEventListener(
+    if (syncButton) {
+        syncButton.addEventListener(
             "click",
-            () => {
-                showToast(
-                    "수취 계좌 변경 기능 연결 전입니다."
-                );
-            }
+            syncTransactions
         );
+    }
+
+    async function syncTransactions() {
+        try {
+            syncButton.disabled = true;
+
+            const result = await requestJson(
+                "/api/transactions/sync",
+                {
+                    method: "POST"
+                }
+            );
+
+            showToast(
+                `동기화 완료: 자동반영 ${result.appliedCount}건, 확인필요
+              ${result.needsCheckCount}건, 미매칭 ${result.unmatchedCount}건`
+            );
+
+            await loadPage();
+
+        } catch (error) {
+            console.error("거래내역 동기화 실패:", error);
+
+            showToast(
+                error.message || "거래내역 동기화에 실패했습니다.",
+                true
+            );
+
+        } finally {
+            syncButton.disabled = false;
+        }
     }
 
     async function loadPage() {

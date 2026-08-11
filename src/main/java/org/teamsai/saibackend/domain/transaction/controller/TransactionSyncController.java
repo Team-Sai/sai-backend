@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
+import org.teamsai.saibackend.domain.transaction.dto.response.TransactionSyncAllResponse;
 import org.teamsai.saibackend.domain.transaction.service.TransactionSyncFacade;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
@@ -27,6 +28,17 @@ public class TransactionSyncController {
     ) {
         return ResponseEntity.ok(
                 transactionSyncFacade.syncAndMatch(userDetails.getUserId(), linkedAccountId)
+        );
+    }
+
+    @Operation(summary = "전체 연동계좌 거래 동기화")
+    @PostMapping("/api/transactions/sync")
+    public ResponseEntity<TransactionSyncAllResponse> syncAll(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails
+    ){
+        return ResponseEntity.ok(
+                transactionSyncFacade.syncAll(userDetails.getUserId())
         );
     }
 }
