@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.contractchange;
+package org.teamsai.saibackend.domain.contract;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -8,18 +8,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.teamsai.saibackend.domain.contract.dto.ChangeRequestStatus;
+import org.teamsai.saibackend.domain.contract.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
+import org.teamsai.saibackend.domain.contract.mapper.ContractChangeMapper;
+import org.teamsai.saibackend.domain.contract.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
-import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
-import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
-import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
-import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
-import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
-import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;

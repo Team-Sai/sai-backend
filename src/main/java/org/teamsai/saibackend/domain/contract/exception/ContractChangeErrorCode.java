@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.contractchange.exception;
+package org.teamsai.saibackend.domain.contract.exception;
 
 
 import lombok.Getter;

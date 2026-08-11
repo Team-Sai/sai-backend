@@ -59,70 +59,18 @@
     identityStatusText.classList.toggle("is-error", Boolean(isError));
   }
 
-  function setIdentityVerifying(loading) {
-    if (!btnIdentityVerify) return;
-    btnIdentityVerify.disabled = loading;
-    btnIdentityVerify.textContent = loading ? "본인인증 처리 중..." : "본인인증 시작";
+  const returnUrl = `/contracts/${contractId}/approve/signature`;
+  if (btnIdentityVerify) {
+    btnIdentityVerify.href = `/identity-test?returnTo=${encodeURIComponent(returnUrl)}`;
   }
 
-  async function startIdentityVerification() {
-    if (typeof PortOne === "undefined" || typeof PortOne.requestIdentityVerification !== "function") {
-      setIdentityStatus("포트원 SDK를 불러오지 못했습니다.", true);
-      return;
-    }
-
-    setIdentityVerifying(true);
-    setIdentityStatus("본인인증 요청을 준비하고 있습니다.");
-
-    try {
-      const prepareResponse = await fetch("/api/identity-verifications", {
-        method: "POST",
-        headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ purpose: "LOAN_CONTRACT" }),
-      });
-      const prepare = await prepareResponse.json().catch(() => null);
-      if (!prepareResponse.ok || !prepare?.identityVerificationId || !prepare?.storeId || !prepare?.channelKey) {
-        throw new Error(prepare?.message || "본인인증 준비에 실패했습니다.");
-      }
-
-      setIdentityStatus("본인인증 창을 여는 중입니다.");
-      const verifyResult = await PortOne.requestIdentityVerification({
-        storeId: prepare.storeId,
-        channelKey: prepare.channelKey,
-        identityVerificationId: prepare.identityVerificationId,
-      });
-
-      if (verifyResult?.code != null) {
-        throw new Error(verifyResult.message || "본인인증에 실패했습니다.");
-      }
-
-      setIdentityStatus("인증 결과를 확인하고 있습니다.");
-      const completeResponse = await fetch(
-          `/api/identity-verifications/${encodeURIComponent(prepare.identityVerificationId)}/complete`,
-          { method: "POST", headers: authHeaders() }
-      );
-      const completeResult = await completeResponse.json().catch(() => null);
-      if (!completeResponse.ok || completeResult?.status !== "VERIFIED") {
-        throw new Error(completeResult?.message || "본인인증 완료 확인에 실패했습니다.");
-      }
-
-      identityVerificationId = prepare.identityVerificationId;
-
-      setIdentityStatus("본인인증이 완료되었습니다.");
-      if (identityPanel) identityPanel.classList.add("is-verified");
-
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      if (identityPanel) identityPanel.hidden = true;
-      if (contractFields) contractFields.hidden = false;
-    } catch (err) {
-      setIdentityStatus(err.message || "본인인증 처리 중 오류가 발생했습니다.", true);
-    } finally {
-      setIdentityVerifying(false);
-    }
+  const incomingIdentityVerificationId = new URLSearchParams(window.location.search).get("identityVerificationId");
+  if (incomingIdentityVerificationId) {
+    identityVerificationId = incomingIdentityVerificationId;
+    setIdentityStatus("본인인증이 완료되었습니다.");
+    if (identityPanel) identityPanel.hidden = true;
+    if (contractFields) contractFields.hidden = false;
   }
-
-  btnIdentityVerify?.addEventListener("click", startIdentityVerification);
 
   function canvasPoint(event) {
     const rect = canvas.getBoundingClientRect();

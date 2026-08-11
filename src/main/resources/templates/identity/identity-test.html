@@ -19,6 +19,11 @@
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
 
     <script defer
+            src="/js/notification/topnav-notifications.js"
+            th:src="@{/js/notification/topnav-notifications.js}">
+    </script>
+
+    <script defer
             src="/js/identity/identity-test.js"
             th:src="@{/js/identity/identity-test.js}">
     </script>
@@ -28,7 +33,7 @@
 
 <header class="topnav">
     <div class="topnav__inner">
-        <div class="topnav__logo">사이월렛</div>
+        <div class="topnav__logo">사이원장</div>
 
         <nav class="topnav__menu">
             <a class="topnav__link" href="#">서비스 소개</a>
@@ -37,36 +42,37 @@
             <a class="topnav__link" href="#">거래 일정</a>
         </nav>
 
-        <button class="topnav__bell" type="button" aria-label="알림">
+        <a class="topnav__bell" href="/notifications" aria-label="알림">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
                 <path d="M12 3a6 6 0 0 0-6 6v3.2c0 .5-.18 1-.5 1.4L4 15.5c-.6.7-.1 1.8.8 1.8h14.4c.9 0 1.4-1.1.8-1.8l-1.5-1.9a2.2 2.2 0 0 1-.5-1.4V9a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
                 <path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
             </svg>
-        </button>
+            <span class="topnav__bell-badge" id="topnavBellBadge" hidden></span>
+        </a>
     </div>
 </header>
 
 <main class="page">
     <div class="stepper-card">
         <ol class="stepper">
-            <li class="stepper__step is-active">
-                <span class="stepper__circle">1</span>
-                <span class="stepper__label">본인인증</span>
-            </li>
-            <li class="stepper__step">
-                <span class="stepper__circle">2</span>
+            <li class="stepper__step is-done">
+                <span class="stepper__circle">
+                    <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
+                        <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
                 <span class="stepper__label">차용증 작성</span>
             </li>
             <li class="stepper__step">
-                <span class="stepper__circle">3</span>
+                <span class="stepper__circle">2</span>
                 <span class="stepper__label">상대확인</span>
+            </li>
+            <li class="stepper__step is-active">
+                <span class="stepper__circle">3</span>
+                <span class="stepper__label">본인인증 · 서명날인</span>
             </li>
             <li class="stepper__step">
                 <span class="stepper__circle">4</span>
-                <span class="stepper__label">서명날인</span>
-            </li>
-            <li class="stepper__step">
-                <span class="stepper__circle">5</span>
                 <span class="stepper__label">저장</span>
             </li>
         </ol>
@@ -119,8 +125,8 @@
 <footer class="site-footer">
     <div class="footer-inner">
         <div>
-            <strong>사이월렛</strong>
-            <p>서울특별시 강남구 테헤란로 000, 0층 &nbsp;|&nbsp; 사업자등록번호 000-00-00000</p>
+            <strong>사이원장</strong>
+            <p>© Sai-Wonjang. All rights reserved.</p>
         </div>
 
         <nav>

@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.contractchange.controller;
+package org.teamsai.saibackend.domain.contract.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
+import org.teamsai.saibackend.domain.contract.service.ContractChangeService;
 
 @Controller
 @RequiredArgsConstructor
@@ -22,6 +22,6 @@ public class ContractChangePageController {
     ) {
         contractChangeService.getContract(contractId, userId);
         model.addAttribute("contractId", contractId);
-        return "contractchange/request";
+        return "contract/request";
     }
 }

@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.contractchange.dto;
+package org.teamsai.saibackend.domain.contract.dto;
 
 public enum ChangeRequestStatus {
     PENDING,

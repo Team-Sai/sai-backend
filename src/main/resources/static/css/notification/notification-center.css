@@ -17,7 +17,7 @@
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--page); font-family: 'Pretendard', sans-serif; color: var(--text); }
+body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--page); font-family: 'Pretendard', sans-serif; color: var(--text); }
 
 
 .topnav { background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -29,7 +29,14 @@ body { margin: 0; background: var(--page); font-family: 'Pretendard', sans-serif
 .topnav__bell { position: relative; background: none; border: none; cursor: pointer; color: var(--muted); }
 .topnav__badge { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
 
-.page { max-width: 900px; margin: 32px auto 80px; padding: 0 20px; }
+.page { max-width: 900px; margin: 32px auto 80px; padding: 0 20px; flex: 1 0 auto; }
+
+.site-footer { margin-top: auto; min-height: 140px; background: #EEF1F5; border-top: 1px solid var(--line); }
+.footer-inner { width: min(1180px, calc(100% - 48px)); height: 100%; min-height: 140px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.footer-inner strong { color: var(--text); font-size: 18px; }
+.footer-inner p { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+.footer-inner nav { display: flex; gap: 26px; }
+.footer-inner nav a { color: var(--muted); font-size: 13px; text-decoration: none; }
 .page-title { font-size: 24px; font-weight: 700; margin: 0 0 6px; }
 .page-subtitle { color: var(--muted); font-size: 14px; margin: 0 0 24px; }
 

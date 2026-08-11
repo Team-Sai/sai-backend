@@ -12,6 +12,6 @@ public class WebViewConfig implements WebMvcConfigurer {
         registry.addViewController("/accounts/link").setViewName("accounts/link");
         registry.addViewController("/accounts/link/select").setViewName("accounts/link-select");
         registry.addViewController("/contracts/complete").setViewName("contract/contract-complete");
-        registry.addViewController("/contracts/edit-complete").setViewName("contractchange/contract-edit-complete");
+        registry.addViewController("/contracts/edit-complete").setViewName("contract/contract-edit-complete");
     }
 }

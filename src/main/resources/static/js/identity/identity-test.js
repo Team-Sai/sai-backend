@@ -8,6 +8,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const verificationButton =
         document.getElementById("verification-button");
 
+    const returnTo =
+        new URLSearchParams(window.location.search).get("returnTo")
+        ?? "/contracts/new";
+
     verificationButton.addEventListener(
         "click",
         startVerification
@@ -62,7 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 "본인인증이 완료되었습니다."
             );
             setTimeout(() => {
-                window.location.href = `/contracts/new?identityVerificationId=${prepare.identityVerificationId}`;
+                const separator = returnTo.includes("?") ? "&" : "?";
+                window.location.href =
+                    `${returnTo}${separator}identityVerificationId=${prepare.identityVerificationId}`;
             }, 1000);
 
         } catch (error) {

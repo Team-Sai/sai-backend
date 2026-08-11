@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.contractchange.service;
+package org.teamsai.saibackend.domain.contract.service;
 
 
 import lombok.RequiredArgsConstructor;
@@ -8,17 +8,16 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.teamsai.saibackend.domain.contract.dto.ChangeRequestStatus;
+import org.teamsai.saibackend.domain.contract.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
-import org.teamsai.saibackend.domain.contract.service.LoanContractService;
-import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
-import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
-import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
-import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
-import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
+import org.teamsai.saibackend.domain.contract.exception.ContractChangeErrorCode;
+import org.teamsai.saibackend.domain.contract.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 
 import java.time.LocalDateTime;
