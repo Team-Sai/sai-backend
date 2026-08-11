@@ -1,37 +1,114 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>금전차용계약서 조회</title>
-    <link rel="stylesheet" th:href="@{/css/contractdetail/contractdetail.css}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>금전차용계약서 조회 | 사이원장</title>
+    <link rel="stylesheet" as="style" crossorigin
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" />
 </head>
 <body>
-<input type="hidden" id="canRequestChange" th:value="${canRequestChange}">
 <input type="hidden" id="contractId" th:value="${contractId}">
 
-<div class="page">
-    <h1>금전차용계약서</h1>
-    <p>최근 체결된 금전차용계약서 입니다.</p>
-
-    <div class="contract-card">
-        <dl>
-            <dt>대출원금</dt><dd id="principalAmount">-</dd>
-            <dt>연이자율</dt><dd id="interestRate">-</dd>
-            <dt>대출시작일</dt><dd id="startDate">-</dd>
-            <dt>만기일</dt><dd id="maturityDate">-</dd>
-            <dt>상환방식</dt><dd id="repaymentType">-</dd>
-            <dt>매월상환일</dt><dd id="repaymentDay">-</dd>
-            <dt>주소</dt><dd id="address">-</dd>
-            <dt>특약</dt><dd id="terms">-</dd>
-        </dl>
+<header class="topnav">
+    <div class="topnav__inner">
+        <div class="topnav__logo">사이월렛</div>
+        <nav class="topnav__menu">
+            <a class="topnav__link" href="#">서비스 소개</a>
+            <a class="topnav__link is-active" href="#">금전소비대차</a>
+            <a class="topnav__link" href="#">정산관리</a>
+            <a class="topnav__link" href="#">거래 일정</a>
+        </nav>
+        <a class="topnav__bell" href="/notifications" aria-label="알림">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+                <path d="M12 3a6 6 0 0 0-6 6v3.2c0 .5-.18 1-.5 1.4L4 15.5c-.6.7-.1 1.8.8 1.8h14.4c.9 0 1.4-1.1.8-1.8l-1.5-1.9a2.2 2.2 0 0 1-.5-1.4V9a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <span class="topnav__bell-badge" id="topnavBellBadge" hidden></span>
+        </a>
     </div>
+</header>
 
+<main class="page">
+    <div class="doc" id="detailCard">
+        <h1 class="doc__title">금 전 차 용 계 약 서</h1>
 
-</div>
+        <section class="doc__article">
+            <span class="doc__clause">제1조(당사자)</span>
+            <div class="doc__body">
+        <span class="doc__text">
+          채권자 <strong id="creditorName" class="doc__readonly">-</strong>(은)는 채무자 <strong id="debtorName" class="doc__readonly">-</strong>에게
+        </span>
+                <span class="doc__text doc__text--indent">
+          금 <strong id="principalAmount" class="doc__readonly">-</strong>원을 대여하고, 채무자는 이를 차용한다.
+        </span>
+            </div>
+        </section>
 
-<button id="changeButton">계약변경</button>
+        <section class="doc__article">
+            <span class="doc__clause">제2조(대출기간)</span>
+            <div class="doc__body">
+        <span class="doc__text">
+          대출 시작일은 <strong id="startDate" class="doc__readonly">-</strong>로 한다.
+        </span>
+                <span class="doc__text doc__text--indent">
+          차용금의 변제기한(만기일)은 <strong id="maturityDate" class="doc__readonly">-</strong>로 한다.
+        </span>
+            </div>
+        </section>
 
+        <section class="doc__article">
+            <span class="doc__clause">제3조(이자)</span>
+            <span class="doc__text">
+        이자는 연 <strong id="interestRate" class="doc__readonly">-</strong>%의 비율로 한다.
+      </span>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제4조(변제방법)</span>
+            <span class="doc__text">
+        매월 <strong id="repaymentDay" class="doc__readonly">-</strong>일에 지급하기로 한다.
+      </span>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제5조(상환방식)</span>
+            <span class="doc__text"><strong id="repaymentType" class="doc__readonly">-</strong></span>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제6조(특약사항)</span>
+            <span class="doc__text"><strong id="terms" class="doc__readonly">-</strong></span>
+        </section>
+
+        <p class="disclaimer">
+            * 본 계약서는 당사자 간 입력 정보 및 전자적으로 기록된 서명 이미지를 기반으로 작성·보관되는 문서로,
+            서명 및 본인확인 절차의 방식에 따라 그 법적 효력의 범위나 효력 발생 요건에 관한 해석이 달라질 수 있어
+            구체적인 법적 효력 여부는 별도 확인이 필요할 수 있습니다.
+        </p>
+
+        <div class="doc__actions">
+            <button type="button" class="btn btn--primary" id="changeButton" hidden>계약 변경 요청</button>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div>
+            <strong>사이원장</strong>
+            <p>© Sai-Wonjang. All rights reserved.</p>
+        </div>
+        <nav>
+            <a href="#">이용약관</a>
+            <a href="#">개인정보처리방침</a>
+            <a href="#">고객센터</a>
+        </nav>
+    </div>
+</footer>
+
+<script th:src="@{/js/notification/topnav-notifications.js}"></script>
 <script th:src="@{/js/contractdetail/contractdetail.js}"></script>
-
 </body>
 </html>
