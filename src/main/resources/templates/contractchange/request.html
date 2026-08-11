@@ -33,8 +33,9 @@
             </select>
 
             <label for="newRepaymentDate">상환일 변경</label>
-
             <input type="number" id="newRepaymentDate" min="1" max="31" placeholder="예: 15">
+            <label for="newTerms">특약사항 변경</label>
+            <textarea id="newTerms" placeholder="변경할 특약사항을 입력해주세요."></textarea>
 
 
             <button type="button" id="cancelButton">변경 취소</button>
@@ -49,9 +50,19 @@
                 <dt>만기일</dt><dd id="maturityDate">-</dd>
                 <dt>상환 방식</dt><dd id="repaymentType">-</dd>
                 <dt>상환일</dt><dd id="repaymentDay">-</dd>
+                <dt>특약사항</dt>
+                <dd>
+                    <span id="currentTermsPreview">-</span>
+                    <button type="button" id="termsToggleBtn" class="terms-toggle" hidden>더보기</button>
+                </dd>
             </dl>
         </div>
     </div>
+    <p class="disclaimer">
+        * 본 변경 요청서에 기재된 내용(특약사항 포함)은 당사자 간 입력 정보를 기반으로 기록되는 것으로,
+        서명 및 본인확인 절차의 방식에 따라 그 법적 효력의 범위나 효력 발생 요건에 관한 해석이
+        달라질 수 있어 구체적인 법적 효력 여부는 별도 확인이 필요할 수 있습니다.
+    </p>
 </div>
 
 <script th:src="@{/js/contractchange/contractchange.js}"></script>

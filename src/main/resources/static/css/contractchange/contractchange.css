@@ -1,13 +1,24 @@
+:root {
+    --page: #F7F8FB;
+    --surface: #FFFFFF;
+    --text: #17191D;
+    --muted: #697080;
+    --line: #CFD5E2;
+    --primary: #006E2A;
+    --primary-bright: #00C853;
+    --error: #BA1A1A;
+}
+
 * {
     box-sizing: border-box;
 }
 
 body {
-    font-family: -apple-system, "Malgun Gothic", sans-serif;
-    background-color: #f5f6f7;
+    font-family: "Pretendard", -apple-system, "Malgun Gothic", sans-serif;
+    background-color: var(--page);
     margin: 0;
     padding: 40px;
-    color: #1a1a1a;
+    color: var(--text);
 }
 
 .page {
@@ -18,10 +29,11 @@ body {
 .page h1 {
     font-size: 28px;
     margin-bottom: 8px;
+    color: var(--primary);
 }
 
 .page > p {
-    color: #666;
+    color: var(--muted);
     margin-bottom: 32px;
 }
 
@@ -33,7 +45,7 @@ body {
 
 #changeRequestForm {
     flex: 2;
-    background: white;
+    background: var(--surface);
     padding: 24px;
     border-radius: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -47,15 +59,17 @@ body {
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 6px;
+    color: var(--text);
 }
 
 #changeRequestForm input,
 #changeRequestForm textarea {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--line);
     border-radius: 8px;
     font-size: 14px;
+    color: var(--text);
 }
 
 #changeReason {
@@ -76,18 +90,19 @@ body {
 }
 
 #cancelButton {
-    background: #f0f0f0;
-    color: #333;
+    background: var(--page);
+    color: var(--text);
+    border: 1px solid var(--line);
 }
 
 #submitButton {
-    background: #0b3d2e;
+    background: var(--primary);
     color: white;
 }
 
 .current-contract {
     flex: 1;
-    background: #0b3d2e;
+    background: var(--primary);
     color: white;
     padding: 24px;
     border-radius: 12px;
@@ -105,7 +120,7 @@ body {
 
 .current-contract dt {
     font-size: 13px;
-    color: #a8c3b8;
+    color: var(--primary-bright);
     margin-top: 16px;
 }
 
@@ -113,4 +128,44 @@ body {
     font-size: 17px;
     font-weight: 600;
     margin: 4px 0 0;
+}
+
+#changeRequestForm input,
+#changeRequestForm textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text);
+}
+
+#changeRequestForm input,
+#changeRequestForm textarea,
+#changeRequestForm select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text);
+    font-family: inherit;
+    background: var(--surface);
+}
+
+.terms-toggle {
+    background: none;
+    border: none;
+    color: var(--primary-bright);
+    font-size: 12px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px 0 0;
+}
+
+.disclaimer {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 20px;
+    line-height: 1.5;
 }
