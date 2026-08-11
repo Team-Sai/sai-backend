@@ -108,30 +108,29 @@ class ChangeRequestDetailServiceTest {
     }
 
     @Test
-    @DisplayName("newMaturityDate가 없으면 예외가 발생한다")
-    void getDetailFailsWhenNewMaturityDateIsNull() {
-        LoanContractChangeDTO invalidChangeRequest = LoanContractChangeDTO.builder()
+    @DisplayName("newMaturityDate가 없으면 현재 계약의 만기일로 채워진다")
+    void getDetail_fallsBackToCurrentMaturityDate_whenNewMaturityDateIsNull() {
+        LoanContractResponse contract = createContract();
+
+        LoanContractChangeDTO changeDTO = LoanContractChangeDTO.builder()
                 .changeRequestId(CHANGE_REQUEST_ID)
                 .status(ChangeRequestStatus.PENDING)
-                .contractId(CONTRACT_ID)
-                .userId(USER_ID)
+                .newMaturityDate(null)
                 .newInterestRate(BigDecimal.valueOf(4.2))
                 .newRepaymentType("EQUAL_PRINCIPAL_AND_INTEREST")
                 .newRepaymentDate(15)
-                // newMaturityDate 일부러 안 채움
+                .changeReason("자금 사정으로 인한 연장 요청")
+                .createdAt(LocalDateTime.now())
+                .contractId(CONTRACT_ID)
+                .userId(USER_ID)
                 .build();
 
-        given(contractChangeService.getContract(CONTRACT_ID, USER_ID))
-                .willReturn(createContract());
-        given(contractChangeService.getChangeRequest(CHANGE_REQUEST_ID))
-                .willReturn(invalidChangeRequest);
+        given(contractChangeService.getContract(CONTRACT_ID, USER_ID)).willReturn(contract);
+        given(contractChangeService.getChangeRequest(CHANGE_REQUEST_ID)).willReturn(changeDTO);
 
-        assertThatThrownBy(() -> changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID))
-                .isInstanceOfSatisfying(
-                        DomainException.class,
-                        exception -> assertThat(exception.getErrorCode())
-                                .isEqualTo(ChangeRequestDetailErrorCode.INVALID_CHANGE_REQUEST_DATA)
-                );
+        ChangeRequestDetailDTO result = changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID);
+
+        assertThat(result.getNewMaturityDate()).isEqualTo(contract.getMaturityDate());
     }
 
     @Test
