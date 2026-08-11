@@ -1,5 +1,6 @@
 package org.teamsai.saibackend.domain.transaction.dto.request;
 
+import org.teamsai.saibackend.domain.transaction.exception.BankTransactionErrorCode;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionProcessingStatus;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionType;
 
@@ -11,8 +12,8 @@ public record BankTransactionSearchCondition(
         String keyword,
         LocalDate fromDate,
         LocalDate toDate,
-        int page,
-        int size
+        long page,
+        long size
 ) {
     public BankTransactionSearchCondition {
         if (page < 0) {
@@ -21,9 +22,21 @@ public record BankTransactionSearchCondition(
         if (size <= 0 || size > 100) {
             size = 20;
         }
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw BankTransactionErrorCode.INVALID_DATE_RANGE.toException();
+        }
+        keyword = normalizeKeyword(keyword);
     }
 
-    public int offset() {
+    private static String normalizeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        String trimmed = keyword.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    public long offset() {
         return page * size;
     }
 }
