@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.account.dto.response.LinkedBankAccountResponse;
+import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingTransactionResult;
@@ -199,6 +200,46 @@ class TransactionSyncFacadeTest {
         inOrder.verify(transactionSyncService)
                 .syncTransactions(USER_ID, SECOND_LINKED_ACCOUNT_ID);
         inOrder.verify(bankMatchingService).execute(SECOND_LINKED_ACCOUNT_ID);
+    }
+
+    @Test
+    @DisplayName("계좌 하나의 동기화가 실패해도 나머지 계좌를 계속 처리한다")
+    void syncAllContinuesWhenOneAccountFails() {
+        given(linkedBankAccountService.getLinkedAccounts(USER_ID))
+                .willReturn(List.of(
+                        linkedAccount(LINKED_ACCOUNT_ID),
+                        linkedAccount(SECOND_LINKED_ACCOUNT_ID)
+                ));
+
+        DomainException syncFailure =
+                AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
+        AutoMatchingExecutionResult successResult =
+                new AutoMatchingExecutionResult(
+                        1, 1, 0, 0, 0, 0,
+                        List.of(new AutoMatchingTransactionResult(
+                                200L,
+                                AutoMatchingProcessStatus.APPLIED
+                        ))
+                );
+
+        willThrow(syncFailure)
+                .given(transactionSyncService)
+                .syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
+        given(transactionSyncService.syncTransactions(USER_ID, SECOND_LINKED_ACCOUNT_ID))
+                .willReturn(1);
+        given(bankMatchingService.execute(SECOND_LINKED_ACCOUNT_ID))
+                .willReturn(successResult);
+
+        TransactionSyncAllResponse result = transactionSyncFacade.syncAll(USER_ID);
+
+        assertThat(result.syncedAccountCount()).isEqualTo(1);
+        assertThat(result.failedAccounts()).hasSize(1);
+        assertThat(result.failedAccounts().get(0).linkedAccountId())
+                .isEqualTo(LINKED_ACCOUNT_ID);
+        assertThat(result.failedAccounts().get(0).errorCode())
+                .isEqualTo("BANK_SERVER_UNAVAILABLE");
+        assertThat(result.totalTransactionCount()).isEqualTo(1);
+        assertThat(result.appliedCount()).isEqualTo(1);
     }
 
     @Test

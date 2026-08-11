@@ -242,7 +242,7 @@ public class LinkedBankAccountServiceTest {
                     .updatedAt(LocalDateTime.now())
                     .build();
 
-            given(linkedBankAccountMapper.selectLinkedAccountsByUserId(USER_ID))
+            given(linkedBankAccountMapper.selectAvailableLinkedAccountsByUserId(USER_ID))
                     .willReturn(List.of(linked));
 
             List<LinkedBankAccountResponse> result =
@@ -251,7 +251,7 @@ public class LinkedBankAccountServiceTest {
             assertThat(result).hasSize(1);
             assertThat(result.get(0).linkedAccountId()).isEqualTo(100L);
             assertThat(result.get(0).connectionStatus()).isEqualTo("AVAILABLE");
-            verify(linkedBankAccountMapper).selectLinkedAccountsByUserId(USER_ID);
+            verify(linkedBankAccountMapper).selectAvailableLinkedAccountsByUserId(USER_ID);
         }
 
         @Test
@@ -261,13 +261,13 @@ public class LinkedBankAccountServiceTest {
                     linkedBankAccountService.getLinkedAccounts(null);
 
             assertThat(result).isEmpty();
-            verify(linkedBankAccountMapper, never()).selectLinkedAccountsByUserId(any());
+            verify(linkedBankAccountMapper, never()).selectAvailableLinkedAccountsByUserId(any());
         }
 
         @Test
         @DisplayName("매퍼가 null을 반환하면 빈 목록을 반환한다")
         void returnsEmptyListWhenMapperReturnsNull() {
-            given(linkedBankAccountMapper.selectLinkedAccountsByUserId(USER_ID)).willReturn(null);
+            given(linkedBankAccountMapper.selectAvailableLinkedAccountsByUserId(USER_ID)).willReturn(null);
 
             List<LinkedBankAccountResponse> result =
                     linkedBankAccountService.getLinkedAccounts(USER_ID);
@@ -278,7 +278,7 @@ public class LinkedBankAccountServiceTest {
         @Test
         @DisplayName("연동된 계좌가 없으면 빈 목록을 반환한다")
         void returnsEmptyListWhenNoLinkedAccounts() {
-            given(linkedBankAccountMapper.selectLinkedAccountsByUserId(USER_ID))
+            given(linkedBankAccountMapper.selectAvailableLinkedAccountsByUserId(USER_ID))
                     .willReturn(List.of());
 
             List<LinkedBankAccountResponse> result =

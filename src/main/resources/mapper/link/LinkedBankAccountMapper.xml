@@ -17,8 +17,24 @@
         created_at AS createdAt
         FROM linked_bank_account
         WHERE user_id = #{userId}
-        AND connection_status = 'AVAILABLE'
         <!-- 현재 활성 상태인 것만 소유권으로 인정할지는 나중에 정함 -->
+    </select>
+
+    <select id="selectAvailableLinkedAccountsByUserId"
+            resultType="org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO">
+        SELECT
+        linked_account_id,
+        user_id AS userId,
+        account_id AS accountId,
+        account_number AS accountNumber,
+        bank_code AS bankCode,
+        account_holder_name AS accountHolderName,
+        connection_status AS connectionStatus,
+        balance AS balance,
+        created_at AS createdAt
+        FROM linked_bank_account
+        WHERE user_id = #{userId}
+        AND connection_status = 'AVAILABLE'
     </select>
 
     <insert id="insertOne" useGeneratedKeys="true" keyProperty="linkedAccountId">

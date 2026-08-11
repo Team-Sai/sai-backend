@@ -37,16 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
             closeSettlement
         );
     }
-    if (syncButton) {
-        syncButton.addEventListener(
-            "click",
-            () => {
-                showToast(
-                    "거래내역 동기화 API 연결 전입니다."
-                );
-            }
-        );
-    }
 
     if (syncButton) {
         syncButton.addEventListener(
