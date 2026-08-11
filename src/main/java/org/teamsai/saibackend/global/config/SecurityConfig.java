@@ -69,6 +69,8 @@ public class SecurityConfig {
 
 
                                         "/accounts/**",
+
+                                        "/dashboard",
                                         "/settlements",
                                         "/settlements/**",
                                         "/contracts/**",

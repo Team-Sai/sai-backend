@@ -170,4 +170,8 @@ public class LoanContractService {
                 .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
     }
 
+    public List<LoanContractResponse> findContractsByUser(Long userId) {
+        return contractMapper.findContractsByUser(userId);
+    }
+
 }

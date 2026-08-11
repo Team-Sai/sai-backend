@@ -42,6 +42,8 @@ public interface LoanContractMapper {
 
     Optional<LoanContractResponse> findContractById(@Param("contractId") Long contractId);
 
+    List<LoanContractResponse> findContractsByUser(@Param("userId") Long userID);
+
     void insertChangedContract(ChangeLoanContractResponse contract);
 
 }
