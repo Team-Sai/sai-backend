@@ -3,8 +3,9 @@ package org.teamsai.saibackend.domain.settlement.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
-import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
+import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementParticipantRequest;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSharedSettlementResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
@@ -14,6 +15,8 @@ import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
 import org.teamsai.saibackend.domain.settlement.type.SettlementType;
 import org.teamsai.saibackend.domain.settlement.type.SplitType;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
+import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -29,7 +32,9 @@ public class SharedSettlementService {
     private static final int WON_SCALE = 0;
 
     private final SettlementMapper settlementMapper;
-    private final SettlementInvitationService invitationService;
+    private final SettlementParticipantService participantService;
+    private final SettlementPaymentService settlementPaymentService;
+    private final UserService userService;
     private final SettlementAccountService settlementAccountService;
 
     @Transactional
@@ -42,7 +47,7 @@ public class SharedSettlementService {
         BigDecimal perPersonAmount =
                 calculatePerPersonAmount(
                         request.getTotalAmount(),
-                        request.getInvitations().size()
+                        request.getParticipants().size()
                 );
 
         LocalDateTime createdAt = LocalDateTime.now();
@@ -75,14 +80,12 @@ public class SharedSettlementService {
                     .SETTLEMENT_CREATE_FAILED
                     .toException();
         }
-
-        invitationService.inviteAll(
+        createParticipantsAndObligations(
                 ownerId,
                 settlement.getSettlementId(),
-                request.getInvitations(),
+                request.getParticipants(),
                 perPersonAmount
         );
-
         settlementAccountService.selectAccount(
             ownerId,settlement.getSettlementId(),request.getLinkedAccountId()
         );
@@ -121,44 +124,74 @@ public class SharedSettlementService {
                     .toException();
         }
 
-        List<CreateSettlementInvitationRequest> invitations =
-                request.getInvitations();
+        List<CreateSettlementParticipantRequest> participants =
+                request.getParticipants();
 
-        if (invitations == null || invitations.isEmpty()) {
+        if (participants == null || participants.isEmpty()) {
             throw SettlementErrorCode
-                    .SETTLEMENT_INVITEE_REQUIRED
+                    .SETTLEMENT_PARTICIPANT_REQUIRED
                     .toException();
         }
 
-        validateDuplicateInvitees(invitations);
+        validateDuplicateParticipants(participants);
     }
 
-    private void validateDuplicateInvitees(
-            List<CreateSettlementInvitationRequest> invitations
+    private void validateDuplicateParticipants(
+            List<CreateSettlementParticipantRequest> participants
     ) {
         Set<String> userTokens = new HashSet<>();
 
-        for (CreateSettlementInvitationRequest invitation
-                : invitations) {
-            if (invitation == null
-                    || invitation.getUserToken() == null
-                    || invitation.getUserToken().isBlank()) {
+        for (CreateSettlementParticipantRequest participant
+                : participants) {
+
+            if (participant == null
+                    || participant.getUserToken() == null
+                    || participant.getUserToken().isBlank()) {
                 throw SettlementErrorCode
-                        .INVALID_SETTLEMENT_INVITEE
+                        .INVALID_SETTLEMENT_PARTICIPANT
                         .toException();
             }
 
-            if (!userTokens.add(invitation.getUserToken())) {
+            if (!userTokens.add(participant.getUserToken())) {
                 throw SettlementErrorCode
-                        .DUPLICATE_SETTLEMENT_INVITEE
+                        .DUPLICATE_SETTLEMENT_PARTICIPANT
                         .toException();
             }
+        }
+    }
+
+
+    private void createParticipantsAndObligations(
+            Long ownerId,
+            Long settlementId,
+            List<CreateSettlementParticipantRequest> participants,
+            BigDecimal expectedAmount
+    ) {
+        for (CreateSettlementParticipantRequest participantRequest
+                : participants) {
+
+            UserDTO participantUser =
+                    userService.findRequestTarget(
+                            ownerId,
+                            participantRequest.getUserToken()
+                    );
+
+            Long participantId =
+                    participantService.createParticipant(
+                            settlementId,
+                            participantUser.getUserId()
+                    );
+
+            settlementPaymentService.createObligation(
+                    participantId,
+                    expectedAmount
+            );
         }
     }
 
     private BigDecimal calculatePerPersonAmount(
             BigDecimal totalAmount,
-            int inviteeCount
+            int participantCount
     ) {
         if (totalAmount == null
                 || totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -167,7 +200,7 @@ public class SharedSettlementService {
                     .toException();
         }
 
-        int totalParticipantCount = inviteeCount + 1;
+        int totalParticipantCount = participantCount + 1;
 
         BigDecimal perPersonAmount =
                 totalAmount.divide(

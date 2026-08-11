@@ -1,11 +1,9 @@
 CREATE TABLE IF NOT EXISTS settlement_participant (
-                                                      participant_id BIGINT NOT NULL AUTO_INCREMENT,
-                                                      invitation_id BIGINT NOT NULL,
-
-                                                      participant_role ENUM(
-                                                      'OWNER',
-                                                      'MEMBER'
-) NOT NULL,
+    participant_id BIGINT NOT NULL AUTO_INCREMENT,
+    settlement_id BIGINT NULL,
+    user_id BIGINT NULL,
+    invitation_id BIGINT NULL,
+    participant_role ENUM('OWNER','MEMBER') NOT NULL,
 
     participant_status ENUM(
                                'ACTIVE',
@@ -17,9 +15,7 @@ CREATE TABLE IF NOT EXISTS settlement_participant (
 
     PRIMARY KEY (participant_id),
 
-    UNIQUE KEY uk_settlement_participant_invitation (
-                                                        invitation_id
-                                                    ),
+    UNIQUE KEY uk_settlement_participant_invitation (invitation_id),
 
     CONSTRAINT fk_settlement_participant_invitation
     FOREIGN KEY (invitation_id)

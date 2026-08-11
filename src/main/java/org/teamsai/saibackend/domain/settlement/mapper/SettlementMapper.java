@@ -27,7 +27,7 @@ public interface SettlementMapper {
             @Param("closedAt") LocalDateTime closedAt
     );
 
-    List<SettlementListResponse> findAllByUserId(Long userId);
+    List<SettlementListResponse> findAllByUserId(@Param("userId") Long userId);
 
     Optional<SettlementDetailResponse> findDetailById(
             @Param("settlementId") Long settlementId,

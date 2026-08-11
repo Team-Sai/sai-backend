@@ -35,21 +35,15 @@
         JOIN settlement_participant sp
         ON sp.participant_id = po.participant_id
 
-        JOIN settlement_invitation si
-        ON si.invitation_id = sp.invitation_id
-
         JOIN users u
-        ON u.user_id = si.user_id
-
-        JOIN settlement s
-        ON s.settlement_id = si.settlement_id
+        ON u.user_id = sp.user_id
 
         LEFT JOIN payment_record pr
         ON pr.payment_target_type = 'SETTLEMENT'
         AND pr.target_id = po.payment_obligation_id
         AND pr.record_status = 'CONFIRMED'
 
-        WHERE s.settlement_id = #{settlementId}
+        WHERE sp.settlement_id = #{settlementId}
         AND sp.participant_status = 'ACTIVE'
         AND po.obligation_status = 'ACTIVE'
 
@@ -61,6 +55,6 @@
 
         ORDER BY po.payment_obligation_id
 
-
     </select>
+
 </mapper>
