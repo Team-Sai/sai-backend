@@ -106,9 +106,8 @@ document.addEventListener("DOMContentLoaded", () => {
             <span>${escapeHtml(formatDate(settlement.dueDate))}</span>
             <a
                 class="detail-link"
-                href="/settlements"
-                aria-label="정산 상세 기능 준비 중"
-                title="상세 조회 API 구현 후 연결"
+                href="/settlements/${settlement.settlementId}"
+                aria-label="${escapeHtml(settlement.title || "정산")} 상세 조회"
             >›</a>
         `;
 

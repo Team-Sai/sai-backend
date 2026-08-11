@@ -11,6 +11,7 @@ import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSharedSettlementResponse;
+import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
@@ -24,7 +25,9 @@ import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -424,6 +427,64 @@ class SharedSettlementServiceTest {
                 .findAllByUserId(userId);
     }
 
+    @Test
+    @DisplayName("정산 생성자는 정산 상세를 조회할 수 있다")
+    void getSettlementDetailByOwner() {
+        SettlementDetailResponse detail = createDetail("OWNER");
+
+        given(settlementMapper.findDetailById(
+                SETTLEMENT_ID,
+                OWNER_ID
+        )).willReturn(Optional.of(detail));
+
+        SettlementDetailResponse result =
+                sharedSettlementService.getSettlementDetail(
+                        SETTLEMENT_ID,
+                        OWNER_ID
+                );
+
+        assertThat(result.settlementId()).isEqualTo(SETTLEMENT_ID);
+        assertThat(result.title()).isEqualTo("테스트 정산");
+        assertThat(result.role()).isEqualTo("OWNER");
+    }
+
+    @Test
+    @DisplayName("정산 참여자는 정산 상세를 조회할 수 있다")
+    void getSettlementDetailByMember() {
+        Long memberId = 2L;
+
+        given(settlementMapper.findDetailById(
+                SETTLEMENT_ID,
+                memberId
+        )).willReturn(Optional.of(createDetail("MEMBER")));
+
+        SettlementDetailResponse result =
+                sharedSettlementService.getSettlementDetail(
+                        SETTLEMENT_ID,
+                        memberId
+                );
+
+        assertThat(result.role()).isEqualTo("MEMBER");
+    }
+
+    @Test
+    @DisplayName("정산과 관계없는 사용자는 상세를 조회할 수 없다")
+    void getSettlementDetailFailsWhenNotParticipant() {
+        Long otherUserId = 3L;
+
+        given(settlementMapper.findDetailById(
+                SETTLEMENT_ID,
+                otherUserId
+        )).willReturn(Optional.of(createDetail("NONE")));
+
+        assertThatThrownBy(() ->
+                sharedSettlementService.getSettlementDetail(
+                        SETTLEMENT_ID,
+                        otherUserId
+                )
+        ).isInstanceOf(DomainException.class);
+    }
+
     private CreateSettlementInvitationRequest invitation(
             String userToken
     ) {
@@ -443,5 +504,19 @@ class SharedSettlementServiceTest {
                                 exception.getErrorCode()
                         ).isEqualTo(errorCode)
                 );
+    }
+
+    private SettlementDetailResponse createDetail(String role) {
+        return new SettlementDetailResponse(
+                SETTLEMENT_ID,
+                "테스트 정산",
+                "모임",
+                "SHARED",
+                "IN_PROGRESS",
+                "EQUAL",
+                LocalDate.now().plusDays(7),
+                LocalDateTime.now(),
+                role
+        );
     }
 }
