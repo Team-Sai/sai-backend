@@ -11,10 +11,6 @@
   const statusEl = document.getElementById("formStatus");
   const agreeCheckbox = document.getElementById("agreeCheckbox");
   const submitBtn = document.getElementById("btnSubmit");
-  const identityPanel = document.getElementById("identityPanel");
-  const identityStatusText = document.getElementById("identityStatusText");
-  const btnIdentityVerify = document.getElementById("btnIdentityVerify");
-  const contractFields = document.getElementById("contractFields");
 
   const canvas = document.getElementById("signatureCanvas");
   const signPlaceholder = document.getElementById("signPlaceholder");
@@ -26,7 +22,6 @@
 
   let hasSignature = false;
   let drawing = false;
-  let identityVerificationId = null;
 
   let draft = null;
   try {
@@ -53,23 +48,11 @@
     statusEl.classList.toggle("is-error", Boolean(isError));
   }
 
-  function setIdentityStatus(message, isError) {
-    if (!identityStatusText) return;
-    identityStatusText.textContent = message;
-    identityStatusText.classList.toggle("is-error", Boolean(isError));
-  }
-
   const returnUrl = `/contracts/${contractId}/approve/signature`;
-  if (btnIdentityVerify) {
-    btnIdentityVerify.href = `/identity-test?returnTo=${encodeURIComponent(returnUrl)}`;
-  }
-
-  const incomingIdentityVerificationId = new URLSearchParams(window.location.search).get("identityVerificationId");
-  if (incomingIdentityVerificationId) {
-    identityVerificationId = incomingIdentityVerificationId;
-    setIdentityStatus("본인인증이 완료되었습니다.");
-    if (identityPanel) identityPanel.hidden = true;
-    if (contractFields) contractFields.hidden = false;
+  const identityVerificationId = new URLSearchParams(window.location.search).get("identityVerificationId");
+  if (!identityVerificationId) {
+    window.location.href = `/identity-test?returnTo=${encodeURIComponent(returnUrl)}`;
+    return;
   }
 
   function canvasPoint(event) {
@@ -124,10 +107,6 @@
   }
 
   async function submitApproval() {
-    if (!identityVerificationId) {
-      throw new Error("본인인증 정보를 찾을 수 없습니다. 본인인증을 다시 진행해 주세요.");
-    }
-
     const blob = await canvasToBlob();
     const formData = new FormData();
     formData.append("debtorAddress", draft.debtorAddress);

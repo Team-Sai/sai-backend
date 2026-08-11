@@ -120,7 +120,8 @@
       return;
     }
 
-    window.location.href = `/contracts/${contractId}/approve/signature`;
+    const returnUrl = `/contracts/${contractId}/approve/signature`;
+    window.location.href = `/identity-test?returnTo=${encodeURIComponent(returnUrl)}`;
   });
 
   loadContract()

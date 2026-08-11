@@ -11,14 +11,8 @@
   const submitBtn = document.getElementById("btnSubmit");
   const cancelBtn = document.getElementById("btnCancel");
   const statusEl = document.getElementById("formStatus");
-  const identityPanel = document.getElementById("identityPanel");
-  const identityStatusText = document.getElementById("identityStatusText");
-  const btnIdentityVerify = document.getElementById("btnIdentityVerify");
-  const contractFields = document.getElementById("contractFields");
 
   if (!canvas) return;
-
-  let identityVerificationId = null;
 
   const ctx = canvas.getContext("2d");
   ctx.lineWidth = 2.5;
@@ -41,25 +35,6 @@
     statusEl.classList.toggle("is-error", Boolean(isError));
   }
 
-  function setIdentityStatus(message, isError) {
-    if (!identityStatusText) return;
-    identityStatusText.textContent = message;
-    identityStatusText.classList.toggle("is-error", Boolean(isError));
-  }
-
-  const returnUrl = "/contracts/signature";
-  if (btnIdentityVerify) {
-    btnIdentityVerify.href = `/identity-test?returnTo=${encodeURIComponent(returnUrl)}`;
-  }
-
-  const incomingIdentityVerificationId = new URLSearchParams(window.location.search).get("identityVerificationId");
-  if (incomingIdentityVerificationId) {
-    identityVerificationId = incomingIdentityVerificationId;
-    setIdentityStatus("본인인증이 완료되었습니다.");
-    if (identityPanel) identityPanel.hidden = true;
-    if (contractFields) contractFields.hidden = false;
-  }
-
   let draft = null;
   try {
     draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null");
@@ -70,6 +45,13 @@
   if (!draft) {
     alert("작성 중인 차용증 정보가 없습니다. 처음부터 다시 시도해 주세요.");
     window.location.href = "/contracts/new";
+    return;
+  }
+
+  const returnUrl = "/contracts/signature";
+  const identityVerificationId = new URLSearchParams(window.location.search).get("identityVerificationId");
+  if (!identityVerificationId) {
+    window.location.href = `/identity-test?returnTo=${encodeURIComponent(returnUrl)}`;
     return;
   }
 
@@ -127,11 +109,6 @@
   clearBtn?.addEventListener("click", clearSignature);
 
   async function createContract() {
-
-    if (!identityVerificationId) {
-      throw new Error("본인인증 정보를 찾을 수 없습니다. 본인인증을 다시 진행해 주세요.");
-    }
-
     const payload = {
       ...draft,
       identityVerificationId,

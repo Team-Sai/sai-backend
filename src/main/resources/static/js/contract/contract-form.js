@@ -153,9 +153,8 @@
   nextBtn?.addEventListener("click", () => {
     if (!validate()) return;
 
-    
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify(serializeForm()));
-    window.location.href = "/contracts/signature";
+    window.location.href = `/identity-test?returnTo=${encodeURIComponent("/contracts/signature")}`;
   });
 
   const principalInput = document.getElementById("principalAmount");
