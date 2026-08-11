@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
@@ -17,6 +16,7 @@ import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractRes
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
+import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
@@ -115,15 +115,15 @@ public class ContractChangeService {
                 .creditorId(contract.getCreditorId())
                 .debtorId(contract.getDebtorId())
                 .principalAmount(contract.getPrincipalAmount())
-                .interestRate(request.getNewInterestRate())
-                .repaymentType(RepaymentMethod.valueOf(request.getNewRepaymentType()))
+                .interestRate(request.getNewInterestRate() != null ? request.getNewInterestRate() : contract.getInterestRate())
+                .repaymentType(request.getNewRepaymentType() != null ? RepaymentMethod.valueOf(request.getNewRepaymentType()) : contract.getRepaymentType())
                 .startDate(contract.getStartDate())
-                .maturityDate(request.getNewMaturityDate())
-                .repaymentDay(request.getNewRepaymentDate())
+                .maturityDate(request.getNewMaturityDate() != null ? request.getNewMaturityDate() : contract.getMaturityDate())
+                .repaymentDay(request.getNewRepaymentDate() != null ? request.getNewRepaymentDate() : contract.getRepaymentDay())
                 .creditorAddress(contract.getCreditorAddress())
                 .debtorAddress(contract.getDebtorAddress())
                 .contractAlias(contract.getContractAlias())
-                .terms(contract.getTerms())
+                .terms(request.getNewTerms() != null ? request.getNewTerms() : contract.getTerms())
                 .status(ContractStatus.PENDING)
                 .createdAt(now)
                 .updatedAt(now)

@@ -8,7 +8,7 @@ import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleStatus;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleSummaryResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;

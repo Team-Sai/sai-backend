@@ -20,14 +20,14 @@ public class ChangeRequestDetailDTO {
     private LocalDate currentMaturityDate;
     private BigDecimal currentInterestRate;
     private String currentRepaymentType;
+    private String currentTerms;
     private BigDecimal currentMonthlyPayment;
     private LocalDate newMaturityDate;
     private BigDecimal newInterestRate;
     private String newRepaymentType;
+    private String newTerms;
     private BigDecimal newMonthlyPayment;
     private String changeReason;
     private Integer extendedMonths;
-
-
 
 }

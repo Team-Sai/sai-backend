@@ -184,3 +184,11 @@ body {
 .btn--secondary:hover {
     color: #111827;
 }
+
+.stamp-seal--pending {
+    border-color: #C77700;
+}
+
+.stamp-seal--pending .stamp-seal__text {
+    color: #C77700;
+}

@@ -6,25 +6,23 @@
 
     <insert id="insert" parameterType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO"
             useGeneratedKeys="true" keyProperty="changeRequestId">
-    INSERT INTO loan_contract_change_request(
-    user_id, change_reason, new_maturity_date, new_interest_rate,
-    new_repayment_type, new_repayment_date, status,
-    created_at, updated_at, contract_id
-    )
-    VALUES (
-            #{userId}, #{changeReason}, #{newMaturityDate}, #{newInterestRate},
-            #{newRepaymentType}, #{newRepaymentDate}, #{status}, #{createdAt},
-            #{updatedAt}, #{contractId}
-           )
+        INSERT INTO loan_contract_change_request(
+            user_id, change_reason, new_maturity_date, new_interest_rate,
+            new_repayment_type, new_repayment_date, new_terms, status,
+            created_at, updated_at, contract_id
+        )
+        VALUES (
+                   #{userId}, #{changeReason}, #{newMaturityDate}, #{newInterestRate},
+                   #{newRepaymentType}, #{newRepaymentDate}, #{newTerms}, #{status}, #{createdAt},
+                   #{updatedAt}, #{contractId}
+               )
     </insert>
-
-
 
     <select id="findByContractId" parameterType="java.lang.Long"
             resultType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO">
         SELECT
             change_request_id, user_id, change_reason, new_maturity_date, new_interest_rate,
-            new_repayment_type, new_repayment_date, status, created_at, updated_at, contract_id
+            new_repayment_type, new_repayment_date, new_terms, status, created_at, updated_at, contract_id
         FROM loan_contract_change_request
         WHERE contract_id = #{contractId}
     </select>
@@ -32,8 +30,8 @@
     <select id="findByChangeRequestId" parameterType="java.lang.Long"
             resultType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO">
         SELECT
-        change_request_id, user_id, change_reason, new_maturity_date, new_interest_rate,
-        new_repayment_type, new_repayment_date, status, created_at, updated_at, contract_id
+            change_request_id, user_id, change_reason, new_maturity_date, new_interest_rate,
+            new_repayment_type, new_repayment_date, new_terms, status, created_at, updated_at, contract_id
         FROM loan_contract_change_request
         WHERE change_request_id = #{changeRequestId}
     </select>

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
