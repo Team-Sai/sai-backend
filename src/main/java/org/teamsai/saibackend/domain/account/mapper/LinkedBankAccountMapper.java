@@ -17,6 +17,8 @@ public interface LinkedBankAccountMapper {
 
     List<LinkedBankAccountDTO> selectLinkedAccountsByUserId(@Param("userId") Long userId);
 
+    List<LinkedBankAccountDTO> selectAvailableLinkedAccountsByUserId(@Param("userId") Long userId);
+
     Long findLastSyncedTransactionIdById(@Param("linkedAccountId") Long linkedAccountId);
 
     int updateLastSyncedTransactionId(
