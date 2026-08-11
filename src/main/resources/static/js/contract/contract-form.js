@@ -84,6 +84,13 @@
     const creditorAddress = document.getElementById("creditorAddress");
     const contractAlias = document.getElementById("contractAlias");
 
+    const selectedLinkedAccountId = document.getElementById("selectedLinkedAccountId");
+
+    if (!selectedLinkedAccountId || !selectedLinkedAccountId.value) {
+      showStatus("대출금을 받을 계좌를 선택해 주세요.", true);
+      if (selectedLinkedAccountId) selectedLinkedAccountId.focus();
+      return false;
+    }
 
     const rawPrincipal = principal.value ? principal.value.replace(/,/g, "") : "";
     if (!rawPrincipal || Number(rawPrincipal) <= 0) {

@@ -66,9 +66,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 "본인인증이 완료되었습니다."
             );
             setTimeout(() => {
-                const separator = returnTo.includes("?") ? "&" : "?";
+
+                const isSafeRelativePath = (path) => {
+                    return typeof path === "string" && path.startsWith("/") && !path.startsWith("//");
+                };
+
+                const safeReturnTo = isSafeRelativePath(returnTo) ? returnTo : "/";
+
+                const separator = safeReturnTo.includes("?") ? "&" : "?";
                 window.location.href =
-                    `${returnTo}${separator}identityVerificationId=${prepare.identityVerificationId}`;
+                    `${safeReturnTo}${separator}identityVerificationId=${prepare.identityVerificationId}`;
             }, 1000);
 
         } catch (error) {
