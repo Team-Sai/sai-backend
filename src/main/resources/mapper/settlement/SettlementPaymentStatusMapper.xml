@@ -7,12 +7,12 @@
         namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementPaymentStatusMapper">
 
     <select id="findPaymentObligationsBySettlementId"
-
             resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementPaymentObligationResponse">
 
         SELECT
         po.payment_obligation_id AS paymentObligationId,
         po.participant_id AS participantId,
+        u.name AS participantName,
         po.expected_amount AS expectedAmount,
 
         COALESCE(SUM(pr.amount), 0) AS paidAmount,
@@ -24,9 +24,9 @@
 
         CASE
         WHEN COALESCE(SUM(pr.amount), 0) = 0
-            THEN 'UNPAID'
+        THEN 'UNPAID'
         WHEN COALESCE(SUM(pr.amount), 0) &lt; po.expected_amount
-            THEN 'PARTIALLY_PAID'
+        THEN 'PARTIALLY_PAID'
         ELSE 'PAID'
         END AS paymentStatus
 
@@ -37,6 +37,9 @@
 
         JOIN settlement_invitation si
         ON si.invitation_id = sp.invitation_id
+
+        JOIN users u
+        ON u.user_id = si.user_id
 
         JOIN settlement s
         ON s.settlement_id = si.settlement_id
@@ -53,8 +56,11 @@
         GROUP BY
         po.payment_obligation_id,
         po.participant_id,
+        u.name,
         po.expected_amount
+
         ORDER BY po.payment_obligation_id
+
 
     </select>
 </mapper>

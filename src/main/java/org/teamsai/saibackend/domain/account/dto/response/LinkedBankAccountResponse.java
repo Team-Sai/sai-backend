@@ -19,7 +19,9 @@ public record LinkedBankAccountResponse(
         BigDecimal balance,
         String connectionStatus
 ) {
-    public static LinkedBankAccountResponse from(LinkedBankAccountDTO dto) {
+    public static LinkedBankAccountResponse from(
+            LinkedBankAccountDTO dto
+    ) {
         return LinkedBankAccountResponse.builder()
                 .linkedAccountId(dto.getLinkedAccountId())
                 .bankCode(dto.getBankCode())
