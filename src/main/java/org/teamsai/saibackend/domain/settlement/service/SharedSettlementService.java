@@ -3,6 +3,8 @@ package org.teamsai.saibackend.domain.settlement.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.teamsai.saibackend.domain.notification.service.NotificationService;
+import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementParticipantRequest;
@@ -36,6 +38,7 @@ public class SharedSettlementService {
     private final SettlementPaymentService settlementPaymentService;
     private final UserService userService;
     private final SettlementAccountService settlementAccountService;
+    private final NotificationService notificationService;
 
     @Transactional
     public CreateSharedSettlementResponse create(
@@ -186,8 +189,19 @@ public class SharedSettlementService {
                     participantId,
                     expectedAmount
             );
+            notificationService.create(
+                    participantUser.getUserId(),
+                    NotificationType.SETTLEMENT_PARTICIPANT_ADDED,
+                    "새로운 정산에 참여자로 등록되었습니다.",
+                    "정산 금액 "
+                            + expectedAmount.toPlainString()
+                            + "원이 등록되었습니다.",
+                    settlementId
+            );
         }
     }
+
+
 
     private BigDecimal calculatePerPersonAmount(
             BigDecimal totalAmount,

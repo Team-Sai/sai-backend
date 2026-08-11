@@ -1,0 +1,38 @@
+package org.teamsai.saibackend.domain.notification.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.teamsai.saibackend.domain.notification.dto.NotificationDTO;
+import org.teamsai.saibackend.domain.notification.dto.response.NotificationResponse;
+import org.teamsai.saibackend.domain.notification.mapper.NotificationMapper;
+import org.teamsai.saibackend.domain.notification.type.NotificationType;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class NotificationService {
+
+    private final NotificationMapper notificationMapper;
+
+    public void create(Long userId, NotificationType type, String title, String content, Long referenceId){
+        NotificationDTO notification = NotificationDTO.builder()
+                .userId(userId)
+                .notificationType(type)
+                .title(title)
+                .content(content)
+                .referenceId(referenceId)
+                .read(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        notificationMapper.insert(notification);
+    }
+
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getNotifications(Long userId) {
+        return notificationMapper.findAllByUserId(userId);
+    }
+}
