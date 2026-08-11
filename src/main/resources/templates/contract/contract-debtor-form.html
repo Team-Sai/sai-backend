@@ -8,7 +8,6 @@
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
   <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="../../static/css/contract/contract-form.css" />
   <link rel="stylesheet" th:href="@{/css/contract/contract-debtor-approve.css}" href="../../static/css/contract/contract-debtor-approve.css" />
-  <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
 </head>
 <body>
 
@@ -44,26 +43,18 @@
             <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </span>
-        <span class="stepper__label">본인인증</span>
-      </li>
-      <li class="stepper__step is-done">
-        <span class="stepper__circle">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
-            <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </span>
         <span class="stepper__label">차용증 작성</span>
       </li>
       <li class="stepper__step is-active">
-        <span class="stepper__circle">3</span>
+        <span class="stepper__circle">2</span>
         <span class="stepper__label">상대확인</span>
       </li>
       <li class="stepper__step">
-        <span class="stepper__circle">4</span>
-        <span class="stepper__label">서명날인</span>
+        <span class="stepper__circle">3</span>
+        <span class="stepper__label">본인인증 · 서명날인</span>
       </li>
       <li class="stepper__step">
-        <span class="stepper__circle">5</span>
+        <span class="stepper__circle">4</span>
         <span class="stepper__label">저장</span>
       </li>
     </ol>
@@ -74,14 +65,6 @@
     <h1 class="doc__title">금 전 차 용 계 약 서</h1>
 
     <p class="doc__status-banner" id="statusBanner" hidden></p>
-
-    <section class="identity-panel" id="identityPanel">
-      <div class="identity-panel__info">
-        <strong>본인인증</strong>
-        <span class="identity-panel__status" id="identityStatusText">본인인증 후 계약 내용을 확인할 수 있습니다.</span>
-      </div>
-      <button type="button" class="btn btn--primary" id="btnIdentityVerify">본인인증 시작</button>
-    </section>
 
     <section class="doc__article">
       <span class="doc__clause">제1조(당사자)</span>

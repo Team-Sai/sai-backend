@@ -49,7 +49,7 @@ public class LoanContractRequest {
 
     private String terms;
 
-    // 계좌 연동이 아직 해결되지 않아 임시 주석 처리. 연동 정상화되면 복구할 것.
+    // 계좌 연동 기능 완성 전까지 임시로 주석 처리 (테스트용, 사용자가 계좌번호를 직접 입력)
     // @NotNull(message = "대출금을 받을 계좌를 선택해주세요.")
     private Long selectedLinkedAccountId;
 
