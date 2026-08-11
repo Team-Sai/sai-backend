@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.teamsai.saibackend.domain.contract.mapper.ContractChangeMapper">
+<mapper namespace="org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper">
 
-    <insert id="insert" parameterType="org.teamsai.saibackend.domain.contract.dto.LoanContractChangeDTO"
+    <insert id="insert" parameterType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO"
             useGeneratedKeys="true" keyProperty="changeRequestId">
     INSERT INTO loan_contract_change_request(
     user_id, change_reason, new_maturity_date, new_interest_rate,
@@ -21,7 +21,7 @@
 
 
     <select id="findByContractId" parameterType="java.lang.Long"
-            resultType="org.teamsai.saibackend.domain.contract.dto.LoanContractChangeDTO">
+            resultType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO">
         SELECT
             change_request_id, user_id, change_reason, new_maturity_date, new_interest_rate,
             new_repayment_type, new_repayment_date, status, created_at, updated_at, contract_id
@@ -30,7 +30,7 @@
     </select>
 
     <select id="findByChangeRequestId" parameterType="java.lang.Long"
-            resultType="org.teamsai.saibackend.domain.contract.dto.LoanContractChangeDTO">
+            resultType="org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO">
         SELECT
         change_request_id, user_id, change_reason, new_maturity_date, new_interest_rate,
         new_repayment_type, new_repayment_date, status, created_at, updated_at, contract_id

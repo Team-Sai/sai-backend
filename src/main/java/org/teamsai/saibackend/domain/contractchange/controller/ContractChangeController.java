@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.contract.controller;
+package org.teamsai.saibackend.domain.contractchange.controller;
 
 
 import jakarta.validation.Valid;
@@ -6,11 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.teamsai.saibackend.domain.contract.dto.request.ContractChangeRequest;
+import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 
-import org.teamsai.saibackend.domain.contract.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 
-import org.teamsai.saibackend.domain.contract.service.ContractChangeService;
+import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 
 @RestController
 @RequestMapping("/api/contracts")

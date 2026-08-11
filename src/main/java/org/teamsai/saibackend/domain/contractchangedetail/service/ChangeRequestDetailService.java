@@ -2,10 +2,10 @@ package org.teamsai.saibackend.domain.contractchangedetail.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.teamsai.saibackend.domain.contract.dto.ChangeRequestStatus;
-import org.teamsai.saibackend.domain.contract.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
+import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contract.service.ContractChangeService;
+import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contractchangedetail.dto.ChangeRequestDetailDTO;
 import org.teamsai.saibackend.domain.contractchangedetail.exception.ChangeRequestDetailErrorCode;
 import org.teamsai.saibackend.domain.contractchangedetail.util.RepaymentCalculator;

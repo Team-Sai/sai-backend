@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.contract.dto;
+package org.teamsai.saibackend.domain.contractchange.dto;
 
 
 import lombok.*;

@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.contract.dto.request;
+package org.teamsai.saibackend.domain.contractchange.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
