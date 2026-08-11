@@ -7,6 +7,8 @@ import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementInvitationRequest;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSharedSettlementResponse;
+import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
+import org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
@@ -92,6 +94,22 @@ public class SharedSettlementService {
                 .title(settlement.getTitle())
                 .createdAt(settlement.getCreatedAt())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<SettlementListResponse> getSettlementList(Long userId) {
+        return settlementMapper.findAllByUserId(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public SettlementDetailResponse getSettlementDetail(Long settlementId, Long userId){
+        SettlementDetailResponse response = settlementMapper.findDetailById(settlementId,userId)
+                .orElseThrow(SettlementErrorCode.SETTLEMENT_NOT_FOUND::toException);
+
+        if("NONE".equals(response.role())){
+            throw SettlementErrorCode.SETTLEMENT_ACCESS_DENIED.toException();
+        }
+        return response;
     }
 
     private void validateCreateRequest(

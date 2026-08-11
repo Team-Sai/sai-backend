@@ -9,8 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusFilter = document.getElementById("status-filter");
     const syncButton = document.getElementById("sync-button");
 
-    const recentSettlement = getRecentSettlement();
-    const settlements = recentSettlement ? [recentSettlement] : [];
+    let settlements = [];
 
     document.getElementById("sync-time").textContent =
         new Intl.DateTimeFormat("ko-KR", {
@@ -18,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
             minute: "2-digit"
         }).format(new Date());
 
-    render(settlements);
+    loadSettlements();
     showCreatedToast();
     bindFilters();
 
@@ -92,21 +91,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const statusText =
             settlement.settlementStatus === "CLOSED" ? "완료" : "진행 중";
 
+        const roleText =
+            settlement.role === "OWNER" ? "정산자" : "참여자";
+
         row.innerHTML = `
             <div class="settlement-name">
                 <span class="type-badge">${escapeHtml(typeText)}</span>
                 <span>${escapeHtml(settlement.title || "이름 없는 정산")}</span>
             </div>
-            <span>정산인</span>
+            <span>${escapeHtml(roleText)}</span>
             <span>${escapeHtml(settlement.settlementCategory || "-")}</span>
             <span class="split-badge">${escapeHtml(splitText)}</span>
             <span class="status-badge">${escapeHtml(statusText)}</span>
             <span>${escapeHtml(formatDate(settlement.dueDate))}</span>
             <a
                 class="detail-link"
-                href="/settlements"
-                aria-label="정산 상세 기능 준비 중"
-                title="상세 조회 API 구현 후 연결"
+                href="/settlements/${settlement.settlementId}"
+                aria-label="${escapeHtml(settlement.title || "정산")} 상세 조회"
             >›</a>
         `;
 
@@ -126,21 +127,42 @@ document.addEventListener("DOMContentLoaded", () => {
             String(inProgressCount);
     }
 
-    function getRecentSettlement() {
-        const value = sessionStorage.getItem("recentCreatedSettlement");
-
-        if (!value) {
-            return null;
-        }
-
+    async function loadSettlements() {
         try {
-            return JSON.parse(value);
-        } catch {
-            sessionStorage.removeItem("recentCreatedSettlement");
-            return null;
+            const token = sessionStorage.getItem("accessToken");
+
+            if (!token) {
+                window.location.href = "/login?required=true";
+                return;
+            }
+
+            const response = await fetch("/api/settlements", {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    sessionStorage.removeItem("accessToken");
+                    window.location.href = "/login?required=true";
+                    return;
+                }
+
+                throw new Error("정산 목록 조회에 실패했습니다.");
+            }
+
+            settlements = await response.json();
+            render(settlements);
+
+        } catch (error) {
+            console.error(error);
+            settlements = [];
+            render(settlements);
+            showToast("정산 목록을 불러오지 못했습니다.", true);
         }
     }
-
     function showCreatedToast() {
         const params = new URLSearchParams(window.location.search);
         const settlementId = params.get("created");
