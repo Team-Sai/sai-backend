@@ -74,19 +74,25 @@ public class RepaymentScheduleService {
     }
 
     public RepaymentScheduleSummaryResponse getScheduleSummary(Long contractId, Long userId) {
-        loanContractService.findContract(contractId, userId);   // 존재확인 + 당사자검증, 한번에
+        // 존재 확인 + 당사자 검증 + 채권자/채무자 이름
+        LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
         List<RepaymentScheduleDTO> schedules = repaymentScheduleMapper.findByContractId(contractId);
 
-        BigDecimal totalScheduledAmount = schedules.stream().map(RepaymentScheduleDTO::getTotalPaymentDue)
+        BigDecimal totalScheduledAmount = schedules.stream()
+                .map(RepaymentScheduleDTO::getTotalPaymentDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal paidAmount = schedules.stream().filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID)
-                .map(RepaymentScheduleDTO::getTotalPaymentDue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal paidAmount = schedules.stream()
+                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID)
+                .map(RepaymentScheduleDTO::getTotalPaymentDue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal remainingAmount = totalScheduledAmount.subtract(paidAmount);
 
-        int paidCount = (int) schedules.stream().filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID).count();
+        int paidCount = (int) schedules.stream()
+                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PAID)
+                .count();
         int totalCount = schedules.size();
 
         List<RepaymentScheduleResponse> scheduleResponses = schedules.stream()
@@ -94,6 +100,8 @@ public class RepaymentScheduleService {
                 .toList();
 
         return RepaymentScheduleSummaryResponse.builder()
+                .creditorName(contract.getCreditorName())
+                .debtorName(contract.getDebtorName())
                 .totalScheduledAmount(totalScheduledAmount)
                 .paidAmount(paidAmount)
                 .remainingAmount(remainingAmount)
@@ -138,5 +146,10 @@ public class RepaymentScheduleService {
         };
 
         repaymentScheduleMapper.insertAll(newSchedules);
+    }
+
+    public RepaymentScheduleDTO getScheduleByScheduleId(Long scheduleId) {
+        return repaymentScheduleMapper.findById(scheduleId)
+                .orElseThrow(() -> RepaymentScheduleErrorCode.SCHEDULE_NOT_FOUND.toException());
     }
 }

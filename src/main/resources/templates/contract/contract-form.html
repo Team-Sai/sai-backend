@@ -33,28 +33,20 @@
 <main class="page">
     <div class="stepper-card">
         <ol class="stepper">
-            <li class="stepper__step is-done">
-                <span class="stepper__circle">
-                    <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
-                        <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </span>
-                <span class="stepper__label">본인인증</span>
-            </li>
             <li class="stepper__step is-active">
-                <span class="stepper__circle">2</span>
+                <span class="stepper__circle">1</span>
                 <span class="stepper__label">차용증 작성</span>
             </li>
             <li class="stepper__step">
-                <span class="stepper__circle">3</span>
+                <span class="stepper__circle">2</span>
                 <span class="stepper__label">상대확인</span>
             </li>
             <li class="stepper__step">
-                <span class="stepper__circle">4</span>
-                <span class="stepper__label">서명날인</span>
+                <span class="stepper__circle">3</span>
+                <span class="stepper__label">본인인증 · 서명날인</span>
             </li>
             <li class="stepper__step">
-                <span class="stepper__circle">5</span>
+                <span class="stepper__circle">4</span>
                 <span class="stepper__label">저장</span>
             </li>
         </ol>
@@ -64,42 +56,44 @@
         <h1 class="doc__title">금 전 차 용 계 약 서</h1>
 
         <p class="doc__status-banner" id="statusBanner" hidden></p>
-        <input type="hidden" id="identityVerificationId" name="identityVerificationId" />
 
         <section class="doc__article">
             <span class="doc__clause">제1조(당사자)</span>
             <div class="doc__body">
-                <span class="doc__text">
-                  채권자 <strong id="creditorNameDisplay" class="doc__readonly">-</strong>(이하 "갑"이라고 함)는
-                </span>
+        <span class="doc__text">
+          채권자 <strong id="creditorNameDisplay" class="doc__readonly">-</strong>(이하 "갑"이라고 함)는
+        </span>
                 <span class="doc__text doc__text--indent">
-                  금
-                  <input type="text" inputmode="numeric" class="doc__inline-input doc__inline-input--amount" id="principalAmount" name="principalAmount" placeholder="0" />
-                  원을 채무자(이하 "을"이라고 함)에게 대여하고 을은 이를 차용한다.
-                </span>
+          금
+          <input type="text" inputmode="numeric" class="doc__inline-input doc__inline-input--amount" id="principalAmount" name="principalAmount" placeholder="0" />
+          원을 채무자(이하 "을"이라고 함)에게 대여하고 을은 이를 차용한다.
+        </span>
 
                 <div class="loan-account">
                     <div class="loan-account__title">대출금 지급 계좌</div>
+                    <!-- 계좌 연동 기능 완성 전까지 임시로 주석 처리 (테스트용 수동 입력으로 대체)
                     <select id="selectedLinkedAccountId" name="selectedLinkedAccountId">
-                        <option value="">계좌 목록을 불러오는 중...</option>
+                      <option value="">계좌를 선택해 주세요</option>
                     </select>
 
                     <table class="loan-account__summary" id="loanAccountSummary" hidden>
-                        <tbody>
-                        <tr>
-                            <th>은 행</th>
-                            <td id="loanAccountBank">-</td>
-                        </tr>
-                        <tr>
-                            <th>계좌번호</th>
-                            <td id="loanAccountNumber">-</td>
-                        </tr>
-                        <tr>
-                            <th>예금주</th>
-                            <td id="loanAccountHolder">-</td>
-                        </tr>
-                        </tbody>
+                      <tbody>
+                      <tr>
+                        <th>은 행</th>
+                        <td id="loanAccountBank">-</td>
+                      </tr>
+                      <tr>
+                        <th>계좌번호</th>
+                        <td id="loanAccountNumber">-</td>
+                      </tr>
+                      <tr>
+                        <th>예금주</th>
+                        <td id="loanAccountHolder">-</td>
+                      </tr>
+                      </tbody>
                     </table>
+                    -->
+                    <input type="text" class="parties__input" id="accountNumber" name="accountNumber" placeholder="계좌번호를 입력하세요" />
                 </div>
             </div>
         </section>
@@ -107,39 +101,39 @@
         <section class="doc__article">
             <span class="doc__clause">제2조(대출기간)</span>
             <div class="doc__body">
-                <span class="doc__text">
-                  대출 시작일은
-                  <input type="date" class="doc__inline-input doc__inline-input--date" id="startDate" name="startDate" />
-                  로 한다.
-                </span>
+        <span class="doc__text">
+          대출 시작일은
+          <input type="date" class="doc__inline-input doc__inline-input--date" id="startDate" name="startDate" />
+          로 한다.
+        </span>
                 <span class="doc__text doc__text--indent">
-                  차용금의 변제기한(만기일)은
-                  <input type="date" class="doc__inline-input doc__inline-input--date" id="maturityDate" name="maturityDate" />
-                  로 한다.
-                </span>
+          차용금의 변제기한(만기일)은
+          <input type="date" class="doc__inline-input doc__inline-input--date" id="maturityDate" name="maturityDate" />
+          로 한다.
+        </span>
             </div>
         </section>
 
         <section class="doc__article">
             <span class="doc__clause">제3조(이자)</span>
             <span class="doc__text">
-                이자는 연
-                <input type="number" step="0.01" min="0" max="20" class="doc__inline-input doc__inline-input--rate" id="interestRate" name="interestRate" placeholder="0.00" />
-                %의 비율로 하며, 20%를 초과할 수 없다.
-            </span>
+        이자는 연
+        <input type="number" step="0.01" min="0" max="20" class="doc__inline-input doc__inline-input--rate" id="interestRate" name="interestRate" placeholder="0.00" />
+        %의 비율로 하며, 20%를 초과할 수 없다.
+      </span>
         </section>
 
         <section class="doc__article">
             <span class="doc__clause">제4조(변제방법)</span>
             <div class="doc__body">
-                <span class="doc__text">
-                  채무의 변제는 갑의 주소 또는 갑이 지정하는 장소에 지참 또는 송금해서 지불하며,
-                </span>
+        <span class="doc__text">
+          채무의 변제는 갑의 주소 또는 갑이 지정하는 장소에 지참 또는 송금해서 지불하며,
+        </span>
                 <span class="doc__text doc__text--indent">
-                  매월
-                  <input type="number" min="1" max="31" class="doc__inline-input doc__inline-input--day" id="repaymentDay" name="repaymentDay" placeholder="1" />
-                  일에 지급하기로 한다.
-                </span>
+          매월
+          <input type="number" min="1" max="31" class="doc__inline-input doc__inline-input--day" id="repaymentDay" name="repaymentDay" placeholder="1" />
+          일에 지급하기로 한다.
+        </span>
             </div>
         </section>
 
@@ -164,15 +158,15 @@
         <section class="doc__article">
             <span class="doc__clause">제6조(계약의 목적)</span>
             <span class="doc__text">
-                <input type="text" class="doc__inline-input doc__inline-input--alias" id="contractAlias" name="contractAlias" placeholder="예: 생활비 차용" />
-            </span>
+        <input type="text" class="doc__inline-input doc__inline-input--alias" id="contractAlias" name="contractAlias" placeholder="예: 생활비 차용" />
+      </span>
         </section>
 
         <section class="doc__article">
             <span class="doc__clause">제7조(특약사항)</span>
             <span class="doc__text">
-                <textarea class="doc__textarea" id="terms" name="terms" rows="3" placeholder="추가로 약정할 내용이 있다면 입력하세요 (선택)"></textarea>
-            </span>
+        <textarea class="doc__textarea" id="terms" name="terms" rows="3" placeholder="추가로 약정할 내용이 있다면 입력하세요 (선택)"></textarea>
+      </span>
         </section>
 
         <p class="doc__closing">

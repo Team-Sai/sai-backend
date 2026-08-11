@@ -98,7 +98,7 @@ public class LoanContractService {
     }
 
     @Transactional
-    public ContractStatus submitDebtorSignature(Long contractId, Long userId, String debtorAddress, MultipartFile signature) {
+    public ContractStatus submitDebtorSignature(Long contractId, Long userId, String debtorAddress, MultipartFile signature, String identityVerificationId) {
 
         if (!StringUtils.hasText(debtorAddress)) {
             throw LoanContractErrorCode.DEBTOR_ADDRESS_REQUIRED.toException();
@@ -115,6 +115,11 @@ public class LoanContractService {
             throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
         }
 
+        identityService.consume(
+                userId,
+                identityVerificationId,
+                IdentityPurpose.LOAN_CONTRACT
+        );
 
         String savedPath = fileService.saveSignatureFile(contractId, signature);
         contractMapper.updateDebtorSignature(contractId, debtorAddress, savedPath, ContractStatus.COMPLETED);

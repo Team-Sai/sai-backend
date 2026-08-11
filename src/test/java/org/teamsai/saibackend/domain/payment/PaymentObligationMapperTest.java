@@ -90,7 +90,7 @@ class PaymentObligationMapperTest {
         assertThat(result)
                 .extracting(
                         MatchingCandidate::targetType,
-                        MatchingCandidate::obligationId,
+                        MatchingCandidate::targetId,
                         MatchingCandidate::participantId,
                         MatchingCandidate::participantName,
                         candidate -> candidate.remainingAmount()

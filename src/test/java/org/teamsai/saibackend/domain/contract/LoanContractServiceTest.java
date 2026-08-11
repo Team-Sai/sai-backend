@@ -299,7 +299,7 @@ class LoanContractServiceTest {
     class SubmitDebtorSignature {
 
         @Test
-        @DisplayName("채무자 본인이 제출하면 서명 파일과 주소를 저장하고 상태를 COMPLETED로 변경한다")
+        @DisplayName("본인인증을 소비한 뒤 서명 파일과 주소를 저장하고 상태를 COMPLETED로 변경한다")
         void submitDebtorSignatureSuccess() {
             MultipartFile signature = mock(MultipartFile.class);
             String debtorAddress = "서울특별시 마포구 월드컵로 1";
@@ -307,13 +307,42 @@ class LoanContractServiceTest {
             given(fileService.saveSignatureFile(CONTRACT_ID, signature))
                     .willReturn("uploads/signatures/1_signature.png");
 
-            ContractStatus status =
-                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, debtorAddress, signature);
+            ContractStatus status = loanContractService.submitDebtorSignature(
+                    CONTRACT_ID, DEBTOR_ID, debtorAddress, signature, IDENTITY_VERIFICATION_ID
+            );
 
+            verify(identityService).consume(
+                    DEBTOR_ID, IDENTITY_VERIFICATION_ID, IdentityPurpose.LOAN_CONTRACT
+            );
             verify(contractMapper).updateDebtorSignature(
                     CONTRACT_ID, debtorAddress, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
             );
             assertThat(status).isEqualTo(ContractStatus.COMPLETED);
+        }
+
+        @Test
+        @DisplayName("본인인증을 완료하지 않았으면 예외가 발생하고 서명이 저장되지 않는다")
+        void submitDebtorSignatureFailsWhenIdentityNotVerified() {
+            MultipartFile signature = mock(MultipartFile.class);
+            given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
+
+            willThrow(IdentityErrorCode.IDENTITY_VERIFICATION_CONSUME_FAILED.toException())
+                    .given(identityService)
+                    .consume(DEBTOR_ID, IDENTITY_VERIFICATION_ID, IdentityPurpose.LOAN_CONTRACT);
+
+            assertThatThrownBy(() ->
+                    loanContractService.submitDebtorSignature(
+                            CONTRACT_ID, DEBTOR_ID, "서울특별시 마포구 월드컵로 1", signature, IDENTITY_VERIFICATION_ID
+                    )
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(IdentityErrorCode.IDENTITY_VERIFICATION_CONSUME_FAILED)
+                    );
+
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractMapper, never()).updateDebtorSignature(any(), any(), any(), any());
         }
 
         @Test
@@ -322,7 +351,9 @@ class LoanContractServiceTest {
             MultipartFile signature = mock(MultipartFile.class);
 
             assertThatThrownBy(() ->
-                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, "", signature)
+                    loanContractService.submitDebtorSignature(
+                            CONTRACT_ID, DEBTOR_ID, "", signature, IDENTITY_VERIFICATION_ID
+                    )
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -340,7 +371,9 @@ class LoanContractServiceTest {
             MultipartFile signature = mock(MultipartFile.class);
 
             assertThatThrownBy(() ->
-                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, null, signature)
+                    loanContractService.submitDebtorSignature(
+                            CONTRACT_ID, DEBTOR_ID, null, signature, IDENTITY_VERIFICATION_ID
+                    )
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -359,7 +392,9 @@ class LoanContractServiceTest {
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
 
             assertThatThrownBy(() ->
-                    loanContractService.submitDebtorSignature(CONTRACT_ID, OTHER_USER_ID, "아무 주소", signature)
+                    loanContractService.submitDebtorSignature(
+                            CONTRACT_ID, OTHER_USER_ID, "아무 주소", signature, IDENTITY_VERIFICATION_ID
+                    )
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,
@@ -378,7 +413,9 @@ class LoanContractServiceTest {
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    loanContractService.submitDebtorSignature(CONTRACT_ID, DEBTOR_ID, "아무 주소", signature)
+                    loanContractService.submitDebtorSignature(
+                            CONTRACT_ID, DEBTOR_ID, "아무 주소", signature, IDENTITY_VERIFICATION_ID
+                    )
             )
                     .isInstanceOfSatisfying(
                             DomainException.class,

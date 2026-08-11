@@ -29,5 +29,5 @@ public interface RepaymentScheduleMapper {
             @Param("paidAt") LocalDateTime paidAt
     );
 
-
+    Optional<RepaymentScheduleDTO> findById(Long scheduleId);
 }
