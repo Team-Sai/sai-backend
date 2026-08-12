@@ -15,6 +15,7 @@ import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettleme
 import org.teamsai.saibackend.domain.settlement.dto.response.*;
 import org.teamsai.saibackend.domain.settlement.service.SettlementCloseService;
 import org.teamsai.saibackend.domain.settlement.service.SettlementPaymentStatusService;
+import org.teamsai.saibackend.domain.settlement.service.SettlementQueryService;
 import org.teamsai.saibackend.domain.settlement.service.SharedSettlementService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
@@ -31,6 +32,7 @@ public class SettlementController {
     private final SharedSettlementService sharedSettlementService;
     private final SettlementPaymentStatusService settlementPaymentStatusService;
     private final SettlementCloseService settlementCloseService;
+    private final SettlementQueryService settlementQueryService;
 
     @GetMapping("/settlements")
     public String settlementListPage() {
@@ -204,7 +206,7 @@ public class SettlementController {
             CustomUserDetails userDetails
     ) {
         List<SettlementListResponse> response =
-                sharedSettlementService.getSettlementList(
+                settlementQueryService.getSettlementList(
                         userDetails.getUserId()
                 );
 
@@ -222,7 +224,7 @@ public class SettlementController {
             @PathVariable Long settlementId
     ) {
         SettlementDetailResponse response =
-                sharedSettlementService.getSettlementDetail(
+                settlementQueryService.getSettlementDetail(
                         settlementId,
                         userDetails.getUserId()
                 );
