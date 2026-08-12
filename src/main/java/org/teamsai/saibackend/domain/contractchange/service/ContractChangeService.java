@@ -142,7 +142,7 @@ public class ContractChangeService {
                 NotificationType.CONTRACT_CHANGE,
                 "계약 변경 요청",
                 creditorInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
-                contractId
+                newContractDTO.getContractId()
         );
 
         log.info("계약 변경 요청 생성 및 차용증 재저장 완료: contractId={}, userId={}",
@@ -168,17 +168,22 @@ public class ContractChangeService {
 
         repaymentScheduleService.generateChangedSchedule(v1ContractId, v2ContractId);
 
-        UserResponse debtorInfo = userService.getMyInfo(v2.getDebtorId());
-
-        notificationService.create(
-                pendingRequest.getUserId(),
-                NotificationType.CONTRACT_CHANGE,
-                "계약 변경 승인 완료",
-                debtorInfo.getName() + "님이 신청하신 계약 변경 요청을 승인했습니다.",
-                v2ContractId
-        );
-
         log.info("계약 변경 승인 처리 완료: v1ContractId={}, v2ContractId={}, changeRequestId={}",
                 v1ContractId, v2ContractId, pendingRequest.getChangeRequestId());
+
+        try {
+            UserResponse debtorInfo = userService.getMyInfo(v2.getDebtorId());
+
+            notificationService.create(
+                    pendingRequest.getUserId(),
+                    NotificationType.CONTRACT_CHANGE,
+                    "계약 변경 승인 완료",
+                    debtorInfo.getName() + "님이 신청하신 계약 변경 요청을 승인했습니다.",
+                    v2ContractId
+            );
+        } catch (Exception e) {
+            log.error("계약 변경 승인 알림 발송 실패: v2ContractId={}, userId={}, error={}",
+                    v2ContractId, pendingRequest.getUserId(), e.getMessage(), e);
+        }
     }
 }
