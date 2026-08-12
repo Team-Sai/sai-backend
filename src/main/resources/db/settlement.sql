@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS settlement (
     INDEX idx_settlement_recurring_id (recurring_settlement_id),
     INDEX idx_settlement_type (settlement_type),
     INDEX idx_settlement_status (settlement_status),
-    INDEX idx_settlement_created_at (created_at)
+    INDEX idx_settlement_created_at (created_at),
 
     CONSTRAINT fk_settlement_recurring
         FOREIGN KEY (recurring_settlement_id)
