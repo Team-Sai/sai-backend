@@ -107,4 +107,67 @@
         AND processing_status = #{currentStatus}
     </update>
 
+    <sql id="searchCondition">
+        WHERE linked_account_id = #{linkedAccountId}
+        <if test="condition.processingStatus != null">
+            AND processing_status = #{condition.processingStatus}
+        </if>
+        <if test="condition.transactionType != null">
+            AND transaction_type = #{condition.transactionType}
+        </if>
+        <if test="condition.keyword != null and condition.keyword != ''">
+            AND (
+            counterparty_name LIKE CONCAT('%', #{condition.keyword}, '%')
+            OR memo LIKE CONCAT('%', #{condition.keyword}, '%')
+            )
+        </if>
+        <if test="condition.fromDate != null">
+            AND transaction_at &gt;= #{condition.fromDate}
+        </if>
+        <if test="condition.toDate != null">
+            AND transaction_at &lt; DATE_ADD(#{condition.toDate}, INTERVAL 1 DAY)
+        </if>
+    </sql>
+
+    <select id="search" resultMap="BankTransactionResultMap">
+        SELECT
+        bank_transaction_id,
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at
+        FROM bank_transaction
+        <include refid="searchCondition"/>
+        ORDER BY transaction_at DESC, bank_transaction_id DESC
+        LIMIT #{condition.size} OFFSET #{condition.offset}
+    </select>
+
+    <select id="countBySearch" resultType="long">
+        SELECT COUNT(*)
+        FROM bank_transaction
+        <include refid="searchCondition"/>
+    </select>
+
+    <select id="findByIdAndLinkedAccountId" resultMap="BankTransactionResultMap">
+        SELECT
+        bank_transaction_id,
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at
+        FROM bank_transaction
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND linked_account_id = #{linkedAccountId}
+    </select>
 </mapper>
+
