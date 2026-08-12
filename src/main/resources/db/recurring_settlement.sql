@@ -1,4 +1,4 @@
-CREATE TABLE recurring_settlement (
+CREATE TABLE IF NOT EXISTS recurring_settlement (
     recurring_settlement_id BIGINT AUTO_INCREMENT,
     owner_id BIGINT NOT NULL,
     settlement_category VARCHAR(50) NOT NULL,

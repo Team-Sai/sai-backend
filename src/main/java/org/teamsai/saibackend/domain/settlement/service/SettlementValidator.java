@@ -7,6 +7,7 @@ import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementParticipantRequest;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
+import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
 
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Set;
 public class SettlementValidator {
 
     private final LinkedBankAccountService linkedBankAccountService;
+    private final SettlementParticipantMapper settlementParticipantMapper;
 
     public void validateOwner(SettlementDTO settlement, Long userId){
         if(!settlement.getOwnerId().equals(userId)){
@@ -69,6 +71,27 @@ public class SettlementValidator {
                         .DUPLICATE_SETTLEMENT_PARTICIPANT
                         .toException();
             }
+        }
+    }
+
+    public void validateAccessibleUser(
+            SettlementDTO settlement,
+            Long userId
+    ) {
+        if (settlement.getOwnerId().equals(userId)) {
+            return;
+        }
+
+        boolean isParticipant =
+                settlementParticipantMapper.existsActiveParticipant(
+                        settlement.getSettlementId(),
+                        userId
+                );
+
+        if (!isParticipant) {
+            throw SettlementErrorCode
+                    .SETTLEMENT_ACCESS_DENIED
+                    .toException();
         }
     }
 }

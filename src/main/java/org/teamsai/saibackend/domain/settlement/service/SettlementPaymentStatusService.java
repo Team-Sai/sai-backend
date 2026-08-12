@@ -39,7 +39,7 @@ public class SettlementPaymentStatusService {
                                         ::toException
                         );
 
-        settlementValidator.validateOwner(settlement,userId);
+        settlementValidator.validateAccessibleUser(settlement,userId);
 
         List<SettlementPaymentObligationResponse> obligations =
 

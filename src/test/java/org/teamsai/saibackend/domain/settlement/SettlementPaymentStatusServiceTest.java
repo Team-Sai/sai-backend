@@ -34,7 +34,8 @@ class SettlementPaymentStatusServiceTest {
 
     private static final Long SETTLEMENT_ID = 1L;
     private static final Long OWNER_ID = 10L;
-    private static final Long OTHER_USER_ID = 20L;
+    private static final Long MEMBER_ID = 20L;
+    private static final Long OTHER_USER_ID = 30L;
 
     @Mock
     private SettlementMapper settlementMapper;
@@ -109,9 +110,8 @@ class SettlementPaymentStatusServiceTest {
         assertThat(response.isClosable())
                 .isFalse();
 
-
         verify(settlementValidator)
-                .validateOwner(
+                .validateAccessibleUser(
                         settlement,
                         OWNER_ID
                 );
@@ -162,6 +162,12 @@ class SettlementPaymentStatusServiceTest {
 
         assertThat(response.getProgressRate())
                 .isEqualByComparingTo("100.00");
+
+        verify(settlementValidator)
+                .validateAccessibleUser(
+                        settlement,
+                        OWNER_ID
+                );
     }
 
 
@@ -249,7 +255,7 @@ class SettlementPaymentStatusServiceTest {
         verify(
                 settlementValidator,
                 never()
-        ).validateOwner(
+        ).validateAccessibleUser(
                 org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any()
         );
@@ -257,8 +263,66 @@ class SettlementPaymentStatusServiceTest {
 
 
     @Test
-    @DisplayName("정산 owner가 아니면 납부 현황을 조회할 수 없다")
-    void getPaymentStatusFailsWhenUserIsNotOwner() {
+    @DisplayName("ACTIVE 정산 참여자는 납부 현황을 조회할 수 있다")
+    void getPaymentStatusSucceedsForMember() {
+
+        SettlementDTO settlement =
+                createSettlement();
+
+        given(
+                settlementMapper.findById(
+                        SETTLEMENT_ID
+                )
+        ).willReturn(
+                Optional.of(settlement)
+        );
+
+        given(
+                paymentStatusMapper
+                        .findPaymentObligationsBySettlementId(
+                                SETTLEMENT_ID
+                        )
+        ).willReturn(
+                List.of(
+                        obligation(
+                                10000,
+                                5000,
+                                5000,
+                                PaymentStatus.PARTIALLY_PAID
+                        )
+                )
+        );
+
+
+        SettlementPaymentStatusResponse response =
+                paymentStatusService.getPaymentStatus(
+                        SETTLEMENT_ID,
+                        MEMBER_ID
+                );
+
+
+        assertThat(response)
+                .isNotNull();
+
+        assertThat(response.getTotalExpectedAmount())
+                .isEqualByComparingTo("10000");
+
+        verify(settlementValidator)
+                .validateAccessibleUser(
+                        settlement,
+                        MEMBER_ID
+                );
+
+        verify(paymentStatusMapper)
+                .findPaymentObligationsBySettlementId(
+                        SETTLEMENT_ID
+                );
+    }
+
+
+    @Test
+    @DisplayName("정산과 관계없는 사용자는 납부 현황을 조회할 수 없다")
+    void getPaymentStatusFailsWhenUserHasNoAccess() {
 
         SettlementDTO settlement =
                 createSettlement();
@@ -276,7 +340,7 @@ class SettlementPaymentStatusServiceTest {
                         .SETTLEMENT_ACCESS_DENIED
                         .toException()
         ).when(settlementValidator)
-                .validateOwner(
+                .validateAccessibleUser(
                         settlement,
                         OTHER_USER_ID
                 );
@@ -299,6 +363,12 @@ class SettlementPaymentStatusServiceTest {
                         )
         );
 
+
+        verify(settlementValidator)
+                .validateAccessibleUser(
+                        settlement,
+                        OTHER_USER_ID
+                );
 
         verify(
                 paymentStatusMapper,
