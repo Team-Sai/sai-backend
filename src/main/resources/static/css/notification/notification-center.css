@@ -8,6 +8,12 @@
   --primary: #006E2A;
   --blue: #2952CC;
 
+  --orange: #F97316;
+  --orange-bg: #FFF7ED;
+
+  --indigo: #6366F1;
+  --indigo-bg: #EEF2FF;
+
   --blue-bg: #EEF2FF;
   --green-bg: #EDF9F0;
 
@@ -245,6 +251,13 @@ body {
       4px solid var(--primary);
 }
 
+.notif-card.accent-orange {
+  border-left: 4px solid var(--orange);
+}
+
+.notif-card.accent-indigo {
+  border-left: 4px solid var(--indigo);
+}
 
 .notif-icon {
   width: 36px;
@@ -272,6 +285,16 @@ body {
   background: var(--green-bg);
 
   color: var(--primary);
+}
+
+.icon-orange {
+  background: var(--orange-bg);
+  color: var(--orange);
+}
+
+.icon-indigo {
+  background: var(--indigo-bg);
+  color: var(--indigo);
 }
 
 
@@ -352,6 +375,15 @@ body {
 .notif-card.accent-green
 .notif-cta {
   background: var(--primary);
+}
+
+.notif-card.accent-orange .notif-cta {
+  background: var(--orange);
+}
+
+/* 인디고 카드 내 버튼 색상 */
+.notif-card.accent-indigo .notif-cta {
+  background: var(--indigo);
 }
 
 
