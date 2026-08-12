@@ -16,3 +16,6 @@ CREATE TABLE IF NOT EXISTS repayment_schedule (
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_repayment_schedule_contract_sequence
+    ON repayment_schedule (contract_id, sequence);
