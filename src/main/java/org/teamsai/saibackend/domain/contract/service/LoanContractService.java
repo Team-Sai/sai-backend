@@ -7,13 +7,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.teamsai.saibackend.domain.archive.dto.ArchiveStatus;
-import org.teamsai.saibackend.domain.archive.service.ArchiveService;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
+import org.teamsai.saibackend.domain.contract.event.ContractCompletedEvent;
 import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
@@ -24,7 +23,6 @@ import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.service.UserService;
 
-import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,7 +37,6 @@ public class LoanContractService {
     private final IdentityService identityService;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
-    private final ArchiveService archiveService;
 
     @Transactional
     public Long createContract(LoanContractRequest request, Long userId) {
@@ -56,7 +53,7 @@ public class LoanContractService {
 
         contractAccountService.createContractAccount(request.getContractId(), userId, request.getSelectedLinkedAccountId());
 
-        eventPublisher.publishEvent(new ContractCreatedEvent(request.getContractId()));   // 방송만 함
+        eventPublisher.publishEvent(new ContractCreatedEvent(request.getContractId()));
 
         return request.getContractId();
     }
@@ -77,7 +74,6 @@ public class LoanContractService {
         String savedPath = fileService.saveSignatureFile(contractId, signature);
 
         contractMapper.updateCreditorSignature(contractId, savedPath, debtorId, ContractStatus.PENDING);
-
 
         notificationService.create(
                 debtorId,
@@ -148,15 +144,7 @@ public class LoanContractService {
                         .build()
         );
 
-        byte[] contractPdf = archiveService.renderContractPdf(completedContract);
-        archiveService.saveFile(
-                ArchiveStatus.CONTRACT.name(),
-                contractId,
-                "차용증_" + contractId + ".pdf",
-                "application/pdf",
-                new ByteArrayInputStream(contractPdf),
-                contractPdf.length
-        );
+        eventPublisher.publishEvent(new ContractCompletedEvent(completedContract));
 
         return ContractStatus.COMPLETED;
     }

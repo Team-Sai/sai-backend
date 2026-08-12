@@ -32,8 +32,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.teamsai.saibackend.domain.archive.dto.ArchiveStatus.CONTRACT;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -90,7 +88,7 @@ public class ArchiveService {
             Files.copy(content, savePath, StandardCopyOption.REPLACE_EXISTING);
 
             FileDTO fileDTO = FileDTO.builder()
-                    .domainType(CONTRACT)
+                    .domainType(ArchiveStatus.valueOf(domainType))
                     .referenceId(referenceId)
                     .originalFilename(originalFilename)
                     .savedFilename(savedFilename)
