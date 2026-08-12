@@ -38,10 +38,10 @@
             <span class="doc__clause">제1조(당사자)</span>
             <div class="doc__body">
         <span class="doc__text">
-          채권자 <strong id="creditorName" class="doc__readonly">-</strong>(은)는 채무자 <strong id="debtorName" class="doc__readonly">-</strong>에게
+          채권자 <strong id="creditorName" class="doc__readonly">-</strong>(이하 "갑"이라고 함)는
         </span>
                 <span class="doc__text doc__text--indent">
-          금 <strong id="principalAmount" class="doc__readonly">-</strong>원을 대여하고, 채무자는 이를 차용한다.
+          금 <strong id="principalAmount" class="doc__readonly">-</strong>원을 채무자 <strong id="debtorNameClause" class="doc__readonly">-</strong>(이하 "을"이라고 함)에게 대여하고 을은 이를 차용한다.
         </span>
             </div>
         </section>
@@ -61,15 +61,20 @@
         <section class="doc__article">
             <span class="doc__clause">제3조(이자)</span>
             <span class="doc__text">
-        이자는 연 <strong id="interestRate" class="doc__readonly">-</strong>%의 비율로 한다.
+        이자는 연 <strong id="interestRate" class="doc__readonly">-</strong>%의 비율로 하며, 20%를 초과할 수 없다.
       </span>
         </section>
 
         <section class="doc__article">
             <span class="doc__clause">제4조(변제방법)</span>
-            <span class="doc__text">
-        매월 <strong id="repaymentDay" class="doc__readonly">-</strong>일에 지급하기로 한다.
-      </span>
+            <div class="doc__body">
+        <span class="doc__text">
+          채무의 변제는 갑의 주소 또는 갑이 지정하는 장소에 지참 또는 송금해서 지불하며,
+        </span>
+                <span class="doc__text doc__text--indent">
+          매월 <strong id="repaymentDay" class="doc__readonly">-</strong>일에 지급하기로 한다.
+        </span>
+            </div>
         </section>
 
         <section class="doc__article">
@@ -78,9 +83,50 @@
         </section>
 
         <section class="doc__article">
-            <span class="doc__clause">제6조(특약사항)</span>
+            <span class="doc__clause">제6조(계약의 목적)</span>
+            <span class="doc__text"><strong id="contractAlias" class="doc__readonly">-</strong></span>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제7조(특약사항)</span>
             <span class="doc__text"><strong id="terms" class="doc__readonly">-</strong></span>
         </section>
+
+        <p class="doc__closing">
+            갑과 을은 상기 계약을 증명하기 위하여 본 계약서 2통을 작성하고, 각자 서명 날인한 후 1통씩을 보관한다.
+        </p>
+
+        <table class="parties">
+            <colgroup>
+                <col style="width: 12%">
+                <col style="width: 12%">
+                <col style="width: 20%">
+                <col style="width: 14%">
+                <col style="width: 20%">
+                <col style="width: 10%">
+                <col style="width: 32%">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th class="parties__role">채권자</th>
+                <td class="parties__label">성 명</td>
+                <td class="parties__value"><strong id="creditorNameCell" class="doc__readonly">-</strong></td>
+                <td class="parties__label">생년월일</td>
+                <td class="parties__value"><strong id="creditorBirthDateCell" class="doc__readonly">-</strong></td>
+                <td class="parties__label">주 소</td>
+                <td class="parties__value"><strong id="creditorAddress" class="doc__readonly">-</strong></td>
+            </tr>
+            <tr>
+                <th class="parties__role">채무자</th>
+                <td class="parties__label">성 명</td>
+                <td class="parties__value"><strong id="debtorName" class="doc__readonly">-</strong></td>
+                <td class="parties__label">생년월일</td>
+                <td class="parties__value"><strong id="debtorBirthDateCell" class="doc__readonly">-</strong></td>
+                <td class="parties__label">주 소</td>
+                <td class="parties__value"><strong id="debtorAddress" class="doc__readonly">-</strong></td>
+            </tr>
+            </tbody>
+        </table>
 
         <p class="disclaimer">
             * 본 계약서는 당사자 간 입력 정보 및 전자적으로 기록된 서명 이미지를 기반으로 작성·보관되는 문서로,
@@ -108,7 +154,6 @@
     </div>
 </footer>
 
-<script th:src="@{/js/notification/topnav-notifications.js}"></script>
 <script th:src="@{/js/contractdetail/contractdetail.js}"></script>
 </body>
 </html>

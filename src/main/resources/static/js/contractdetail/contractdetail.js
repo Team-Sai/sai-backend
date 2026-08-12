@@ -30,9 +30,17 @@ fetch(`/api/contracts/${contractId}/contract-detail`, { headers: authHeaders() }
         document.getElementById('repaymentType').textContent =
             REPAYMENT_TYPE_LABELS[data.contract.repaymentType] || data.contract.repaymentType;
         document.getElementById('repaymentDay').textContent = data.contract.repaymentDay;
+        document.getElementById('contractAlias').textContent = data.contract.contractAlias;
         document.getElementById('terms').textContent = data.contract.terms || '-';
         document.getElementById('creditorName').textContent = data.contract.creditorName;
-        document.getElementById('debtorName').textContent = data.contract.debtorName;
+        document.getElementById('debtorName').textContent = data.contract.debtorName || '-';
+        document.getElementById('debtorNameClause').textContent = data.contract.debtorName || '-';
+
+        document.getElementById('creditorNameCell').textContent = data.contract.creditorName;
+        document.getElementById('creditorBirthDateCell').textContent = data.contract.creditorBirthDate;
+        document.getElementById('creditorAddress').textContent = data.contract.creditorAddress || '-';
+        document.getElementById('debtorBirthDateCell').textContent = data.contract.debtorBirthDate || '-';
+        document.getElementById('debtorAddress').textContent = data.contract.debtorAddress || '-';
 
         changeButton.hidden = !data.canRequestChange;
     })

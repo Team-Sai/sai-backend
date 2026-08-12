@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>차용증 보관함 (임시)</title>
+    <link rel="stylesheet" th:href="@{/css/archive/archive.css}">
+    <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}">
+</head>
+<body>
+
+<div class="archive-container">
+    <h1>차용증 보관함</h1>
+    <p class="subtitle">저장된 차용증을 눌러 상세 화면을 확인하세요. (임시 페이지)</p>
+
+    <div class="archive-list" id="archiveList"></div>
+
+    <div class="pager" id="pager" style="display:none;">
+        <button id="prevPageBtn" type="button">이전</button>
+        <span id="pageLabel" class="pager-label"></span>
+        <button id="nextPageBtn" type="button">다음</button>
+    </div>
+</div>
+
+<div id="printArea" class="print-only"></div>
+
+<script th:src="@{/js/archive/archive.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>

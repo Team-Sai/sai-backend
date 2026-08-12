@@ -10,11 +10,6 @@ import org.teamsai.saibackend.global.exception.DomainException;
 @RequiredArgsConstructor
 public enum LoanContractFileErrorCode implements BaseErrorCode<DomainException> {
 
-    CONTRACT_FILE_NOT_FOUND(
-            HttpStatus.NOT_FOUND,
-            "해당 계약서의 첨부파일을 찾을 수 없습니다."
-    ),
-
     SIGNATURE_UPLOAD_FAILED(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "서명 파일 저장에 실패했습니다."

@@ -5,11 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.teamsai.saibackend.domain.contract.dto.LoanContractFileDTO;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractFileErrorCode;
-import org.teamsai.saibackend.domain.contract.mapper.LoanContractFileMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,22 +20,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LoanContractFileService {
 
-    private final LoanContractFileMapper fileMapper;
-
     @Getter
     @Value("${file.upload-dir:C:/upload/shinhan/}")
     private String uploadDir = "C:/upload/shinhan/";
 
-    @Transactional
-    public Long insertContractFile(LoanContractFileDTO file) {
-        fileMapper.insertContractFile(file);
-        return file.getFileId();
-    }
-
-    public LoanContractFileDTO findFileByContractId(Long contractId) {
-        return fileMapper.findFileByContractId(contractId)
-                .orElseThrow(LoanContractFileErrorCode.CONTRACT_FILE_NOT_FOUND::toException);
-    }
 
     public String saveSignatureFile(Long contractId, MultipartFile file) {
         if (file == null || file.isEmpty()) {
