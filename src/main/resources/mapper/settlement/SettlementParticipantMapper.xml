@@ -5,21 +5,21 @@
 
 <mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper">
 
-    <insert
-            id="insert"
+    <insert id="insert"
             parameterType="org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO"
             useGeneratedKeys="true"
-            keyProperty="participantId"
-            keyColumn="participant_id">
+            keyProperty="participantId">
 
         INSERT INTO settlement_participant (
-        invitation_id,
+        settlement_id,
+        user_id,
         participant_role,
         participant_status,
         joined_at
         )
         VALUES (
-        #{invitationId},
+        #{settlementId},
+        #{userId},
         #{participantRole},
         #{participantStatus},
         #{joinedAt}
@@ -27,39 +27,18 @@
 
     </insert>
 
-    <select
-            id="existsByInvitationId"
-            resultType="boolean">
-
-        SELECT EXISTS (
-        SELECT 1
-        FROM settlement_participant
-        WHERE invitation_id = #{invitationId}
-        )
-
-    </select>
-
-    <select
-            id="existsActiveParticipant"
+    <select id="existsActiveParticipant"
             resultType="boolean">
 
         SELECT EXISTS (
         SELECT 1
         FROM settlement_participant sp
-        JOIN settlement_invitation si
-        ON si.invitation_id = sp.invitation_id
-        WHERE si.settlement_id = #{settlementId}
-        AND si.user_id = #{userId}
+        WHERE sp.settlement_id = #{settlementId}
+        AND sp.user_id = #{userId}
         AND sp.participant_status = 'ACTIVE'
         )
 
     </select>
 
-    <update id="updateStatusByInvitationId">
-        UPDATE settlement_participant
-        SET participant_status = #{participantStatus}
-        WHERE invitation_id = #{invitationId}
-        AND participant_status = 'ACTIVE'
-    </update>
 
 </mapper>

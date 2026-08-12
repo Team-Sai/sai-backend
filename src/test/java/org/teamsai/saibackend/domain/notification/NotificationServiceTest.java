@@ -1,0 +1,150 @@
+package org.teamsai.saibackend.domain.notification;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.teamsai.saibackend.domain.notification.dto.NotificationDTO;
+import org.teamsai.saibackend.domain.notification.dto.response.NotificationResponse;
+import org.teamsai.saibackend.domain.notification.mapper.NotificationMapper;
+import org.teamsai.saibackend.domain.notification.service.NotificationService;
+import org.teamsai.saibackend.domain.notification.type.NotificationType;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("NotificationService 단위 테스트")
+class NotificationServiceTest {
+
+    @Mock
+    private NotificationMapper notificationMapper;
+
+    @InjectMocks
+    private NotificationService notificationService;
+
+
+    @Test
+    @DisplayName("정산 참여자에게 알림을 생성한다")
+    void createNotificationSuccess() {
+
+        Long userId = 2L;
+        Long settlementId = 10L;
+
+
+        notificationService.create(
+                userId,
+                NotificationType
+                        .SETTLEMENT_PARTICIPANT_ADDED,
+                "새로운 정산에 참여자로 등록되었습니다.",
+                "정산 금액 30000원이 등록되었습니다.",
+                settlementId
+        );
+
+
+        ArgumentCaptor<NotificationDTO> captor =
+                ArgumentCaptor.forClass(
+                        NotificationDTO.class
+                );
+
+
+        verify(notificationMapper)
+                .insert(
+                        captor.capture()
+                );
+
+
+        NotificationDTO notification =
+                captor.getValue();
+
+
+        assertThat(notification.getUserId())
+                .isEqualTo(
+                        userId
+                );
+
+        assertThat(notification.getNotificationType())
+                .isEqualTo(
+                        NotificationType
+                                .SETTLEMENT_PARTICIPANT_ADDED
+                );
+
+        assertThat(notification.getTitle())
+                .isEqualTo(
+                        "새로운 정산에 참여자로 등록되었습니다."
+                );
+
+        assertThat(notification.getContent())
+                .isEqualTo(
+                        "정산 금액 30000원이 등록되었습니다."
+                );
+
+        assertThat(notification.getReferenceId())
+                .isEqualTo(
+                        settlementId
+                );
+
+        assertThat(notification.getCreatedAt())
+                .isNotNull();
+    }
+
+
+    @Test
+    @DisplayName("로그인 사용자의 알림 목록을 조회한다")
+    void getNotificationsSuccess() {
+
+        Long userId = 2L;
+
+        LocalDateTime createdAt =
+                LocalDateTime.now();
+
+
+        List<NotificationResponse> expected =
+                List.of(
+                        new NotificationResponse(
+                                1L,
+                                NotificationType
+                                        .SETTLEMENT_PARTICIPANT_ADDED,
+                                "새로운 정산에 참여자로 등록되었습니다.",
+                                "정산 금액 30000원이 등록되었습니다.",
+                                10L,
+                                createdAt
+                        )
+                );
+
+
+        when(
+                notificationMapper
+                        .findAllByUserId(
+                                userId
+                        )
+        ).thenReturn(
+                expected
+        );
+
+
+        List<NotificationResponse> result =
+                notificationService
+                        .getNotifications(
+                                userId
+                        );
+
+
+        assertThat(result)
+                .isEqualTo(
+                        expected
+                );
+
+        verify(notificationMapper)
+                .findAllByUserId(
+                        userId
+                );
+    }
+}
