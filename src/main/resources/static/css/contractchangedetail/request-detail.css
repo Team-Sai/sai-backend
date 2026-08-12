@@ -79,14 +79,22 @@ body {
 
 .reason-card h3,
 .period-card h3 {
-    font-size: 14px;
+    font-size: 18px;
     margin-top: 0;
 }
 
 .requester {
+    display: flex;
+    flex-direction: column;
     margin-top: 12px;
     font-size: 13px;
     color: #555;
+}
+
+#changeReason {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #1a1a1a;
 }
 
 .requester .role {

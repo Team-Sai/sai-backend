@@ -30,7 +30,7 @@ fetch(`/api/contracts/${contractId}/contract-detail`, { headers: authHeaders() }
         document.getElementById('repaymentType').textContent =
             REPAYMENT_TYPE_LABELS[data.contract.repaymentType] || data.contract.repaymentType;
         document.getElementById('repaymentDay').textContent = data.contract.repaymentDay;
-        document.getElementById('terms').textContent = data.contract.terms || '-';
+        document.getElementById('termsSection').hidden = !data.contract.terms;
         document.getElementById('creditorName').textContent = data.contract.creditorName;
         document.getElementById('debtorName').textContent = data.contract.debtorName;
         document.getElementById('creditorNameCell').textContent = data.contract.creditorName;

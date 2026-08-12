@@ -18,8 +18,7 @@ fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}`, { heade
     })
     .then(detail => {
         document.getElementById('requesterName').textContent = detail.requesterName;
-        document.getElementById('requesterNameSide').textContent = detail.requesterName;
-        document.getElementById('requestedAt').textContent = detail.requestedAt;
+        document.getElementById('requestedAt').textContent = formatDateTimeKorean(detail.requestedAt);
         document.getElementById('status').textContent = detail.status;
 
         document.getElementById('currentMaturityDate').textContent = detail.currentMaturityDate;
@@ -60,5 +59,16 @@ function formatExtendedMonths(months) {
 }
 
 document.getElementById('approveButton').addEventListener('click', function () {
-    alert('승인 기능은 준비 중입니다.');
+    window.location.href = `/contracts/${contractId}/approve`;
 });
+
+function formatDateTimeKorean(dateString) {
+    const dated = new Date(dateString);
+    const year = dated.getFullYear();
+    const month = dated.getMonth() + 1;
+    const date = dated.getDate();
+    const hours = dated.getHours();
+    const minutes = dated.getMinutes();
+    const seconds = dated.getSeconds();
+    return `${year}년 ${month}월 ${date}일 ${hours}시 ${minutes}분 ${seconds}초`;
+}
