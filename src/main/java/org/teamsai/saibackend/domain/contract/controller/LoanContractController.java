@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,8 +19,6 @@ import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
-
-import java.util.List;
 
 @Tag(
         name = "차용증 API",
@@ -124,23 +121,6 @@ public class LoanContractController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         contractService.linkDebtor(contractId, userDetails.getUserId());
-    }
-
-    @Operation(
-            summary = "수신한 차용증 목록 조회",
-            description = "로그인한 사용자가 채무자로 지정되어 서명 대기 중인(PENDING) 차용증 목록을 조회합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
-    })
-    @ResponseBody
-    @GetMapping("/api/contracts/incoming")
-    public ResponseEntity<List<LoanContractResponse>> getIncomingContracts(
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        List<LoanContractResponse> incomingContracts = contractService.findPendingContractsByDebtorId(userDetails.getUserId());
-        return ResponseEntity.ok(incomingContracts);
     }
 
     @Operation(
