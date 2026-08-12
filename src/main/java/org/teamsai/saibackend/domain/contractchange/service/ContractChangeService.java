@@ -60,6 +60,12 @@ public class ContractChangeService {
 
     }
 
+    public Long getPendingChangedContractId(Long contractId) {
+        return loanContractService.findPendingContractByPreviousId(contractId)
+                .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException)
+                .getContractId();
+    }
+
 
     @Transactional
     public LoanContractChangeDTO requestChange(Long contractId, ContractChangeRequest request, Long userId) {
