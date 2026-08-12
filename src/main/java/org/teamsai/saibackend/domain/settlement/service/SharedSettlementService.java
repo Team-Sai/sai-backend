@@ -3,52 +3,36 @@ package org.teamsai.saibackend.domain.settlement.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.teamsai.saibackend.domain.notification.service.NotificationService;
-import org.teamsai.saibackend.domain.notification.type.NotificationType;
-import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
-import org.teamsai.saibackend.domain.settlement.dto.request.CreateSettlementParticipantRequest;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.CreateSharedSettlementResponse;
-import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
-import org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
 import org.teamsai.saibackend.domain.settlement.type.SettlementType;
 import org.teamsai.saibackend.domain.settlement.type.SplitType;
-import org.teamsai.saibackend.domain.user.dto.UserDTO;
-import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class SharedSettlementService {
 
-    private static final int WON_SCALE = 0;
-
     private final SettlementMapper settlementMapper;
-    private final SettlementParticipantService participantService;
-    private final SettlementPaymentService settlementPaymentService;
-    private final UserService userService;
     private final SettlementAccountService settlementAccountService;
-    private final NotificationService notificationService;
+    private final SettlementValidator settlementValidator;
+    private final SettlementParticipantRegistrationService participantRegistrationService;
+    private final SettlementAmountCalculator settlementAmountCalculator;
 
     @Transactional
     public CreateSharedSettlementResponse create(
             Long ownerId,
             CreateSharedSettlementRequest request
     ) {
-        validateCreateRequest(request);
-
+       settlementValidator.validateCreateRequest(request);
         BigDecimal perPersonAmount =
-                calculatePerPersonAmount(
+                settlementAmountCalculator.calculateEqualAmount(
                         request.getTotalAmount(),
                         request.getParticipants().size()
                 );
@@ -66,8 +50,6 @@ public class SharedSettlementService {
                                 request.getSettlementCategory()
                         )
                         .title(request.getTitle())
-
-                        // 실제 N빵 enum 상수명으로 변경
                         .splitType(SplitType.EQUAL)
 
                         .totalAmount(request.getTotalAmount())
@@ -83,14 +65,17 @@ public class SharedSettlementService {
                     .SETTLEMENT_CREATE_FAILED
                     .toException();
         }
-        createParticipantsAndObligations(
+        participantRegistrationService.registerParticipants(
                 ownerId,
                 settlement.getSettlementId(),
                 request.getParticipants(),
                 perPersonAmount
         );
+
         settlementAccountService.selectAccount(
-            ownerId,settlement.getSettlementId(),request.getLinkedAccountId()
+                ownerId,
+                settlement.getSettlementId(),
+                request.getLinkedAccountId()
         );
 
         return CreateSharedSettlementResponse.builder()
@@ -100,135 +85,5 @@ public class SharedSettlementService {
                 .title(settlement.getTitle())
                 .createdAt(settlement.getCreatedAt())
                 .build();
-    }
-
-    @Transactional(readOnly = true)
-    public List<SettlementListResponse> getSettlementList(Long userId) {
-        return settlementMapper.findAllByUserId(userId);
-    }
-
-    @Transactional(readOnly = true)
-    public SettlementDetailResponse getSettlementDetail(Long settlementId, Long userId){
-        SettlementDetailResponse response = settlementMapper.findDetailById(settlementId,userId)
-                .orElseThrow(SettlementErrorCode.SETTLEMENT_NOT_FOUND::toException);
-
-        if("NONE".equals(response.role())){
-            throw SettlementErrorCode.SETTLEMENT_ACCESS_DENIED.toException();
-        }
-        return response;
-    }
-
-    private void validateCreateRequest(
-            CreateSharedSettlementRequest request
-    ) {
-        if (request == null) {
-            throw SettlementErrorCode
-                    .INVALID_SETTLEMENT_REQUEST
-                    .toException();
-        }
-
-        List<CreateSettlementParticipantRequest> participants =
-                request.getParticipants();
-
-        if (participants == null || participants.isEmpty()) {
-            throw SettlementErrorCode
-                    .SETTLEMENT_PARTICIPANT_REQUIRED
-                    .toException();
-        }
-
-        validateDuplicateParticipants(participants);
-    }
-
-    private void validateDuplicateParticipants(
-            List<CreateSettlementParticipantRequest> participants
-    ) {
-        Set<String> userTokens = new HashSet<>();
-
-        for (CreateSettlementParticipantRequest participant
-                : participants) {
-
-            if (participant == null
-                    || participant.getUserToken() == null
-                    || participant.getUserToken().isBlank()) {
-                throw SettlementErrorCode
-                        .INVALID_SETTLEMENT_PARTICIPANT
-                        .toException();
-            }
-
-            if (!userTokens.add(participant.getUserToken())) {
-                throw SettlementErrorCode
-                        .DUPLICATE_SETTLEMENT_PARTICIPANT
-                        .toException();
-            }
-        }
-    }
-
-
-    private void createParticipantsAndObligations(
-            Long ownerId,
-            Long settlementId,
-            List<CreateSettlementParticipantRequest> participants,
-            BigDecimal expectedAmount
-    ) {
-        for (CreateSettlementParticipantRequest participantRequest
-                : participants) {
-
-            UserDTO participantUser =
-                    userService.findRequestTarget(
-                            ownerId,
-                            participantRequest.getUserToken()
-                    );
-
-            Long participantId =
-                    participantService.createParticipant(
-                            settlementId,
-                            participantUser.getUserId()
-                    );
-
-            settlementPaymentService.createObligation(
-                    participantId,
-                    expectedAmount
-            );
-            notificationService.create(
-                    participantUser.getUserId(),
-                    NotificationType.SETTLEMENT_PARTICIPANT_ADDED,
-                    "새로운 정산에 참여자로 등록되었습니다.",
-                    "정산 금액 "
-                            + expectedAmount.toPlainString()
-                            + "원이 등록되었습니다.",
-                    settlementId
-            );
-        }
-    }
-
-
-
-    private BigDecimal calculatePerPersonAmount(
-            BigDecimal totalAmount,
-            int participantCount
-    ) {
-        if (totalAmount == null
-                || totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw SettlementErrorCode
-                    .INVALID_SETTLEMENT_AMOUNT
-                    .toException();
-        }
-
-        int totalParticipantCount = participantCount + 1;
-
-        BigDecimal perPersonAmount =
-                totalAmount.divide(
-                        BigDecimal.valueOf(totalParticipantCount),
-                        WON_SCALE,
-                        RoundingMode.DOWN
-                );
-
-        if (perPersonAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw SettlementErrorCode
-                    .INVALID_SETTLEMENT_AMOUNT
-                    .toException();
-        }
-
-        return perPersonAmount;
     }
 }

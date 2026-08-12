@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS settlement (
     settlement_id BIGINT AUTO_INCREMENT,
+    recurring_settlement_id BIGINT NULL,
     owner_id BIGINT NOT NULL,
     settlement_type ENUM('SHARED', 'RECURRING') NOT NULL,
 
@@ -15,10 +16,6 @@ CREATE TABLE IF NOT EXISTS settlement (
     CHECK (total_amount > 0),
     due_date DATE NULL,
 
-    cycle_rule ENUM('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY') NULL,
-    start_date DATE NULL,
-    end_date DATE NULL,
-
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     closed_at DATETIME NULL,
 
@@ -29,10 +26,15 @@ CREATE TABLE IF NOT EXISTS settlement (
     PRIMARY KEY (settlement_id),
 
     INDEX idx_settlement_owner_id (owner_id),
+    INDEX idx_settlement_recurring_id (recurring_settlement_id),
     INDEX idx_settlement_type (settlement_type),
     INDEX idx_settlement_status (settlement_status),
-    INDEX idx_settlement_created_at (created_at)
-    )
-    ENGINE = InnoDB
-    DEFAULT CHARSET = utf8mb4
-    COLLATE = utf8mb4_unicode_ci;
+    INDEX idx_settlement_created_at (created_at),
+
+    CONSTRAINT fk_settlement_recurring
+        FOREIGN KEY (recurring_settlement_id)
+        REFERENCES recurring_settlement(recurring_settlement_id)
+)
+ENGINE = InnoDB
+DEFAULT CHARSET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
