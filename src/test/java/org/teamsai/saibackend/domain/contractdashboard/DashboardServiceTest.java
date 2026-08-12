@@ -20,10 +20,13 @@ import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentSch
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {
@@ -149,6 +152,52 @@ class DashboardServiceTest {
 
         assertThat(response.getContracts().get(0).getContractId()).isEqualTo(61L);
         assertThat(response.getContracts().get(1).getContractId()).isEqualTo(60L);
+    }
+
+    @Test
+    void getDashboard_sortsByCreatedAtOnlyWhenIntegrationSortIsRequested() {
+        LoanContractResponse newerLowerId = buildContract(60L, null, ContractStatus.COMPLETED, "new", 1L, 2L)
+                .toBuilder().createdAt(LocalDateTime.of(2026, 8, 2, 10, 0)).build();
+        LoanContractResponse olderHigherId = buildContract(61L, null, ContractStatus.COMPLETED, "old", 1L, 3L)
+                .toBuilder().createdAt(LocalDateTime.of(2026, 8, 1, 10, 0)).build();
+        when(loanContractService.findContractsByUser(USER_ID))
+                .thenReturn(List.of(newerLowerId, olderHigherId));
+        when(repaymentScheduleService.getSchedule(60L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedule(61L)).thenReturn(List.of());
+
+        DashboardResponse integration = dashboardService.getDashboard(
+                USER_ID, null, "ALL", "CREATED_DESC", 1
+        );
+        DashboardResponse existingDefault = dashboardService.getDashboard(
+                USER_ID, null, "ALL", null, 1
+        );
+
+        assertThat(integration.getContracts()).extracting(DashboardContractRowResponse::getContractId)
+                .containsExactly(60L, 61L);
+        assertThat(existingDefault.getContracts()).extracting(DashboardContractRowResponse::getContractId)
+                .containsExactly(61L, 60L);
+    }
+
+    @Test
+    void getIntegrationDashboardDataReusesEachContractsSchedules() {
+        LoanContractResponse contract = buildContract(
+                62L, null, ContractStatus.COMPLETED, "통합 대시보드 계약", 1L, 2L
+        );
+        RepaymentScheduleDTO schedule = buildSchedule(
+                RepaymentScheduleStatus.PENDING, 500_000, LocalDate.now()
+        );
+        when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(contract));
+        when(repaymentScheduleService.getSchedule(62L)).thenReturn(List.of(schedule));
+
+        DashboardService.IntegrationDashboardData result =
+                dashboardService.getIntegrationDashboardData(USER_ID);
+
+        assertThat(result.dashboard().getContracts()).hasSize(1);
+        assertThat(result.loanSchedules()).singleElement().satisfies(context -> {
+            assertThat(context.contract().getContractId()).isEqualTo(62L);
+            assertThat(context.schedule()).isSameAs(schedule);
+        });
+        verify(repaymentScheduleService, times(1)).getSchedule(62L);
     }
 
     @Test

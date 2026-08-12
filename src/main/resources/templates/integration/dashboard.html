@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사이원장 통합 대시보드</title>
+    <link rel="stylesheet" th:href="@{/css/integration/dashboard.css}" href="/css/integration/dashboard.css">
+</head>
+<body>
+<div class="dashboard-shell">
+    <header class="site-header">
+        <a class="brand" href="/integration/dashboard" aria-label="사이원장 홈">
+            <span class="brand__mark">S</span>
+            <span class="brand__name">사이원장</span>
+        </a>
+        <nav class="site-nav" aria-label="주요 메뉴">
+            <a class="site-nav__link is-active" href="/integration/dashboard">대시보드</a>
+            <a class="site-nav__link" href="/settlements">정산</a>
+            <a class="site-nav__link" href="/dashboard">금전소비대차</a>
+            <a class="site-nav__link" href="#">캘린더</a>
+        </nav>
+        <div class="header-actions" aria-label="사용자 메뉴">
+            <a class="icon-button" href="/notifications" aria-label="알림">!</a>
+            <a class="profile-button" href="/mypage">마이페이지</a>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <h1 class="page-title">통합 대시보드</h1>
+
+        <section class="hero-summary" aria-labelledby="summaryTitle">
+            <div class="hero-summary__copy">
+                <p id="summaryTitle" class="section-kicker">요약 현황</p>
+                <p class="summary-sentence">
+                    현재 받을 돈은 <strong id="receiveTotalText">-</strong>이고
+                    <span>현재 보낼 돈은 <strong id="sendTotalText">-</strong>이에요.</span>
+                </p>
+                <p class="summary-detail" id="receiveBreakdownText">-</p>
+            </div>
+        </section>
+
+        <section class="dashboard-grid" aria-label="월별 현황과 확인 필요 내역">
+            <article class="panel calendar-panel">
+                <div class="panel-header">
+                    <h2>월별 현황</h2>
+                    <button class="text-button" type="button">전체보기</button>
+                </div>
+                <div class="calendar-card">
+                    <div class="calendar-toolbar">
+                        <strong id="calendarMonthLabel">-</strong>
+                        <div class="calendar-actions">
+                            <button id="prevMonthButton" class="calendar-button" type="button" aria-label="이전 달">‹</button>
+                            <button id="nextMonthButton" class="calendar-button" type="button" aria-label="다음 달">›</button>
+                        </div>
+                    </div>
+                    <div class="calendar-weekdays" aria-hidden="true">
+                        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                    </div>
+                    <div id="calendarGrid" class="calendar-grid" aria-label="월별 일정 달력"></div>
+                    <div class="calendar-legend" aria-label="입출금 범례">
+                        <span><i class="dot dot--inbound"></i>입금</span>
+                        <span><i class="dot dot--outbound"></i>출금</span>
+                    </div>
+                </div>
+            </article>
+
+            <div class="side-stack">
+                <article class="panel attention-panel">
+                    <h2>확인이 필요한 내역</h2>
+                    <div id="attentionList" class="attention-list"></div>
+                </article>
+
+                <article class="panel month-panel">
+                    <h2>이번달 요약</h2>
+                    <div class="month-stats">
+                        <div><span>완료한 거래</span><strong id="completedCount">-</strong><em>건</em></div>
+                        <div><span>진행 중인 정산</span><strong id="activeSettlementCount">-</strong><em>건</em></div>
+                        <div><span>차용증 상환</span><strong id="loanRepaymentCount">-</strong><em>건</em></div>
+                    </div>
+                    <div class="completion-row">
+                        <span>거래 완료율</span>
+                        <strong id="completionRateText">-</strong>
+                    </div>
+                    <div class="progress-track" aria-hidden="true">
+                        <span id="completionRateBar"></span>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="panel transaction-panel" aria-labelledby="recentTransactionTitle">
+            <div class="panel-header transaction-header">
+                <h2 id="recentTransactionTitle">최근 거래 내역</h2>
+                <div class="filter-tabs" role="tablist" aria-label="거래 유형 필터">
+                    <button class="filter-tab is-active" type="button" data-filter="ALL">전체</button>
+                    <button class="filter-tab" type="button" data-filter="LOAN">대출</button>
+                    <button class="filter-tab" type="button" data-filter="SETTLEMENT">정산</button>
+                </div>
+            </div>
+            <div class="transaction-table" role="table" aria-label="최근 거래 내역">
+                <div class="transaction-row transaction-row--head" role="row">
+                    <span role="columnheader">제목</span>
+                    <span role="columnheader">상태</span>
+                    <span role="columnheader">금액</span>
+                    <span role="columnheader">상세보기</span>
+                </div>
+                <div id="transactionList"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div>
+            <strong>사이원장</strong>
+            <p>정산과 차용증 거래를 한 곳에서 확인하세요.</p>
+        </div>
+        <nav aria-label="푸터 메뉴">
+            <a href="#">이용약관</a>
+            <a href="#">개인정보처리방침</a>
+            <a href="#">고객센터</a>
+        </nav>
+    </footer>
+</div>
+
+<script th:src="@{/js/integration/dashboard.js}" src="/js/integration/dashboard.js"></script>
+</body>
+</html>
