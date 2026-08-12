@@ -1,243 +1,483 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     initNotificationCenter();
 });
 
 function initNotificationCenter() {
-    let state = {
+
+    const state = {
         notifications: [],
-        isDeleteMode: false,
-        selectedIds: new Set(),
-        activeCategory: 'ALL'
+        activeCategory: "ALL"
     };
 
-    const btnSettings = document.getElementById('btnSettings');
-    const settingsDropdown = document.getElementById('settingsDropdown');
-    const btnEnterDeleteMode = document.getElementById('btnEnterDeleteMode');
-    const notifListEl = document.getElementById('notifList');
-    const normalFooter = document.getElementById('normalFooter');
-    const deleteFooter = document.getElementById('deleteFooter');
-    const btnSelectAll = document.getElementById('btnSelectAll');
-    const btnDeleteSelected = document.getElementById('btnDeleteSelected');
-    const selectedCountEl = document.getElementById('selectedCount');
+    const notifListEl =
+        document.getElementById("notifList");
 
-    function authHeaders(extra) {
-        const token = sessionStorage.getItem('accessToken');
-        return Object.assign(
-            token ? { Authorization: `Bearer ${token}` } : {},
-            extra || {}
-        );
+
+    function authHeaders(extra = {}) {
+        const token =
+            sessionStorage.getItem("accessToken");
+
+        return {
+            ...(token
+                ? {
+                    Authorization:
+                        `Bearer ${token}`
+                }
+                : {}),
+            ...extra
+        };
     }
 
+
     function escapeHtml(value) {
+
         if (value == null) {
-            return '';
+            return "";
         }
 
         return String(value)
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#039;');
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 
-    function loadDeletedIds() {
-        try {
-            return JSON.parse(sessionStorage.getItem('deletedNotificationIds') || '[]');
-        } catch (e) {
-            return [];
+
+    function formatTimeLabel(dateStr) {
+
+        if (!dateStr) {
+            return "";
+        }
+
+        const date = new Date(dateStr);
+
+        if (Number.isNaN(date.getTime())) {
+            return "";
+        }
+
+        const diffMs =
+            Math.max(
+                Date.now() - date.getTime(),
+                0
+            );
+
+        const minutes =
+            Math.floor(
+                diffMs / (60 * 1000)
+            );
+
+        const hours =
+            Math.floor(
+                diffMs / (60 * 60 * 1000)
+            );
+
+        const days =
+            Math.floor(
+                diffMs /
+                (24 * 60 * 60 * 1000)
+            );
+
+        if (days > 0) {
+            return `${days}일 전`;
+        }
+
+        if (hours > 0) {
+            return `${hours}시간 전`;
+        }
+
+        if (minutes > 0) {
+            return `${minutes}분 전`;
+        }
+
+        return "방금 전";
+    }
+
+
+    function resolveNotificationView(
+        notification
+    ) {
+
+        switch (
+            notification.notificationType
+        ) {
+
+            case "CONTRACT_REQUESTED":
+                return {
+                    category: "SIGN",
+                    iconClass: "icon-blue",
+                    accentClass: "accent-blue",
+                    ctaLabel: "서명하러 가기",
+                    ctaUrl:
+                        `/contracts/${notification.referenceId}/approve`
+                };
+
+
+            case "SETTLEMENT_PARTICIPANT_ADDED":
+                return {
+                    category: "SETTLEMENT",
+                    iconClass: "icon-green",
+                    accentClass: "accent-green",
+                    ctaLabel: "정산 보기",
+                    ctaUrl:
+                        `/settlements/${notification.referenceId}`
+                };
+
+
+            default:
+                return {
+                    category: "SYSTEM",
+                    iconClass: "icon-gray",
+                    accentClass: "",
+                    ctaLabel: null,
+                    ctaUrl: null
+                };
         }
     }
 
-    function saveDeletedIds(ids) {
-        const merged = new Set([...loadDeletedIds(), ...ids]);
-        sessionStorage.setItem('deletedNotificationIds', JSON.stringify(Array.from(merged)));
+
+    function normalizeNotification(
+        notification
+    ) {
+
+        const view =
+            resolveNotificationView(
+                notification
+            );
+
+        return {
+            id:
+                notification.notificationId,
+
+            notificationType:
+                notification.notificationType,
+
+            category:
+                view.category,
+
+            title:
+                escapeHtml(
+                    notification.title
+                ),
+
+            description:
+                escapeHtml(
+                    notification.content
+                ),
+
+            timeLabel:
+                formatTimeLabel(
+                    notification.createdAt
+                ),
+
+            ctaLabel:
+                view.ctaLabel,
+
+            ctaUrl:
+                view.ctaUrl,
+
+            iconClass:
+                view.iconClass,
+
+            accentClass:
+                view.accentClass
+        };
     }
 
-    function formatTimeLabel(dateStr) {
-        if (!dateStr) return '';
-        const diffMs = Math.max(Date.now() - new Date(dateStr).getTime(), 0);
-        const minutes = Math.floor(diffMs / (60 * 1000));
-        const hours = Math.floor(diffMs / (60 * 60 * 1000));
-        const days = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-        if (days > 0) return `${days}일 전`;
-        if (hours > 0) return `${hours}시간 전`;
-        return `${minutes}분 전`;
-    }
 
     async function fetchNotifications() {
+
+        const token =
+            sessionStorage.getItem(
+                "accessToken"
+            );
+
+        if (!token) {
+            window.location.href =
+                "/login?required=true";
+            return;
+        }
+
         try {
-            const response = await fetch('/api/contracts/incoming', {
-                method: 'GET',
-                headers: authHeaders({ Accept: 'application/json' }),
-            });
-            if (!response.ok) throw new Error('불러오기 실패');
 
-            const contracts = await response.json();
-            const deletedIds = loadDeletedIds();
-            const visibleContracts = contracts.filter(c => !deletedIds.includes(c.contractId));
+            const response =
+                await fetch(
+                    "/api/notifications",
+                    {
+                        method: "GET",
 
-            state.notifications = visibleContracts.map(c => ({
-                id: c.contractId,
-                category: 'SIGN',
-                type: 'contract_sent_to_debtor',
-                title: '서명 요청 알림',
-                description: `${escapeHtml(c.creditorName) || '채권자'}님과의 차용증 계약서에 서명이 필요합니다. 지금 확인하고 진행해 주세요.`,
-                time_label: formatTimeLabel(c.updatedAt),
-                is_read: false,
-                cta_label: '서명하러 가기',
-                cta_url: `/contracts/${c.contractId}/approve`
-            }));
+                        headers:
+                            authHeaders({
+                                Accept:
+                                    "application/json"
+                            }),
+
+                        credentials:
+                            "include"
+                    }
+                );
+
+
+            if (response.status === 401) {
+
+                sessionStorage.removeItem(
+                    "accessToken"
+                );
+
+                window.location.href =
+                    "/login?required=true";
+
+                return;
+            }
+
+
+            if (!response.ok) {
+                throw new Error(
+                    "알림을 불러오지 못했습니다."
+                );
+            }
+
+
+            const responseBody =
+                await response.json();
+
+
+            state.notifications =
+                (
+                    Array.isArray(
+                        responseBody
+                    )
+                        ? responseBody
+                        : []
+                )
+                .map(
+                    normalizeNotification
+                );
+
+
             render();
-        } catch (e) {
-            console.error(e);
-            notifListEl.innerHTML = `<li style="text-align:center; padding:30px; color:var(--muted);">알림을 불러올 수 없습니다.</li>`;
+
+        } catch (error) {
+
+            console.error(
+                "알림 조회 실패",
+                error
+            );
+
+            notifListEl.innerHTML = `
+                <li class="empty-notification">
+                    알림을 불러올 수 없습니다.
+                </li>
+            `;
         }
     }
 
 
     function render() {
 
-        const filteredList = state.notifications.filter(n => {
-            if (state.activeCategory === 'ALL') return true;
-            return n.category === state.activeCategory;
-        });
+        const filteredList =
+            state.notifications.filter(
+                (notification) => {
 
-        if (filteredList.length === 0) {
-            notifListEl.innerHTML = `<li style="text-align:center; padding:40px; color:var(--muted);">해당 알림이 없습니다.</li>`;
+                    if (
+                        state.activeCategory
+                        === "ALL"
+                    ) {
+                        return true;
+                    }
+
+                    return (
+                        notification.category
+                        ===
+                        state.activeCategory
+                    );
+                }
+            );
+
+
+        if (
+            filteredList.length === 0
+        ) {
+
+            notifListEl.innerHTML = `
+                <li class="empty-notification">
+                    해당 알림이 없습니다.
+                </li>
+            `;
+
             return;
         }
 
-        notifListEl.innerHTML = filteredList.map(n => {
-            const isSelected = state.selectedIds.has(n.id);
-            const isRead = n.is_read;
-            const unreadClass = isRead ? '' : 'unread';
-            const accentClass = isRead ? '' : (n.category === 'SIGN' ? 'accent-blue' : 'accent-green');
-            const selectedClass = isSelected ? 'selected' : '';
-            const dot = isRead ? '' : '<i class="dot"></i>';
 
-            const radioColHtml = `
-        <div class="notif-radio-col ${state.isDeleteMode ? '' : 'hidden'}">
-          <div class="custom-radio"></div>
-        </div>`;
+        notifListEl.innerHTML =
+            filteredList
+                .map(
+                    (notification) => {
 
-            const ctaHtml = (n.cta_label && !state.isDeleteMode)
-                ? `<button class="notif-cta">${n.cta_label}</button>`
-                : '';
-
-            const iconClass = n.category === 'SIGN' ? 'icon-blue' : (n.category === 'PAYMENT' ? 'icon-green' : 'icon-gray');
-
-            return `
-        <li class="notif-card ${unreadClass} ${accentClass} ${selectedClass}" data-id="${n.id}">
-          ${radioColHtml}
-          <div class="notif-icon ${iconClass}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 8h16M4 8l3-3M4 8l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="notif-body">
-            <div class="notif-row">
-              <span class="notif-title">${n.title}</span>
-              <span class="notif-time">${n.time_label} ${dot}</span>
-            </div>
-            <p class="notif-desc">${n.description}</p>
-            ${ctaHtml}
-          </div>
-        </li>`;
-        }).join('');
+                        const ctaHtml =
+                            notification.ctaLabel
+                                ? `
+                                    <button
+                                        type="button"
+                                        class="notif-cta"
+                                    >
+                                        ${notification.ctaLabel}
+                                    </button>
+                                `
+                                : "";
 
 
-        if (state.isDeleteMode) {
-            normalFooter.classList.add('hidden');
-            deleteFooter.classList.remove('hidden');
-            selectedCountEl.textContent = state.selectedIds.size;
-        } else {
-            normalFooter.classList.remove('hidden');
-            deleteFooter.classList.add('hidden');
-        }
+                        return `
+                            <li
+                                class="
+                                    notif-card
+                                    ${notification.accentClass}
+                                "
+                                data-id="${notification.id}"
+                            >
+
+                                <div
+                                    class="
+                                        notif-icon
+                                        ${notification.iconClass}
+                                    "
+                                >
+                                    <svg
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            d="M4 8h16M4 8l3-3M4 8l3 3"
+                                            stroke="currentColor"
+                                            stroke-width="1.6"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
+                                    </svg>
+                                </div>
+
+
+                                <div class="notif-body">
+
+                                    <div class="notif-row">
+
+                                        <span
+                                            class="notif-title"
+                                        >
+                                            ${notification.title}
+                                        </span>
+
+                                        <span
+                                            class="notif-time"
+                                        >
+                                            ${notification.timeLabel}
+                                        </span>
+
+                                    </div>
+
+
+                                    <p
+                                        class="notif-desc"
+                                    >
+                                        ${notification.description}
+                                    </p>
+
+
+                                    ${ctaHtml}
+
+                                </div>
+
+                            </li>
+                        `;
+                    }
+                )
+                .join("");
     }
 
 
-    btnSettings.addEventListener('click', (e) => {
-        e.stopPropagation();
-        settingsDropdown.classList.toggle('hidden');
-    });
+    document
+        .querySelectorAll(
+            ".filter-tab"
+        )
+        .forEach(
+            (tab) => {
 
-    document.addEventListener('click', () => {
-        settingsDropdown.classList.add('hidden');
-    });
+                tab.addEventListener(
+                    "click",
+                    (event) => {
 
-
-    btnEnterDeleteMode.addEventListener('click', () => {
-        state.isDeleteMode = true;
-        state.selectedIds.clear();
-        render();
-    });
-
-
-    document.querySelectorAll('.filter-tab').forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-            e.target.classList.add('active');
-            state.activeCategory = e.target.dataset.category;
-            render();
-        });
-    });
+                        document
+                            .querySelectorAll(
+                                ".filter-tab"
+                            )
+                            .forEach(
+                                (item) => {
+                                    item.classList.remove(
+                                        "active"
+                                    );
+                                }
+                            );
 
 
-    notifListEl.addEventListener('click', (e) => {
-        const card = e.target.closest('.notif-card');
-        if (!card) return;
+                        event
+                            .currentTarget
+                            .classList
+                            .add("active");
 
-        const id = Number(card.dataset.id);
 
-        if (state.isDeleteMode) {
-            if (state.selectedIds.has(id)) {
-                state.selectedIds.delete(id);
-            } else {
-                state.selectedIds.add(id);
+                        state.activeCategory =
+                            event
+                                .currentTarget
+                                .dataset
+                                .category;
+
+
+                        render();
+                    }
+                );
             }
-            render();
-            return;
+        );
+
+
+    notifListEl.addEventListener(
+        "click",
+        (event) => {
+
+            const card =
+                event.target.closest(
+                    ".notif-card"
+                );
+
+            if (!card) {
+                return;
+            }
+
+
+            const id =
+                Number(
+                    card.dataset.id
+                );
+
+
+            const notification =
+                state.notifications.find(
+                    (item) =>
+                        item.id === id
+                );
+
+
+            if (
+                notification?.ctaUrl
+            ) {
+                window.location.href =
+                    notification.ctaUrl;
+            }
         }
+    );
 
-        const notification = state.notifications.find((n) => n.id === id);
-        if (notification?.cta_url) {
-            location.href = notification.cta_url;
-        }
-    });
-
-
-    btnSelectAll.addEventListener('click', () => {
-        const visibleIds = state.notifications
-            .filter(n => state.activeCategory === 'ALL' || n.category === state.activeCategory)
-            .map(n => n.id);
-
-        if (state.selectedIds.size === visibleIds.length) {
-            state.selectedIds.clear();
-        } else {
-            visibleIds.forEach(id => state.selectedIds.add(id));
-        }
-        render();
-    });
-
-
-    btnDeleteSelected.addEventListener('click', () => {
-        if (state.selectedIds.size === 0) {
-            alert('삭제할 알림을 선택해 주세요.');
-            return;
-        }
-
-        if (confirm(`선택한 ${state.selectedIds.size}개의 알림을 삭제하시겠습니까?`)) {
-            const deletedArray = Array.from(state.selectedIds);
-
-            saveDeletedIds(deletedArray);
-
-            state.notifications = state.notifications.filter(n => !state.selectedIds.has(n.id));
-            state.selectedIds.clear();
-            state.isDeleteMode = false;
-            
-            render();
-        }
-    });
 
     fetchNotifications();
 }

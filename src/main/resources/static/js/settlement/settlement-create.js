@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function lookupAndAddParticipant() {
         clearError("participantLookup");
-        clearError("invitations");
+        clearError("participants");
 
         const userToken = participantTokenInput.value.trim();
 
@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (selectedParticipants.has(userToken)) {
-            setError("participantLookup", "이미 추가한 납부자입니다.");
+            setError("participantLookup", "이미 추가한 참여자입니다.");
             return;
         }
 
@@ -170,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             if (selectedParticipants.has(normalizedParticipant.userToken)) {
-                setError("participantLookup", "이미 추가한 납부자입니다.");
+                setError("participantLookup", "이미 추가한 참여자입니다.");
                 return;
             }
 
@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             participantTokenInput.value = "";
             updateParticipantView();
-            showToast(`${normalizedParticipant.name} 님을 납부자로 추가했습니다.`);
+            showToast(`${normalizedParticipant.name} 님을 참여자로 추가했습니다.`);
         } catch (error) {
             setError(
                 "participantLookup",
@@ -289,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
             removeButton.className = "participant-remove-button";
             removeButton.setAttribute(
                 "aria-label",
-                `${participant.name} 납부자에서 제거`
+                `${participant.name} 참여자에서 제거`
             );
             removeButton.textContent = "×";
             removeButton.addEventListener("click", () => {
@@ -374,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 ? Number(settlementAccountSelect.value)
                 : null,
 
-            invitations:
+            participants:
                 Array.from(selectedParticipants.values())
                     .map((participant) => ({
                         userToken: participant.userToken
@@ -431,7 +431,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 dueDate: payload.dueDate,
                 totalAmount: payload.totalAmount,
                 participantCount:
-                    payload.invitations.length + 1,
+                    payload.participants.length + 1,
                 linkedAccountId:payload.linkedAccountId
             };
 
@@ -481,8 +481,8 @@ document.addEventListener("DOMContentLoaded", () => {
             valid = false;
         }
 
-        if (!Array.isArray(payload.invitations) || payload.invitations.length === 0) {
-            setError("invitations", "납부자를 한 명 이상 추가해 주세요.");
+        if (!Array.isArray(payload.participants) || payload.participants.length === 0) {
+            setError("participants", "참여자를 한 명 이상 추가해 주세요.");
             valid = false;
         }
 

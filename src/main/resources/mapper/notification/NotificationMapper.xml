@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.notification.mapper.NotificationMapper">
+
+    <insert id="insert"
+            parameterType="org.teamsai.saibackend.domain.notification.dto.NotificationDTO"
+            useGeneratedKeys="true"
+            keyProperty="notificationId"
+            keyColumn="notification_id">
+
+        INSERT INTO notification (
+        user_id,
+        notification_type,
+        title,
+        content,
+        reference_id,
+        created_at
+        )
+        VALUES (
+        #{userId},
+        #{notificationType},
+        #{title},
+        #{content},
+        #{referenceId},
+        #{createdAt}
+        )
+
+    </insert>
+
+
+    <select id="findAllByUserId"
+            resultType="org.teamsai.saibackend.domain.notification.dto.response.NotificationResponse">
+
+        SELECT
+        notification_id AS notificationId,
+        notification_type AS notificationType,
+        title,
+        content,
+        reference_id AS referenceId,
+        created_at AS createdAt
+
+        FROM notification
+
+        WHERE user_id = #{userId}
+
+        ORDER BY
+        created_at DESC,
+        notification_id DESC
+
+    </select>
+
+</mapper>
