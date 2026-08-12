@@ -23,7 +23,7 @@ fetch(`/api/contracts/${contractId}/contract-detail`, { headers: authHeaders() }
         return response.json();
     })
     .then(data => {
-        document.getElementById('principalAmount').textContent = data.contract.principalAmount.toLocaleString();
+        document.getElementById('principalAmount').textContent = data.contract.principalAmount.toLocaleString(undefined, {maximumFractionDigits: 0});
         document.getElementById('interestRate').textContent = data.contract.interestRate;
         document.getElementById('startDate').textContent = data.contract.startDate;
         document.getElementById('maturityDate').textContent = data.contract.maturityDate;
@@ -33,6 +33,8 @@ fetch(`/api/contracts/${contractId}/contract-detail`, { headers: authHeaders() }
         document.getElementById('terms').textContent = data.contract.terms || '-';
         document.getElementById('creditorName').textContent = data.contract.creditorName;
         document.getElementById('debtorName').textContent = data.contract.debtorName;
+        document.getElementById('creditorNameCell').textContent = data.contract.creditorName;
+        document.getElementById('debtorNameCell').textContent = data.contract.debtorName;
 
         changeButton.hidden = !data.canRequestChange;
     })

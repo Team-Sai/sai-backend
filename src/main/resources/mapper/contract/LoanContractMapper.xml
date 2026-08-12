@@ -162,6 +162,7 @@
         c.interest_rate,
         c.status,
         c.updated_at,
+        c.previous_contract_id,
         u.name AS creditorName
         FROM loan_contract c
         LEFT JOIN users u ON c.creditor_id = u.user_id

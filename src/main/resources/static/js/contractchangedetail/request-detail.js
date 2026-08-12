@@ -46,7 +46,7 @@ fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}`, { heade
     });
 
 function formatCurrency(amount) {
-    return '₩' + Number(amount).toLocaleString();
+    return '₩' + Number(amount).toLocaleString(undefined, {maximumFractionDigits: 0});
 }
 
 function formatExtendedMonths(months) {

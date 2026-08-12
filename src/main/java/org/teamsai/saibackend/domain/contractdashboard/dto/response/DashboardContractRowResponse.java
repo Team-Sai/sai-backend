@@ -1,6 +1,5 @@
 package org.teamsai.saibackend.domain.contractdashboard.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Getter;
 import org.teamsai.saibackend.domain.contractdashboard.type.ContractRole;
@@ -26,7 +25,6 @@ public class DashboardContractRowResponse {
     private DashboardContractStatus contractStatus;
     private DashboardPaymentStatus paymentStatus;
     private LocalDate maturityDate;
-
-    @JsonIgnore
     private LocalDate nearestScheduleDueDate;
+    private BigDecimal nextDueAmount;
 }

@@ -4,8 +4,28 @@
     <meta charset="UTF-8">
     <title>변경 요청 수신 화면</title>
     <link rel="stylesheet" th:href="@{/css/contractchangedetail/request-detail.css}">
+    <link rel="stylesheet" href="/css/contractchange/site-common.css" />
 </head>
 <body>
+
+<header class="site-header">
+    <div class="header-inner">
+        <a class="brand" href="/">사이원장</a>
+        <nav class="main-nav" aria-label="주요 메뉴">
+            <a href="#">서비스 소개</a>
+            <a class="active" href="/dashboard">금전거래대차</a>
+            <a href="/settlements">정산</a>
+            <a href="#">거래 일정</a>
+        </nav>
+        <div class="header-actions">
+            <button class="icon-button" type="button" aria-label="알림">♧</button>
+            <a class="profile-link" href="/mypage" aria-label="마이페이지">
+                <span class="profile-avatar">사</span>
+            </a>
+        </div>
+    </div>
+</header>
+
 
 <input type="hidden" id="contractId" th:value="${contractId}">
 <input type="hidden" id="changeRequestId" th:value="${changeRequestId}">
@@ -87,5 +107,20 @@
 </div>
 
 <script th:src="@{/js/contractchangedetail/request-detail.js}"></script>
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div>
+            <strong>사이원장</strong>
+            <p>© Sai-Wonjang. All rights reserved.</p>
+        </div>
+        <nav>
+            <a href="#">이용약관</a>
+            <a href="#">개인정보처리방침</a>
+            <a href="#">고객센터</a>
+        </nav>
+    </div>
+</footer>
+
 </body>
 </html>

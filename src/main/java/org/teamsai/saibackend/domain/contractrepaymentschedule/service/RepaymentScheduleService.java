@@ -8,11 +8,11 @@ import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleSummaryResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.util.ScheduleGenerator;
 
 import java.math.BigDecimal;
@@ -21,7 +21,9 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -74,7 +76,7 @@ public class RepaymentScheduleService {
     }
 
     public RepaymentScheduleSummaryResponse getScheduleSummary(Long contractId, Long userId) {
-        // 존재 확인 + 당사자 검증 + 채권자/채무자 이름
+
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
         List<RepaymentScheduleDTO> schedules = repaymentScheduleMapper.findByContractId(contractId);
@@ -95,6 +97,11 @@ public class RepaymentScheduleService {
                 .count();
         int totalCount = schedules.size();
 
+        Optional<RepaymentScheduleDTO> nextduedate = findNextPendingSchedule(contractId);
+        LocalDate nextDueDate = nextduedate
+                .map(RepaymentScheduleDTO::getDueDate)
+                .orElse(null);
+
         List<RepaymentScheduleResponse> scheduleResponses = schedules.stream()
                 .map(RepaymentScheduleResponse::from)
                 .toList();
@@ -108,6 +115,7 @@ public class RepaymentScheduleService {
                 .paidCount(paidCount)
                 .totalCount(totalCount)
                 .schedules(scheduleResponses)
+                .nextDueDate(nextDueDate)
                 .build();
     }
 
@@ -151,5 +159,11 @@ public class RepaymentScheduleService {
     public RepaymentScheduleDTO getScheduleByScheduleId(Long scheduleId) {
         return repaymentScheduleMapper.findById(scheduleId)
                 .orElseThrow(() -> RepaymentScheduleErrorCode.SCHEDULE_NOT_FOUND.toException());
+    }
+
+    public Map<Long, List<RepaymentScheduleDTO>> getSchedulesByContractIds(List<Long> contractIds) {
+        List<RepaymentScheduleDTO> all = repaymentScheduleMapper.findByContractIds(contractIds);
+        return all.stream()
+                .collect(Collectors.groupingBy(RepaymentScheduleDTO::getContractId));
     }
 }
