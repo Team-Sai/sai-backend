@@ -1,6 +1,5 @@
 package org.teamsai.saibackend.domain.contractchange.service;
 
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,10 @@ import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
+import org.teamsai.saibackend.domain.notification.service.NotificationService;
+import org.teamsai.saibackend.domain.notification.type.NotificationType;
+import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
+import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +36,8 @@ public class ContractChangeService {
     private final ContractChangeMapper contractChangeMapper;
     private final LoanContractService loanContractService;
     private final RepaymentScheduleService repaymentScheduleService;
+    private final NotificationService notificationService;
+    private final UserService userService;
 
 
     public void checkAccess(Long contractId, Long userId) {
@@ -54,7 +59,6 @@ public class ContractChangeService {
                 .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
 
     }
-
 
 
     @Transactional
@@ -131,6 +135,16 @@ public class ContractChangeService {
 
         loanContractService.insertChangedContract(newContractDTO);
 
+        UserResponse creditorInfo = userService.getMyInfo(userId);
+
+        notificationService.create(
+                contract.getDebtorId(),
+                NotificationType.CONTRACT_CHANGE,
+                "계약 변경 요청",
+                creditorInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
+                newContractDTO.getContractId()
+        );
+
         log.info("계약 변경 요청 생성 및 차용증 재저장 완료: contractId={}, userId={}",
                 contractId, userId);
 
@@ -156,5 +170,20 @@ public class ContractChangeService {
 
         log.info("계약 변경 승인 처리 완료: v1ContractId={}, v2ContractId={}, changeRequestId={}",
                 v1ContractId, v2ContractId, pendingRequest.getChangeRequestId());
+
+        try {
+            UserResponse debtorInfo = userService.getMyInfo(v2.getDebtorId());
+
+            notificationService.create(
+                    pendingRequest.getUserId(),
+                    NotificationType.CONTRACT_CHANGE,
+                    "계약 변경 승인 완료",
+                    debtorInfo.getName() + "님이 신청하신 계약 변경 요청을 승인했습니다.",
+                    v2ContractId
+            );
+        } catch (Exception e) {
+            log.error("계약 변경 승인 알림 발송 실패: v2ContractId={}, userId={}, error={}",
+                    v2ContractId, pendingRequest.getUserId(), e.getMessage(), e);
+        }
     }
 }
