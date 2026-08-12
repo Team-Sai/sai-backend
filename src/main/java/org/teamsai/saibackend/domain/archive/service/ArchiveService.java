@@ -42,8 +42,8 @@ public class ArchiveService {
     private final TemplateEngine templateEngine;
 
     @Getter
-    @Value("${file.upload-dir:C:/upload/shinhan/}")
-    private String uploadDir = "C:/upload/shinhan/";
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     public List<FileDTO> findFilesByReference(String domainType, Long referenceId) {
         return archiveMapper.findFilesByReference(domainType, referenceId);

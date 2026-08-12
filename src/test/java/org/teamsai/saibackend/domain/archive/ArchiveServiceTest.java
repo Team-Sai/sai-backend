@@ -1,23 +1,37 @@
 package org.teamsai.saibackend.domain.archive;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.archive.dto.ArchiveStatus;
 import org.teamsai.saibackend.domain.archive.dto.FileDTO;
 import org.teamsai.saibackend.domain.archive.mapper.ArchiveMapper;
 import org.teamsai.saibackend.domain.archive.service.ArchiveService;
+import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
+import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +58,14 @@ class ArchiveServiceTest {
     private ArchiveService archiveService;
 
     private Path savedPath;
+
+    @TempDir
+    Path tempDir;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(archiveService, "uploadDir", tempDir.toString());
+    }
 
     @AfterEach
     void cleanUp() throws IOException {
@@ -147,6 +169,103 @@ class ArchiveServiceTest {
 
             assertThatThrownBy(() -> archiveService.getFileById(FILE_ID))
                     .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("계약서 PDF 생성")
+    class RenderContractPdf {
+
+        @BeforeEach
+        void setUpTemplateEngine() {
+            ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
+            resolver.setPrefix("templates/");
+            resolver.setSuffix(".html");
+            resolver.setTemplateMode(TemplateMode.HTML);
+            resolver.setCharacterEncoding("UTF-8");
+            resolver.setCacheable(false);
+
+            SpringTemplateEngine templateEngine = new SpringTemplateEngine();
+            templateEngine.setTemplateResolver(resolver);
+
+            ReflectionTestUtils.setField(archiveService, "templateEngine", templateEngine);
+        }
+
+        @Test
+        @DisplayName("계약 정보를 채워 PDF 바이트를 생성한다")
+        void renderContractPdfSuccess() throws IOException {
+            LoanContractResponse contract = createContract(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST);
+
+            byte[] pdfBytes = archiveService.renderContractPdf(contract);
+
+            assertThat(pdfBytes).isNotEmpty();
+            assertThat(new String(pdfBytes, 0, 4, StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+
+            try (PDDocument document = PDDocument.load(pdfBytes)) {
+                String text = new PDFTextStripper().getText(document);
+                assertThat(text).contains(contract.getCreditorName());
+                assertThat(text).contains(contract.getDebtorName());
+                assertThat(text).contains(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST.getDescription());
+            }
+        }
+
+        @Test
+        @DisplayName("상환 방식이 바뀌면 PDF 내용에도 반영된다")
+        void renderContractPdfReflectsRepaymentType() throws IOException {
+            LoanContractResponse contract = createContract(RepaymentMethod.BULLET_REPAYMENT);
+
+            byte[] pdfBytes = archiveService.renderContractPdf(contract);
+
+            try (PDDocument document = PDDocument.load(pdfBytes)) {
+                String text = new PDFTextStripper().getText(document);
+                assertThat(text).contains(RepaymentMethod.BULLET_REPAYMENT.getDescription());
+            }
+        }
+
+        private LoanContractResponse createContract(RepaymentMethod repaymentMethod) {
+            return LoanContractResponse.builder()
+                    .contractId(1L)
+                    .creditorName("김채권")
+                    .creditorBirthDate("1980-01-01")
+                    .creditorAddress("서울시 강남구")
+                    .debtorName("이채무")
+                    .debtorBirthDate("1990-05-05")
+                    .debtorAddress("서울시 서초구")
+                    .principalAmount(new BigDecimal("10000000"))
+                    .interestRate(new BigDecimal("5.0"))
+                    .repaymentType(repaymentMethod)
+                    .startDate(LocalDate.of(2026, 1, 1))
+                    .maturityDate(LocalDate.of(2027, 1, 1))
+                    .repaymentDay(25)
+                    .contractAlias("전세자금 대여")
+                    .terms("특약 없음")
+                    .build();
+        }
+    }
+
+    @Nested
+    @DisplayName("파일 리소스 로드")
+    class LoadFileAsResource {
+
+        @Test
+        @DisplayName("저장된 파일을 리소스로 반환한다")
+        void loadFileAsResourceSuccess() throws IOException {
+            String savedFilename = "CONTRACT_1_test.pdf";
+            Path filePath = tempDir.resolve(savedFilename);
+            Files.write(filePath, "file-bytes".getBytes());
+
+            Resource resource = archiveService.loadFileAsResource(savedFilename);
+
+            assertThat(resource.exists()).isTrue();
+            assertThat(resource.isReadable()).isTrue();
+            assertThat(resource.getFile().toPath()).isEqualTo(filePath);
+        }
+
+        @Test
+        @DisplayName("파일이 존재하지 않으면 예외가 발생한다")
+        void loadFileAsResourceFailsWhenNotFound() {
+            assertThatThrownBy(() -> archiveService.loadFileAsResource("not-exists.pdf"))
+                    .isInstanceOf(RuntimeException.class);
         }
     }
 
