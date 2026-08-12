@@ -117,9 +117,9 @@ function initNotificationCenter() {
                     category: "SIGN",
                     iconClass: "icon-indigo",
                     accentClass: "accent-indigo",
-                    ctaLabel: "차용증 보기",
+                    ctaLabel: "변경 요청 확인하기",
                     ctaUrl:
-                        `/contracts/${notification.referenceId}/approve`
+                        `/contracts/${notification.referenceId}/change-requests/${notification.secondaryReferenceId}`
                 };
 
             case "SETTLEMENT_PARTICIPANT_ADDED":

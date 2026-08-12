@@ -120,3 +120,104 @@ body {
     color: #999;
     margin-top: 16px;
 }
+
+.action-group {
+    display: flex;
+    gap: 12px;
+}
+
+.action-group #approveButton {
+    flex: 1;
+}
+
+.btn-reject {
+    flex: 1;
+    padding: 14px;
+    border: 1.5px solid #c0392b;
+    border-radius: 8px;
+    background: white;
+    color: #c0392b;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-reject:hover {
+    background: #fdf1f0;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.modal-overlay[hidden] {
+    display: none;
+}
+
+.modal-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+}
+
+.modal-card h3 {
+    margin: 0 0 8px;
+    font-size: 17px;
+}
+
+.modal-sub {
+    font-size: 13px;
+    color: #888;
+    margin: 0 0 16px;
+}
+
+#returnReasonInput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.modal-error {
+    color: #c0392b;
+    font-size: 12.5px;
+    margin: 8px 0 0;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.modal-actions .btn-ghost {
+    padding: 10px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    color: #555;
+    cursor: pointer;
+}
+
+.btn-reject-confirm {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #c0392b;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}

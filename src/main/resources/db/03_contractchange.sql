@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS loan_contract_change_request (
     new_repayment_type VARCHAR(20) NULL,
     new_repayment_date INT NULL,
     new_terms TEXT NULL,
+    return_reason TEXT NULL,
     status VARCHAR(20) NOT NULL CHECK (
     status IN ('PENDING', 'APPROVED', 'REJECTED')
     ),
@@ -31,3 +32,4 @@ ALTER TABLE loan_contract_change_request
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pending_per_contract
     ON loan_contract_change_request (pending_lock_key);
+

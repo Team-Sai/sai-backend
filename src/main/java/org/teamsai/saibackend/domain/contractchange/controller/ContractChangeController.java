@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRejectRequest;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 
@@ -64,5 +65,28 @@ public class ContractChangeController {
             @AuthenticationPrincipal(expression = "userId") Long userId
     ){
         return contractChangeService.requestChange(contractId, request, userId);
+    }
+
+    @Operation(
+            summary = "계약 변경 요청 반려",
+            description = "채무자가 대기 중인 계약 변경 요청을 반려 사유와 함께 거절합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "반려 처리 성공"),
+            @ApiResponse(responseCode = "400", description = "반려 사유가 비어있음"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "403", description = "계약 당사자(채무자)가 아님"),
+            @ApiResponse(responseCode = "404", description = "계약 또는 변경 요청을 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "이미 처리된 요청임")
+    })
+    @ResponseBody
+    @PatchMapping("/api/contracts/{contractId}/change-requests/{changeRequestId}/reject")
+    public LoanContractChangeDTO rejectChange(
+            @PathVariable Long contractId,
+            @PathVariable Long changeRequestId,
+            @Valid @RequestBody ContractChangeRejectRequest request,
+            @AuthenticationPrincipal(expression = "userId") Long userId
+    ) {
+        return contractChangeService.rejectChange(contractId, changeRequestId, request.getReturnReason(), userId);
     }
 }

@@ -100,7 +100,23 @@
         </div>
     </div>
 
-    <button id="approveButton">변경 승인</button>
+    <div class="action-group">
+        <button id="approveButton">변경 승인</button>
+        <button id="rejectButton" class="btn-reject">변경 반려</button>
+    </div>
+
+    <div class="modal-overlay" id="rejectModal" hidden>
+        <div class="modal-card">
+            <h3>변경 요청 반려</h3>
+            <p class="modal-sub">반려 사유를 입력해주세요.</p>
+            <textarea id="returnReasonInput" rows="4" placeholder="반려 사유를 입력하세요"></textarea>
+            <p class="modal-error" id="rejectError" hidden></p>
+            <div class="modal-actions">
+                <button type="button" id="rejectCancelButton" class="btn-ghost">취소</button>
+                <button type="button" id="rejectConfirmButton" class="btn-reject-confirm">반려 확정</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script th:src="@{/js/contractchangedetail/request-detail.js}"></script>

@@ -7,17 +7,17 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
-import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
-import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
+import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
+import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
 import org.teamsai.saibackend.domain.notification.type.NotificationType;
@@ -142,7 +142,8 @@ public class ContractChangeService {
                 NotificationType.CONTRACT_CHANGE,
                 "계약 변경 요청",
                 creditorInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
-                newContractDTO.getContractId()
+                contractId,
+                changeDTO.getChangeRequestId()
         );
 
         log.info("계약 변경 요청 생성 및 차용증 재저장 완료: contractId={}, userId={}",
@@ -185,5 +186,36 @@ public class ContractChangeService {
             log.error("계약 변경 승인 알림 발송 실패: v2ContractId={}, userId={}, error={}",
                     v2ContractId, pendingRequest.getUserId(), e.getMessage(), e);
         }
+    }
+
+    @Transactional
+    public LoanContractChangeDTO rejectChange(Long contractId, Long changeRequestId, String returnReason, Long userId) {
+
+        LoanContractResponse contract = loanContractService.findContract(contractId, userId);
+        LoanContractChangeDTO changeRequest = getChangeRequest(changeRequestId);
+
+        if(!contract.getDebtorId().equals(userId)) {
+            throw ContractChangeErrorCode.NOT_DEBTOR.toException();
+        }
+
+        if(!changeRequest.getContractId().equals(contractId)) {
+            throw ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
+        }
+
+        if(changeRequest.getStatus() != ChangeRequestStatus.PENDING)  {
+            throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
+        }
+
+        contractChangeMapper.updateStatusWithReturnReason(changeRequestId, ChangeRequestStatus.REJECTED, returnReason);
+
+        LoanContractResponse v2 = loanContractService.findPendingContractByPreviousId(contractId)
+                        .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
+
+        loanContractService.rejectChangedContract(v2.getContractId());
+
+        log.info("계약 변경 요청 반려 처리 완료: contractId={}, changeRequestId={}", contractId, changeRequestId);
+
+        return getChangeRequest(changeRequestId);
+
     }
 }

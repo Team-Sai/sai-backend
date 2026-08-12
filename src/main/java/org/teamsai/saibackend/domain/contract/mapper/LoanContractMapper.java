@@ -38,9 +38,16 @@ public interface LoanContractMapper {
             @Param("status") ContractStatus status
     );
 
+    void updateChangeStatus(
+            @Param("contractId") Long contractId,
+            @Param("status") ContractStatus status
+    );
+
     Optional<LoanContractResponse> findContractById(@Param("contractId") Long contractId);
 
     List<LoanContractResponse> findContractsByUser(@Param("userId") Long userID);
+
+    Optional<LoanContractResponse> findPendingContractByPreviousId(@Param("previousContractId") Long previousContractId);
 
     void insertChangedContract(ChangeLoanContractResponse contract);
 

@@ -72,3 +72,47 @@ function formatDateTimeKorean(dateString) {
     const seconds = dated.getSeconds();
     return `${year}년 ${month}월 ${date}일 ${hours}시 ${minutes}분 ${seconds}초`;
 }
+
+const rejectButton = document.getElementById('rejectButton');
+const rejectModal = document.getElementById('rejectModal');
+const rejectCancelButton = document.getElementById('rejectCancelButton');
+const rejectConfirmButton = document.getElementById('rejectConfirmButton');
+const returnReasonInput = document.getElementById('returnReasonInput');
+const rejectError = document.getElementById('rejectError');
+
+rejectButton.addEventListener('click', function () {
+rejectModal.hidden = false;
+});
+
+rejectCancelButton.addEventListener('click', function () {
+    rejectModal.hidden = true;
+    returnReasonInput.value = '';
+    rejectError.hidden = true;
+});
+
+rejectConfirmButton.addEventListener('click', function () {
+    const returnReason = returnReasonInput.value.trim();
+
+    if (!returnReason) {
+        rejectError.textContent = '반려 사유를 입력해주세요.';
+        rejectError.hidden = false;
+        return;
+    }
+
+    fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}/reject`, {
+        method: 'PATCH',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({returnReason: returnReason})
+    })
+.then(response => {
+        if (!response.ok) {
+            throw new Error('반려 처리 실패');
+        }
+        alert('변경 요청을 반려했습니다.');
+        window.location.href = '/dashboard';
+    })
+        .catch(() => {
+        rejectError.textContent = '반려 처리에 실패했습니다. 다시 시도해주세요.'
+        rejectError.hidden = false;
+        });
+});
