@@ -48,6 +48,13 @@
     return;
   }
 
+  const returnUrl = "/contracts/signature";
+  const identityVerificationId = new URLSearchParams(window.location.search).get("identityVerificationId");
+  if (!identityVerificationId) {
+    window.location.href = `/identity-test?returnTo=${encodeURIComponent(returnUrl)}`;
+    return;
+  }
+
   cancelBtn?.addEventListener("click", () => {
     window.location.href = "/contracts/new";
   });
@@ -102,21 +109,10 @@
   clearBtn?.addEventListener("click", clearSignature);
 
   async function createContract() {
-
-    const verificationId = draft.identityVerificationId || draft.verificationId;
-
-    if (!verificationId) {
-      throw new Error("본인인증 정보를 찾을 수 없습니다. 처음부터 다시 진행해 주세요.");
-    }
-
     const payload = {
       ...draft,
-      identityVerificationId: verificationId
+      identityVerificationId,
     };
-
-    if (payload.verificationId) {
-      delete payload.verificationId;
-    }
 
     const response = await fetch("/api/contracts/write", {
       method: "POST",

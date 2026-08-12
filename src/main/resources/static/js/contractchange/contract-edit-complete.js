@@ -2,17 +2,20 @@
   "use strict";
 
   const btnViewContract = document.getElementById("btnViewContract");
-  if (!btnViewContract) return;
+  const btnGoDashboard = document.getElementById("btnGoDashboard");
 
   const params = new URLSearchParams(window.location.search);
   const contractId = params.get("contractId");
 
   if (!contractId) {
-    btnViewContract.disabled = true;
-    return;
+    if (btnViewContract) btnViewContract.disabled = true;
+  } else if (btnViewContract) {
+    btnViewContract.addEventListener("click", () => {
+      window.location.href = `/contracts/${encodeURIComponent(contractId)}/contract-detail`;
+    });
   }
 
-  btnViewContract.addEventListener("click", () => {
-    window.location.href = `/contracts/${encodeURIComponent(contractId)}/contract-detail`;
+  btnGoDashboard?.addEventListener("click", () => {
+    window.location.href = "/dashboard";
   });
 })();

@@ -16,7 +16,7 @@ public class SettlementPaymentObligationResponse {
 
     private Long paymentObligationId;
     private Long participantId;
-
+    private String participantName;
     private BigDecimal expectedAmount;
     private BigDecimal paidAmount;
     private BigDecimal remainingAmount;

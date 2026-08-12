@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>정산 상세 | 사이원장</title>
+  <link rel="stylesheet" href="/css/settlement/settlement-detail.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark"></span><span>사이원장</span>
+    </a>
+    <nav class="main-nav">
+      <a href="/">서비스소개</a>
+      <a href="/contracts">금전소비대차</a>
+      <a class="active" href="/settlements">정산</a>
+      <a href="/calendar">캘린더</a>
+    </nav>
+    <div class="profile-chip"></div>
+  </div>
+</header>
+
+<main class="page-shell">
+  <section class="detail-heading">
+    <div>
+      <div class="heading-badges">
+        <span id="settlement-status-badge" class="badge badge-progress">진행중</span>
+        <span id="settlement-role-badge" class="badge badge-role">정산자</span>
+      </div>
+      <h1 id="settlement-title">정산 상세</h1>
+    </div>
+    <div class="heading-actions">
+      <a class="button button-secondary" href="/settlements">목록으로</a>
+      <button id="sync-button" class="button button-secondary" type="button">↻ 거래내역 동기화</button>
+      <button id="close-button" class="button button-primary" type="button">정산 마감</button>
+    </div>
+  </section>
+
+  <section class="summary-card">
+    <div class="summary-item">
+      <span>전체 지출 합계</span>
+      <strong><span id="total-expected-amount">0</span>원</strong>
+    </div>
+    <div class="summary-item">
+      <span>입금 완료 금액</span>
+      <strong class="text-success"><span id="total-paid-amount">0</span>원</strong>
+    </div>
+    <div class="summary-item">
+      <span>미정산 금액</span>
+      <strong><span id="total-remaining-amount">0</span>원</strong>
+    </div>
+    <div class="summary-progress">
+      <div class="progress-meta"><span>입금률</span><strong id="amount-progress-rate">0%</strong></div>
+      <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+      <div class="progress-count"><strong id="completed-target-count">0</strong>/<span id="total-target-count">0</span></div>
+    </div>
+  </section>
+
+  <section class="meta-card">
+    <div class="meta-item"><span>생성일</span><strong id="created-at">-</strong></div>
+    <div class="meta-divider"></div>
+    <div class="meta-item"><span>마감일</span><strong id="due-date">-</strong></div>
+    <div class="meta-divider"></div>
+    <div class="meta-item meta-grow"><span>정산 목적</span><strong id="settlement-category">-</strong></div>
+    <div class="meta-divider"></div>
+    <div class="meta-item"><span>참여 인원</span><strong><span id="participant-count">0</span>명</strong></div>
+  </section>
+
+  <div class="detail-grid">
+    <aside class="side-column">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>정산 요청 정보</h2>
+          <button id="change-account-button" class="text-button" type="button">요청 계좌 변경</button>
+        </div>
+        <div class="account-card">
+          <div class="account-icon">₩</div>
+          <div>
+            <span id="bank-name">수취 계좌</span>
+            <strong id="masked-account-number">계좌 정보 없음</strong>
+            <small id="account-holder-name">-</small>
+          </div>
+        </div>
+        <dl class="info-list">
+          <div><dt>분배 방식</dt><dd id="split-type">-</dd></div>
+          <div><dt>최근 동기화</dt><dd id="sync-time">-</dd></div>
+          <div><dt>확인 필요</dt><dd id="attention-count" class="text-danger">0명</dd></div>
+        </dl>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>참여자 정산 현황</h2>
+          <span id="target-completion-rate" class="panel-side-text">0%</span>
+        </div>
+        <div id="participant-avatar-list" class="participant-avatar-list"></div>
+      </section>
+    </aside>
+
+    <section class="panel participant-panel">
+      <div class="panel-header participant-panel-header">
+        <div>
+          <h2>참여자별 입금 현황</h2>
+          <p>정산 생성 시 만들어진 납부의무와 실제 입금 반영 결과입니다.</p>
+        </div>
+        <button id="refresh-button" class="button button-secondary button-small" type="button">↻ 새로고침</button>
+      </div>
+      <div class="table-scroll">
+        <table class="payment-table">
+          <thead>
+          <tr>
+            <th>참여자</th>
+            <th>분담 금액</th>
+            <th>입금 금액</th>
+            <th>잔여 금액</th>
+            <th>최근 입금일</th>
+            <th>입금 상태</th>
+            <th>관리</th>
+          </tr>
+          </thead>
+          <tbody id="payment-table-body"></tbody>
+        </table>
+      </div>
+      <div id="empty-participants" class="empty-state" hidden>등록된 납부 대상이 없습니다.</div>
+    </section>
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+<script src="/js/settlement/settlement-detail.js"></script>
+</body>
+</html>

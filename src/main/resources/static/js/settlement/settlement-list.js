@@ -21,9 +21,53 @@ document.addEventListener("DOMContentLoaded", () => {
     showCreatedToast();
     bindFilters();
 
-    syncButton.addEventListener("click", () => {
-        showToast("거래내역 동기화 API가 연결되면 이 버튼에서 호출합니다.");
-    });
+    syncButton.addEventListener("click", syncTransactions);
+
+    async function syncTransactions() {
+        try {
+            syncButton.disabled = true;
+
+            const token = sessionStorage.getItem("accessToken");
+
+            if (!token) {
+                window.location.href = "/login?required=true";
+                return;
+            }
+
+            const response = await fetch("/api/transactions/sync", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    sessionStorage.removeItem("accessToken");
+                    window.location.href = "/login?required=true";
+                    return;
+                }
+
+                throw new Error("거래내역 동기화에 실패했습니다.");
+            }
+
+            const result = await response.json();
+
+            showToast(
+                `동기화 완료: 자동반영 ${result.appliedCount}건, 확인필요
+              ${result.needsCheckCount}건, 미매칭 ${result.unmatchedCount}건`
+            );
+
+            await loadSettlements();
+
+        } catch (error) {
+            console.error(error);
+            showToast(error.message || "거래내역 동기화에 실패했습니다.", true);
+
+        } finally {
+            syncButton.disabled = false;
+        }
+    }
 
     function bindFilters() {
         [searchInput, typeFilter, splitFilter, statusFilter].forEach((element) => {
@@ -106,9 +150,8 @@ document.addEventListener("DOMContentLoaded", () => {
             <span>${escapeHtml(formatDate(settlement.dueDate))}</span>
             <a
                 class="detail-link"
-                href="/settlements"
-                aria-label="정산 상세 기능 준비 중"
-                title="상세 조회 API 구현 후 연결"
+                href="/settlements/${settlement.settlementId}"
+                aria-label="${escapeHtml(settlement.title || "정산")} 상세 조회"
             >›</a>
         `;
 

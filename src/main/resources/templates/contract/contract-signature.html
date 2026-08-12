@@ -13,7 +13,7 @@
 
 <header class="topnav">
   <div class="topnav__inner">
-    <div class="topnav__logo">사이월렛</div>
+    <div class="topnav__logo">사이원장</div>
 
     <nav class="topnav__menu">
       <a class="topnav__link" href="#">서비스 소개</a>
@@ -42,19 +42,15 @@
             <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </span>
-        <span class="stepper__label">본인인증</span>
-      </li>
-      <li class="stepper__step is-done">
-        <span class="stepper__circle">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
-            <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </span>
         <span class="stepper__label">차용증 작성</span>
       </li>
       <li class="stepper__step is-active">
+        <span class="stepper__circle">2</span>
+        <span class="stepper__label">본인인증 · 서명날인</span>
+      </li>
+      <li class="stepper__step">
         <span class="stepper__circle">3</span>
-        <span class="stepper__label">서명 날인</span>
+        <span class="stepper__label">상대확인</span>
       </li>
       <li class="stepper__step">
         <span class="stepper__circle">4</span>
@@ -66,6 +62,8 @@
   <div class="doc" id="signatureCard">
 
     <h1 class="doc__title">금 전 차 용 계 약 서</h1>
+
+    <div id="contractFields">
 
     <section class="doc__article">
       <span class="doc__clause">상대방 지정</span>
@@ -104,6 +102,8 @@
     <div class="doc__actions">
       <button type="button" class="btn btn--ghost" id="btnCancel">취소</button>
       <button type="button" class="btn btn--primary" id="btnSubmit">전송</button>
+    </div>
+
     </div>
 
     <p class="doc__status" id="formStatus" role="status" aria-live="polite"></p>

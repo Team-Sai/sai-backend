@@ -64,6 +64,7 @@
         settlement_category,
         title,
         split_type,
+        total_amount,
         due_date,
         cycle_rule,
         start_date,
@@ -89,6 +90,7 @@
         settlement_category,
         title,
         split_type,
+        total_amount,
         due_date,
         cycle_rule,
         start_date,
@@ -118,31 +120,64 @@
         SELECT
         s.settlement_id AS settlementId,
         s.title AS title,
+
         CASE
-        WHEN s.owner_id = #{userId} THEN 'OWNER'
+        WHEN s.owner_id = #{userId}
+        THEN 'OWNER'
         ELSE 'MEMBER'
         END AS role,
+
         s.settlement_category AS settlementCategory,
         s.settlement_type AS settlementType,
         s.split_type AS splitType,
         s.settlement_status AS settlementStatus,
         s.due_date AS dueDate
+
         FROM settlement s
-        WHERE s.owner_id = #{userId}
 
-        OR EXISTS (
-        SELECT 1
-        FROM settlement_participant sp
-        JOIN settlement_invitation si
-        ON si.invitation_id = sp.invitation_id
-
-        WHERE si.settlement_id = s.settlement_id
-        AND si.user_id = #{userId}
-        AND si.invitation_status = 'ACCEPTED'
+        LEFT JOIN settlement_participant sp
+        ON sp.settlement_id = s.settlement_id
+        AND sp.user_id = #{userId}
         AND sp.participant_status = 'ACTIVE'
-        )
 
-        ORDER BY s.settlement_id DESC
+        WHERE
+        s.owner_id = #{userId}
+        OR sp.participant_id IS NOT NULL
+
+        ORDER BY s.created_at DESC
+
+    </select>
+    <select id="findDetailById"
+            resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse">
+
+        SELECT
+        s.settlement_id AS settlementId,
+        s.title AS title,
+        s.settlement_category AS settlementCategory,
+        s.settlement_type AS settlementType,
+        s.settlement_status AS settlementStatus,
+        s.split_type AS splitType,
+        s.due_date AS dueDate,
+        s.created_at AS createdAt,
+
+        CASE
+        WHEN s.owner_id = #{userId}
+        THEN 'OWNER'
+
+        WHEN sp.participant_id IS NOT NULL
+        THEN 'MEMBER'
+
+        ELSE 'NONE'
+        END AS role
+
+        FROM settlement s
+
+        LEFT JOIN settlement_participant sp
+        ON sp.settlement_id = s.settlement_id
+        AND sp.user_id = #{userId}
+        AND sp.participant_status = 'ACTIVE'
+
+        WHERE s.settlement_id = #{settlementId}
 
     </select>
 

@@ -16,36 +16,34 @@ import java.time.LocalDateTime;
 public class SettlementParticipantService {
 
     private final SettlementParticipantMapper settlementParticipantMapper;
+@Transactional
 
-    public Long createFromInvitation(Long invitationId) {
+    public Long createParticipant(
+            Long settlementId,
+            Long userId
+    ) {
         SettlementParticipantDTO participant =
                 SettlementParticipantDTO.builder()
-                        .invitationId(invitationId)
-                        .participantRole(SettlementParticipantRole.MEMBER)
-                        .participantStatus(SettlementParticipantStatus.ACTIVE)
+                        .settlementId(settlementId)
+                        .userId(userId)
+                        .participantRole(
+                                SettlementParticipantRole.MEMBER
+                        )
+                        .participantStatus(
+                                SettlementParticipantStatus.ACTIVE
+                        )
                         .joinedAt(LocalDateTime.now())
                         .build();
 
-        int insertedCount = settlementParticipantMapper.insert(participant);
+        int insertedCount =
+                settlementParticipantMapper.insert(participant);
 
-        if(insertedCount !=1 ){
-            throw  SettlementErrorCode.SETTLEMENT_PARTICIPANT_CREATE_FAILED.toException();
+        if (insertedCount != 1) {
+            throw SettlementErrorCode
+                    .SETTLEMENT_PARTICIPANT_CREATE_FAILED
+                    .toException();
         }
 
         return participant.getParticipantId();
-
-    }@Transactional
-    public void removeByInvitationId(Long invitationId) {
-        int updatedCount =
-                settlementParticipantMapper.updateStatusByInvitationId(
-                        invitationId,
-                        SettlementParticipantStatus.REMOVED
-                );
-
-        if (updatedCount != 1) {
-            throw SettlementErrorCode
-                    .SETTLEMENT_PARTICIPANT_STATUS_UPDATE_FAILED
-                    .toException();
-        }
     }
 }

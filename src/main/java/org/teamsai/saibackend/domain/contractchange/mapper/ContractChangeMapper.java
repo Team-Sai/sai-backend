@@ -2,7 +2,7 @@ package org.teamsai.saibackend.domain.contractchange.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.teamsai.saibackend.domain.contractchange.dto.ChangeRequestStatus;
+import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 
 import java.util.List;

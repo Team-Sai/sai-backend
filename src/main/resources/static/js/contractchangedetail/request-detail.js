@@ -34,6 +34,9 @@ fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}`, { heade
         document.getElementById('currentRepaymentType').textContent = detail.currentRepaymentType;
         document.getElementById('newRepaymentType').textContent = detail.newRepaymentType;
 
+        document.getElementById('currentTerms').textContent = detail.currentTerms || '-';
+        document.getElementById('newTerms').textContent = detail.newTerms || '-';
+
         document.getElementById('changeReason').textContent = detail.changeReason;
 
         document.getElementById('extendedMonths').textContent = formatExtendedMonths(detail.extendedMonths);

@@ -102,14 +102,6 @@ public class SettlementPaymentService {
         return paymentObligation.getPaymentObligationId();
     }
 
-    public void markObligationNeedsCheckByInvitationId(Long invitationId){
-        int updatedCount = paymentObligationMapper.updateReviewStatusByInvitationId(invitationId,ReviewStatus.NEEDS_CHECK);
-
-        if(updatedCount != 1){
-            throw PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND.toException();
-        }
-    }
-
     private void validateActiveObligation(PaymentObligationDTO obligation) {
         if (obligation.getObligationStatus() != ObligationStatus.ACTIVE) {
             throw PaymentErrorCode.PAYMENT_OBLIGATION_NOT_ACTIVE.toException();

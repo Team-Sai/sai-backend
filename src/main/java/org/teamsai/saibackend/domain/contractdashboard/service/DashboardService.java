@@ -1,0 +1,267 @@
+package org.teamsai.saibackend.domain.contractdashboard.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
+import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.service.LoanContractService;
+import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardContractRowResponse;
+import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardResponse;
+import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardSummaryResponse;
+import org.teamsai.saibackend.domain.contractdashboard.exception.DashboardErrorCode;
+import org.teamsai.saibackend.domain.contractdashboard.type.ContractRole;
+import org.teamsai.saibackend.domain.contractdashboard.type.DashboardContractStatus;
+import org.teamsai.saibackend.domain.contractdashboard.type.DashboardPaymentStatus;
+import org.teamsai.saibackend.domain.contractdashboard.type.TransactionCategory;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class DashboardService {
+
+    private final LoanContractService loanContractService;
+    private final RepaymentScheduleService repaymentScheduleService;
+
+    private List<LoanContractResponse> getVisibleContracts(Long userId) {
+        List<LoanContractResponse> contract = loanContractService.findContractsByUser(userId);
+
+        Set<Long> supersededIds = contract.stream()
+                .filter(c -> c.getPreviousContractId() != null && c.getStatus() == ContractStatus.COMPLETED)
+                .map(c -> c.getPreviousContractId())
+                .collect(Collectors.toSet());
+
+        return contract.stream()
+                .filter(c -> !supersededIds.contains(c.getContractId()) && c.getStatus() == ContractStatus.COMPLETED)
+                .toList();
+    }
+
+    private BigDecimal calculateTotalRemaining(List<RepaymentScheduleDTO> schedules) {
+
+        return schedules.stream()
+                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING)
+                .map(RepaymentScheduleDTO::getTotalPaymentDue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal calculateThisMonthDue(List<RepaymentScheduleDTO> schedules) {
+        YearMonth thisMonth = YearMonth.now();
+        return schedules.stream()
+                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING
+                        && YearMonth.from(s.getDueDate()).equals(thisMonth))
+                .map(RepaymentScheduleDTO::getTotalPaymentDue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+
+    }
+
+    private DashboardPaymentStatus determinePaymentStatus(BigDecimal totalRemaining, BigDecimal thisMonthDue) {
+        if (totalRemaining.compareTo(BigDecimal.ZERO) == 0) {
+            return DashboardPaymentStatus.NONE;
+        } else if (thisMonthDue.compareTo(BigDecimal.ZERO) > 0) {
+            return DashboardPaymentStatus.WAITING;
+        }
+        return DashboardPaymentStatus.NO_DUE_THIS_MONTH;
+    }
+
+    private DashboardContractStatus determineContractStatus(BigDecimal totalRemaining) {
+        return totalRemaining.compareTo(BigDecimal.ZERO) == 0
+                ? DashboardContractStatus.COMPLETED
+                : DashboardContractStatus.ONGOING;
+    }
+
+    private ContractRole determineRole(LoanContractResponse contract, Long userId) {
+        return contract.getCreditorId().equals(userId)
+                ? ContractRole.CREDITOR
+                : ContractRole.DEBTOR;
+    }
+
+    private TransactionCategory determineCategory(ContractRole role) {
+        return role == ContractRole.CREDITOR
+                ? TransactionCategory.RECEIVE
+                : TransactionCategory.PAY;
+    }
+
+    private DashboardContractRowResponse toRow(LoanContractResponse contract, Long userId) {
+        List<RepaymentScheduleDTO> schedules = repaymentScheduleService.getSchedule(contract.getContractId());
+
+        BigDecimal totalRemaining = calculateTotalRemaining(schedules);
+        BigDecimal thisMonthDue = calculateThisMonthDue(schedules);
+
+        ContractRole role = determineRole(contract, userId);
+
+        TransactionCategory category = determineCategory(role);
+
+        DashboardContractStatus contractStatus = determineContractStatus(totalRemaining);
+
+        DashboardPaymentStatus paymentStatus = determinePaymentStatus(totalRemaining, thisMonthDue);
+
+        LocalDate nearestDueDate = calculateNearestDueDate(schedules);
+
+        return DashboardContractRowResponse.builder()
+                .contractId(contract.getContractId())
+                .contractAlias(contract.getContractAlias())
+                .role(role)
+                .category(category)
+                .principalAmount(contract.getPrincipalAmount())
+                .totalRemainingAmount(totalRemaining)
+                .thisMonthDueAmount(thisMonthDue)
+                .maskedAccount(null)
+                .contractStatus(contractStatus)
+                .paymentStatus(paymentStatus)
+                .maturityDate(contract.getMaturityDate())
+                .nearestScheduleDueDate(nearestDueDate)
+                .build();
+    }
+
+
+    private DashboardSummaryResponse buildSummary(List<DashboardContractRowResponse> rows) {
+        int totalContractCount = rows.size();
+
+        BigDecimal totalLentAmount = rows.stream()
+                .filter(c -> c.getRole() == ContractRole.CREDITOR)
+                .map(DashboardContractRowResponse::getTotalRemainingAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalBorrowedAmount = rows.stream()
+                .filter(c -> c.getRole() == ContractRole.DEBTOR)
+                .map(DashboardContractRowResponse::getTotalRemainingAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal thisMonthDueAmount = rows.stream()
+                .map(DashboardContractRowResponse::getThisMonthDueAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        String defaultFilter = totalLentAmount.compareTo(totalBorrowedAmount) >= 0 ? "LENT" : "BORROWED";
+
+        LocalDate nearestDueDate = rows.stream()
+                .filter(s -> s.getNearestScheduleDueDate() != null)
+                .map(DashboardContractRowResponse::getNearestScheduleDueDate)
+                .min(LocalDate::compareTo)
+                .orElse(null);
+
+        return DashboardSummaryResponse.builder()
+                .totalContractCount(totalContractCount)
+                .totalLentAmount(totalLentAmount)
+                .totalBorrowedAmount(totalBorrowedAmount)
+                .nearestDueDate(nearestDueDate)
+                .defaultFilter(defaultFilter)
+                .thisMonthDueAmount(thisMonthDueAmount)
+                .build();
+    }
+
+    private LocalDate calculateNearestDueDate(List<RepaymentScheduleDTO> schedules) {
+        return schedules.stream()
+                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING)
+                .map(RepaymentScheduleDTO::getDueDate)
+                .min(LocalDate::compareTo)
+                .orElse(null);
+
+
+
+
+    }
+
+    private List<DashboardContractRowResponse> filterByKeyword(List<DashboardContractRowResponse> rows, String keyword) {
+        if(keyword == null || keyword.isEmpty()) {
+            return rows;
+        }
+        String lowerKeyword = keyword.toLowerCase();
+
+            return rows.stream()
+                    .filter(c -> c.getContractAlias() != null &&
+                            c.getContractAlias().toLowerCase().contains(lowerKeyword))
+                    .toList();
+
+    }
+
+    private List<DashboardContractRowResponse> filterByRole(List<DashboardContractRowResponse> rows, String filterType) {
+        if (filterType == null || filterType.equals("ALL")) {
+            return rows;
+        } else if (filterType.equals("LENT")) {
+            return rows.stream()
+                    .filter(c -> c.getRole() == ContractRole.CREDITOR)
+                    .toList();
+        } else if (filterType.equals("BORROWED")) {
+            return rows.stream()
+                    .filter(c -> c.getRole() == ContractRole.DEBTOR)
+                    .toList();
+        }
+        throw DashboardErrorCode.INVALID_ROLE_FILTER.toException();
+    }
+
+    private List<DashboardContractRowResponse> sortRows(List<DashboardContractRowResponse> rows, String sortType) {
+        List<DashboardContractRowResponse> sorted = new ArrayList<>(rows);
+
+        if (sortType == null || sortType.isEmpty()) {
+            sorted.sort(Comparator.comparing(DashboardContractRowResponse::getContractId).reversed());
+            return sorted;
+        }
+
+
+        switch (sortType) {
+            case "ALPHABET" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getContractAlias));
+            case "ROLE" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getRole));
+            case "CATEGORY" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getCategory));
+            case "AMOUNT_DESC" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getTotalRemainingAmount).reversed());
+            case "AMOUNT_ASC" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getTotalRemainingAmount));
+            case "STATUS" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getContractStatus));
+            case "DEADLINE" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getMaturityDate));
+            default -> throw DashboardErrorCode.INVALID_SORT_TYPE.toException();
+        }
+        return sorted;
+    }
+
+    private List<DashboardContractRowResponse> paginate(List<DashboardContractRowResponse> rows, int page, int pageSize) {
+        if (page < 1) {
+            page = 1;
+        }
+
+        int startIndex = (page - 1) * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, rows.size());
+
+        if(startIndex >= rows.size()) {
+            return List.of();
+        }
+        return rows.subList(startIndex, endIndex);
+    }
+
+    public DashboardResponse getDashboard(Long userId, String keyword, String roleFilter, String sortType, int page) {
+        List<LoanContractResponse> contracts = getVisibleContracts(userId);
+
+        List<DashboardContractRowResponse> allRows = contracts.stream()
+                .map(contract -> toRow(contract, userId)).toList();
+
+        DashboardSummaryResponse summary = buildSummary(allRows);
+        List<DashboardContractRowResponse> filtered = filterByKeyword(allRows, keyword);
+        List<DashboardContractRowResponse> roleFiltered = filterByRole(filtered, roleFilter);
+        List<DashboardContractRowResponse> sorted = sortRows(roleFiltered, sortType);
+        long totalCount = sorted.size();
+        List<DashboardContractRowResponse> pagedRows = paginate(sorted, page, 5);
+        int totalPages = (int) Math.ceil((double) totalCount / 5);
+
+        return DashboardResponse.builder()
+                .summary(summary)
+                .contracts(pagedRows)
+                .currentPage(page)
+                .totalPages(totalPages)
+                .totalCount(totalCount)
+                .pageSize(5)
+                .build();
+
+    }
+
+}

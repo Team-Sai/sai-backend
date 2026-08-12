@@ -26,7 +26,6 @@ import static org.assertj.core.groups.Tuple.tuple;
 @Sql(scripts = {
         "/db/user.sql",
         "/db/settlement.sql",
-        "/db/settlement_invitation.sql",
         "/db/settlement_participant.sql"
 })
 @DisplayName("SettlementMapper 통합 테스트")
@@ -58,8 +57,12 @@ class SettlementMapperTest {
                 "내가 만든 정산"
         );
 
+
         List<SettlementListResponse> result =
-                settlementMapper.findAllByUserId(USER_ID);
+                settlementMapper.findAllByUserId(
+                        USER_ID
+                );
+
 
         assertThat(result)
                 .extracting(
@@ -77,7 +80,7 @@ class SettlementMapperTest {
 
     @Test
     @Transactional
-    @DisplayName("수락된 초대의 ACTIVE 참여자는 MEMBER로 조회한다")
+    @DisplayName("ACTIVE 참여자는 정산을 MEMBER로 조회한다")
     void findAllByUserIdReturnsActiveMemberSettlement() {
 
         insertUser(
@@ -96,21 +99,19 @@ class SettlementMapperTest {
                 "참여 중인 정산"
         );
 
-        insertInvitation(
-                9731L,
-                9721L,
-                USER_ID,
-                "ACCEPTED"
-        );
-
         insertParticipant(
                 9741L,
-                9731L,
+                9721L,
+                USER_ID,
                 "ACTIVE"
         );
 
+
         List<SettlementListResponse> result =
-                settlementMapper.findAllByUserId(USER_ID);
+                settlementMapper.findAllByUserId(
+                        USER_ID
+                );
+
 
         assertThat(result)
                 .extracting(
@@ -122,78 +123,6 @@ class SettlementMapperTest {
                                 9721L,
                                 "MEMBER"
                         )
-                );
-    }
-
-
-    @Test
-    @Transactional
-    @DisplayName("초대 대기 또는 거절 상태의 정산은 MEMBER 목록에서 제외한다")
-    void findAllByUserIdExcludesInvitedAndRejectedInvitations() {
-
-        insertUser(
-                USER_ID,
-                "참여자"
-        );
-
-        insertUser(
-                OTHER_USER_ID,
-                "정산 생성자"
-        );
-
-        insertSettlement(
-                9751L,
-                OTHER_USER_ID,
-                "초대 대기 정산"
-        );
-
-        insertSettlement(
-                9752L,
-                OTHER_USER_ID,
-                "초대 거절 정산"
-        );
-
-        insertInvitation(
-                9761L,
-                9751L,
-                USER_ID,
-                "INVITED"
-        );
-
-        insertInvitation(
-                9762L,
-                9752L,
-                USER_ID,
-                "REJECTED"
-        );
-
-        /*
-         * participant 행이 존재하더라도
-         * invitation_status가 ACCEPTED가 아니므로
-         * 목록에서 조회되면 안 된다.
-         */
-        insertParticipant(
-                9771L,
-                9761L,
-                "ACTIVE"
-        );
-
-        insertParticipant(
-                9772L,
-                9762L,
-                "ACTIVE"
-        );
-
-        List<SettlementListResponse> result =
-                settlementMapper.findAllByUserId(USER_ID);
-
-        assertThat(result)
-                .extracting(
-                        SettlementListResponse::settlementId
-                )
-                .doesNotContain(
-                        9751L,
-                        9752L
                 );
     }
 
@@ -219,21 +148,19 @@ class SettlementMapperTest {
                 "비활성 참여 정산"
         );
 
-        insertInvitation(
-                9791L,
-                9781L,
-                USER_ID,
-                "ACCEPTED"
-        );
-
         insertParticipant(
                 9801L,
-                9791L,
+                9781L,
+                USER_ID,
                 "REMOVED"
         );
 
+
         List<SettlementListResponse> result =
-                settlementMapper.findAllByUserId(USER_ID);
+                settlementMapper.findAllByUserId(
+                        USER_ID
+                );
+
 
         assertThat(result)
                 .extracting(
@@ -245,10 +172,49 @@ class SettlementMapperTest {
     }
 
 
+    @Test
+    @Transactional
+    @DisplayName("정산과 관계없는 사용자의 목록에는 정산이 포함되지 않는다")
+    void findAllByUserIdExcludesUnrelatedSettlement() {
+
+        insertUser(
+                USER_ID,
+                "조회 사용자"
+        );
+
+        insertUser(
+                OTHER_USER_ID,
+                "정산 생성자"
+        );
+
+        insertSettlement(
+                9811L,
+                OTHER_USER_ID,
+                "관계없는 정산"
+        );
+
+
+        List<SettlementListResponse> result =
+                settlementMapper.findAllByUserId(
+                        USER_ID
+                );
+
+
+        assertThat(result)
+                .extracting(
+                        SettlementListResponse::settlementId
+                )
+                .doesNotContain(
+                        9811L
+                );
+    }
+
+
     private void insertUser(
             Long userId,
             String name
     ) {
+
         String unique =
                 UUID.randomUUID().toString();
 
@@ -280,6 +246,7 @@ class SettlementMapperTest {
             Long ownerId,
             String title
     ) {
+
         jdbcTemplate.update(
                 """
                 INSERT INTO settlement (
@@ -314,59 +281,25 @@ class SettlementMapperTest {
     }
 
 
-    private void insertInvitation(
-            Long invitationId,
-            Long settlementId,
-            Long userId,
-            String invitationStatus
-    ) {
-        jdbcTemplate.update(
-                """
-                INSERT INTO settlement_invitation (
-                    invitation_id,
-                    settlement_id,
-                    user_id,
-                    invitation_status,
-                    invited_at,
-                    accepted_at
-                )
-                VALUES (
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    NOW(),
-                    CASE
-                        WHEN ? = 'ACCEPTED'
-                        THEN NOW()
-                        ELSE NULL
-                    END
-                )
-                """,
-                invitationId,
-                settlementId,
-                userId,
-                invitationStatus,
-                invitationStatus
-        );
-    }
-
-
     private void insertParticipant(
             Long participantId,
-            Long invitationId,
+            Long settlementId,
+            Long userId,
             String participantStatus
     ) {
+
         jdbcTemplate.update(
                 """
                 INSERT INTO settlement_participant (
                     participant_id,
-                    invitation_id,
+                    settlement_id,
+                    user_id,
                     participant_role,
                     participant_status,
                     joined_at
                 )
                 VALUES (
+                    ?,
                     ?,
                     ?,
                     'MEMBER',
@@ -375,7 +308,8 @@ class SettlementMapperTest {
                 )
                 """,
                 participantId,
-                invitationId,
+                settlementId,
+                userId,
                 participantStatus
         );
     }

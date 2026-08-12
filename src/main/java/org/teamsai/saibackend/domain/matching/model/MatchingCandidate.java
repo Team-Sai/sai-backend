@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 public record MatchingCandidate(
         MatchingTargetType targetType,
-        Long obligationId,
+        Long targetId,
         Long participantId,
         String participantName,
         BigDecimal remainingAmount
@@ -15,7 +15,7 @@ public record MatchingCandidate(
 
     public MatchingCandidate {
         if (targetType == null
-                || obligationId == null
+                || targetId == null
                 || participantId == null
                 || participantName == null
                 || remainingAmount == null

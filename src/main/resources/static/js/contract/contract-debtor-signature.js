@@ -48,6 +48,13 @@
     statusEl.classList.toggle("is-error", Boolean(isError));
   }
 
+  const returnUrl = `/contracts/${contractId}/approve/signature`;
+  const identityVerificationId = new URLSearchParams(window.location.search).get("identityVerificationId");
+  if (!identityVerificationId) {
+    window.location.href = `/identity-test?returnTo=${encodeURIComponent(returnUrl)}`;
+    return;
+  }
+
   function canvasPoint(event) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -104,6 +111,7 @@
     const formData = new FormData();
     formData.append("debtorAddress", draft.debtorAddress);
     formData.append("signature", blob, "signature.png");
+    formData.append("identityVerificationId", identityVerificationId);
 
     const response = await fetch(`/api/contracts/${contractId}/approve`, {
       method: "PATCH",

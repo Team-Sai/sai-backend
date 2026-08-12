@@ -81,7 +81,8 @@ public class LinkedBankAccountService {
             return Collections.emptyList();
         }
 
-        List<LinkedBankAccountDTO> linkedAccounts = linkedBankAccountMapper.selectLinkedAccountsByUserId(userId);
+        List<LinkedBankAccountDTO> linkedAccounts =
+                linkedBankAccountMapper.selectAvailableLinkedAccountsByUserId(userId);
         if (linkedAccounts == null || linkedAccounts.isEmpty()) {
             return Collections.emptyList();
         }

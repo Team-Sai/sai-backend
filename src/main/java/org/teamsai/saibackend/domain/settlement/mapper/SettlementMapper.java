@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.settlement.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
+import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,11 @@ public interface SettlementMapper {
             @Param("closedAt") LocalDateTime closedAt
     );
 
-    List<SettlementListResponse> findAllByUserId(Long userId);
+    List<SettlementListResponse> findAllByUserId(@Param("userId") Long userId);
+
+    Optional<SettlementDetailResponse> findDetailById(
+            @Param("settlementId") Long settlementId,
+            @Param("userId") Long userId
+    );
 
 }
