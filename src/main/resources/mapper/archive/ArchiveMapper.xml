@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.archive.mapper.ArchiveMapper">
+
+    <insert id="insertFile" useGeneratedKeys="true" keyProperty="fileId">
+        INSERT INTO loan_contract_file (
+        domain_type,
+        reference_id,
+        original_filename,
+        saved_filename,
+        file_size,
+        file_type,
+        created_at
+        ) VALUES (
+        #{domainType},
+        #{referenceId},
+        #{originalFilename},
+        #{savedFilename},
+        #{fileSize},
+        #{fileType},
+        #{createdAt}
+        )
+    </insert>
+
+    <select id="findFilesByReference" resultType="org.teamsai.saibackend.domain.archive.dto.FileDTO">
+        SELECT
+        file_id           AS fileId,
+        domain_type       AS domainType,
+        reference_id      AS referenceId,
+        original_filename AS originalFilename,
+        saved_filename    AS savedFilename,
+        file_size         AS fileSize,
+        file_type         AS fileType,
+        created_at        AS createdAt
+        FROM loan_contract_file
+        WHERE domain_type = #{domainType}
+          AND reference_id = #{referenceId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findAllFilesByUserId" resultType="org.teamsai.saibackend.domain.archive.dto.FileDTO">
+        SELECT
+        f.file_id           AS fileId,
+        f.domain_type       AS domainType,
+        f.reference_id      AS referenceId,
+        f.original_filename AS originalFilename,
+        f.saved_filename    AS savedFilename,
+        f.file_size         AS fileSize,
+        f.file_type         AS fileType,
+        f.created_at        AS createdAt
+        FROM loan_contract_file f
+        JOIN loan_contract c ON c.contract_id = f.reference_id
+        WHERE c.creditor_id = #{userId}
+        OR c.debtor_id = #{userId}
+        ORDER BY f.created_at DESC
+    </select>
+
+    <select id="findFileById" resultType="org.teamsai.saibackend.domain.archive.dto.FileDTO">
+        SELECT
+        file_id           AS fileId,
+        domain_type       AS domainType,
+        reference_id      AS referenceId,
+        original_filename AS originalFilename,
+        saved_filename    AS savedFilename,
+        file_size         AS fileSize,
+        file_type         AS fileType,
+        created_at        AS createdAt
+        FROM loan_contract_file
+        WHERE file_id = #{fileId}
+    </select>
+
+</mapper>

@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS loan_contract (
 
 CREATE TABLE IF NOT EXISTS loan_contract_file (
     file_id           BIGINT NOT NULL AUTO_INCREMENT,
-    contract_id       BIGINT NOT NULL,
+    domain_type       VARCHAR(50) NOT NULL,
+    reference_id      BIGINT NOT NULL,
 
     original_filename VARCHAR(255) NOT NULL,
     saved_filename    VARCHAR(255) NOT NULL,
@@ -47,8 +48,7 @@ CREATE TABLE IF NOT EXISTS loan_contract_file (
     created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (file_id),
-    KEY idx_loan_contract_file_contract_id (contract_id),
-    CONSTRAINT fk_loan_contract_file_contract FOREIGN KEY (contract_id) REFERENCES loan_contract (contract_id)
+    KEY idx_file_domain_reference (domain_type, reference_id)
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;

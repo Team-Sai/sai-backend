@@ -1,5 +1,7 @@
 package org.teamsai.saibackend.domain.archive.service;
 
+import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,12 +10,20 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.teamsai.saibackend.domain.archive.dto.ArchiveStatus;
 import org.teamsai.saibackend.domain.archive.dto.FileDTO;
 import org.teamsai.saibackend.domain.archive.mapper.ArchiveMapper;
+import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,6 +41,7 @@ import static org.teamsai.saibackend.domain.archive.dto.ArchiveStatus.CONTRACT;
 public class ArchiveService {
 
     private final ArchiveMapper archiveMapper;
+    private final TemplateEngine templateEngine;
 
     @Getter
     @Value("${file.upload-dir:C:/upload/shinhan/}")
@@ -51,13 +62,23 @@ public class ArchiveService {
         }
 
         try {
+            return saveFile(domainType, referenceId, file.getOriginalFilename(), file.getContentType(),
+                    file.getInputStream(), file.getSize());
+        } catch (IOException e) {
+            log.error("파일 저장 중 오류 발생", e);
+            throw new RuntimeException("파일 저장 처리 중 오류가 발생했습니다.", e);
+        }
+    }
 
+    @Transactional
+    public FileDTO saveFile(String domainType, Long referenceId, String originalFilename, String contentType,
+                             InputStream content, long fileSize) {
+        try {
             Path dirPath = Paths.get(uploadDir);
             if (!Files.exists(dirPath)) {
                 Files.createDirectories(dirPath);
             }
 
-            String originalFilename = file.getOriginalFilename();
             String ext = "";
             if (originalFilename != null && originalFilename.contains(".")) {
                 ext = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
@@ -66,15 +87,15 @@ public class ArchiveService {
             String savedFilename = domainType + "_" + referenceId + "_" + UUID.randomUUID() + (ext.isEmpty() ? "" : "." + ext);
 
             Path savePath = dirPath.resolve(savedFilename);
-            Files.copy(file.getInputStream(), savePath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(content, savePath, StandardCopyOption.REPLACE_EXISTING);
 
             FileDTO fileDTO = FileDTO.builder()
                     .domainType(CONTRACT)
                     .referenceId(referenceId)
                     .originalFilename(originalFilename)
                     .savedFilename(savedFilename)
-                    .fileSize(file.getSize())
-                    .fileType(file.getContentType())
+                    .fileSize(fileSize)
+                    .fileType(contentType)
                     .createdAt(LocalDateTime.now())
                     .build();
 
@@ -89,6 +110,47 @@ public class ArchiveService {
             log.error("파일 저장 중 오류 발생", e);
             throw new RuntimeException("파일 저장 처리 중 오류가 발생했습니다.", e);
         }
+    }
+
+    public byte[] renderContractPdf(LoanContractResponse contract) {
+        String pdfCss;
+        try (InputStream cssStream = getClass().getResourceAsStream("/static/css/archive/contract-pdf.css")) {
+            pdfCss = StreamUtils.copyToString(cssStream, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("PDF 스타일시트 로딩 중 오류가 발생했습니다.", e);
+        }
+
+        Context context = new Context();
+        context.setVariable("contract", contract);
+        context.setVariable("repaymentTypeLabel", contract.getRepaymentType().getDescription());
+        context.setVariable("pdfCss", pdfCss);
+
+        String html = templateEngine.process("archive/contract-pdf", context);
+
+        ByteArrayOutputStream pdfBuffer = new ByteArrayOutputStream();
+        try {
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+
+            builder.useFont(
+                    () -> getClass().getResourceAsStream("/static/font/pretendard/Pretendard-Regular.ttf"),
+                    "Pretendard", 400, BaseRendererBuilder.FontStyle.NORMAL, true
+            );
+            builder.useFont(
+                    () -> getClass().getResourceAsStream("/static/font/pretendard/Pretendard-Bold.ttf"),
+                    "Pretendard", 700, BaseRendererBuilder.FontStyle.NORMAL, true
+            );
+
+            builder.useDefaultPageSize(210, 297, BaseRendererBuilder.PageSizeUnits.MM);
+            builder.withHtmlContent(html, "");
+            builder.toStream(pdfBuffer);
+            builder.run();
+
+        } catch (Exception e) {
+            log.error("PDF 생성 실패 - contractId: {}", contract.getContractId(), e);
+            throw new RuntimeException("PDF 생성 중 오류가 발생했습니다.", e);
+        }
+
+        return pdfBuffer.toByteArray();
     }
 
     public FileDTO getFileById(Long fileId) {

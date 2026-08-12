@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.teamsai.saibackend.domain.archive.dto.ArchiveStatus;
+import org.teamsai.saibackend.domain.archive.service.ArchiveService;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
@@ -22,6 +24,7 @@ import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.service.UserService;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,6 +39,7 @@ public class LoanContractService {
     private final IdentityService identityService;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
+    private final ArchiveService archiveService;
 
     @Transactional
     public Long createContract(LoanContractRequest request, Long userId) {
@@ -135,6 +139,24 @@ public class LoanContractService {
         if (contract.getPreviousContractId() != null) {
             eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));
         }
+
+        LoanContractResponse completedContract = withPartyInfo(
+                contract.toBuilder()
+                        .debtorAddress(debtorAddress)
+                        .debtorSignature(savedPath)
+                        .status(ContractStatus.COMPLETED)
+                        .build()
+        );
+
+        byte[] contractPdf = archiveService.renderContractPdf(completedContract);
+        archiveService.saveFile(
+                ArchiveStatus.CONTRACT.name(),
+                contractId,
+                "차용증_" + contractId + ".pdf",
+                "application/pdf",
+                new ByteArrayInputStream(contractPdf),
+                contractPdf.length
+        );
 
         return ContractStatus.COMPLETED;
     }

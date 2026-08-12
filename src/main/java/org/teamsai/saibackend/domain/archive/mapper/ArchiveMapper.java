@@ -15,7 +15,7 @@ public interface ArchiveMapper {
 
     List<FileDTO> findFilesByReference(@Param("domainType") String domainType, @Param("referenceId") Long referenceId);
 
-    List<FileDTO> findAllFilesByUserId(Long userId);
+    List<FileDTO> findAllFilesByUserId(@Param("userId") Long userId);
 
-    Optional<FileDTO> findFileById(Long fileId);
+    Optional<FileDTO> findFileById(@Param("fileId") Long fileId);
 }
