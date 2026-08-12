@@ -7,8 +7,10 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.teamsai.saibackend.global.util.LinkIdentityHasher;
 
 import javax.crypto.SecretKey;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Optional;
 
@@ -16,6 +18,7 @@ import java.util.Optional;
 public class JwtTokenProvider {
 
     private static final String CLAIM_PURPOSE = "purpose";
+    private static final String CLAIM_IDENTITY_HASH = "identity-hash";
     private static final String PURPOSE_ACCESS = "access";
     private static final String PURPOSE_BANK_LINK = "bank-link";
 
@@ -47,13 +50,14 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String createLinkStateToken(Long userId) {
+    public String createLinkStateToken(Long userId, String name, LocalDate birthDate) {
         Date issuedAt = new Date();
         Date expiration = new Date(issuedAt.getTime() + linkStateExpirationMs);
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim(CLAIM_PURPOSE, PURPOSE_BANK_LINK)
+                .claim(CLAIM_IDENTITY_HASH, LinkIdentityHasher.hash(name,birthDate))
                 .issuedAt(issuedAt)
                 .expiration(expiration)
                 .signWith(signingKey)

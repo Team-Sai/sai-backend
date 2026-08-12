@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
 import org.teamsai.saibackend.domain.link.service.AccountLinkService;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
+import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.exception.DomainException;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
@@ -37,13 +39,15 @@ public class AccountLinkFlowController {
     private final JwtTokenProvider jwtTokenProvider;
     private final LinkedBankAccountService linkedBankAccountService;
     private final AccountLinkService accountLinkService;
+    private final UserService userService;
 
     @PostMapping("/api/accounts/link/start")
     public ResponseEntity<Map<String, String>> startLink(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUserId();
-        String state = jwtTokenProvider.createLinkStateToken(userId);
+        UserDTO myInfo = userService.getUser(userId);
+        String state = jwtTokenProvider.createLinkStateToken(userId, myInfo.getName(), myInfo.getBirthDate());
 
         List<Long> alreadyLinkedAccountIds = linkedBankAccountService.getLinkedAccountIds(userId);
         String linkedIdsParam = alreadyLinkedAccountIds.stream()
