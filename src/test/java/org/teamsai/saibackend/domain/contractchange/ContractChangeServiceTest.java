@@ -20,6 +20,9 @@ import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
+import org.teamsai.saibackend.domain.notification.service.NotificationService;
+import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
+import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
@@ -46,6 +49,12 @@ class ContractChangeServiceTest {
 
     @Mock
     private LoanContractService loanContractService;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private ContractChangeService contractChangeService;
@@ -130,6 +139,8 @@ class ContractChangeServiceTest {
                     .willReturn(createContract(ContractStatus.COMPLETED));
             given(contractChangeMapper.findByContractId(CONTRACT_ID))
                     .willReturn(List.of());
+            given(userService.getMyInfo(USER_ID))
+                    .willReturn(UserResponse.builder().name("채권자").build());
 
             contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID);
 

@@ -10,6 +10,11 @@ import org.teamsai.saibackend.global.exception.DomainException;
 @RequiredArgsConstructor
 public enum BankTransactionErrorCode implements BaseErrorCode<DomainException> {
 
+    INVALID_DATE_RANGE(
+            HttpStatus.BAD_REQUEST,
+            "조회 시작일이 종료일보다 늦을 수 없습니다."
+    ),
+
     INVALID_BANK_TRANSACTION(
             HttpStatus.BAD_REQUEST,
             "은행 거래 정보가 올바르지 않습니다."

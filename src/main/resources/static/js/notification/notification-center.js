@@ -100,18 +100,27 @@ function initNotificationCenter() {
 
         switch (
             notification.notificationType
-        ) {
+            ) {
 
             case "CONTRACT_REQUESTED":
                 return {
                     category: "SIGN",
-                    iconClass: "icon-blue",
-                    accentClass: "accent-blue",
+                    iconClass: "icon-orange",
+                    accentClass: "accent-orange",
                     ctaLabel: "서명하러 가기",
                     ctaUrl:
                         `/contracts/${notification.referenceId}/approve`
                 };
 
+            case "CONTRACT_CHANGE":
+                return {
+                    category: "SIGN",
+                    iconClass: "icon-indigo",
+                    accentClass: "accent-indigo",
+                    ctaLabel: "차용증 보기",
+                    ctaUrl:
+                        `/contracts/${notification.referenceId}/approve`
+                };
 
             case "SETTLEMENT_PARTICIPANT_ADDED":
                 return {
@@ -122,7 +131,6 @@ function initNotificationCenter() {
                     ctaUrl:
                         `/settlements/${notification.referenceId}`
                 };
-
 
             default:
                 return {

@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS notification (
     notification_id BIGINT NOT NULL AUTO_INCREMENT,
     user_id BIGINT NOT NULL,
-    notification_type ENUM('SETTLEMENT_PARTICIPANT_ADDED',  'CONTRACT_REQUESTED') NOT NULL,
+    notification_type VARCHAR(50) NOT NULL,
     title VARCHAR(200) NOT NULL,
     content VARCHAR(500) NOT NULL,
     reference_id BIGINT NOT NULL,

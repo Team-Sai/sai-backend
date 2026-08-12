@@ -1,6 +1,5 @@
 package org.teamsai.saibackend.domain.contract.service;
 
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,6 +17,9 @@ import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
 import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
+import org.teamsai.saibackend.domain.notification.service.NotificationService;
+import org.teamsai.saibackend.domain.notification.type.NotificationType;
+import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.util.List;
@@ -33,6 +35,7 @@ public class LoanContractService {
     private final UserService userService;
     private final IdentityService identityService;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     @Transactional
     public Long createContract(LoanContractRequest request, Long userId) {
@@ -63,19 +66,24 @@ public class LoanContractService {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
 
+        UserResponse creditorInfo = userService.getMyInfo(userId);
+
         Long debtorId = userService.findRequestTarget(userId, debtorUserToken).getUserId();
 
         String savedPath = fileService.saveSignatureFile(contractId, signature);
 
         contractMapper.updateCreditorSignature(contractId, savedPath, debtorId, ContractStatus.PENDING);
 
-        return ContractStatus.PENDING;
-    }
 
-    //알림센터를 위한 코드, 채권자가 채무자에게 차용증을 전송한 상태
-    @Transactional(readOnly = true)
-    public List<LoanContractResponse> findPendingContractsByDebtorId(Long debtorId) {
-        return contractMapper.findPendingContractsByDebtorId(debtorId);
+        notificationService.create(
+                debtorId,
+                NotificationType.CONTRACT_REQUESTED,
+                "새로운 차용증 수신",
+                creditorInfo.getName() + "님으로부터 서명 대기 중인 차용증이 전송되었습니다.",
+                contractId
+        );
+
+        return ContractStatus.PENDING;
     }
 
     @Transactional
