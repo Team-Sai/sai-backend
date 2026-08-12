@@ -7,6 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.global.util.LinkIdentityHasher;
 
 import javax.crypto.SecretKey;
@@ -25,16 +26,19 @@ public class JwtTokenProvider {
     private final SecretKey signingKey;
     private final long accessTokenExpirationMs;
     private final long linkStateExpirationMs;
+    private final String linkIdentityHashSecret;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-token-expiration-ms}") long accessTokenExpirationMs,
-            @Value("${jwt.link-state-expiration-ms}") long linkStateExpirationMs
+            @Value("${jwt.link-state-expiration-ms}") long linkStateExpirationMs,
+            @Value("${link-identity.hash-secret}") String linkIdentityHashSecret
     ) {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenExpirationMs = accessTokenExpirationMs;
         this.linkStateExpirationMs = linkStateExpirationMs;
+        this.linkIdentityHashSecret = linkIdentityHashSecret;
     }
 
     public String createAccessToken(Long userId) {
@@ -51,13 +55,17 @@ public class JwtTokenProvider {
     }
 
     public String createLinkStateToken(Long userId, String name, LocalDate birthDate) {
+        if (name == null || name.isBlank() || birthDate == null) {
+            throw UserErrorCode.INCOMPLETE_PROFILE_FOR_LINK.toException();
+        }
+
         Date issuedAt = new Date();
         Date expiration = new Date(issuedAt.getTime() + linkStateExpirationMs);
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim(CLAIM_PURPOSE, PURPOSE_BANK_LINK)
-                .claim(CLAIM_IDENTITY_HASH, LinkIdentityHasher.hash(name,birthDate))
+                .claim(CLAIM_IDENTITY_HASH, LinkIdentityHasher.hash(name, birthDate, linkIdentityHashSecret))
                 .issuedAt(issuedAt)
                 .expiration(expiration)
                 .signWith(signingKey)

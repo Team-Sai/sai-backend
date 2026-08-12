@@ -53,6 +53,10 @@ public enum UserErrorCode
             HttpStatus.BAD_REQUEST,
             "유효하지 않거나 만료된 연동 요청입니다. 다시 시도해주세요."
     ),
+    INCOMPLETE_PROFILE_FOR_LINK(
+            HttpStatus.BAD_REQUEST,
+            "계좌 연동을 위해서는 이름과 생년월일 정보가 등록되어 있어야 합니다."
+    ),
     LINK_KEY_UPDATE_CONFLICT(
             HttpStatus.CONFLICT,
             "계좌 연동 처리 중 충돌이 발생했습니다. 다시 시도해주세요."

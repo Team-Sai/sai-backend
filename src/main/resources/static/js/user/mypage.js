@@ -243,14 +243,16 @@ document.addEventListener(
 
             const token = sessionStorage.getItem("accessToken");
 
-            try{
+            try {
                 const response = await fetch("/api/accounts/link/start", {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` }
                 });
 
                 if (!response.ok) {
-                    window.alert("계좌 연동을 시작할 수 없습니다.");
+                    bankWindow?.close();
+                    const errorData = await response.json().catch(() => ({}));
+                    window.alert(errorData.message || "계좌 연동을 시작할 수 없습니다.");
                     return;
                 }
 
@@ -265,6 +267,7 @@ document.addEventListener(
                 window.alert("계좌 연동을 시작할 수 없습니다.");
             }
         }
+
         window.addEventListener("message", (event) => {
             if (event.origin !== "http://localhost:8081") return;
 
