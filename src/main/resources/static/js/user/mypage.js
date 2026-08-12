@@ -238,9 +238,7 @@ document.addEventListener(
         }
 
         async function handleConnectAccountClick() {
-
             const bankWindow = window.open("about:blank", "sai-bank-link", "width=480,height=720");
-
             const token = sessionStorage.getItem("accessToken");
 
             try {
@@ -249,14 +247,21 @@ document.addEventListener(
                     headers: { "Authorization": `Bearer ${token}` }
                 });
 
+                if (response.status === 401 || response.status === 403) {
+                    bankWindow?.close();
+                    sessionStorage.removeItem("accessToken");
+                    redirectToLogin(true);
+                    return;
+                }
+
                 if (!response.ok) {
                     bankWindow?.close();
-                    const errorData = await response.json().catch(() => ({}));
+                    const errorData = await readJson(response);
                     window.alert(errorData.message || "계좌 연동을 시작할 수 없습니다.");
                     return;
                 }
 
-                const { redirectUrl } = await response.json();
+                const { redirectUrl } = await readJson(response);
 
                 if (bankWindow) {
                     bankWindow.location.href = redirectUrl;

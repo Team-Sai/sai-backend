@@ -55,10 +55,6 @@ public class JwtTokenProvider {
     }
 
     public String createLinkStateToken(Long userId, String name, LocalDate birthDate) {
-        if (name == null || name.isBlank() || birthDate == null) {
-            throw UserErrorCode.INCOMPLETE_PROFILE_FOR_LINK.toException();
-        }
-
         Date issuedAt = new Date();
         Date expiration = new Date(issuedAt.getTime() + linkStateExpirationMs);
 

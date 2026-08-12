@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
+import org.teamsai.saibackend.domain.identity.service.IdentityValidator;
 import org.teamsai.saibackend.domain.link.service.AccountLinkService;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
@@ -40,6 +41,7 @@ public class AccountLinkFlowController {
     private final LinkedBankAccountService linkedBankAccountService;
     private final AccountLinkService accountLinkService;
     private final UserService userService;
+    private final IdentityValidator identityValidator;
 
     @PostMapping("/api/accounts/link/start")
     public ResponseEntity<Map<String, String>> startLink(
@@ -47,6 +49,9 @@ public class AccountLinkFlowController {
     ) {
         Long userId = userDetails.getUserId();
         UserDTO myInfo = userService.getUser(userId);
+
+        identityValidator.validateUserInformation(myInfo);
+
         String state = jwtTokenProvider.createLinkStateToken(userId, myInfo.getName(), myInfo.getBirthDate());
 
         List<Long> alreadyLinkedAccountIds = linkedBankAccountService.getLinkedAccountIds(userId);

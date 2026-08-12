@@ -75,7 +75,7 @@ public class IdentityValidator {
         }
     }
 
-    private void validateUserInformation(
+    public void validateUserInformation(
             UserDTO user
     ) {
         if (user == null

@@ -20,10 +20,10 @@ class JwtTokenProviderTest {
 
     private static final long ACCESS_TOKEN_EXPIRATION_MS =
             60 * 60 * 1000L;
-    private static final long LINK_STATE_EXPIRATION_Ms =
+    private static final long LINK_STATE_EXPIRATION_MS =
             10 * 60 * 1000L;
-
     private static final Long USER_ID = 1L;
+    private static final String TEST_LINK_IDENTITY_HASH_SECRET = "test-link-identity-secret";
 
     private String secret;
     private SecretKey signingKey;
@@ -34,16 +34,15 @@ class JwtTokenProviderTest {
         byte[] keyBytes =
                 "01234567890123456789012345678901"
                         .getBytes(StandardCharsets.UTF_8);
-
         secret = Encoders.BASE64.encode(keyBytes);
         signingKey = Keys.hmacShaKeyFor(keyBytes);
 
-        jwtTokenProvider =
-                new JwtTokenProvider(
-                        secret,
-                        ACCESS_TOKEN_EXPIRATION_MS,
-                        LINK_STATE_EXPIRATION_Ms
-                );
+        jwtTokenProvider = new JwtTokenProvider(
+                secret,
+                ACCESS_TOKEN_EXPIRATION_MS,
+                LINK_STATE_EXPIRATION_MS,
+                TEST_LINK_IDENTITY_HASH_SECRET
+        );
     }
 
     @Test
@@ -101,7 +100,6 @@ class JwtTokenProviderTest {
         byte[] otherKeyBytes =
                 "abcdefghijklmnopqrstuvwxyz123456"
                         .getBytes(StandardCharsets.UTF_8);
-
         SecretKey otherSigningKey =
                 Keys.hmacShaKeyFor(otherKeyBytes);
 
@@ -126,7 +124,6 @@ class JwtTokenProviderTest {
             SecretKey key
     ) {
         Date issuedAt = new Date();
-
         return Jwts.builder()
                 .subject(subject)
                 .issuedAt(issuedAt)

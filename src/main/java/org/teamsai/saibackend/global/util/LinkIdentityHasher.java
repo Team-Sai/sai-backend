@@ -3,8 +3,6 @@ package org.teamsai.saibackend.global.util;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.HexFormat;
 
@@ -17,6 +15,10 @@ public final class LinkIdentityHasher {
     }
 
     public static String hash(String name, LocalDate birthDate, String secret) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("명의 해시 처리 실패: link-identity.hash-secret 값이 비어 있습니다.");
+        }
+
         String normalized = normalizeName(name) + DELIMITER + normalizeBirthDate(birthDate);
 
         try {
@@ -24,8 +26,10 @@ public final class LinkIdentityHasher {
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM));
             byte[] hashBytes = mac.doFinal(normalized.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hashBytes);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new IllegalStateException("명의 해시 처리 실패", e);
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "명의 해시 처리 실패: " + e.getClass().getSimpleName() + " - " + e.getMessage(), e
+            );
         }
     }
 
