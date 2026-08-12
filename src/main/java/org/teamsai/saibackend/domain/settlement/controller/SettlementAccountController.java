@@ -27,8 +27,7 @@ import org.teamsai.saibackend.domain.settlement.service.SettlementAccountService
 @RequiredArgsConstructor
 public class SettlementAccountController {
 
-    private final SettlementAccountService
-            settlementAccountService;
+    private final SettlementAccountService settlementAccountService;
 
     @Operation(
             summary = "정산 수취 계좌 설정",

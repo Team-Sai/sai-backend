@@ -15,14 +15,11 @@
         <result property="splitType" column="split_type"/>
         <result property="totalAmount" column="total_amount"/>
         <result property="dueDate" column="due_date"/>
-        <result property="cycleRule" column="cycle_rule"/>
-        <result property="startDate" column="start_date"/>
-        <result property="endDate" column="end_date"/>
+        <result property="recurringSettlementId" column="recurring_settlement_id"/>
         <result property="createdAt" column="created_at"/>
         <result property="closedAt" column="closed_at"/>
         <result property="status" column="status"/>
         <result property="cycleDate" column="cycle_date"/>
-        <result property="invitationToken" column="invitation_token"/>
     </resultMap>
 
     <insert id="insertSettlement"
@@ -32,6 +29,7 @@
             keyColumn="settlement_id">
 
         INSERT INTO settlement (
+        recurring_settlement_id,
         owner_id,
         settlement_type,
         settlement_status,
@@ -40,9 +38,11 @@
         split_type,
         total_amount,
         due_date,
+        cycle_date,
         created_at
         )
         VALUES (
+        #{recurringSettlementId},
         #{ownerId},
         #{settlementType},
         #{settlementStatus},
@@ -51,6 +51,7 @@
         #{splitType},
         #{totalAmount},
         #{dueDate},
+        #{cycleDate},
         #{createdAt}
         )
     </insert>
@@ -58,6 +59,7 @@
     <select id="findById" resultMap="settlementResultMap">
         SELECT
         settlement_id,
+        recurring_settlement_id,
         owner_id,
         settlement_type,
         settlement_status,
@@ -66,24 +68,20 @@
         split_type,
         total_amount,
         due_date,
-        cycle_rule,
-        start_date,
-        end_date,
         created_at,
         closed_at,
         status,
-        cycle_date,
-        invitation_token
+        cycle_date
         FROM settlement
         WHERE settlement_id = #{settlementId}
     </select>
 
-    <select
-            id="findByIdForUpdate"
+    <select id="findByIdForUpdate"
             resultMap="settlementResultMap">
 
         SELECT
         settlement_id,
+        recurring_settlement_id,
         owner_id,
         settlement_type,
         settlement_status,
@@ -92,14 +90,10 @@
         split_type,
         total_amount,
         due_date,
-        cycle_rule,
-        start_date,
-        end_date,
         created_at,
         closed_at,
         status,
-        cycle_date,
-        invitation_token
+        cycle_date
         FROM settlement
         WHERE settlement_id = #{settlementId}
         FOR UPDATE

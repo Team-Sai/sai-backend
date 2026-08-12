@@ -23,8 +23,8 @@ public class SettlementPaymentStatusService {
     private static final int RATE_SCALE = 2;
 
     private final SettlementMapper settlementMapper;
-    private final SettlementPaymentStatusMapper
-            paymentStatusMapper;
+    private final SettlementPaymentStatusMapper paymentStatusMapper;
+    private final SettlementValidator settlementValidator;
 
     @Transactional(readOnly = true)
     public SettlementPaymentStatusResponse getPaymentStatus(
@@ -39,11 +39,7 @@ public class SettlementPaymentStatusService {
                                         ::toException
                         );
 
-        if(!settlement.getOwnerId().equals(userId)){
-            throw SettlementErrorCode
-                    .SETTLEMENT_ACCESS_DENIED
-                        .toException();
-        }
+        settlementValidator.validateAccessibleUser(settlement,userId);
 
         List<SettlementPaymentObligationResponse> obligations =
 
@@ -74,13 +70,7 @@ public class SettlementPaymentStatusService {
             progressRate = HUNDRED;
         }
 
-        boolean closable = !obligations.isEmpty()
-                && obligations.stream()
-                .allMatch(obligation ->
-                        obligation.getPaidAmount()
-                                .compareTo(obligation.getExpectedAmount())
-                                ==0
-                );
+        boolean closable = isFullyPaid(obligations);
 
         return SettlementPaymentStatusResponse.builder()
                 .settlementId(settlement.getSettlementId())
@@ -107,6 +97,28 @@ public class SettlementPaymentStatusService {
                         totalExpectedAmount,
                         RATE_SCALE,
                         RoundingMode.HALF_UP
+                );
+    }
+
+    @Transactional(readOnly = true)
+    public boolean areAllObligationsPaid(Long settlementId) {
+        List<SettlementPaymentObligationResponse> obligations =
+                paymentStatusMapper
+                        .findPaymentObligationsBySettlementId(settlementId);
+
+        return isFullyPaid(obligations);
+    }
+
+    private boolean isFullyPaid(
+            List<SettlementPaymentObligationResponse> obligations
+    ) {
+        return !obligations.isEmpty()
+                && obligations.stream()
+                .allMatch(obligation ->
+                        obligation.getPaidAmount()
+                                .compareTo(
+                                        obligation.getExpectedAmount()
+                                ) == 0
                 );
     }
 }
