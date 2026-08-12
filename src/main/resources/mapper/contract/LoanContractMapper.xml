@@ -153,23 +153,6 @@
         WHERE contract_id = #{contractId}
     </update>
 
-    <select id="findPendingContractsByDebtorId" resultType="org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse">
-        SELECT
-        c.contract_id,
-        c.creditor_id,
-        c.debtor_id,
-        c.principal_amount,
-        c.interest_rate,
-        c.status,
-        c.updated_at,
-        u.name AS creditorName
-        FROM loan_contract c
-        LEFT JOIN users u ON c.creditor_id = u.user_id
-        WHERE c.debtor_id = #{debtorId}
-        AND c.status = 'PENDING'
-        ORDER BY c.updated_at DESC
-    </select>
-
     <insert id="insertChangedContract" useGeneratedKeys="true" keyProperty="contractId">
         INSERT INTO loan_contract (
         previous_contract_id,
