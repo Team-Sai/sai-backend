@@ -38,6 +38,6 @@ public class CreateSharedSettlementRequest {
 
 
     @Valid
-    @NotEmpty(message = "납부자를 한 명 이상 선택해 주세요.")
-    private List<CreateSettlementInvitationRequest> invitations;
+    @NotEmpty(message = "참여자를 한 명 이상 선택해 주세요.")
+    private List<CreateSettlementParticipantRequest> participants;
 }

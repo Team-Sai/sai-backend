@@ -11,8 +11,8 @@
 <body>
 
 <header class="topnav">
-    <div class="topnav__inner">
-        <div class="topnav__logo">사이월렛</div>
+  <div class="topnav__inner">
+    <div class="topnav__logo">사이원장</div>
 
         <nav class="topnav__menu">
             <a class="topnav__link" href="#">서비스 소개</a>
@@ -21,36 +21,37 @@
             <a class="topnav__link" href="#">거래 일정</a>
         </nav>
 
-        <button class="topnav__bell" type="button" aria-label="알림">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
-                <path d="M12 3a6 6 0 0 0-6 6v3.2c0 .5-.18 1-.5 1.4L4 15.5c-.6.7-.1 1.8.8 1.8h14.4c.9 0 1.4-1.1.8-1.8l-1.5-1.9a2.2 2.2 0 0 1-.5-1.4V9a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-                <path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
-        </button>
-    </div>
+    <a class="topnav__bell" href="/notifications" aria-label="알림">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+        <path d="M12 3a6 6 0 0 0-6 6v3.2c0 .5-.18 1-.5 1.4L4 15.5c-.6.7-.1 1.8.8 1.8h14.4c.9 0 1.4-1.1.8-1.8l-1.5-1.9a2.2 2.2 0 0 1-.5-1.4V9a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span class="topnav__bell-badge" id="topnavBellBadge" hidden></span>
+    </a>
+  </div>
 </header>
 
 <main class="page">
-    <div class="stepper-card">
-        <ol class="stepper">
-            <li class="stepper__step is-active">
-                <span class="stepper__circle">1</span>
-                <span class="stepper__label">차용증 작성</span>
-            </li>
-            <li class="stepper__step">
-                <span class="stepper__circle">2</span>
-                <span class="stepper__label">상대확인</span>
-            </li>
-            <li class="stepper__step">
-                <span class="stepper__circle">3</span>
-                <span class="stepper__label">본인인증 · 서명날인</span>
-            </li>
-            <li class="stepper__step">
-                <span class="stepper__circle">4</span>
-                <span class="stepper__label">저장</span>
-            </li>
-        </ol>
-    </div>
+  <div class="stepper-card">
+    <ol class="stepper">
+      <li class="stepper__step is-active">
+        <span class="stepper__circle">1</span>
+        <span class="stepper__label">차용증 작성</span>
+      </li>
+      <li class="stepper__step">
+        <span class="stepper__circle">2</span>
+        <span class="stepper__label">본인인증 · 서명날인</span>
+      </li>
+      <li class="stepper__step">
+        <span class="stepper__circle">3</span>
+        <span class="stepper__label">상대확인</span>
+      </li>
+      <li class="stepper__step">
+        <span class="stepper__circle">4</span>
+        <span class="stepper__label">저장</span>
+      </li>
+    </ol>
+  </div>
 
     <form class="doc" id="contractForm" data-contract-id="">
         <h1 class="doc__title">금 전 차 용 계 약 서</h1>
@@ -69,34 +70,31 @@
           원을 채무자(이하 "을"이라고 함)에게 대여하고 을은 이를 차용한다.
         </span>
 
-                <div class="loan-account">
-                    <div class="loan-account__title">대출금 지급 계좌</div>
-                    <!-- 계좌 연동 기능 완성 전까지 임시로 주석 처리 (테스트용 수동 입력으로 대체)
-                    <select id="selectedLinkedAccountId" name="selectedLinkedAccountId">
-                      <option value="">계좌를 선택해 주세요</option>
-                    </select>
+        <div class="loan-account">
+          <div class="loan-account__title">대출금 지급 계좌</div>
+          <select id="selectedLinkedAccountId" name="selectedLinkedAccountId">
+            <option value="">계좌를 선택해 주세요</option>
+          </select>
 
-                    <table class="loan-account__summary" id="loanAccountSummary" hidden>
-                      <tbody>
-                      <tr>
-                        <th>은 행</th>
-                        <td id="loanAccountBank">-</td>
-                      </tr>
-                      <tr>
-                        <th>계좌번호</th>
-                        <td id="loanAccountNumber">-</td>
-                      </tr>
-                      <tr>
-                        <th>예금주</th>
-                        <td id="loanAccountHolder">-</td>
-                      </tr>
-                      </tbody>
-                    </table>
-                    -->
-                    <input type="text" class="parties__input" id="accountNumber" name="accountNumber" placeholder="계좌번호를 입력하세요" />
-                </div>
-            </div>
-        </section>
+          <table class="loan-account__summary" id="loanAccountSummary" hidden>
+            <tbody>
+            <tr>
+              <th>은 행</th>
+              <td id="loanAccountBank">-</td>
+            </tr>
+            <tr>
+              <th>계좌번호</th>
+              <td id="loanAccountNumber">-</td>
+            </tr>
+            <tr>
+              <th>예금주</th>
+              <td id="loanAccountHolder">-</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
         <section class="doc__article">
             <span class="doc__clause">제2조(대출기간)</span>
@@ -227,6 +225,21 @@
     </form>
 </main>
 
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <strong>사이원장</strong>
+      <p>© Sai-Wonjang. All rights reserved.</p>
+    </div>
+    <nav>
+      <a href="#">이용약관</a>
+      <a href="#">개인정보처리방침</a>
+      <a href="#">고객센터</a>
+    </nav>
+  </div>
+</footer>
+
+<script th:src="@{/js/notification/topnav-notifications.js}" src="../../static/js/notification/topnav-notifications.js"></script>
 <script th:src="@{/js/contract/contract-form.js}" src="../../static/js/contract/contract-form.js"></script>
 </body>
 </html>

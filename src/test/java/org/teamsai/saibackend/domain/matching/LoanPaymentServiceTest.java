@@ -9,7 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleStatus;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.matching.service.LoanPaymentService;

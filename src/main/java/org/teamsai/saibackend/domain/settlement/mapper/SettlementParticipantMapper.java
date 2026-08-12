@@ -3,7 +3,6 @@ package org.teamsai.saibackend.domain.settlement.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
-import org.teamsai.saibackend.domain.settlement.type.SettlementParticipantStatus;
 
 @Mapper
 public interface  SettlementParticipantMapper {
@@ -13,6 +12,4 @@ public interface  SettlementParticipantMapper {
             @Param("settlementId") Long settlementId,
             @Param("userId") Long userId
     );
-
-    int updateStatusByInvitationId(Long invitationId, SettlementParticipantStatus participantStatus);
 }

@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
 public class SettlementParticipantDTO {
 
     private Long participantId;
-    private Long invitationId;
-
+    private Long userId;
+    private Long settlementId;
     private SettlementParticipantRole participantRole;
     private SettlementParticipantStatus participantStatus;
 
