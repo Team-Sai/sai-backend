@@ -43,6 +43,7 @@
         SET status = #{status},
         updated_at = NOW()
         WHERE change_request_id = #{changeRequestId}
+        AND status = 'PENDING'
     </update>
 
     <update id="updateStatusWithReturnReason">
@@ -50,6 +51,7 @@
         SET status = #{status}, return_reason = #{returnReason},
         updated_at = NOW()
         WHERE change_request_id = #{changeRequestId}
+        AND status = 'PENDING'
     </update>
 
 </mapper>

@@ -162,6 +162,10 @@ public class RepaymentScheduleService {
     }
 
     public Map<Long, List<RepaymentScheduleDTO>> getSchedulesByContractIds(List<Long> contractIds) {
+        if (contractIds == null || contractIds.isEmpty()) {
+            return Map.of();
+        }
+
         List<RepaymentScheduleDTO> all = repaymentScheduleMapper.findByContractIds(contractIds);
         return all.stream()
                 .collect(Collectors.groupingBy(RepaymentScheduleDTO::getContractId));

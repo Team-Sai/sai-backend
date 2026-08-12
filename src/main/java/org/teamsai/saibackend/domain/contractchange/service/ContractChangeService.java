@@ -60,10 +60,13 @@ public class ContractChangeService {
 
     }
 
-    public Long getPendingChangedContractId(Long contractId) {
+    private LoanContractResponse getPendingChangedContract(Long contractId) {
         return loanContractService.findPendingContractByPreviousId(contractId)
-                .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException)
-                .getContractId();
+                .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
+    }
+
+    public Long getPendingChangedContractId(Long contractId) {
+        return getPendingChangedContract(contractId).getContractId();
     }
 
 
@@ -111,6 +114,7 @@ public class ContractChangeService {
                 .newInterestRate(request.getNewInterestRate())
                 .newRepaymentType(request.getNewRepaymentType())
                 .newRepaymentDate(request.getNewRepaymentDate())
+                .newTerms(request.getNewTerms())
                 .userId(userId)
                 .contractId(contractId)
                 .status(ChangeRequestStatus.PENDING)
@@ -171,7 +175,10 @@ public class ContractChangeService {
                 .findFirst()
                 .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
 
-        contractChangeMapper.updateStatus(pendingRequest.getChangeRequestId(), ChangeRequestStatus.APPROVED);
+        int updatedRows = contractChangeMapper.updateStatus(pendingRequest.getChangeRequestId(), ChangeRequestStatus.APPROVED);
+        if(updatedRows == 0) {
+            throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
+        }
 
         repaymentScheduleService.generateChangedSchedule(v1ContractId, v2ContractId);
 
@@ -212,10 +219,24 @@ public class ContractChangeService {
             throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
         }
 
-        contractChangeMapper.updateStatusWithReturnReason(changeRequestId, ChangeRequestStatus.REJECTED, returnReason);
+        int updatedRows = contractChangeMapper.updateStatusWithReturnReason(changeRequestId, ChangeRequestStatus.REJECTED, returnReason);
+        if(updatedRows == 0) {
+            throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
+        }
+        try {
+            notificationService.create(
+                    contract.getCreditorId(),
+                    NotificationType.CONTRACT_CHANGE,
+                    "계약 변경 요청 반려",
+                    contract.getDebtorName() + "님이 변경 요청을 반려했습니다.",
+                    contractId
+            );
+        } catch (Exception e) {
+            log.error("계약 변경 반려 알림 발송 실패: contractId={}, changeRequestId={}, rror={}",
+                    contractId, changeRequestId, e.getMessage(), e);
+        }
 
-        LoanContractResponse v2 = loanContractService.findPendingContractByPreviousId(contractId)
-                        .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
+        LoanContractResponse v2 = getPendingChangedContract(contractId);
 
         loanContractService.rejectChangedContract(v2.getContractId());
 
@@ -223,5 +244,11 @@ public class ContractChangeService {
 
         return getChangeRequest(changeRequestId);
 
+    }
+
+    public boolean hasPendingChangeRequest(Long contractId) {
+        List<LoanContractChangeDTO> existingRequests = contractChangeMapper.findByContractId(contractId);
+        return existingRequests.stream()
+                .anyMatch(changeRequest -> ChangeRequestStatus.PENDING.equals(changeRequest.getStatus()));
     }
 }

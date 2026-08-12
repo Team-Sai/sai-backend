@@ -1,5 +1,6 @@
 const contractId = document.getElementById('contractId').value;
 const changeButton = document.getElementById('changeButton');
+const pendingChangeNotice = document.getElementById('pendingChangeNotice');
 
 const REPAYMENT_TYPE_LABELS = {
     EQUAL_PRINCIPAL_AND_INTEREST: '원리금균등상환',
@@ -37,6 +38,7 @@ fetch(`/api/contracts/${contractId}/contract-detail`, { headers: authHeaders() }
         document.getElementById('debtorNameCell').textContent = data.contract.debtorName;
 
         changeButton.hidden = !data.canRequestChange;
+        pendingChangeNotice.hidden = !(data.isCreditor && !data.canRequestChange);
     })
     .catch(() => {
         alert('계약 정보를 불러오는 중 오류가 발생했습니다.');
