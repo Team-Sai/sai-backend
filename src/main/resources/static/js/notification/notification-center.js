@@ -113,14 +113,23 @@ function initNotificationCenter() {
                 };
 
             case "CONTRACT_CHANGE":
-                return {
-                    category: "SIGN",
-                    iconClass: "icon-indigo",
-                    accentClass: "accent-indigo",
-                    ctaLabel: "변경 요청 확인하기",
-                    ctaUrl:
-                        `/contracts/${notification.referenceId}/change-requests/${notification.secondaryReferenceId}`
-                };
+                return notification.secondaryReferenceId
+                    ? {
+                        category: "SIGN",
+                        iconClass: "icon-indigo",
+                        accentClass: "accent-indigo",
+                        ctaLabel: "변경 요청 확인하기",
+                        ctaUrl:
+                            `/contracts/${notification.referenceId}/change-requests/${notification.secondaryReferenceId}`
+                    }
+                    : {
+                        category: "SIGN",
+                        iconClass: "icon-indigo",
+                        accentClass: "accent-indigo",
+                        ctaLabel: "계약서 보기",
+                        ctaUrl:
+                            `/contracts/${notification.referenceId}/contract-detail`
+                    };
 
             case "SETTLEMENT_PARTICIPANT_ADDED":
                 return {
