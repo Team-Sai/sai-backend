@@ -2,8 +2,8 @@ package org.teamsai.saibackend.domain.contractchangedetail.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchangedetail.dto.ChangeRequestDetailDTO;
@@ -70,8 +70,11 @@ public class ChangeRequestDetailService {
         Period period = Period.between(contract.getMaturityDate(), effectiveMaturityDate);
         int extendedMonths = period.getMonths() + period.getYears() * 12;
 
+        Long newContractId = contractChangeService.getPendingChangedContractId(contractId);
+
         return ChangeRequestDetailDTO.builder()
                 .changeRequestId(changeDTO.getChangeRequestId())
+                .newContractId(newContractId)
                 .requesterName(contract.getCreditorName())
                 .requestedAt(changeDTO.getCreatedAt())
                 .status(translateStatus(changeDTO.getStatus()))

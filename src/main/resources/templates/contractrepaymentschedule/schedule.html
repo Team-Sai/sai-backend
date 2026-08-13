@@ -4,14 +4,41 @@
     <meta charset="UTF-8">
     <title>상환현황 상세조회</title>
     <link rel="stylesheet" th:href="@{/css/contractrepaymentschedule/contractrepaymentschedule.css}">
+    <link rel="stylesheet" href="/css/contractchange/site-common.css" />
 </head>
 <body>
+
+
+
+<header class="site-header">
+    <div class="header-inner">
+        <a class="brand" href="/">사이원장</a>
+        <nav class="main-nav" aria-label="주요 메뉴">
+            <a href="#">서비스 소개</a>
+            <a class="active" href="/dashboard">금전거래대차</a>
+            <a href="/settlements">정산</a>
+            <a href="#">거래 일정</a>
+        </nav>
+        <div class="header-actions">
+            <button class="icon-button" type="button" aria-label="알림">♧</button>
+            <a class="profile-link" href="/mypage" aria-label="마이페이지">
+                <span class="profile-avatar">사</span>
+            </a>
+        </div>
+    </div>
+</header>
 
 <div class="schedule-container">
 
     <div class="schedule-header">
-        <span class="status-badge" id="statusBadge"></span>
-        <span class="contract-alias" id="contractAlias"></span>
+        <div class="schedule-header__info">
+            <span class="status-badge" id="statusBadge"></span>
+            <span class="contract-alias" id="contractAlias"></span>
+        </div>
+        <div class="schedule-header__actions">
+            <button type="button" class="btn-secondary" id="btnSyncTransaction" disabled>거래동기화</button>
+            <button type="button" class="btn-primary-small" id="btnViewContract">계약서 보기</button>
+        </div>
     </div>
 
     <div class="schedule-card">
@@ -39,8 +66,6 @@
                 <div class="progress-bar-fill" id="progressBarFill"></div>
             </div>
         </div>
-
-        <button type="button" class="btn-view-contract" id="btnViewContract">계약서 보기</button>
     </div>
 
     <div class="schedule-card">
@@ -49,15 +74,11 @@
             <dt>이율</dt><dd id="interestRate"></dd>
             <dt>만기일</dt><dd id="maturityDate"></dd>
             <dt>상환방식</dt><dd id="repaymentType"></dd>
+            <dt>다음 납부일</dt><dd id="nextDueDate"></dd>
         </dl>
     </div>
 
-    <div class="schedule-card">
-        <div class="account-placeholder">
-            <span>계좌 연동 준비 중</span>
-            <button type="button" class="btn-sync-transaction" disabled>거래동기화</button>
-        </div>
-    </div>
+    <!-- 계좌 연동 카드는 통째로 삭제 -->
 
     <div class="schedule-card">
         <table class="schedule-table">
@@ -73,12 +94,33 @@
             <tbody id="scheduleTableBody">
             </tbody>
         </table>
+        <div class="pagination" id="schedulePagination"></div>
     </div>
 
     <input type="hidden" id="contractId" th:value="${contractId}">
-
+    <p class="disclaimer">
+        * 본 화면의 상환 회차별 금액은 계약 조건을 기준으로 자동 산정된 예정 금액으로,
+        실제 입금 및 처리 시점에 따라 표시된 상태와 차이가 있을 수 있습니다.
+        금액은 원 단위 미만을 반올림하여 표시됩니다.
+    </p>
 </div>
 
 <script th:src="@{/js/contractrepaymentschedule/contractrepaymentschedule.js}"></script>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div>
+                <strong>사이원장</strong>
+                <p>© Sai-Wonjang. All rights reserved.</p>
+            </div>
+            <nav>
+                <a href="#">이용약관</a>
+                <a href="#">개인정보처리방침</a>
+                <a href="#">고객센터</a>
+            </nav>
+        </div>
+    </footer>
+
+
 </body>
 </html>

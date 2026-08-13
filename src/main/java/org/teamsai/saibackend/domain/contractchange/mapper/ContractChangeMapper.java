@@ -29,5 +29,11 @@ public interface ContractChangeMapper {
             @Param("status") ChangeRequestStatus status
     );
 
+    int updateStatusWithReturnReason(
+            @Param("changeRequestId") Long changeRequestId,
+            @Param("status") ChangeRequestStatus status,
+            @Param("returnReason") String returnReason
+    );
+
 
 }

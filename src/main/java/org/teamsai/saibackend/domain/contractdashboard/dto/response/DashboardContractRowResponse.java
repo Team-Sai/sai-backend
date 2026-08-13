@@ -27,9 +27,8 @@ public class DashboardContractRowResponse {
     private DashboardContractStatus contractStatus;
     private DashboardPaymentStatus paymentStatus;
     private LocalDate maturityDate;
-
-    @JsonIgnore
     private LocalDate nearestScheduleDueDate;
+    private BigDecimal nextDueAmount;
 
     @JsonIgnore
     private LocalDateTime createdAt;

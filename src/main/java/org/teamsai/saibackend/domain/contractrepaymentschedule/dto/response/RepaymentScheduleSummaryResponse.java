@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -12,7 +13,7 @@ public class RepaymentScheduleSummaryResponse {
 
     private String creditorName;
     private String debtorName;
-
+    private LocalDate nextDueDate;
     private BigDecimal totalScheduledAmount;
     private BigDecimal paidAmount;
     private BigDecimal remainingAmount;

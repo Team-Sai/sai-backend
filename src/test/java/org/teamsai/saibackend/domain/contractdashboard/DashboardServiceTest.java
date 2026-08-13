@@ -22,11 +22,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {
@@ -51,7 +50,8 @@ class DashboardServiceTest {
 
         when(loanContractService.findContractsByUser(USER_ID))
                 .thenReturn(List.of(v1Superseded, v2Current, incomplete));
-        when(repaymentScheduleService.getSchedule(11L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(11L)))
+                .thenReturn(Map.of());
 
         DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
 
@@ -71,8 +71,8 @@ class DashboardServiceTest {
         );
 
         when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(borrowedContract));
-        when(repaymentScheduleService.getSchedule(20L)).thenReturn(schedules);
-
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(20L)))
+                .thenReturn(Map.of(20L, schedules));
         DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
         DashboardContractRowResponse row = response.getContracts().get(0);
 
@@ -90,10 +90,11 @@ class DashboardServiceTest {
 
         when(loanContractService.findContractsByUser(USER_ID))
                 .thenReturn(List.of(lentContract, borrowedContract));
-        when(repaymentScheduleService.getSchedule(30L))
-                .thenReturn(List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 200_000, LocalDate.now().plusMonths(1))));
-        when(repaymentScheduleService.getSchedule(31L))
-                .thenReturn(List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 1_250_000, LocalDate.now())));
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(30L, 31L)))
+                .thenReturn(Map.of(
+                        30L, List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 200_000, LocalDate.now().plusMonths(1))),
+                        31L, List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 1_250_000, LocalDate.now()))
+                ));
 
         DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
 
@@ -111,8 +112,8 @@ class DashboardServiceTest {
         LoanContractResponse other = buildContract(41L, null, ContractStatus.COMPLETED, "차량 구입", 1L, 3L);
 
         when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(target, other));
-        when(repaymentScheduleService.getSchedule(40L)).thenReturn(List.of());
-        when(repaymentScheduleService.getSchedule(41L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(40L, 41L)))
+                .thenReturn(Map.of());
 
         DashboardResponse response = dashboardService.getDashboard(USER_ID, "생활비", "ALL", null, 1);
 
@@ -127,8 +128,8 @@ class DashboardServiceTest {
         LoanContractResponse borrowed = buildContract(51L, null, ContractStatus.COMPLETED, "빌린계약", 3L, 1L);
 
         when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(lent, borrowed));
-        when(repaymentScheduleService.getSchedule(50L)).thenReturn(List.of());
-        when(repaymentScheduleService.getSchedule(51L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(50L, 51L)))
+                .thenReturn(Map.of());
 
         DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "LENT", null, 1);
 
@@ -143,11 +144,12 @@ class DashboardServiceTest {
         LoanContractResponse large = buildContract(61L, null, ContractStatus.COMPLETED, "고액계약", 1L, 3L);
 
         when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(small, large));
-        when(repaymentScheduleService.getSchedule(60L))
-                .thenReturn(List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 100_000, LocalDate.now())));
-        when(repaymentScheduleService.getSchedule(61L))
-                .thenReturn(List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 9_000_000, LocalDate.now())));
 
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(60L, 61L)))
+                .thenReturn(Map.of(
+                        60L, List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 100_000, LocalDate.now())),
+                        61L, List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 9_000_000, LocalDate.now()))
+                ));
         DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", "AMOUNT_DESC", 1);
 
         assertThat(response.getContracts().get(0).getContractId()).isEqualTo(61L);
@@ -162,8 +164,8 @@ class DashboardServiceTest {
                 .toBuilder().createdAt(LocalDateTime.of(2026, 8, 1, 10, 0)).build();
         when(loanContractService.findContractsByUser(USER_ID))
                 .thenReturn(List.of(newerLowerId, olderHigherId));
-        when(repaymentScheduleService.getSchedule(60L)).thenReturn(List.of());
-        when(repaymentScheduleService.getSchedule(61L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(60L, 61L)))
+                .thenReturn(Map.of());
 
         DashboardResponse integration = dashboardService.getDashboard(
                 USER_ID, null, "ALL", "CREATED_DESC", 1
@@ -187,7 +189,8 @@ class DashboardServiceTest {
                 RepaymentScheduleStatus.PENDING, 500_000, LocalDate.now()
         );
         when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(contract));
-        when(repaymentScheduleService.getSchedule(62L)).thenReturn(List.of(schedule));
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(62L)))
+                .thenReturn(Map.of(62L, List.of(schedule)));
 
         DashboardService.IntegrationDashboardData result =
                 dashboardService.getIntegrationDashboardData(USER_ID);
@@ -197,7 +200,7 @@ class DashboardServiceTest {
             assertThat(context.contract().getContractId()).isEqualTo(62L);
             assertThat(context.schedule()).isSameAs(schedule);
         });
-        verify(repaymentScheduleService, times(1)).getSchedule(62L);
+        verify(repaymentScheduleService, times(1)).getSchedulesByContractIds(List.of(62L));
     }
 
     @Test
@@ -213,9 +216,8 @@ class DashboardServiceTest {
         );
 
         when(loanContractService.findContractsByUser(USER_ID)).thenReturn(sixContracts);
-        for (long id = 70L; id <= 75L; id++) {
-            when(repaymentScheduleService.getSchedule(id)).thenReturn(List.of());
-        }
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(70L, 71L, 72L, 73L, 74L, 75L)))
+                .thenReturn(Map.of());
 
         DashboardResponse page1 = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
         DashboardResponse page2 = dashboardService.getDashboard(USER_ID, null, "ALL", null, 2);
@@ -261,8 +263,8 @@ class DashboardServiceTest {
         LoanContractResponse newer = buildContract(81L, null, ContractStatus.COMPLETED, "나중생성", 1L, 2L);
 
         when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(older, newer));
-        when(repaymentScheduleService.getSchedule(80L)).thenReturn(List.of());
-        when(repaymentScheduleService.getSchedule(81L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(80L, 81L)))
+                .thenReturn(Map.of());
 
         DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
 
@@ -277,7 +279,8 @@ class DashboardServiceTest {
         LoanContractResponse contract = buildContract(90L, null, ContractStatus.COMPLETED, "테스트계약", 1L, 2L);
 
         when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(contract));
-        when(repaymentScheduleService.getSchedule(90L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(90L)))
+                .thenReturn(Map.of());
 
         DashboardResponse responseZero = dashboardService.getDashboard(USER_ID, null, "ALL", null, 0);
         DashboardResponse responseNegative = dashboardService.getDashboard(USER_ID, null, "ALL", null, -5);
@@ -294,10 +297,13 @@ class DashboardServiceTest {
 
         when(loanContractService.findContractsByUser(USER_ID))
                 .thenReturn(List.of(lentContract, borrowedContract));
-        when(repaymentScheduleService.getSchedule(100L))
-                .thenReturn(List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 5_000_000, LocalDate.now())));
-        when(repaymentScheduleService.getSchedule(101L))
-                .thenReturn(List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 100_000, LocalDate.now())));
+
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(100L, 101L)))
+                .thenReturn(Map.of(
+                        100L, List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 5_000_000, LocalDate.now())),
+                        101L, List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 100_000, LocalDate.now()))
+
+                ));
 
         DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
 
@@ -312,8 +318,8 @@ class DashboardServiceTest {
 
         when(loanContractService.findContractsByUser(USER_ID))
                 .thenReturn(List.of(debtorContract, creditorContract));
-        when(repaymentScheduleService.getSchedule(110L)).thenReturn(List.of());
-        when(repaymentScheduleService.getSchedule(111L)).thenReturn(List.of());
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(111L, 110L)))
+                .thenReturn(Map.of());
 
         DashboardResponse alphabetSorted = dashboardService.getDashboard(USER_ID, null, "ALL", "ALPHABET", 1);
         assertThat(alphabetSorted.getContracts().get(0).getContractAlias()).isEqualTo("가나다1");
