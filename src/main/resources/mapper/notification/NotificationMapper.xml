@@ -17,6 +17,7 @@
         title,
         content,
         reference_id,
+        secondary_reference_id,
         created_at
         )
         VALUES (
@@ -25,6 +26,7 @@
         #{title},
         #{content},
         #{referenceId},
+        #{secondaryReferenceId},
         #{createdAt}
         )
 
@@ -40,6 +42,7 @@
         title,
         content,
         reference_id AS referenceId,
+        secondary_reference_id AS secondaryReferenceId,
         created_at AS createdAt
 
         FROM notification

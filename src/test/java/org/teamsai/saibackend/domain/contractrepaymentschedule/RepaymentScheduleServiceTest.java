@@ -11,10 +11,10 @@ import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.response.RepaymentScheduleSummaryResponse;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
@@ -156,5 +156,29 @@ class RepaymentScheduleServiceTest {
                 .totalPaymentDue(new BigDecimal(totalPaymentDue))
                 .status(status)
                 .build();
+    }
+
+    @Test
+    @DisplayName("계약 ID 목록이 비어있으면 쿼리 없이 빈 Map을 반환한다")
+    void getSchedulesByContractIds_returnsEmptyMapWhenListIsEmpty() {
+        var result = repaymentScheduleService.getSchedulesByContractIds(List.of());
+
+        assertThat(result).isEmpty();
+        verify(repaymentScheduleMapper, never()).findByContractIds(anyList());
+    }
+
+    @Test
+    @DisplayName("계약 ID 목록이 있으면 계약 ID별로 스케줄을 그룹핑해서 반환한다")
+    void getSchedulesByContractIds_groupsByContractId() {
+        List<RepaymentScheduleDTO> schedules = List.of(
+                buildRow(1, RepaymentScheduleStatus.PENDING, "500000"),
+                buildRow(2, RepaymentScheduleStatus.PENDING, "500000")
+        );
+        when(repaymentScheduleMapper.findByContractIds(List.of(1L))).thenReturn(schedules);
+
+        var result = repaymentScheduleService.getSchedulesByContractIds(List.of(1L));
+
+        assertThat(result).containsOnlyKeys(1L);
+        assertThat(result.get(1L)).hasSize(2);
     }
 }

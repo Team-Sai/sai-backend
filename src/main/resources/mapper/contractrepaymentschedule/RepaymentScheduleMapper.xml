@@ -38,6 +38,27 @@
         ORDER BY sequence ASC
     </select>
 
+    <select id="findByContractIds"
+            resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
+        SELECT
+            schedule_id          AS scheduleId,
+            contract_id          AS contractId,
+            sequence,
+            due_date              AS dueDate,
+            principal_due         AS principalDue,
+            interest_due          AS interestDue,
+            total_payment_due     AS totalPaymentDue,
+            remaining_principal   AS remainingPrincipal,
+            status,
+            paid_at               AS paidAt,
+            created_at            AS createdAt
+        FROM repayment_schedule
+        WHERE contract_id IN <foreach item = "contractId" collection="contractIds" open="(" separator="," close=")">
+              #{contractId}
+        </foreach>
+        ORDER BY sequence ASC
+    </select>
+
     <select id="findEarliestPendingByContractId"
             resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
         SELECT
