@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.multipart.MultipartFile;
+import org.teamsai.saibackend.domain.archive.service.ArchiveService;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
@@ -72,6 +73,9 @@ class LoanContractServiceTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private ArchiveService archiveService;
 
     @InjectMocks
     private LoanContractService loanContractService;
@@ -286,6 +290,11 @@ class LoanContractServiceTest {
             given(contractMapper.findContractById(CONTRACT_ID)).willReturn(Optional.of(createResponse()));
             given(fileService.saveSignatureFile(CONTRACT_ID, signature))
                     .willReturn("uploads/signatures/1_signature.png");
+            given(userService.getMyInfo(CREDITOR_ID))
+                    .willReturn(UserResponse.builder().name("김채권").birthDate(LocalDate.of(1995, 5, 5)).build());
+            given(userService.getMyInfo(DEBTOR_ID))
+                    .willReturn(UserResponse.builder().name("이채무").birthDate(LocalDate.of(1996, 6, 6)).build());
+            given(archiveService.renderContractPdf(any())).willReturn(new byte[]{1, 2, 3});
 
             ContractStatus status = loanContractService.submitDebtorSignature(
                     CONTRACT_ID, DEBTOR_ID, debtorAddress, signature, IDENTITY_VERIFICATION_ID
@@ -296,6 +305,9 @@ class LoanContractServiceTest {
             );
             verify(contractMapper).updateDebtorSignature(
                     CONTRACT_ID, debtorAddress, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
+            );
+            verify(archiveService).saveFile(
+                    eq("CONTRACT"), eq(CONTRACT_ID), eq("차용증_" + CONTRACT_ID + ".pdf"), eq("application/pdf"), any(), eq(3L)
             );
             assertThat(status).isEqualTo(ContractStatus.COMPLETED);
         }

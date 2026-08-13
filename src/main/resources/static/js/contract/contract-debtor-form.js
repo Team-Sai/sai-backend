@@ -127,7 +127,7 @@
   loadContract()
     .catch(async (err) => {
       if (err.status === 403) {
-        // 아직 채무자로 연결되지 않음 - 자동으로 채무자로 연결한 뒤 다시 조회한다.
+
         try {
           await linkAsDebtor();
           await loadContract();

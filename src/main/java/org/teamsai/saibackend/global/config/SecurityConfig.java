@@ -75,6 +75,7 @@ public class SecurityConfig {
                                         "/settlements/**",
                                         "/contracts/**",
                                         "/notifications",
+                                        "/archive",
 
                                         "/integration/dashboard"
 
