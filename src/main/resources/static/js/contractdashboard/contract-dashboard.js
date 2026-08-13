@@ -133,7 +133,7 @@ document.getElementById('sortSelect').addEventListener('change', (e) => {
 });
 
 document.getElementById('btnCreateContract').addEventListener('click', () => {
-    window.location.href = '/identity-test';
+    window.location.href = '/contracts/new';
 })
 
 function escapeHtml(str) {
