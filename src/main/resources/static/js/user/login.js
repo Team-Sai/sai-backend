@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const ROUTES = {
         main: FILE_PREVIEW ? "../login/login.html" : "/",
         signup: FILE_PREVIEW ? "../signup/signup.html" : "/signup",
-        mypage: FILE_PREVIEW ? "../mypage/mypage.html" : "/mypage"
+        dashboard: FILE_PREVIEW ? "../integration/dashboard.html" : "/integration/dashboard"
     };
 
     const API = {
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 await loginWithApi();
             }
 
-            window.location.replace(ROUTES.mypage);
+            window.location.replace(ROUTES.dashboard);
 
         } catch (error) {
             console.error(error);

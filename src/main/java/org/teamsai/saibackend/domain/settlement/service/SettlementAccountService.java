@@ -155,12 +155,12 @@ public class SettlementAccountService {
     public SettlementAccountResponse findCurrentAccount(Long userId, Long settlementId){
         SettlementDTO settlement = findSettlement(settlementId);
 
-        settlementValidator.validateOwner(settlement,userId);
+        settlementValidator.validateAccessibleUser(settlement,userId);
 
         SettlementAccountDTO account = settlementAccountMapper.findActiveBySettlementId(settlementId)
                 .orElseThrow(SettlementErrorCode.SETTLEMENT_ACCOUNT_NOT_FOUND::toException);
 
-        return toResponse(userId, account);
+        return toResponse(settlement.getOwnerId(), account);
     }
 
 
