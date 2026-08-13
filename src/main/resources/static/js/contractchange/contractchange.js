@@ -23,7 +23,7 @@ fetch(`/api/contracts/${contractId}`, { headers: authHeaders() })
         return response.json();
     })
     .then(contract => {
-        document.getElementById('principalAmount').textContent = contract.principalAmount.toLocaleString() + '원';
+        document.getElementById('principalAmount').textContent = contract.principalAmount.toLocaleString(undefined, {maximumFractionDigits: 0}) + '원';
         document.getElementById('interestRate').textContent = contract.interestRate + '%';
         document.getElementById('maturityDate').textContent = contract.maturityDate;
         document.getElementById('repaymentType').textContent =
@@ -120,10 +120,10 @@ document.getElementById('changeRequestForm').addEventListener('submit', function
     const requestBody = {
         changeReason: document.getElementById('changeReason').value,
         newMaturityDate: document.getElementById('newMaturityDate').value || null,
-        newInterestRate: document.getElementById('newInterestRate').value || null + '%',
+        newInterestRate: document.getElementById('newInterestRate').value || null,
         newRepaymentType: document.getElementById('newRepaymentType').value || null,
         newRepaymentDate: document.getElementById('newRepaymentDate').value || null,
-        newTerms: document.getElementById('newTerms').value.trim() || null + '일',
+        newTerms: document.getElementById('newTerms').value.trim() || null,
     };
 
     fetch(`/api/contracts/${contractId}/change-requests`, {

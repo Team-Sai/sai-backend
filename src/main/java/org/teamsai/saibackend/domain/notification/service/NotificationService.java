@@ -18,12 +18,17 @@ public class NotificationService {
     private final NotificationMapper notificationMapper;
 
     public void create(Long userId, NotificationType type, String title, String content, Long referenceId){
+        create(userId, type, title, content, referenceId, null);
+    }
+
+    public void create(Long userId, NotificationType type, String title, String content, Long referenceId, Long secondaryReferenceId){
         NotificationDTO notification = NotificationDTO.builder()
                 .userId(userId)
                 .notificationType(type)
                 .title(title)
                 .content(content)
                 .referenceId(referenceId)
+                .secondaryReferenceId(secondaryReferenceId)
                 .read(false)
                 .createdAt(LocalDateTime.now())
                 .build();

@@ -25,6 +25,7 @@ public class SettlementAccountService {
     private final SettlementMapper settlementMapper;
     private final SettlementAccountMapper settlementAccountMapper;
     private final LinkedBankAccountService linkedBankAccountService;
+    private final SettlementValidator settlementValidator;
 
     @Transactional
     public SettlementAccountResponse selectAccount(
@@ -41,15 +42,9 @@ public class SettlementAccountService {
 
         SettlementDTO settlement = findSettlement(settlementId);
 
-        validatorOwner(
-                settlement,
-                userId
-        );
+        settlementValidator.validateOwner(settlement,userId);
 
-        validateLinkedAccountOwner(
-                userId,
-                linkedAccountId
-        );
+        settlementValidator.validateLinkedAccountOwner(userId,linkedAccountId);
 
         Optional<SettlementAccountDTO> currentAccount =
                 settlementAccountMapper.findActiveBySettlementIdForUpdate(
@@ -155,29 +150,17 @@ public class SettlementAccountService {
         );
     }
 
-    private void validateLinkedAccountOwner(Long userId, Long linkedAccountId
-    ) {
-        if (!linkedBankAccountService.isOwnedLinkedAccount(userId, linkedAccountId)) {
-            throw SettlementErrorCode.INVALID_SETTLEMENT_ACCOUNT.toException();
-        }
-    }
-
-    private void validatorOwner(SettlementDTO settlement, Long userId) {
-        if(!settlement.getOwnerId().equals(userId)){
-            throw SettlementErrorCode.SETTLEMENT_ACCESS_DENIED.toException();
-        }
-    }
 
     @Transactional(readOnly = true)
     public SettlementAccountResponse findCurrentAccount(Long userId, Long settlementId){
         SettlementDTO settlement = findSettlement(settlementId);
 
-        validatorOwner(settlement,userId);
+        settlementValidator.validateAccessibleUser(settlement,userId);
 
         SettlementAccountDTO account = settlementAccountMapper.findActiveBySettlementId(settlementId)
                 .orElseThrow(SettlementErrorCode.SETTLEMENT_ACCOUNT_NOT_FOUND::toException);
 
-        return toResponse(userId, account);
+        return toResponse(settlement.getOwnerId(), account);
     }
 
 

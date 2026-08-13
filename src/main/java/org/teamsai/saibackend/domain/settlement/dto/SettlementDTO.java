@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class SettlementDTO {
     private Long settlementId;
+    private Long recurringSettlementId;
     private Long ownerId;
 
     private SettlementType settlementType;
@@ -25,10 +26,6 @@ public class SettlementDTO {
     private BigDecimal totalAmount;
     private LocalDate dueDate;
 
-    // 정기정산에서 사용
-    private CycleRule cycleRule;
-    private LocalDate startDate;
-    private LocalDate endDate;
     private LocalDate cycleDate;
 
     private LocalDateTime createdAt;
