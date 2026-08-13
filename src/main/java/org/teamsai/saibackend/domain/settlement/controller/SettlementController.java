@@ -13,10 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.teamsai.saibackend.domain.settlement.dto.request.CreateSharedSettlementRequest;
 import org.teamsai.saibackend.domain.settlement.dto.response.*;
-import org.teamsai.saibackend.domain.settlement.service.SettlementCloseService;
-import org.teamsai.saibackend.domain.settlement.service.SettlementPaymentStatusService;
-import org.teamsai.saibackend.domain.settlement.service.SettlementQueryService;
-import org.teamsai.saibackend.domain.settlement.service.SharedSettlementService;
+import org.teamsai.saibackend.domain.settlement.service.*;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 import java.util.List;
@@ -33,6 +30,7 @@ public class SettlementController {
     private final SettlementPaymentStatusService settlementPaymentStatusService;
     private final SettlementCloseService settlementCloseService;
     private final SettlementQueryService settlementQueryService;
+    private final SettlementSummaryService settlementSummaryService;
 
     @GetMapping("/settlements")
     public String settlementListPage() {
@@ -226,6 +224,36 @@ public class SettlementController {
         SettlementDetailResponse response =
                 settlementQueryService.getSettlementDetail(
                         settlementId,
+                        userDetails.getUserId()
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "정산 요약 조회",
+            description = """
+                  현재 로그인한 사용자를 기준으로 받을 정산과
+                  납부할 정산의 잔여 금액 및 정산 건수를 조회합니다.
+                  """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "정산 요약 조회 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자"
+            )
+    })
+    @GetMapping("/api/settlements/summary")
+    @ResponseBody
+    public ResponseEntity<SettlementSummaryResponse> getSettlementSummary(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        SettlementSummaryResponse response =
+                settlementSummaryService.getSummary(
                         userDetails.getUserId()
                 );
 
