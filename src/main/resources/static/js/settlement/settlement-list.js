@@ -168,52 +168,76 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function loadSettlements() {
-        try {
-            const token = sessionStorage.getItem("accessToken");
+        const token = sessionStorage.getItem("accessToken");
 
-            if (!token) {
-                window.location.href = "/login?required=true";
+        if (!token) {
+            window.location.href = "/login?required=true";
+            return;
+        }
+
+        const requestOptions = {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        };
+
+        await Promise.all([
+            loadSettlementList(requestOptions),
+            loadSummary(requestOptions)
+        ]);
+    }
+
+    async function loadSettlementList(requestOptions) {
+        try {
+            const response = await fetch("/api/settlements", requestOptions);
+
+            if (response.status === 401) {
+                handleUnauthorized();
                 return;
             }
 
-            const requestOptions = {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            };
-
-            const [listResponse, summaryResponse] = await Promise.all([
-                fetch("/api/settlements", requestOptions),
-                fetch("/api/settlements/summary", requestOptions)
-            ]);
-
-            if (!listResponse.ok || !summaryResponse.ok) {
-                if (listResponse.status === 401 || summaryResponse.status === 401) {
-                    sessionStorage.removeItem("accessToken");
-                    window.location.href = "/login?required=true";
-                    return;
-                }
-
+            if (!response.ok) {
                 throw new Error("정산 목록 조회에 실패했습니다.");
             }
 
-            const [settlementItems, summary] = await Promise.all([
-                listResponse.json(),
-                summaryResponse.json()
-            ]);
-
-            settlements = settlementItems;
+            settlements = await response.json();
             render(settlements);
-            updateSummary(summary);
-
         } catch (error) {
-            console.error(error);
+            console.error("정산 목록 조회 실패:", error);
             settlements = [];
             render(settlements);
-            updateSummary({});
             showToast("정산 목록을 불러오지 못했습니다.", true);
         }
+    }
+
+    async function loadSummary(requestOptions) {
+        try {
+            const response = await fetch(
+                "/api/settlements/summary",
+                requestOptions
+            );
+
+            if (response.status === 401) {
+                handleUnauthorized();
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error("정산 요약 조회에 실패했습니다.");
+            }
+
+            updateSummary(await response.json());
+        } catch (error) {
+            console.error("정산 요약 조회 실패:", error);
+            updateSummary({});
+            showToast("정산 요약을 불러오지 못했습니다.", true);
+        }
+    }
+
+    function handleUnauthorized() {
+        sessionStorage.removeItem("accessToken");
+        window.location.href = "/login?required=true";
     }
 
     function formatAmount(value) {
