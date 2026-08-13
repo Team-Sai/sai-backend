@@ -68,6 +68,7 @@
     document.getElementById("creditorNameCell").textContent = data.creditorName || "-";
     document.getElementById("creditorBirthDateCell").textContent = data.creditorBirthDate || "-";
     document.getElementById("debtorName").textContent = data.debtorName || "-";
+    document.getElementById("debtorNameDisplay").textContent = data.debtorName || "-";
     document.getElementById("debtorBirthDate").textContent = data.debtorBirthDate || "-";
     debtorAddressInput.value = data.debtorAddress || "";
 
