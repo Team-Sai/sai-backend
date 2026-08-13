@@ -77,6 +77,8 @@ public class SecurityConfig {
                                         "/notifications",
                                         "/archive"
 
+                                        "/integration/dashboard"
+
                                 )
                                 .permitAll()
 

@@ -25,6 +25,7 @@ import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -190,6 +191,14 @@ public class LoanContractService {
 
     public List<LoanContractResponse> findContractsByUser(Long userId) {
         return contractMapper.findContractsByUser(userId);
+    }
+
+    public Optional<LoanContractResponse> findPendingContractByPreviousId(Long previousContractId) {
+        return contractMapper.findPendingContractByPreviousId(previousContractId);
+    }
+
+    public void rejectChangedContract(Long contractId) {
+        contractMapper.updateChangeStatus(contractId, ContractStatus.CHANGE_REJECTED);
     }
 
 }

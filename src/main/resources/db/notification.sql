@@ -16,3 +16,6 @@ CREATE TABLE IF NOT EXISTS notification (
     ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_unicode_ci;
+
+ALTER TABLE notification
+    ADD COLUMN IF NOT EXISTS secondary_reference_id BIGINT NULL;

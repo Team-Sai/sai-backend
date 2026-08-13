@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class ChangeRequestDetailDTO {
 
     private Long changeRequestId;
+    private Long newContractId;
     private String requesterName;
     private LocalDateTime requestedAt;
     private String status;

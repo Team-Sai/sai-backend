@@ -12,6 +12,7 @@
         SELECT
         po.payment_obligation_id AS paymentObligationId,
         po.participant_id AS participantId,
+        sp.user_id AS userId,
         u.name AS participantName,
         po.expected_amount AS expectedAmount,
 
@@ -50,6 +51,7 @@
         GROUP BY
         po.payment_obligation_id,
         po.participant_id,
+        sp.user_id,
         u.name,
         po.expected_amount
 

@@ -8,18 +8,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
-import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
-import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
+import org.teamsai.saibackend.domain.contract.service.LoanContractService;
+import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
+import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
-import org.teamsai.saibackend.domain.contract.service.LoanContractService;
+import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.service.UserService;
@@ -28,6 +28,7 @@ import org.teamsai.saibackend.global.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -232,6 +233,156 @@ class ContractChangeServiceTest {
 
             verify(contractChangeMapper, never()).insert(any());
             verify(loanContractService, never()).insertChangedContract(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("변경 요청 반려")
+    class RejectChange {
+
+        private static final Long CHANGE_REQUEST_ID = 5L;
+        private static final Long V2_CONTRACT_ID = 2L;
+        private static final String RETURN_REASON = "이율이 너무 높습니다";
+
+        private LoanContractChangeDTO pendingChangeRequest() {
+            return LoanContractChangeDTO.builder()
+                    .changeRequestId(CHANGE_REQUEST_ID)
+                    .contractId(CONTRACT_ID)
+                    .status(ChangeRequestStatus.PENDING)
+                    .build();
+        }
+
+        private LoanContractResponse pendingV2() {
+            return LoanContractResponse.builder()
+                    .contractId(V2_CONTRACT_ID)
+                    .previousContractId(CONTRACT_ID)
+                    .status(ContractStatus.PENDING)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("채무자가 PENDING 요청을 반려하면 사유를 저장하고 v2를 CHANGE_REJECTED로 바꾼다")
+        void rejectChangeSuccess() {
+            given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(pendingChangeRequest()));
+            given(contractChangeMapper.updateStatusWithReturnReason(CHANGE_REQUEST_ID, ChangeRequestStatus.REJECTED, RETURN_REASON))
+                    .willReturn(1);
+            given(loanContractService.findPendingContractByPreviousId(CONTRACT_ID))
+                    .willReturn(Optional.of(pendingV2()));
+
+            contractChangeService.rejectChange(CONTRACT_ID, CHANGE_REQUEST_ID, RETURN_REASON, DEBTOR_ID);
+
+            verify(contractChangeMapper)
+                    .updateStatusWithReturnReason(CHANGE_REQUEST_ID, ChangeRequestStatus.REJECTED, RETURN_REASON);
+            verify(loanContractService).rejectChangedContract(V2_CONTRACT_ID);
+        }
+
+        @Test
+        @DisplayName("채권자가 반려를 시도하면 예외가 발생하고 아무것도 저장하지 않는다")
+        void rejectChangeFailsWhenRequesterIsCreditor() {
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(pendingChangeRequest()));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.rejectChange(CONTRACT_ID, CHANGE_REQUEST_ID, RETURN_REASON, USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.NOT_DEBTOR)
+                    );
+
+            verify(contractChangeMapper, never()).updateStatusWithReturnReason(any(), any(), any());
+            verify(loanContractService, never()).rejectChangedContract(any());
+        }
+
+        @Test
+        @DisplayName("changeRequestId가 다른 계약 소속이면 예외가 발생한다")
+        void rejectChangeFailsWhenContractMismatch() {
+            LoanContractChangeDTO otherContractRequest = LoanContractChangeDTO.builder()
+                    .changeRequestId(CHANGE_REQUEST_ID)
+                    .contractId(999L)
+                    .status(ChangeRequestStatus.PENDING)
+                    .build();
+
+            given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(otherContractRequest));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.rejectChange(CONTRACT_ID, CHANGE_REQUEST_ID, RETURN_REASON, DEBTOR_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND)
+                    );
+        }
+
+        @Test
+        @DisplayName("이미 처리된(APPROVED) 요청을 반려하려 하면 예외가 발생한다")
+        void rejectChangeFailsWhenAlreadyProcessed() {
+            LoanContractChangeDTO approvedRequest = LoanContractChangeDTO.builder()
+                    .changeRequestId(CHANGE_REQUEST_ID)
+                    .contractId(CONTRACT_ID)
+                    .status(ChangeRequestStatus.APPROVED)
+                    .build();
+
+            given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(approvedRequest));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.rejectChange(CONTRACT_ID, CHANGE_REQUEST_ID, RETURN_REASON, DEBTOR_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.ALREADY_BEING_REQUEST)
+                    );
+
+            verify(contractChangeMapper, never()).updateStatusWithReturnReason(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 변경 요청이면 예외가 발생한다")
+        void rejectChangeFailsWhenChangeRequestNotFound() {
+            given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() ->
+                    contractChangeService.rejectChange(CONTRACT_ID, CHANGE_REQUEST_ID, RETURN_REASON, DEBTOR_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND)
+                    );
+        }
+
+        @Test
+        @DisplayName("승인 처리와 경쟁 상태로 이미 상태가 바뀌었으면(영향받은 행 0개) 예외가 발생한다")
+        void rejectChangeFailsWhenRaceConditionLeavesZeroRowsUpdated() {
+            given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(pendingChangeRequest()));
+            given(contractChangeMapper.updateStatusWithReturnReason(CHANGE_REQUEST_ID, ChangeRequestStatus.REJECTED, RETURN_REASON))
+                    .willReturn(0);
+
+            assertThatThrownBy(() ->
+                    contractChangeService.rejectChange(CONTRACT_ID, CHANGE_REQUEST_ID, RETURN_REASON, DEBTOR_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.ALREADY_BEING_REQUEST)
+                    );
+
+            verify(loanContractService, never()).rejectChangedContract(any());
         }
     }
 }

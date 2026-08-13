@@ -6,16 +6,6 @@
     padding: 0;
 }
 
-body {
-    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-    font-size: 14px;
-    background-color: #f4f5f7;
-    color: #111827;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
 
 .success-container {
     width: 100%;

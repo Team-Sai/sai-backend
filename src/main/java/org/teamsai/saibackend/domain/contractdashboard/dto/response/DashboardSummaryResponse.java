@@ -13,7 +13,16 @@ public class DashboardSummaryResponse {
     private int totalContractCount;
     private BigDecimal totalLentAmount;
     private BigDecimal totalBorrowedAmount;
+
+    private BigDecimal thisMonthDueAmount;
+    private Integer dueMonth;
+
+    private BigDecimal receivableThisMonthAmount;
+    private Integer receivableDueMonth;
+
+    private BigDecimal payableThisMonthAmount;
+    private Integer payableDueMonth;
+
     private LocalDate nearestDueDate;
     private String defaultFilter;
-    private BigDecimal thisMonthDueAmount;
 }
