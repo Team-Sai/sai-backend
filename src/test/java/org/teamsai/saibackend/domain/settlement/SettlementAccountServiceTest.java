@@ -764,10 +764,35 @@ class SettlementAccountServiceTest {
                     );
 
             verify(settlementValidator)
-                    .validateOwner(
+                    .validateAccessibleUser(
                             settlement,
                             OWNER_ID
                     );
+        }
+
+        @Test
+        @DisplayName("참여자는 정산 소유자의 현재 수취 계좌를 조회한다")
+        void participantFindsOwnersCurrentAccount() {
+            SettlementDTO settlement = createSettlement(OWNER_ID);
+            SettlementAccountDTO account = createActiveSettlementAccount(
+                    SECOND_SETTLEMENT_ACCOUNT_ID,
+                    SECOND_LINKED_ACCOUNT_ID
+            );
+            LinkedBankAccountResponse linkedAccount = linkedAccount(SECOND_LINKED_ACCOUNT_ID);
+            when(settlementMapper.findById(SETTLEMENT_ID)).thenReturn(Optional.of(settlement));
+            when(settlementAccountMapper.findActiveBySettlementId(SETTLEMENT_ID))
+                    .thenReturn(Optional.of(account));
+            when(linkedBankAccountService.getLinkedAccounts(OWNER_ID))
+                    .thenReturn(List.of(linkedAccount));
+
+            SettlementAccountResponse response = settlementAccountService.findCurrentAccount(
+                    OTHER_USER_ID,
+                    SETTLEMENT_ID
+            );
+
+            assertThat(response.getLinkedAccountId()).isEqualTo(SECOND_LINKED_ACCOUNT_ID);
+            verify(settlementValidator).validateAccessibleUser(settlement, OTHER_USER_ID);
+            verify(linkedBankAccountService).getLinkedAccounts(OWNER_ID);
         }
 
 
@@ -806,7 +831,7 @@ class SettlementAccountServiceTest {
 
 
             verify(settlementValidator)
-                    .validateOwner(
+                    .validateAccessibleUser(
                             settlement,
                             OWNER_ID
                     );
@@ -830,7 +855,7 @@ class SettlementAccountServiceTest {
                             .SETTLEMENT_ACCESS_DENIED
                             .toException()
             ).when(settlementValidator)
-                    .validateOwner(
+                    .validateAccessibleUser(
                             settlement,
                             OTHER_USER_ID
                     );
@@ -849,7 +874,7 @@ class SettlementAccountServiceTest {
 
 
             verify(settlementValidator)
-                    .validateOwner(
+                    .validateAccessibleUser(
                             settlement,
                             OTHER_USER_ID
                     );

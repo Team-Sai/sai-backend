@@ -1,5 +1,6 @@
 package org.teamsai.saibackend.domain.contractdashboard.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Getter;
 import org.teamsai.saibackend.domain.contractdashboard.type.ContractRole;
@@ -9,6 +10,7 @@ import org.teamsai.saibackend.domain.contractdashboard.type.TransactionCategory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -27,4 +29,7 @@ public class DashboardContractRowResponse {
     private LocalDate maturityDate;
     private LocalDate nearestScheduleDueDate;
     private BigDecimal nextDueAmount;
+
+    @JsonIgnore
+    private LocalDateTime createdAt;
 }

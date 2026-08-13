@@ -27,7 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         "/db/user.sql",
         "/db/linked_bank_account.sql",
         "/db/settlement.sql",
-        "/db/settlement_invitation.sql",
         "/db/settlement_participant.sql",
         "/db/settlement_account.sql",
         "/db/payment.sql"
@@ -65,11 +64,11 @@ class PaymentObligationMapperTest {
         insertActiveSettlementAccount(9203L, OTHER_LINKED_ACCOUNT_ID);
         insertActiveSettlementAccount(9204L, LINKED_ACCOUNT_ID);
 
-        insertAcceptedParticipant(9301L, 9201L, 9102L, 9401L, "ACTIVE");
-        insertAcceptedParticipant(9302L, 9202L, 9103L, 9402L, "ACTIVE");
-        insertAcceptedParticipant(9303L, 9203L, 9103L, 9403L, "ACTIVE");
-        insertAcceptedParticipant(9304L, 9204L, 9103L, 9404L, "ACTIVE");
-        insertAcceptedParticipant(9305L, 9201L, 9103L, 9405L, "REMOVED");
+        insertParticipant(9201L, 9102L, 9401L, "ACTIVE");
+        insertParticipant(9202L, 9103L, 9402L, "ACTIVE");
+        insertParticipant(9203L, 9103L, 9403L, "ACTIVE");
+        insertParticipant(9204L, 9103L, 9404L, "ACTIVE");
+        insertParticipant(9201L, 9103L, 9405L, "REMOVED");
 
         insertPaymentObligation(9501L, 9401L, "10000.00", "UNPAID", "ACTIVE");
         insertPaymentObligation(9502L, 9402L, "20000.00", "PARTIALLY_PAID", "ACTIVE");
@@ -202,8 +201,7 @@ class PaymentObligationMapperTest {
         );
     }
 
-    private void insertAcceptedParticipant(
-            Long invitationId,
+    private void insertParticipant(
             Long settlementId,
             Long userId,
             Long participantId,
@@ -211,33 +209,19 @@ class PaymentObligationMapperTest {
     ) {
         jdbcTemplate.update(
                 """
-                INSERT INTO settlement_invitation (
-                    invitation_id,
-                    settlement_id,
-                    user_id,
-                    invitation_status,
-                    invited_at,
-                    accepted_at
-                )
-                VALUES (?, ?, ?, 'ACCEPTED', NOW(), NOW())
-                """,
-                invitationId,
-                settlementId,
-                userId
-        );
-        jdbcTemplate.update(
-                """
                 INSERT INTO settlement_participant (
                     participant_id,
-                    invitation_id,
+                    settlement_id,
+                    user_id,
                     participant_role,
                     participant_status,
                     joined_at
                 )
-                VALUES (?, ?, 'MEMBER', ?, NOW())
+                VALUES (?, ?, ?, 'MEMBER', ?, NOW())
                 """,
                 participantId,
-                invitationId,
+                settlementId,
+                userId,
                 participantStatus
         );
     }

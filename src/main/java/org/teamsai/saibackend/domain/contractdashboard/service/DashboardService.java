@@ -99,8 +99,14 @@ public class DashboardService {
                 : TransactionCategory.PAY;
     }
 
-    private DashboardContractRowResponse toRow(LoanContractResponse contract, Long userId, Map<Long, List<RepaymentScheduleDTO>> scheduleMap) {
-        List<RepaymentScheduleDTO> schedules = scheduleMap.getOrDefault(contract.getContractId(), List.of());
+
+    private DashboardContractRowResponse toRow(
+            ContractScheduleContext context,
+            Long userId
+    ) {
+        LoanContractResponse contract = context.contract();
+        List<RepaymentScheduleDTO> schedules = context.schedules();
+
 
         BigDecimal totalRemaining = calculateTotalRemaining(schedules);
         BigDecimal thisMonthDue = calculateThisMonthDue(schedules);
@@ -127,6 +133,7 @@ public class DashboardService {
                 .maturityDate(contract.getMaturityDate())
                 .nearestScheduleDueDate(nearestDueDate)
                 .nextDueAmount(nextDueAmount)
+                .createdAt(contract.getCreatedAt())
                 .build();
     }
 
@@ -208,14 +215,6 @@ public class DashboardService {
                 .build();
     }
 
-    private LocalDate calculateNearestDueDate(List<RepaymentScheduleDTO> schedules) {
-        return schedules.stream()
-                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING)
-                .map(RepaymentScheduleDTO::getDueDate)
-                .min(LocalDate::compareTo)
-                .orElse(null);
-    }
-
     private List<DashboardContractRowResponse> filterByKeyword(List<DashboardContractRowResponse> rows, String keyword) {
         if (keyword == null || keyword.isEmpty()) {
             return rows;
@@ -259,6 +258,10 @@ public class DashboardService {
             case "AMOUNT_ASC" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getTotalRemainingAmount));
             case "STATUS" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getContractStatus));
             case "DEADLINE" -> sorted.sort(Comparator.comparing(DashboardContractRowResponse::getMaturityDate));
+            case "CREATED_DESC" -> sorted.sort(Comparator.comparing(
+                    DashboardContractRowResponse::getCreatedAt,
+                    Comparator.nullsLast(Comparator.reverseOrder())
+            ));
             default -> throw DashboardErrorCode.INVALID_SORT_TYPE.toException();
         }
         return sorted;
@@ -278,17 +281,38 @@ public class DashboardService {
         return rows.subList(startIndex, endIndex);
     }
 
-    public DashboardResponse getDashboard(Long userId, String keyword, String roleFilter, String sortType, int page) {
+    private List<ContractScheduleContext> getContractScheduleContexts(Long userId) {
         List<LoanContractResponse> contracts = getVisibleContracts(userId);
-
         List<Long> contractIds = contracts.stream()
                 .map(LoanContractResponse::getContractId)
                 .toList();
+        Map<Long, List<RepaymentScheduleDTO>> scheduleMap =
+                repaymentScheduleService.getSchedulesByContractIds(contractIds);
 
-        Map<Long, List<RepaymentScheduleDTO>> scheduleMap = repaymentScheduleService.getSchedulesByContractIds(contractIds);
+        return contracts.stream()
+                .map(contract -> new ContractScheduleContext(
+                        contract,
+                        scheduleMap.getOrDefault(contract.getContractId(), List.of())
+                ))
+                .toList();
+    }
 
-        List<DashboardContractRowResponse> allRows = contracts.stream()
-                .map(contract -> toRow(contract, userId, scheduleMap)).toList();
+    private DashboardResponse buildDashboard(
+            List<ContractScheduleContext> contexts,
+            Long userId,
+            String keyword,
+            String roleFilter,
+            String sortType,
+            int page
+    ) {
+        Map<Long, List<RepaymentScheduleDTO>> scheduleMap = contexts.stream()
+                .collect(Collectors.toMap(
+                        context -> context.contract().getContractId(),
+                        ContractScheduleContext::schedules
+                ));
+
+        List<DashboardContractRowResponse> allRows = contexts.stream()
+                .map(context -> toRow(context, userId)).toList();
 
         DashboardSummaryResponse summary = buildSummary(allRows, scheduleMap);
         List<DashboardContractRowResponse> filtered = filterByKeyword(allRows, keyword);
@@ -312,6 +336,52 @@ public class DashboardService {
         return schedules.stream()
                 .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING)
                 .min(Comparator.comparing(RepaymentScheduleDTO::getDueDate));
+    }
+
+    public DashboardResponse getDashboard(Long userId, String keyword, String roleFilter, String sortType, int page) {
+        return buildDashboard(
+                getContractScheduleContexts(userId),
+                userId,
+                keyword,
+                roleFilter,
+                sortType,
+                page
+        );
+    }
+
+    public IntegrationDashboardData getIntegrationDashboardData(Long userId) {
+        List<ContractScheduleContext> contexts = getContractScheduleContexts(userId);
+        DashboardResponse dashboard = buildDashboard(
+                contexts,
+                userId,
+                null,
+                "ALL",
+                "CREATED_DESC",
+                1
+        );
+        List<LoanScheduleContext> loanSchedules = contexts.stream()
+                .flatMap(context -> context.schedules().stream()
+                        .map(schedule -> new LoanScheduleContext(context.contract(), schedule)))
+                .toList();
+        return new IntegrationDashboardData(dashboard, loanSchedules);
+    }
+
+    private record ContractScheduleContext(
+            LoanContractResponse contract,
+            List<RepaymentScheduleDTO> schedules
+    ) {
+    }
+
+    public record LoanScheduleContext(
+            LoanContractResponse contract,
+            RepaymentScheduleDTO schedule
+    ) {
+    }
+
+    public record IntegrationDashboardData(
+            DashboardResponse dashboard,
+            List<LoanScheduleContext> loanSchedules
+    ) {
     }
 
 }

@@ -125,7 +125,8 @@
         s.settlement_type AS settlementType,
         s.split_type AS splitType,
         s.settlement_status AS settlementStatus,
-        s.due_date AS dueDate
+        s.due_date AS dueDate,
+        s.created_at AS createdAt
 
         FROM settlement s
 
