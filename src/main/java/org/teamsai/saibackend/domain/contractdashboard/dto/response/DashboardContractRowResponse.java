@@ -10,6 +10,7 @@ import org.teamsai.saibackend.domain.contractdashboard.type.TransactionCategory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -29,4 +30,7 @@ public class DashboardContractRowResponse {
 
     @JsonIgnore
     private LocalDate nearestScheduleDueDate;
+
+    @JsonIgnore
+    private LocalDateTime createdAt;
 }
