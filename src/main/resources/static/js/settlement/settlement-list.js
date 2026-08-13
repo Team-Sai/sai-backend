@@ -108,7 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (items.length === 0) {
             emptyState.hidden = false;
             settlementList.hidden = true;
-            updateSummary([]);
             return;
         }
 
@@ -119,7 +118,6 @@ document.addEventListener("DOMContentLoaded", () => {
             settlementList.appendChild(createSettlementRow(settlement));
         });
 
-        updateSummary(items);
     }
 
     function createSettlementRow(settlement) {
@@ -158,17 +156,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return row;
     }
 
-    function updateSummary(items) {
-        const inProgressCount = items.filter(
-            (item) => item.settlementStatus === "IN_PROGRESS"
-        ).length;
-
-        document.getElementById("receivable-amount").textContent = "0";
-        document.getElementById("payable-amount").textContent = "0";
-        document.getElementById("receivable-count").textContent = "0건";
-        document.getElementById("payable-count").textContent = "0건";
-        document.getElementById("attention-count").textContent =
-            String(inProgressCount);
+    function updateSummary(summary) {
+        document.getElementById("receivable-amount").textContent =
+            formatAmount(summary.receivableAmount);
+        document.getElementById("payable-amount").textContent =
+            formatAmount(summary.payableAmount);
+        document.getElementById("receivable-count").textContent =
+            `${summary.receivableCount ?? 0}건`;
+        document.getElementById("payable-count").textContent =
+            `${summary.payableCount ?? 0}건`;
     }
 
     async function loadSettlements() {
@@ -180,15 +176,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const response = await fetch("/api/settlements", {
+            const requestOptions = {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
-            });
+            };
 
-            if (!response.ok) {
-                if (response.status === 401) {
+            const [listResponse, summaryResponse] = await Promise.all([
+                fetch("/api/settlements", requestOptions),
+                fetch("/api/settlements/summary", requestOptions)
+            ]);
+
+            if (!listResponse.ok || !summaryResponse.ok) {
+                if (listResponse.status === 401 || summaryResponse.status === 401) {
                     sessionStorage.removeItem("accessToken");
                     window.location.href = "/login?required=true";
                     return;
@@ -197,15 +198,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error("정산 목록 조회에 실패했습니다.");
             }
 
-            settlements = await response.json();
+            const [settlementItems, summary] = await Promise.all([
+                listResponse.json(),
+                summaryResponse.json()
+            ]);
+
+            settlements = settlementItems;
             render(settlements);
+            updateSummary(summary);
 
         } catch (error) {
             console.error(error);
             settlements = [];
             render(settlements);
+            updateSummary({});
             showToast("정산 목록을 불러오지 못했습니다.", true);
         }
+    }
+
+    function formatAmount(value) {
+        return Number(value ?? 0).toLocaleString("ko-KR");
     }
     function showCreatedToast() {
         const params = new URLSearchParams(window.location.search);
