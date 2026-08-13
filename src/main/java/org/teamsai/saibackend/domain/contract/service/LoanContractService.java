@@ -12,6 +12,7 @@ import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
+import org.teamsai.saibackend.domain.contract.event.ContractCompletedEvent;
 import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
@@ -53,7 +54,7 @@ public class LoanContractService {
 
         contractAccountService.createContractAccount(request.getContractId(), userId, request.getSelectedLinkedAccountId());
 
-        eventPublisher.publishEvent(new ContractCreatedEvent(request.getContractId()));   // 방송만 함
+        eventPublisher.publishEvent(new ContractCreatedEvent(request.getContractId()));
 
         return request.getContractId();
     }
@@ -74,7 +75,6 @@ public class LoanContractService {
         String savedPath = fileService.saveSignatureFile(contractId, signature);
 
         contractMapper.updateCreditorSignature(contractId, savedPath, debtorId, ContractStatus.PENDING);
-
 
         notificationService.create(
                 debtorId,
@@ -136,6 +136,16 @@ public class LoanContractService {
         if (contract.getPreviousContractId() != null) {
             eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));
         }
+
+        LoanContractResponse completedContract = withPartyInfo(
+                contract.toBuilder()
+                        .debtorAddress(debtorAddress)
+                        .debtorSignature(savedPath)
+                        .status(ContractStatus.COMPLETED)
+                        .build()
+        );
+
+        eventPublisher.publishEvent(new ContractCompletedEvent(completedContract));
 
         return ContractStatus.COMPLETED;
     }

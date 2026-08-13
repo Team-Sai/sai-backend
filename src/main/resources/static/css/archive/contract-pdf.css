@@ -1,0 +1,97 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    color: #1a1a1a;
+    font-family: "Pretendard", sans-serif;
+}
+
+.doc {
+    padding: 12mm 8mm;
+}
+
+.doc__title {
+    text-align: center;
+    color: #006E2A;
+    font-size: 24px;
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
+    font-weight: 700;
+    margin: 0 0 36px;
+}
+
+.doc__article {
+    margin-bottom: 18px;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.doc__clause {
+    display: block;
+    min-width: 112px;
+    color: #006E2A;
+    font-weight: 700;
+}
+
+.doc__text {
+    display: block;
+    color: #1a1a1a;
+}
+
+.doc__text--indent {
+    margin-top: 4px;
+}
+
+.doc__closing {
+    font-size: 13.5px;
+    color: #697080;
+    line-height: 1.8;
+    margin: 28px 0 20px;
+    text-align: center;
+}
+
+.doc__readonly {
+    color: #006E2A;
+    font-weight: 600;
+    border-bottom: 1.5px dashed #CFD5E2;
+    padding: 1px 4px;
+}
+
+.parties {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-top: 8px;
+    border-top: 2px solid #006E2A;
+    font-size: 13px;
+}
+
+.parties th,
+.parties td {
+    border: 1px solid #CFD5E2;
+    padding: 10px 12px;
+    overflow: hidden;
+}
+
+.parties__role {
+    background: #f0f7f2;
+    color: #006E2A;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.parties__label {
+    background: #f3f4f5;
+    color: #697080;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.parties__value {
+    background: #ffffff;
+}
