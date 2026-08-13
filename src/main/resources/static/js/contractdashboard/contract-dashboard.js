@@ -54,19 +54,9 @@ function renderSummary(summary) {
     }
 
     document.getElementById('totalContractCount').textContent = summary.totalContractCount + '건';
-    document.getElementById('totalLentAmount').textContent = summary.totalLentAmount.toLocaleString() + '원';
-    document.getElementById('totalBorrowedAmount').textContent = summary.totalBorrowedAmount.toLocaleString() + '원';
-    document.getElementById('thisMonthDueAmount').textContent = summary.thisMonthDueAmount.toLocaleString() + '원';
+    document.getElementById('totalLentAmount').textContent = summary.totalLentAmount.toLocaleString(undefined, {maximumFractionDigits: 0}) + '원';
+    document.getElementById('totalBorrowedAmount').textContent = summary.totalBorrowedAmount.toLocaleString(undefined, {maximumFractionDigits: 0}) + '원';
 
-    const badge = document.getElementById('dDayBadge');
-    if (summary.nearestDueDate) {
-        const today = new Date();
-        const due = new Date(summary.nearestDueDate);
-        const diffDays = Math.ceil((due - today) / 86400000);
-        badge.textContent = `D-${diffDays}`;
-    } else {
-        badge.textContent = '';
-    }
     return true;
 }
 
@@ -84,14 +74,15 @@ function renderTable(contracts) {
         const statusClass = c.contractStatus === 'ONGOING' ? 'ongoing' : 'completed';
         const paymentClass = c.paymentStatus.toLowerCase();
         const nearestDue = c.nearestScheduleDueDate || '-';
+        const nextDueAmount = c.nextDueAmount ? c.nextDueAmount.toLocaleString(undefined, {maximumFractionDigits: 0}) : '-';
 
         tbody.innerHTML += `
             <tr>
                 <td>${escapeHtml(c.contractAlias)}</td>
                 <td><span class="role-badge ${roleClass}">${ROLE_LABELS[c.role]}</span></td>
                 <td>${CATEGORY_LABELS[c.category]}</td>
-                <td>${c.principalAmount.toLocaleString()} / ${c.totalRemainingAmount.toLocaleString()}</td>
-                <td>${c.thisMonthDueAmount.toLocaleString()}원</td>
+                <td>${c.principalAmount.toLocaleString(undefined, {maximumFractionDigits: 0})} / ${c.totalRemainingAmount.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                <td>${nextDueAmount}원</td>
                 <td>${escapeHtml(c.maskedAccount) || '-'}</td>
                 <td>${nearestDue}</td>
                 <td><span class="status-pill ${statusClass}">${CONTRACT_STATUS_LABELS[c.contractStatus]}</span></td>
@@ -142,7 +133,7 @@ document.getElementById('sortSelect').addEventListener('change', (e) => {
 });
 
 document.getElementById('btnCreateContract').addEventListener('click', () => {
-    window.location.href = '/identity-test';
+    window.location.href = '/contracts/new';
 })
 
 function escapeHtml(str) {

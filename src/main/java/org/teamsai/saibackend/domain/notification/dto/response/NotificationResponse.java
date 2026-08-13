@@ -10,6 +10,7 @@ public record NotificationResponse(
         String title,
         String content,
         Long referenceId,
+        Long secondaryReferenceId,
         LocalDateTime createdAt
 ) {
 }

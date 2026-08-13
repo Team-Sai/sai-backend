@@ -30,81 +30,66 @@ class NotificationServiceTest {
     @InjectMocks
     private NotificationService notificationService;
 
-
     @Test
-    @DisplayName("정산 참여자에게 알림을 생성한다")
+    @DisplayName("정산 참여자에게 알림을 생성한다 (secondaryReferenceId 없이)")
     void createNotificationSuccess() {
-
         Long userId = 2L;
         Long settlementId = 10L;
 
-
         notificationService.create(
                 userId,
-                NotificationType
-                        .SETTLEMENT_PARTICIPANT_ADDED,
+                NotificationType.SETTLEMENT_PARTICIPANT_ADDED,
                 "새로운 정산에 참여자로 등록되었습니다.",
                 "정산 금액 30000원이 등록되었습니다.",
                 settlementId
         );
 
+        ArgumentCaptor<NotificationDTO> captor = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(notificationMapper).insert(captor.capture());
 
-        ArgumentCaptor<NotificationDTO> captor =
-                ArgumentCaptor.forClass(
-                        NotificationDTO.class
-                );
+        NotificationDTO notification = captor.getValue();
 
+        assertThat(notification.getUserId()).isEqualTo(userId);
+        assertThat(notification.getNotificationType()).isEqualTo(NotificationType.SETTLEMENT_PARTICIPANT_ADDED);
+        assertThat(notification.getTitle()).isEqualTo("새로운 정산에 참여자로 등록되었습니다.");
+        assertThat(notification.getContent()).isEqualTo("정산 금액 30000원이 등록되었습니다.");
+        assertThat(notification.getReferenceId()).isEqualTo(settlementId);
+        assertThat(notification.getCreatedAt()).isNotNull();
 
-        verify(notificationMapper)
-                .insert(
-                        captor.capture()
-                );
-
-
-        NotificationDTO notification =
-                captor.getValue();
-
-
-        assertThat(notification.getUserId())
-                .isEqualTo(
-                        userId
-                );
-
-        assertThat(notification.getNotificationType())
-                .isEqualTo(
-                        NotificationType
-                                .SETTLEMENT_PARTICIPANT_ADDED
-                );
-
-        assertThat(notification.getTitle())
-                .isEqualTo(
-                        "새로운 정산에 참여자로 등록되었습니다."
-                );
-
-        assertThat(notification.getContent())
-                .isEqualTo(
-                        "정산 금액 30000원이 등록되었습니다."
-                );
-
-        assertThat(notification.getReferenceId())
-                .isEqualTo(
-                        settlementId
-                );
-
-        assertThat(notification.getCreatedAt())
-                .isNotNull();
+        // 5개짜리 오버로드를 쓰면 secondaryReferenceId는 항상 null이어야 한다
+        assertThat(notification.getSecondaryReferenceId()).isNull();
     }
 
+    @Test
+    @DisplayName("계약 변경 요청 알림은 secondaryReferenceId(changeRequestId)까지 함께 저장한다")
+    void createNotificationWithSecondaryReferenceIdSuccess() {
+        Long debtorId = 3L;
+        Long contractId = 100L;
+        Long changeRequestId = 7L;
+
+        notificationService.create(
+                debtorId,
+                NotificationType.CONTRACT_CHANGE,
+                "계약 변경 요청",
+                "홍길동님으로부터 계약 내용 변경 요청이 도착했습니다.",
+                contractId,
+                changeRequestId
+        );
+
+        ArgumentCaptor<NotificationDTO> captor = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(notificationMapper).insert(captor.capture());
+
+        NotificationDTO notification = captor.getValue();
+
+        assertThat(notification.getReferenceId()).isEqualTo(contractId);
+        assertThat(notification.getSecondaryReferenceId()).isEqualTo(changeRequestId);
+    }
 
     @Test
     @DisplayName("로그인 사용자의 알림 목록을 조회한다")
     void getNotificationsSuccess() {
-
         Long userId = 2L;
-
-        LocalDateTime createdAt =
-                LocalDateTime.now();
-
+        LocalDateTime createdAt = LocalDateTime.now();
 
         List<NotificationResponse> expected =
                 List.of(
@@ -115,36 +100,16 @@ class NotificationServiceTest {
                                 "새로운 정산에 참여자로 등록되었습니다.",
                                 "정산 금액 30000원이 등록되었습니다.",
                                 10L,
+                                null,          // ← 이 줄 추가 (secondaryReferenceId)
                                 createdAt
                         )
                 );
 
+        when(notificationMapper.findAllByUserId(userId)).thenReturn(expected);
 
-        when(
-                notificationMapper
-                        .findAllByUserId(
-                                userId
-                        )
-        ).thenReturn(
-                expected
-        );
+        List<NotificationResponse> result = notificationService.getNotifications(userId);
 
-
-        List<NotificationResponse> result =
-                notificationService
-                        .getNotifications(
-                                userId
-                        );
-
-
-        assertThat(result)
-                .isEqualTo(
-                        expected
-                );
-
-        verify(notificationMapper)
-                .findAllByUserId(
-                        userId
-                );
+        assertThat(result).isEqualTo(expected);
+        verify(notificationMapper).findAllByUserId(userId);
     }
 }

@@ -7,17 +7,17 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
-import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
-import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
+import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
 import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
+import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
 import org.teamsai.saibackend.domain.notification.type.NotificationType;
@@ -58,6 +58,15 @@ public class ContractChangeService {
         return contractChangeMapper.findByChangeRequestId(changeRequestId)
                 .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
 
+    }
+
+    private LoanContractResponse getPendingChangedContract(Long contractId) {
+        return loanContractService.findPendingContractByPreviousId(contractId)
+                .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
+    }
+
+    public Long getPendingChangedContractId(Long contractId) {
+        return getPendingChangedContract(contractId).getContractId();
     }
 
 
@@ -105,6 +114,7 @@ public class ContractChangeService {
                 .newInterestRate(request.getNewInterestRate())
                 .newRepaymentType(request.getNewRepaymentType())
                 .newRepaymentDate(request.getNewRepaymentDate())
+                .newTerms(request.getNewTerms())
                 .userId(userId)
                 .contractId(contractId)
                 .status(ChangeRequestStatus.PENDING)
@@ -142,7 +152,8 @@ public class ContractChangeService {
                 NotificationType.CONTRACT_CHANGE,
                 "계약 변경 요청",
                 creditorInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
-                newContractDTO.getContractId()
+                contractId,
+                changeDTO.getChangeRequestId()
         );
 
         log.info("계약 변경 요청 생성 및 차용증 재저장 완료: contractId={}, userId={}",
@@ -164,7 +175,10 @@ public class ContractChangeService {
                 .findFirst()
                 .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
 
-        contractChangeMapper.updateStatus(pendingRequest.getChangeRequestId(), ChangeRequestStatus.APPROVED);
+        int updatedRows = contractChangeMapper.updateStatus(pendingRequest.getChangeRequestId(), ChangeRequestStatus.APPROVED);
+        if(updatedRows == 0) {
+            throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
+        }
 
         repaymentScheduleService.generateChangedSchedule(v1ContractId, v2ContractId);
 
@@ -185,5 +199,56 @@ public class ContractChangeService {
             log.error("계약 변경 승인 알림 발송 실패: v2ContractId={}, userId={}, error={}",
                     v2ContractId, pendingRequest.getUserId(), e.getMessage(), e);
         }
+    }
+
+    @Transactional
+    public LoanContractChangeDTO rejectChange(Long contractId, Long changeRequestId, String returnReason, Long userId) {
+
+        LoanContractResponse contract = loanContractService.findContract(contractId, userId);
+        LoanContractChangeDTO changeRequest = getChangeRequest(changeRequestId);
+
+        if(!contract.getDebtorId().equals(userId)) {
+            throw ContractChangeErrorCode.NOT_DEBTOR.toException();
+        }
+
+        if(!changeRequest.getContractId().equals(contractId)) {
+            throw ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
+        }
+
+        if(changeRequest.getStatus() != ChangeRequestStatus.PENDING)  {
+            throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
+        }
+
+        int updatedRows = contractChangeMapper.updateStatusWithReturnReason(changeRequestId, ChangeRequestStatus.REJECTED, returnReason);
+        if(updatedRows == 0) {
+            throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
+        }
+        try {
+            notificationService.create(
+                    contract.getCreditorId(),
+                    NotificationType.CONTRACT_CHANGE,
+                    "계약 변경 요청 반려",
+                    contract.getDebtorName() + "님이 변경 요청을 반려했습니다.",
+                    contractId
+            );
+        } catch (Exception e) {
+            log.error("계약 변경 반려 알림 발송 실패: contractId={}, changeRequestId={}, rror={}",
+                    contractId, changeRequestId, e.getMessage(), e);
+        }
+
+        LoanContractResponse v2 = getPendingChangedContract(contractId);
+
+        loanContractService.rejectChangedContract(v2.getContractId());
+
+        log.info("계약 변경 요청 반려 처리 완료: contractId={}, changeRequestId={}", contractId, changeRequestId);
+
+        return getChangeRequest(changeRequestId);
+
+    }
+
+    public boolean hasPendingChangeRequest(Long contractId) {
+        List<LoanContractChangeDTO> existingRequests = contractChangeMapper.findByContractId(contractId);
+        return existingRequests.stream()
+                .anyMatch(changeRequest -> ChangeRequestStatus.PENDING.equals(changeRequest.getStatus()));
     }
 }
