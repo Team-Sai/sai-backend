@@ -156,6 +156,10 @@ async function syncTransactions() {
             );
         }
 
+        if (!result) {
+            throw new Error('거래내역 동기화 결과를 확인할 수 없습니다.');
+        }
+
         alert(
             `거래내역 동기화가 완료되었습니다.\n` +
             `자동 반영: ${result.appliedCount}건\n` +
