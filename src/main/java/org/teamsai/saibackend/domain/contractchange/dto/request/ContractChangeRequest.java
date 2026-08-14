@@ -21,8 +21,13 @@ public class ContractChangeRequest {
 
     @DecimalMin(value = "0", inclusive = false, message = "이율은 0보다 커야 합니다.")
     @DecimalMax(value = "20", message = "이율은 20% 이하여야 합니다.")
-    @Digits(integer = 2, fraction = 2, message = "이율은 소수점 둘째 자리까지만 입력 가능합니다.")
     private BigDecimal newInterestRate;
+
+    @AssertTrue(message = "이율은 0.5% 단위로 입력해주세요.")
+    public boolean isValidInterestRateIncrement() {
+        if (newInterestRate == null) return true;
+        return newInterestRate.remainder(new BigDecimal("0.5")).compareTo(BigDecimal.ZERO) == 0;
+    }
 
     @Pattern(
             regexp = "EQUAL_PRINCIPAL_AND_INTEREST|EQUAL_PRINCIPAL|BULLET_REPAYMENT",

@@ -91,12 +91,8 @@ function validate() {
 
     if (newInterestRate !== '') {
         const rate = Number(newInterestRate);
-        if (rate > 20) {
-            alert('이율은 20%를 넘을 수 없습니다.');
-            return false;
-        }
-        if (rate <= 0) {
-            alert('이율은 0%보다 커야 합니다.');
+        if (!Number.isFinite(rate) || rate < 0.5 || rate > 20 || !Number.isInteger(rate * 2)) {
+            alert('이율은 0.5% 이상 20% 이하이며, 0.5% 단위여야 합니다.');
             return false;
         }
     }

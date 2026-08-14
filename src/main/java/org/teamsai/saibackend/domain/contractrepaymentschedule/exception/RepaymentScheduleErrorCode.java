@@ -14,7 +14,9 @@ public enum RepaymentScheduleErrorCode implements BaseErrorCode<DomainException>
 
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND,"상환 스케줄을 찾을 수 없습니다"),
 
-    SCHEDULE_NOT_PENDING(HttpStatus.CONFLICT, "이미 상환 완료되었거나 처리 불가능한 스케줄입니다.");
+    SCHEDULE_NOT_PENDING(HttpStatus.CONFLICT, "이미 상환 완료되었거나 처리 불가능한 스케줄입니다."),
+
+    SCHEDULE_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "상환 스케줄 생성 중 오류가 발생했습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

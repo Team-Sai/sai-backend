@@ -27,6 +27,18 @@ public class LoanContractRequest {
     @DecimalMax(value = "20.0", inclusive = true, message = "연이자율은 20%를 초과할 수 없습니다.")
     private BigDecimal interestRate;
 
+    @AssertTrue(message = "대출원금은 원 단위로 입력해주세요.")
+    public boolean isWholeWonPrincipalAmount() {
+        if (principalAmount == null) return true;
+        return principalAmount.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0;
+    }
+
+    @AssertTrue(message = "연이자율은 0.5% 단위로 입력해주세요.")
+    public boolean isValidInterestRateIncrement() {
+        if (interestRate == null) return true;
+        return interestRate.remainder(new BigDecimal("0.5")).compareTo(BigDecimal.ZERO) == 0;
+    }
+
     @NotNull(message = "상환방식을 클릭해주세요.")
     private RepaymentMethod repaymentType;
 
