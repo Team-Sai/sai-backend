@@ -26,6 +26,16 @@ public enum MatchingErrorCode
             "매칭 후보를 찾을 수 없습니다."
     ),
 
+    MATCHING_CANDIDATE_SAVE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "매칭 후보 저장에 실패했습니다."
+    ),
+
+    MATCHING_REVIEW_NOT_REQUIRED(
+            HttpStatus.CONFLICT,
+            "확인이 필요한 은행 거래가 아닙니다."
+    ),
+
     ALREADY_MATCHED(
             HttpStatus.CONFLICT,
             "이미 매칭된 항목입니다."

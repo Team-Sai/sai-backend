@@ -5,15 +5,9 @@ import org.springframework.stereotype.Service;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingTransactionResult;
-import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
-import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
-import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
-import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 import org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO;
 import org.teamsai.saibackend.domain.transaction.service.BankTransactionService;
-import org.teamsai.saibackend.domain.transaction.type.BankTransactionProcessingStatus;
-import org.teamsai.saibackend.domain.transaction.type.BankTransactionType;
 
 import java.util.List;
 
@@ -22,10 +16,12 @@ import java.util.List;
 public class BankMatchingService {
 
     private final BankTransactionService bankTransactionService;
-    private final PaymentObligationMapper paymentObligationMapper;
-    private final AutoMatchingService autoMatchingService;
+    private final BankMatchingTransactionService transactionService;
 
-    public AutoMatchingExecutionResult execute(Long linkedAccountId) {
+    public AutoMatchingExecutionResult execute(
+            Long userId,
+            Long linkedAccountId
+    ) {
         validateLinkedAccountId(linkedAccountId);
 
         List<BankTransactionDTO> bankTransactions =
@@ -37,27 +33,13 @@ public class BankMatchingService {
             return emptyResult();
         }
 
-        if (bankTransactions.stream()
-                .noneMatch(this::hasMatchableCounterpartyName)) {
-            AutoMatchingExecutionResult executionResult =
-                    toExecutionResult(
-                            toNeedsCheckResults(bankTransactions)
-                    );
-            updateBankTransactionStatuses(executionResult);
-
-            return executionResult;
-        }
-
-        AutoMatchingExecutionResult executionResult =
-                toExecutionResult(
-                        processTransactions(
-                                linkedAccountId,
-                                bankTransactions
-                        )
-                );
-        updateBankTransactionStatuses(executionResult);
-
-        return executionResult;
+        return toExecutionResult(
+                processTransactions(
+                        userId,
+                        linkedAccountId,
+                        bankTransactions
+                )
+        );
     }
 
     private void validateLinkedAccountId(Long linkedAccountId) {
@@ -79,89 +61,16 @@ public class BankMatchingService {
     }
 
     private List<AutoMatchingTransactionResult> processTransactions(
+            Long userId,
             Long linkedAccountId,
             List<BankTransactionDTO> bankTransactions
     ) {
         return bankTransactions.stream()
-                .map(bankTransaction -> processTransaction(
+                .map(bankTransaction -> transactionService.process(
+                        userId,
                         linkedAccountId,
                         bankTransaction
                 ))
-                .toList();
-    }
-
-    private AutoMatchingTransactionResult processTransaction(
-            Long linkedAccountId,
-            BankTransactionDTO bankTransaction
-    ) {
-        if (!hasMatchableCounterpartyName(bankTransaction)) {
-            return new AutoMatchingTransactionResult(
-                    bankTransaction.getBankTransactionId(),
-                    AutoMatchingProcessStatus.NEEDS_CHECK
-            );
-        }
-
-        MatchingTransaction matchingTransaction =
-                toMatchingTransaction(bankTransaction);
-
-        List<MatchingCandidate> candidates =
-                paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
-                        linkedAccountId,
-                        matchingTransaction.transactionAt()
-                );
-
-        AutoMatchingExecutionResult matchingResult =
-                autoMatchingService.execute(
-                        List.of(matchingTransaction),
-                        candidates
-                );
-
-        if (matchingResult.transactionResults().size() != 1) {
-            throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
-        }
-
-        return matchingResult.transactionResults().get(0);
-    }
-
-    private boolean hasMatchableCounterpartyName(
-            BankTransactionDTO bankTransaction
-    ) {
-        String counterpartyName = bankTransaction.getCounterpartyName();
-
-        return counterpartyName != null && !counterpartyName.isBlank();
-    }
-
-    private MatchingTransaction toMatchingTransaction(
-            BankTransactionDTO bankTransaction
-    ) {
-        return new MatchingTransaction(
-                bankTransaction.getBankTransactionId(),
-                toMatchingTransactionType(bankTransaction.getTransactionType()),
-                bankTransaction.getAmount(),
-                bankTransaction.getCounterpartyName(),
-                bankTransaction.getTransactionAt()
-        );
-    }
-
-    private AutoMatchingTransactionType toMatchingTransactionType(
-            BankTransactionType transactionType
-    ) {
-        return switch (transactionType) {
-            case DEPOSIT -> AutoMatchingTransactionType.DEPOSIT;
-            case WITHDRAWAL -> AutoMatchingTransactionType.WITHDRAWAL;
-        };
-    }
-
-    private List<AutoMatchingTransactionResult> toNeedsCheckResults(
-            List<BankTransactionDTO> bankTransactions
-    ) {
-        return bankTransactions.stream()
-                .map(transaction ->
-                        new AutoMatchingTransactionResult(
-                                transaction.getBankTransactionId(),
-                                AutoMatchingProcessStatus.NEEDS_CHECK
-                        )
-                )
                 .toList();
     }
 
@@ -193,35 +102,5 @@ public class BankMatchingService {
                 failedCount,
                 transactionResults
         );
-    }
-
-    private void updateBankTransactionStatuses(
-            AutoMatchingExecutionResult executionResult
-    ) {
-        for (AutoMatchingTransactionResult transactionResult
-                : executionResult.transactionResults()) {
-            bankTransactionService.updateStatus(
-                    transactionResult.transactionId(),
-                    BankTransactionProcessingStatus.PENDING,
-                    toBankTransactionProcessingStatus(
-                            transactionResult.processStatus()
-                    )
-            );
-        }
-    }
-
-    private BankTransactionProcessingStatus toBankTransactionProcessingStatus(
-            AutoMatchingProcessStatus processStatus
-    ) {
-        return switch (processStatus) {
-            case APPLIED, DUPLICATE ->
-                    BankTransactionProcessingStatus.APPLIED;
-            case NEEDS_CHECK ->
-                    BankTransactionProcessingStatus.NEEDS_CHECK;
-            case UNMATCHED ->
-                    BankTransactionProcessingStatus.UNMATCHED;
-            case FAILED ->
-                    BankTransactionProcessingStatus.FAILED;
-        };
     }
 }

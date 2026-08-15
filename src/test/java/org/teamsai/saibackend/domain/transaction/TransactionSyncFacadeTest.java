@@ -59,7 +59,7 @@ class TransactionSyncFacadeTest {
         );
 
         given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(1);
-        given(bankMatchingService.execute(LINKED_ACCOUNT_ID)).willReturn(expectedResult);
+        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID)).willReturn(expectedResult);
 
         AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID);
 
@@ -67,7 +67,7 @@ class TransactionSyncFacadeTest {
 
         InOrder inOrder = inOrder(transactionSyncService, bankMatchingService);
         inOrder.verify(transactionSyncService).syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
-        inOrder.verify(bankMatchingService).execute(LINKED_ACCOUNT_ID);
+        inOrder.verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID);
     }
 
     @Test
@@ -78,12 +78,12 @@ class TransactionSyncFacadeTest {
         );
 
         given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(0);
-        given(bankMatchingService.execute(LINKED_ACCOUNT_ID)).willReturn(emptyResult);
+        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID)).willReturn(emptyResult);
 
         AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID);
 
         assertThat(result.totalTransactionCount()).isZero();
-        verify(bankMatchingService).execute(LINKED_ACCOUNT_ID);
+        verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID);
     }
 
     @Test
@@ -97,7 +97,7 @@ class TransactionSyncFacadeTest {
         assertThatThrownBy(() -> transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID))
                 .isSameAs(syncFailure);
 
-        verify(bankMatchingService, never()).execute(any());
+        verify(bankMatchingService, never()).execute(any(), any());
     }
 
     @Test
@@ -107,7 +107,7 @@ class TransactionSyncFacadeTest {
 
         given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(2);
         willThrow(matchingFailure)
-                .given(bankMatchingService).execute(LINKED_ACCOUNT_ID);
+                .given(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID);
 
         assertThatThrownBy(() -> transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID))
                 .isSameAs(matchingFailure);
@@ -172,9 +172,9 @@ class TransactionSyncFacadeTest {
                 .willReturn(2);
         given(transactionSyncService.syncTransactions(USER_ID, SECOND_LINKED_ACCOUNT_ID))
                 .willReturn(3);
-        given(bankMatchingService.execute(LINKED_ACCOUNT_ID))
+        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID))
                 .willReturn(firstResult);
-        given(bankMatchingService.execute(SECOND_LINKED_ACCOUNT_ID))
+        given(bankMatchingService.execute(USER_ID, SECOND_LINKED_ACCOUNT_ID))
                 .willReturn(secondResult);
 
         TransactionSyncAllResponse result =
@@ -196,10 +196,13 @@ class TransactionSyncFacadeTest {
         inOrder.verify(linkedBankAccountService).getLinkedAccounts(USER_ID);
         inOrder.verify(transactionSyncService)
                 .syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
-        inOrder.verify(bankMatchingService).execute(LINKED_ACCOUNT_ID);
+        inOrder.verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID);
         inOrder.verify(transactionSyncService)
                 .syncTransactions(USER_ID, SECOND_LINKED_ACCOUNT_ID);
-        inOrder.verify(bankMatchingService).execute(SECOND_LINKED_ACCOUNT_ID);
+        inOrder.verify(bankMatchingService).execute(
+                USER_ID,
+                SECOND_LINKED_ACCOUNT_ID
+        );
     }
 
     @Test
@@ -227,7 +230,7 @@ class TransactionSyncFacadeTest {
                 .syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
         given(transactionSyncService.syncTransactions(USER_ID, SECOND_LINKED_ACCOUNT_ID))
                 .willReturn(1);
-        given(bankMatchingService.execute(SECOND_LINKED_ACCOUNT_ID))
+        given(bankMatchingService.execute(USER_ID, SECOND_LINKED_ACCOUNT_ID))
                 .willReturn(successResult);
 
         TransactionSyncAllResponse result = transactionSyncFacade.syncAll(USER_ID);
@@ -260,7 +263,7 @@ class TransactionSyncFacadeTest {
         assertThat(result.failedCount()).isZero();
 
         verify(transactionSyncService, never()).syncTransactions(any(), any());
-        verify(bankMatchingService, never()).execute(any());
+        verify(bankMatchingService, never()).execute(any(), any());
     }
 
     private LinkedBankAccountResponse linkedAccount(Long linkedAccountId) {

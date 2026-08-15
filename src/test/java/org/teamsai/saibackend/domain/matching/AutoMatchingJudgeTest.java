@@ -6,11 +6,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingResult;
+import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.policy.AutoMatchingJudge;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingDecisionType;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
+import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.global.exception.DomainException;
 
@@ -53,7 +55,7 @@ class AutoMatchingJudgeTest {
 
             assertThat(result.decisionType())
                     .isEqualTo(AutoMatchingDecisionType.UNMATCHED);
-            assertThat(result.matchedCandidates()).isEmpty();
+            assertThat(result.evaluatedCandidates()).isEmpty();
         }
 
         @Test
@@ -78,7 +80,12 @@ class AutoMatchingJudgeTest {
 
             assertThat(result.decisionType())
                     .isEqualTo(AutoMatchingDecisionType.MATCHABLE);
-            assertThat(result.matchedCandidates()).containsExactly(candidate);
+            assertThat(result.evaluatedCandidates()).containsExactly(
+                    new EvaluatedMatchingCandidate(
+                            candidate,
+                            MatchingAmountType.EXACT
+                    )
+            );
         }
 
         @Test
@@ -100,8 +107,16 @@ class AutoMatchingJudgeTest {
 
             assertThat(result.decisionType())
                     .isEqualTo(AutoMatchingDecisionType.NEEDS_CHECK);
-            assertThat(result.matchedCandidates())
-                    .containsExactly(first, second);
+            assertThat(result.evaluatedCandidates()).containsExactly(
+                    new EvaluatedMatchingCandidate(
+                            first,
+                            MatchingAmountType.EXACT
+                    ),
+                    new EvaluatedMatchingCandidate(
+                            second,
+                            MatchingAmountType.EXACT
+                    )
+            );
         }
 
         @Test
@@ -126,7 +141,7 @@ class AutoMatchingJudgeTest {
 
             assertThat(result.decisionType())
                     .isEqualTo(AutoMatchingDecisionType.UNMATCHED);
-            assertThat(result.matchedCandidates()).isEmpty();
+            assertThat(result.evaluatedCandidates()).isEmpty();
         }
 
         @Test
@@ -151,12 +166,12 @@ class AutoMatchingJudgeTest {
 
             assertThat(result.decisionType())
                     .isEqualTo(AutoMatchingDecisionType.UNMATCHED);
-            assertThat(result.matchedCandidates()).isEmpty();
+            assertThat(result.evaluatedCandidates()).isEmpty();
         }
 
         @Test
         @DisplayName("입금액이 남은 납부금액보다 작으면 부분 상환으로 자동매칭하지 않는다")
-        void depositWithPartialAmountIsUnmatched() {
+        void depositWithPartialAmountNeedsCheck() {
             MatchingTransaction transaction = transaction(
                     AutoMatchingTransactionType.DEPOSIT,
                     "HongGilDong",
@@ -175,8 +190,107 @@ class AutoMatchingJudgeTest {
             );
 
             assertThat(result.decisionType())
+                    .isEqualTo(AutoMatchingDecisionType.NEEDS_CHECK);
+            assertThat(result.evaluatedCandidates()).containsExactly(
+                    new EvaluatedMatchingCandidate(
+                            candidate,
+                            MatchingAmountType.PARTIAL
+                    )
+            );
+        }
+
+        @Test
+        void depositAtTenPercentNeedsCheckAsPartial() {
+            MatchingTransaction transaction = transaction(
+                    AutoMatchingTransactionType.DEPOSIT,
+                    "HongGilDong",
+                    "1000"
+            );
+            MatchingCandidate candidate = candidate(
+                    1L,
+                    "HongGilDong",
+                    "10000"
+            );
+
+            AutoMatchingResult result = judge.judge(
+                    transaction,
+                    List.of(candidate)
+            );
+
+            assertThat(result.decisionType())
+                    .isEqualTo(AutoMatchingDecisionType.NEEDS_CHECK);
+            assertThat(result.evaluatedCandidates().get(0).amountMatchType())
+                    .isEqualTo(MatchingAmountType.PARTIAL);
+        }
+
+        @Test
+        void depositBelowTenPercentIsUnmatched() {
+            MatchingTransaction transaction = transaction(
+                    AutoMatchingTransactionType.DEPOSIT,
+                    "HongGilDong",
+                    "999"
+            );
+            MatchingCandidate candidate = candidate(
+                    1L,
+                    "HongGilDong",
+                    "10000"
+            );
+
+            AutoMatchingResult result = judge.judge(
+                    transaction,
+                    List.of(candidate)
+            );
+
+            assertThat(result.decisionType())
                     .isEqualTo(AutoMatchingDecisionType.UNMATCHED);
-            assertThat(result.matchedCandidates()).isEmpty();
+            assertThat(result.evaluatedCandidates()).isEmpty();
+        }
+
+        @Test
+        void depositAtOneHundredTenPercentNeedsCheckAsExcess() {
+            MatchingTransaction transaction = transaction(
+                    AutoMatchingTransactionType.DEPOSIT,
+                    "HongGilDong",
+                    "11000"
+            );
+            MatchingCandidate candidate = candidate(
+                    1L,
+                    "HongGilDong",
+                    "10000"
+            );
+
+            AutoMatchingResult result = judge.judge(
+                    transaction,
+                    List.of(candidate)
+            );
+
+            assertThat(result.decisionType())
+                    .isEqualTo(AutoMatchingDecisionType.NEEDS_CHECK);
+            assertThat(result.evaluatedCandidates().get(0).amountMatchType())
+                    .isEqualTo(MatchingAmountType.EXCESS);
+        }
+
+        @Test
+        void depositAboveOneHundredTenPercentIsUnmatched() {
+            MatchingTransaction transaction = transaction(
+                    AutoMatchingTransactionType.DEPOSIT,
+                    "HongGilDong",
+                    "11001"
+            );
+            MatchingCandidate candidate = candidate(
+                    1L,
+                    "HongGilDong",
+                    "10000"
+            );
+
+            AutoMatchingResult result = judge.judge(
+                    transaction,
+                    List.of(candidate)
+            );
+
+            assertThat(result.decisionType())
+                    .isEqualTo(AutoMatchingDecisionType.UNMATCHED);
+            assertThat(result.evaluatedCandidates()).isEmpty();
         }
     }
 

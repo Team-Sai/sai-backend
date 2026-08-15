@@ -3,14 +3,23 @@ package org.teamsai.saibackend.domain.matching.policy;
 import org.springframework.stereotype.Component;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingResult;
+import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
+import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class AutoMatchingJudge {
+
+    private static final BigDecimal MINIMUM_MATCH_RATIO =
+            new BigDecimal("0.10");
+    private static final BigDecimal MAXIMUM_MATCH_RATIO =
+            new BigDecimal("1.10");
 
     public AutoMatchingResult judge(
             MatchingTransaction transaction,
@@ -18,39 +27,77 @@ public class AutoMatchingJudge {
     ) {
         validateInput(transaction, candidates);
 
-        if (transaction.transactionType() != AutoMatchingTransactionType.DEPOSIT) {
+        if (transaction.transactionType()
+                != AutoMatchingTransactionType.DEPOSIT) {
             return new AutoMatchingResult(List.of());
         }
 
-        List<MatchingCandidate> matchedCandidates = candidates.stream()
-                .filter(candidate -> isMatched(transaction, candidate))
-                .toList();
+        List<EvaluatedMatchingCandidate> evaluatedCandidates =
+                candidates.stream()
+                        .filter(candidate ->
+                                isParticipantNameMatched(
+                                        transaction,
+                                        candidate
+                                ))
+                        .map(candidate ->
+                                evaluateCandidate(transaction, candidate))
+                        .flatMap(Optional::stream)
+                        .toList();
 
-        return new AutoMatchingResult(matchedCandidates);
+        return new AutoMatchingResult(evaluatedCandidates);
     }
 
-    private boolean isMatched(
+    private Optional<EvaluatedMatchingCandidate> evaluateCandidate(
             MatchingTransaction transaction,
             MatchingCandidate candidate
     ) {
-        return isAmountMatched(transaction, candidate)
-                && isParticipantNameMatched(transaction, candidate);
+        BigDecimal transactionAmount = transaction.amount();
+        BigDecimal expectedAmount = candidate.remainingAmount();
+        BigDecimal minimumAmount = expectedAmount
+                .multiply(MINIMUM_MATCH_RATIO);
+        BigDecimal maximumAmount = expectedAmount
+                .multiply(MAXIMUM_MATCH_RATIO);
+
+        if (transactionAmount.compareTo(minimumAmount) < 0
+                || transactionAmount.compareTo(maximumAmount) > 0) {
+            return Optional.empty();
+        }
+
+        MatchingAmountType amountMatchType =
+                determineAmountMatchType(
+                        transactionAmount,
+                        expectedAmount
+                );
+
+        return Optional.of(
+                new EvaluatedMatchingCandidate(
+                        candidate,
+                        amountMatchType
+                )
+        );
     }
 
-    private boolean isAmountMatched(
-            MatchingTransaction transaction,
-            MatchingCandidate candidate
+    private MatchingAmountType determineAmountMatchType(
+            BigDecimal transactionAmount,
+            BigDecimal expectedAmount
     ) {
-        // MVP 자동매칭은 입금액과 남은 납부금액이 정확히 같은 경우만 허용한다.
-        return transaction.amount()
-                .compareTo(candidate.remainingAmount()) == 0;
+        int comparison = transactionAmount.compareTo(expectedAmount);
+
+        if (comparison < 0) {
+            return MatchingAmountType.PARTIAL;
+        }
+
+        if (comparison > 0) {
+            return MatchingAmountType.EXCESS;
+        }
+
+        return MatchingAmountType.EXACT;
     }
 
     private boolean isParticipantNameMatched(
             MatchingTransaction transaction,
             MatchingCandidate candidate
     ) {
-        // MVP 이후 실제 은행 연동 시 계좌 ID나 연결 키 기반 식별로 리팩터링한다.
         return normalizeName(transaction.counterpartyName())
                 .equals(normalizeName(candidate.participantName()));
     }

@@ -6,8 +6,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingResult;
+import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingDecisionType;
+import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.global.exception.DomainException;
 
@@ -40,20 +42,23 @@ class AutoMatchingResultTest {
 
             assertThat(result.decisionType())
                     .isEqualTo(AutoMatchingDecisionType.UNMATCHED);
-            assertThat(result.matchedCandidates()).isEmpty();
+            assertThat(result.evaluatedCandidates()).isEmpty();
         }
 
         @Test
         @DisplayName("매칭 후보가 하나이면 매칭 가능으로 판정한다")
         void oneCandidateIsMatchable() {
             MatchingCandidate candidate = createCandidate(1L);
+            EvaluatedMatchingCandidate evaluatedCandidate =
+                    evaluatedCandidate(candidate, MatchingAmountType.EXACT);
 
             AutoMatchingResult result =
-                    new AutoMatchingResult(List.of(candidate));
+                    new AutoMatchingResult(List.of(evaluatedCandidate));
 
             assertThat(result.decisionType())
                     .isEqualTo(AutoMatchingDecisionType.MATCHABLE);
-            assertThat(result.matchedCandidates()).containsExactly(candidate);
+            assertThat(result.evaluatedCandidates())
+                    .containsExactly(evaluatedCandidate);
         }
 
         @Test
@@ -61,28 +66,52 @@ class AutoMatchingResultTest {
         void multipleCandidatesNeedsCheck() {
             MatchingCandidate first = createCandidate(1L);
             MatchingCandidate second = createCandidate(2L);
+            EvaluatedMatchingCandidate evaluatedFirst =
+                    evaluatedCandidate(first, MatchingAmountType.EXACT);
+            EvaluatedMatchingCandidate evaluatedSecond =
+                    evaluatedCandidate(second, MatchingAmountType.EXACT);
 
             AutoMatchingResult result =
-                    new AutoMatchingResult(List.of(first, second));
+                    new AutoMatchingResult(
+                            List.of(evaluatedFirst, evaluatedSecond)
+                    );
 
             assertThat(result.decisionType())
                     .isEqualTo(AutoMatchingDecisionType.NEEDS_CHECK);
-            assertThat(result.matchedCandidates())
-                    .containsExactly(first, second);
+            assertThat(result.evaluatedCandidates())
+                    .containsExactly(evaluatedFirst, evaluatedSecond);
+        }
+
+        @Test
+        void onePartialCandidateNeedsCheck() {
+            MatchingCandidate candidate = createCandidate(1L);
+            EvaluatedMatchingCandidate evaluatedCandidate =
+                    evaluatedCandidate(candidate, MatchingAmountType.PARTIAL);
+
+            AutoMatchingResult result =
+                    new AutoMatchingResult(List.of(evaluatedCandidate));
+
+            assertThat(result.decisionType())
+                    .isEqualTo(AutoMatchingDecisionType.NEEDS_CHECK);
+            assertThat(result.evaluatedCandidates())
+                    .containsExactly(evaluatedCandidate);
         }
 
         @Test
         @DisplayName("매칭 후보 목록을 방어적으로 복사한다")
         void copiesMatchedCandidatesDefensively() {
             MatchingCandidate candidate = createCandidate(1L);
-            List<MatchingCandidate> candidates = new ArrayList<>();
-            candidates.add(candidate);
+            EvaluatedMatchingCandidate evaluatedCandidate =
+                    evaluatedCandidate(candidate, MatchingAmountType.EXACT);
+            List<EvaluatedMatchingCandidate> candidates = new ArrayList<>();
+            candidates.add(evaluatedCandidate);
 
             AutoMatchingResult result = new AutoMatchingResult(candidates);
 
             candidates.clear();
 
-            assertThat(result.matchedCandidates()).containsExactly(candidate);
+            assertThat(result.evaluatedCandidates())
+                    .containsExactly(evaluatedCandidate);
         }
     }
 
@@ -94,6 +123,13 @@ class AutoMatchingResultTest {
                 "HongGilDong",
                 new BigDecimal("10000")
         );
+    }
+
+    private EvaluatedMatchingCandidate evaluatedCandidate(
+            MatchingCandidate candidate,
+            MatchingAmountType amountMatchType
+    ) {
+        return new EvaluatedMatchingCandidate(candidate, amountMatchType);
     }
 
     private void assertInvalidMatchingRequestThrownBy(

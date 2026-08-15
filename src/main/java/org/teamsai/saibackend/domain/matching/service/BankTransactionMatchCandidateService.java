@@ -1,0 +1,140 @@
+package org.teamsai.saibackend.domain.matching.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateDTO;
+import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateQueryDTO;
+import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+import org.teamsai.saibackend.domain.matching.mapper.BankTransactionMatchCandidateMapper;
+import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class BankTransactionMatchCandidateService {
+
+    private final BankTransactionMatchCandidateMapper candidateMapper;
+
+    @Transactional
+    public void saveAll(
+            Long bankTransactionId,
+            List<EvaluatedMatchingCandidate> evaluatedCandidates
+    ) {
+        validateSaveRequest(bankTransactionId, evaluatedCandidates);
+
+        if (evaluatedCandidates.isEmpty()) {
+            return;
+        }
+
+        LocalDateTime createdAt = LocalDateTime.now();
+
+        List<BankTransactionMatchCandidateDTO> candidates =
+                evaluatedCandidates.stream()
+                        .map(candidate -> toDto(
+                                bankTransactionId,
+                                candidate,
+                                createdAt
+                        ))
+                        .toList();
+
+        int insertedCount = candidateMapper.insertAll(candidates);
+
+        if (insertedCount != candidates.size()) {
+            throw MatchingErrorCode
+                    .MATCHING_CANDIDATE_SAVE_FAILED
+                    .toException();
+        }
+    }
+
+    public List<BankTransactionMatchCandidateDTO>
+    findAllByBankTransactionId(Long bankTransactionId) {
+        validateBankTransactionId(bankTransactionId);
+
+        return candidateMapper.findAllByBankTransactionId(
+                bankTransactionId
+        );
+    }
+
+    public List<BankTransactionMatchCandidateQueryDTO>
+    findAllForReviewByBankTransactionId(Long bankTransactionId) {
+        validateBankTransactionId(bankTransactionId);
+
+        return candidateMapper.findAllForReviewByBankTransactionId(
+                bankTransactionId
+        );
+    }
+
+    public BankTransactionMatchCandidateDTO
+    findByIdAndBankTransactionId(
+            Long matchCandidateId,
+            Long bankTransactionId
+    ) {
+        if (matchCandidateId == null || matchCandidateId <= 0) {
+            throw MatchingErrorCode
+                    .INVALID_MATCHING_REQUEST
+                    .toException();
+        }
+
+        validateBankTransactionId(bankTransactionId);
+
+        return candidateMapper.findByIdAndBankTransactionId(
+                        matchCandidateId,
+                        bankTransactionId
+                )
+                .orElseThrow(
+                        MatchingErrorCode
+                                .MATCHING_CANDIDATE_NOT_FOUND
+                                ::toException
+                );
+    }
+
+    private BankTransactionMatchCandidateDTO toDto(
+            Long bankTransactionId,
+            EvaluatedMatchingCandidate evaluatedCandidate,
+            LocalDateTime createdAt
+    ) {
+        return BankTransactionMatchCandidateDTO.builder()
+                .bankTransactionId(bankTransactionId)
+                .targetType(
+                        evaluatedCandidate.candidate().targetType()
+                )
+                .targetId(
+                        evaluatedCandidate.candidate().targetId()
+                )
+                .expectedRemainingAmount(
+                        evaluatedCandidate.candidate().remainingAmount()
+                )
+                .amountMatchType(
+                        evaluatedCandidate.amountMatchType()
+                )
+                .createdAt(createdAt)
+                .build();
+    }
+
+    private void validateSaveRequest(
+            Long bankTransactionId,
+            List<EvaluatedMatchingCandidate> evaluatedCandidates
+    ) {
+        validateBankTransactionId(bankTransactionId);
+
+        if (evaluatedCandidates == null
+                || evaluatedCandidates.stream()
+                .anyMatch(candidate -> candidate == null)) {
+            throw MatchingErrorCode
+                    .INVALID_MATCHING_REQUEST
+                    .toException();
+        }
+    }
+
+    private void validateBankTransactionId(Long bankTransactionId) {
+        if (bankTransactionId == null || bankTransactionId <= 0) {
+            throw MatchingErrorCode
+                    .INVALID_MATCHING_REQUEST
+                    .toException();
+        }
+    }
+}
