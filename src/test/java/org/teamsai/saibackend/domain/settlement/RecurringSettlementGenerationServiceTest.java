@@ -186,6 +186,8 @@ class RecurringSettlementGenerationServiceTest {
 
         when(cycleGenerator.calculateNthCycleDate(any(), any(), eq(1)))
                 .thenReturn(LocalDate.of(2026, 2, 28));
+        when(cycleGenerator.calculateNthCycleDate(any(), any(), eq(2)))
+                .thenReturn(LocalDate.of(2026, 3, 31));
 
         when(cycleGenerator.generateOneCycle(eq(r1), eq(latest1), any()))
                 .thenThrow(new IllegalStateException("r1 실패"));
@@ -195,6 +197,7 @@ class RecurringSettlementGenerationServiceTest {
         sut.generateTodaySettlements(baseDate);
 
         verify(cycleGenerator).generateOneCycle(eq(r1), eq(latest1), any());
-        verify(cycleGenerator).generateOneCycle(eq(r2), eq(latest2), any()); // r1 실패와 무관하게 호출됨
+        verify(cycleGenerator).generateOneCycle(eq(r2), eq(latest2), any());
+        verify(cycleGenerator, times(1)).generateOneCycle(eq(r2), any(), any());
     }
 }
