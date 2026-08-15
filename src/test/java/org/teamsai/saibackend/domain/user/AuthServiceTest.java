@@ -336,7 +336,7 @@ class AuthServiceTest {
                     .isEqualTo("access-token");
 
             assertThat(response.getUserToken())
-                    .isEqualTo(USER_KEY);
+                    .isEqualTo(USER_TOKEN);
 
             assertThat(response.getName())
                     .isEqualTo("김사이");
@@ -469,7 +469,7 @@ class AuthServiceTest {
     private UserDTO createUser() {
         return UserDTO.builder()
                 .userId(USER_ID)
-                .userKey(USER_TOKEN)
+                .userToken(USER_TOKEN)
                 .userKey(USER_KEY)
                 .email("user@example.com")
                 .password(ENCODED_PASSWORD)

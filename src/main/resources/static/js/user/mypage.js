@@ -238,23 +238,30 @@ document.addEventListener(
         }
 
         async function handleConnectAccountClick() {
-
             const bankWindow = window.open("about:blank", "sai-bank-link", "width=480,height=720");
-
             const token = sessionStorage.getItem("accessToken");
 
-            try{
+            try {
                 const response = await fetch("/api/accounts/link/start", {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` }
                 });
 
-                if (!response.ok) {
-                    window.alert("계좌 연동을 시작할 수 없습니다.");
+                if (response.status === 401 || response.status === 403) {
+                    bankWindow?.close();
+                    sessionStorage.removeItem("accessToken");
+                    redirectToLogin(true);
                     return;
                 }
 
-                const { redirectUrl } = await response.json();
+                if (!response.ok) {
+                    bankWindow?.close();
+                    const errorData = await readJson(response);
+                    window.alert(errorData.message || "계좌 연동을 시작할 수 없습니다.");
+                    return;
+                }
+
+                const { redirectUrl } = await readJson(response);
 
                 if (bankWindow) {
                     bankWindow.location.href = redirectUrl;
@@ -265,6 +272,7 @@ document.addEventListener(
                 window.alert("계좌 연동을 시작할 수 없습니다.");
             }
         }
+
         window.addEventListener("message", (event) => {
             if (event.origin !== "http://localhost:8081") return;
 

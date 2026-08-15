@@ -31,7 +31,7 @@ public class UserService {
         }
     }
 
-    private UserDTO getUser(Long userId) {
+    public UserDTO getUser(Long userId) {
         return userMapper.findById(userId)
                 .orElseThrow(
                         UserErrorCode.USER_NOT_FOUND::toException
