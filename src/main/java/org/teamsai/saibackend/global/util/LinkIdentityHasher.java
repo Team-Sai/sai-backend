@@ -3,6 +3,7 @@ package org.teamsai.saibackend.global.util;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.HexFormat;
 
@@ -10,9 +11,6 @@ public final class LinkIdentityHasher {
 
     private static final String DELIMITER = "|";
     private static final String HMAC_ALGORITHM = "HmacSHA256";
-
-    private LinkIdentityHasher() {
-    }
 
     public static String hash(String name, LocalDate birthDate, String secret) {
         if (secret == null || secret.isBlank()) {
@@ -34,7 +32,10 @@ public final class LinkIdentityHasher {
     }
 
     private static String normalizeName(String name) {
-        return name == null ? "" : name.replaceAll("\\s+", "");
+        if (name == null) {
+            return "";
+        }
+        return Normalizer.normalize(name.strip(), Normalizer.Form.NFC);
     }
 
     private static String normalizeBirthDate(LocalDate birthDate) {
