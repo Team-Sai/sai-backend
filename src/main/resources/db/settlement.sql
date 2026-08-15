@@ -38,3 +38,20 @@ CREATE TABLE IF NOT EXISTS settlement (
 ENGINE = InnoDB
 DEFAULT CHARSET = utf8mb4
 COLLATE = utf8mb4_unicode_ci;
+
+SET @constraint_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'settlement'
+      AND INDEX_NAME = 'uq_settlement_recurring_cycle'
+);
+
+SET @sql = IF(@constraint_exists = 0,
+    'ALTER TABLE settlement ADD CONSTRAINT uq_settlement_recurring_cycle UNIQUE (recurring_settlement_id, cycle_date)',
+    'SELECT ''uq_settlement_recurring_cycle already exists'' AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
