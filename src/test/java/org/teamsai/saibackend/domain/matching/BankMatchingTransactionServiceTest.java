@@ -71,6 +71,7 @@ class BankMatchingTransactionServiceTest {
     @DisplayName("상대방명이 없으면 후보를 조회하지 않고 미매칭으로 변경한다")
     void classifiesBlankCounterpartyNameAsUnmatched() {
         BankTransactionDTO transaction = bankTransaction(101L, " ");
+        givenLockedTransaction(transaction);
 
         AutoMatchingTransactionResult result =
                 transactionService.process(
@@ -94,10 +95,15 @@ class BankMatchingTransactionServiceTest {
     @Test
     @DisplayName("후보를 조회해 자동매칭하고 은행 거래 상태를 변경한다")
     void executesAutoMatchingAndUpdatesStatus() {
-        BankTransactionDTO transaction = bankTransaction(
+        BankTransactionDTO staleTransaction = bankTransaction(
+                101L,
+                "Old Name"
+        );
+        BankTransactionDTO lockedTransaction = bankTransaction(
                 101L,
                 "Hong Gil Dong"
         );
+        givenLockedTransaction(lockedTransaction);
         MatchingCandidate candidate = candidate();
         AutoMatchingTransactionResult transactionResult = result(
                 101L,
@@ -106,7 +112,7 @@ class BankMatchingTransactionServiceTest {
 
         given(paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
                 LINKED_ACCOUNT_ID,
-                transaction.getTransactionAt()
+                lockedTransaction.getTransactionAt()
         )).willReturn(List.of(candidate));
         given(autoMatchingService.execute(any(), any()))
                 .willReturn(executionResult(transactionResult));
@@ -115,7 +121,7 @@ class BankMatchingTransactionServiceTest {
                 transactionService.process(
                         USER_ID,
                         LINKED_ACCOUNT_ID,
-                        transaction
+                        staleTransaction
                 );
 
         ArgumentCaptor<List<MatchingTransaction>> transactionsCaptor =
@@ -149,6 +155,7 @@ class BankMatchingTransactionServiceTest {
                 101L,
                 "Hong Gil Dong"
         );
+        givenLockedTransaction(transaction);
         given(paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
                 LINKED_ACCOUNT_ID,
                 transaction.getTransactionAt()
@@ -175,6 +182,7 @@ class BankMatchingTransactionServiceTest {
                 101L,
                 "Hong Gil Dong"
         );
+        givenLockedTransaction(transaction);
         given(paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
                 LINKED_ACCOUNT_ID,
                 transaction.getTransactionAt()
@@ -208,6 +216,7 @@ class BankMatchingTransactionServiceTest {
                 101L,
                 "Hong Gil Dong"
         );
+        givenLockedTransaction(transaction);
         given(paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
                 LINKED_ACCOUNT_ID,
                 transaction.getTransactionAt()
@@ -243,6 +252,7 @@ class BankMatchingTransactionServiceTest {
                 101L,
                 "Hong Gil Dong"
         );
+        givenLockedTransaction(transaction);
         given(paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
                 LINKED_ACCOUNT_ID,
                 transaction.getTransactionAt()
@@ -284,6 +294,7 @@ class BankMatchingTransactionServiceTest {
                 101L,
                 "Hong Gil Dong"
         );
+        givenLockedTransaction(transaction);
         given(paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
                 LINKED_ACCOUNT_ID,
                 transaction.getTransactionAt()
@@ -315,9 +326,52 @@ class BankMatchingTransactionServiceTest {
         );
     }
 
+    @Test
+    @DisplayName("잠금 조회한 거래가 이미 처리됐으면 자동매칭을 다시 실행하지 않는다")
+    void skipsTransactionAlreadyProcessedByConcurrentRequest() {
+        BankTransactionDTO transaction = bankTransaction(
+                101L,
+                "Hong Gil Dong",
+                BankTransactionProcessingStatus.APPLIED
+        );
+        givenLockedTransaction(transaction);
+
+        AutoMatchingTransactionResult result = transactionService.process(
+                USER_ID,
+                LINKED_ACCOUNT_ID,
+                transaction
+        );
+
+        assertThat(result.processStatus())
+                .isEqualTo(AutoMatchingProcessStatus.DUPLICATE);
+        verify(paymentObligationMapper, never())
+                .findMatchCandidatesByLinkedAccountId(any(), any());
+        verify(autoMatchingService, never()).execute(any(), any());
+        verify(candidateService, never())
+                .findAllByBankTransactionId(any());
+        verify(notificationService, never()).createIfAbsent(
+                any(), any(), any(), any(), any(), any()
+        );
+        verify(bankTransactionService, never()).updateStatus(
+                any(), any(), any()
+        );
+    }
+
     private BankTransactionDTO bankTransaction(
             Long bankTransactionId,
             String counterpartyName
+    ) {
+        return bankTransaction(
+                bankTransactionId,
+                counterpartyName,
+                BankTransactionProcessingStatus.PENDING
+        );
+    }
+
+    private BankTransactionDTO bankTransaction(
+            Long bankTransactionId,
+            String counterpartyName,
+            BankTransactionProcessingStatus processingStatus
     ) {
         return BankTransactionDTO.builder()
                 .bankTransactionId(bankTransactionId)
@@ -325,11 +379,18 @@ class BankMatchingTransactionServiceTest {
                 .externalTransactionId("external-" + bankTransactionId)
                 .amount(new BigDecimal("10000.00"))
                 .transactionType(BankTransactionType.DEPOSIT)
-                .processingStatus(BankTransactionProcessingStatus.PENDING)
+                .processingStatus(processingStatus)
                 .transactionAt(LocalDateTime.of(2026, 8, 5, 10, 0))
                 .counterpartyName(counterpartyName)
                 .syncedAt(LocalDateTime.of(2026, 8, 5, 10, 5))
                 .build();
+    }
+
+    private void givenLockedTransaction(BankTransactionDTO transaction) {
+        given(bankTransactionService.findByIdAndLinkedAccountIdForUpdate(
+                transaction.getBankTransactionId(),
+                LINKED_ACCOUNT_ID
+        )).willReturn(transaction);
     }
 
     private MatchingCandidate candidate() {

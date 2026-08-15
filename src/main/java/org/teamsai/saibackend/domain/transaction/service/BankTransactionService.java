@@ -46,6 +46,22 @@ public class BankTransactionService {
     }
 
     @Transactional
+    public BankTransactionDTO findByIdAndLinkedAccountIdForUpdate(
+            Long bankTransactionId,
+            Long linkedAccountId
+    ) {
+        return bankTransactionMapper
+                .findByIdAndLinkedAccountIdForUpdate(
+                        bankTransactionId,
+                        linkedAccountId
+                )
+                .orElseThrow(
+                        BankTransactionErrorCode
+                                .BANK_TRANSACTION_NOT_FOUND::toException
+                );
+    }
+
+    @Transactional
     public void updateStatus(
             Long bankTransactionId,
             BankTransactionProcessingStatus currentStatus,

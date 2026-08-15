@@ -38,18 +38,33 @@ public class BankMatchingTransactionService {
             Long linkedAccountId,
             BankTransactionDTO bankTransaction
     ) {
+        BankTransactionDTO lockedTransaction =
+                bankTransactionService
+                        .findByIdAndLinkedAccountIdForUpdate(
+                                bankTransaction.getBankTransactionId(),
+                                linkedAccountId
+                        );
+
+        if (lockedTransaction.getProcessingStatus()
+                != BankTransactionProcessingStatus.PENDING) {
+            return new AutoMatchingTransactionResult(
+                    lockedTransaction.getBankTransactionId(),
+                    AutoMatchingProcessStatus.DUPLICATE
+            );
+        }
+
         AutoMatchingTransactionResult result =
-                processMatching(linkedAccountId, bankTransaction);
+                processMatching(linkedAccountId, lockedTransaction);
 
         createMatchingReviewNotificationIfRequired(
                 userId,
                 linkedAccountId,
-                bankTransaction,
+                lockedTransaction,
                 result
         );
 
         bankTransactionService.updateStatus(
-                bankTransaction.getBankTransactionId(),
+                lockedTransaction.getBankTransactionId(),
                 BankTransactionProcessingStatus.PENDING,
                 toBankTransactionProcessingStatus(result.processStatus())
         );
