@@ -26,6 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Sql(scripts = {
         "/db/user.sql",
         "/db/linked_bank_account.sql",
+        "/db/01_loancontract.sql",
+        "/db/02_repayment_schedule.sql",
+        "/db/04_contractaccount.sql",
         "/db/settlement.sql",
         "/db/settlement_participant.sql",
         "/db/settlement_account.sql",
@@ -113,6 +116,45 @@ class PaymentObligationMapperTest {
                 );
     }
 
+    @Test
+    @Transactional
+    @DisplayName("연결 계좌를 사용하는 완료된 차용증의 가장 빠른 미납 회차를 조회한다")
+    void findMatchCandidatesByLinkedAccountIdReturnsEarliestLoanSchedule() {
+        insertUser(9101L, "Creditor");
+        insertUser(9102L, "Hong Gil Dong");
+        insertLinkedAccount(LINKED_ACCOUNT_ID, 9101L);
+        insertLoanContract(9201L, 9101L, 9102L);
+        insertActiveContractAccount(9301L, 9201L, LINKED_ACCOUNT_ID);
+        insertRepaymentSchedule(9401L, 9201L, 1, "20000.00");
+        insertRepaymentSchedule(9402L, 9201L, 2, "20000.00");
+        insertConfirmedLoanPaymentRecord(9501L, 9401L, "5000.00");
+
+        List<MatchingCandidate> result =
+                paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
+                        LINKED_ACCOUNT_ID,
+                        MATCHING_TRANSACTION_AT
+                );
+
+        assertThat(result)
+                .extracting(
+                        MatchingCandidate::targetType,
+                        MatchingCandidate::targetId,
+                        MatchingCandidate::participantId,
+                        MatchingCandidate::participantName,
+                        candidate -> candidate.remainingAmount()
+                                .stripTrailingZeros()
+                )
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(
+                                MatchingTargetType.LOAN,
+                                9401L,
+                                9102L,
+                                "Hong Gil Dong",
+                                new BigDecimal("15000").stripTrailingZeros()
+                        )
+                );
+    }
+
     private void insertUser(Long userId, String name) {
         String unique = UUID.randomUUID().toString();
         jdbcTemplate.update(
@@ -153,6 +195,123 @@ class PaymentObligationMapperTest {
                 userId,
                 "account-" + linkedAccountId,
                 linkedAccountId
+        );
+    }
+
+    private void insertLoanContract(
+            Long contractId,
+            Long creditorId,
+            Long debtorId
+    ) {
+        jdbcTemplate.update(
+                """
+                INSERT INTO loan_contract (
+                    contract_id,
+                    creditor_id,
+                    debtor_id,
+                    principal_amount,
+                    interest_rate,
+                    repayment_type,
+                    start_date,
+                    maturity_date,
+                    repayment_day,
+                    status,
+                    creditor_address,
+                    debtor_address,
+                    contract_alias,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    ?, ?, ?, 40000, 0, 'EQUAL_PRINCIPAL',
+                    '2026-01-01', '2026-12-31', 1, 'COMPLETED',
+                    'creditor-address', 'debtor-address', ?, NOW(), NOW()
+                )
+                """,
+                contractId,
+                creditorId,
+                debtorId,
+                "contract-" + contractId
+        );
+    }
+
+    private void insertActiveContractAccount(
+            Long contractAccountId,
+            Long contractId,
+            Long linkedAccountId
+    ) {
+        jdbcTemplate.update(
+                """
+                INSERT INTO contract_account (
+                    contract_account_id,
+                    linked_account_id,
+                    account_status,
+                    selected_at,
+                    contract_id
+                )
+                VALUES (?, ?, 'ACTIVE', NOW(), ?)
+                """,
+                contractAccountId,
+                linkedAccountId,
+                contractId
+        );
+    }
+
+    private void insertRepaymentSchedule(
+            Long scheduleId,
+            Long contractId,
+            int sequence,
+            String totalPaymentDue
+    ) {
+        BigDecimal amount = new BigDecimal(totalPaymentDue);
+        jdbcTemplate.update(
+                """
+                INSERT INTO repayment_schedule (
+                    schedule_id,
+                    contract_id,
+                    sequence,
+                    due_date,
+                    principal_due,
+                    interest_due,
+                    total_payment_due,
+                    remaining_principal,
+                    status,
+                    created_at
+                )
+                VALUES (?, ?, ?, '2026-06-01', ?, 0, ?, ?, 'PENDING', NOW())
+                """,
+                scheduleId,
+                contractId,
+                sequence,
+                amount,
+                amount,
+                amount
+        );
+    }
+
+    private void insertConfirmedLoanPaymentRecord(
+            Long paymentRecordId,
+            Long scheduleId,
+            String amount
+    ) {
+        jdbcTemplate.update(
+                """
+                INSERT INTO payment_record (
+                    payment_record_id,
+                    bank_transaction_id,
+                    payment_target_type,
+                    target_id,
+                    amount,
+                    source_type,
+                    record_status,
+                    recorded_at
+                )
+                VALUES (?, ?, 'LOAN', ?, ?, 'AUTO_MATCH', 'CONFIRMED', NOW())
+                """,
+                paymentRecordId,
+                paymentRecordId,
+                scheduleId,
+                new BigDecimal(amount)
         );
     }
 
