@@ -5,6 +5,15 @@
 
 <mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper">
 
+    <resultMap id="SettlementParticipantResultMap" type="org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO">
+        <id property="participantId" column="participant_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="settlementId" column="settlement_id"/>
+        <result property="participantRole" column="participant_role"/>
+        <result property="participantStatus" column="participant_status"/>
+        <result property="joinedAt" column="joined_at"/>
+    </resultMap>
+
     <insert id="insert"
             parameterType="org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO"
             useGeneratedKeys="true"
@@ -26,6 +35,12 @@
         )
 
     </insert>
+
+    <select id="findBySettlementId" resultMap="SettlementParticipantResultMap">
+        SELECT participant_id, user_id, settlement_id, participant_role, participant_status, joined_at
+        FROM settlement_participant
+        WHERE settlement_id = #{settlementId}
+    </select>
 
     <select id="existsActiveParticipant"
             resultType="boolean">
