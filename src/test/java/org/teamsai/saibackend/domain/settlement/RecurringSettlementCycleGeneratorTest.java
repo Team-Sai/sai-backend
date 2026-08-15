@@ -26,7 +26,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -43,6 +42,10 @@ class RecurringSettlementCycleGeneratorTest {
     private RecurringSettlementCycleGenerator sut; // system under test
 
     private RecurringSettlementDTO recurring(CycleRule cycleRule) {
+        return recurring(cycleRule, LocalDate.of(2026, 1, 1));
+    }
+
+    private RecurringSettlementDTO recurring(CycleRule cycleRule, LocalDate startDate) {
         return RecurringSettlementDTO.builder()
                 .recurringSettlementId(1L)
                 .ownerId(100L)
@@ -51,7 +54,7 @@ class RecurringSettlementCycleGeneratorTest {
                 .splitType(SplitType.EQUAL)
                 .totalAmount(BigDecimal.valueOf(300000))
                 .cycleRule(cycleRule)
-                .startDate(LocalDate.of(2026, 1, 1))
+                .startDate(startDate)
                 .endDate(null)
                 .build();
     }
@@ -123,7 +126,7 @@ class RecurringSettlementCycleGeneratorTest {
     }
 
     @Nested
-    @DisplayName("CycleRule별 생성일 도래 판정")
+    @DisplayName("CycleRule별 생성일 도래 판정 (말일 앵커링 포함)")
     class DueDateJudgement {
 
         @Test
@@ -137,11 +140,7 @@ class RecurringSettlementCycleGeneratorTest {
             when(paymentObligationMapper.findByParticipantId(1L))
                     .thenReturn(Optional.of(PaymentObligationDTO.builder()
                             .expectedAmount(BigDecimal.valueOf(150000)).build()));
-            when(settlementMapper.insertSettlement(any())).thenAnswer(inv -> {
-                SettlementDTO s = inv.getArgument(0);
-                s.setSettlementId(20L); // setter 없으면 @Builder.Default 등으로 대체 필요
-                return 1;
-            });
+            when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
 
             sut.generateNextCycle(recurring, LocalDate.of(2026, 2, 2));
@@ -150,23 +149,11 @@ class RecurringSettlementCycleGeneratorTest {
         }
 
         @Test
-        @DisplayName("MONTHLY - 같은 일자가 아니면 도래하지 않은 것으로 본다")
-        void monthlyNotDueOnDifferentDay() {
-            RecurringSettlementDTO recurring = recurring(CycleRule.MONTHLY);
+        @DisplayName("MONTHLY - 1/31 시작, 직전 회차 1/31 → 2월은 말일인 28일에 도래한다")
+        void monthlyClampsToLastDayOfShortMonth() {
+            RecurringSettlementDTO recurring = recurring(CycleRule.MONTHLY, LocalDate.of(2026, 1, 31));
             when(settlementMapper.findLatestByRecurringId(1L))
-                    .thenReturn(latestSettlement(LocalDate.of(2026, 1, 1)));
-
-            sut.generateNextCycle(recurring, LocalDate.of(2026, 2, 2)); // 1일이 아니라 2일
-
-            verify(settlementMapper, never()).insertSettlement(any());
-        }
-
-        @Test
-        @DisplayName("MONTHLY - 같은 일자, 한 달 이상 지났으면 도래한 것으로 본다")
-        void monthlyDueOnSameDayNextMonth() {
-            RecurringSettlementDTO recurring = recurring(CycleRule.MONTHLY);
-            when(settlementMapper.findLatestByRecurringId(1L))
-                    .thenReturn(latestSettlement(LocalDate.of(2026, 1, 1)));
+                    .thenReturn(latestSettlement(LocalDate.of(2026, 1, 31)));
             when(participantMapper.findBySettlementId(10L))
                     .thenReturn(List.of(activeParticipant(1L, 100L)));
             when(paymentObligationMapper.findByParticipantId(1L))
@@ -175,9 +162,85 @@ class RecurringSettlementCycleGeneratorTest {
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
 
-            sut.generateNextCycle(recurring, LocalDate.of(2026, 2, 1));
+            sut.generateNextCycle(recurring, LocalDate.of(2026, 2, 28));
 
             verify(settlementMapper).insertSettlement(any());
+        }
+
+        @Test
+        @DisplayName("MONTHLY - 목표일(2/28) 이전이면 아직 도래하지 않은 것으로 본다")
+        void monthlyNotDueBeforeClampedTarget() {
+            RecurringSettlementDTO recurring = recurring(CycleRule.MONTHLY, LocalDate.of(2026, 1, 31));
+            when(settlementMapper.findLatestByRecurringId(1L))
+                    .thenReturn(latestSettlement(LocalDate.of(2026, 1, 31)));
+
+            sut.generateNextCycle(recurring, LocalDate.of(2026, 2, 27));
+
+            verify(settlementMapper, never()).insertSettlement(any());
+        }
+
+        @Test
+        @DisplayName("MONTHLY - 2월에 28일로 클램프된 뒤에도, 3월엔 원래 anchor인 31일로 복귀한다")
+        void monthlyAnchorRecoversAfterClamp() {
+            // 직전 회차가 2/28(클램프된 값)이어도, anchor는 startDate의 31일을 계속 유지해야 함
+            RecurringSettlementDTO recurring = recurring(CycleRule.MONTHLY, LocalDate.of(2026, 1, 31));
+            when(settlementMapper.findLatestByRecurringId(1L))
+                    .thenReturn(latestSettlement(LocalDate.of(2026, 2, 28)));
+            when(participantMapper.findBySettlementId(10L))
+                    .thenReturn(List.of(activeParticipant(1L, 100L)));
+            when(paymentObligationMapper.findByParticipantId(1L))
+                    .thenReturn(Optional.of(PaymentObligationDTO.builder()
+                            .expectedAmount(BigDecimal.valueOf(150000)).build()));
+            when(settlementMapper.insertSettlement(any())).thenReturn(1);
+            when(participantMapper.insert(any())).thenReturn(1);
+
+            sut.generateNextCycle(recurring, LocalDate.of(2026, 3, 31));
+
+            verify(settlementMapper).insertSettlement(any());
+        }
+
+        @Test
+        @DisplayName("MONTHLY - anchor 복귀 목표일(3/31) 이전인 3/30에는 아직 도래하지 않은 것으로 본다")
+        void monthlyNotDueBeforeAnchorRecovery() {
+            RecurringSettlementDTO recurring = recurring(CycleRule.MONTHLY, LocalDate.of(2026, 1, 31));
+            when(settlementMapper.findLatestByRecurringId(1L))
+                    .thenReturn(latestSettlement(LocalDate.of(2026, 2, 28)));
+
+            sut.generateNextCycle(recurring, LocalDate.of(2026, 3, 30));
+
+            verify(settlementMapper, never()).insertSettlement(any());
+        }
+
+        @Test
+        @DisplayName("YEARLY - 2/29 시작, 평년엔 2/28로 클램프되어 도래한다")
+        void yearlyClampsToFeb28InNonLeapYear() {
+            // 2024는 윤년, 2025는 평년
+            RecurringSettlementDTO recurring = recurring(CycleRule.YEARLY, LocalDate.of(2024, 2, 29));
+            when(settlementMapper.findLatestByRecurringId(1L))
+                    .thenReturn(latestSettlement(LocalDate.of(2024, 2, 29)));
+            when(participantMapper.findBySettlementId(10L))
+                    .thenReturn(List.of(activeParticipant(1L, 100L)));
+            when(paymentObligationMapper.findByParticipantId(1L))
+                    .thenReturn(Optional.of(PaymentObligationDTO.builder()
+                            .expectedAmount(BigDecimal.valueOf(150000)).build()));
+            when(settlementMapper.insertSettlement(any())).thenReturn(1);
+            when(participantMapper.insert(any())).thenReturn(1);
+
+            sut.generateNextCycle(recurring, LocalDate.of(2025, 2, 28));
+
+            verify(settlementMapper).insertSettlement(any());
+        }
+
+        @Test
+        @DisplayName("YEARLY - 평년에 2/28로 클램프된 뒤, 다음 윤년엔 원래 anchor인 2/29로 복귀한다")
+        void yearlyAnchorRecoversOnNextLeapYear() {
+            RecurringSettlementDTO recurring = recurring(CycleRule.YEARLY, LocalDate.of(2024, 2, 29));
+            when(settlementMapper.findLatestByRecurringId(1L))
+                    .thenReturn(latestSettlement(LocalDate.of(2027, 2, 28))); // 평년 회차
+
+            // 2028은 윤년 - 아직 2/28이면 도래 전
+            sut.generateNextCycle(recurring, LocalDate.of(2028, 2, 28));
+            verify(settlementMapper, never()).insertSettlement(any());
         }
     }
 
