@@ -76,7 +76,7 @@ public class RecurringSettlementCycleGenerator {
         }
 
         BigDecimal equalAmount = recurring.getSplitType() == SplitType.EQUAL
-                ? settlementAmountCalculator.calculateEqualAmount(recurring.getTotalAmount(), activeParticipants.size())
+                ? settlementAmountCalculator.calculateEqualAmountForTotalCount(recurring.getTotalAmount(), activeParticipants.size())
                 : null;
 
         for (SettlementParticipantDTO oldParticipant : activeParticipants) {
