@@ -30,6 +30,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -145,7 +146,7 @@ class RecurringSettlementCycleGeneratorTest {
     class EqualSplitRecalculation {
 
         @Test
-        @DisplayName("EQUAL이면 직전 회차 금액이 아니라 현재 ACTIVE 참여자 수 기준으로 재계산한다")
+        @DisplayName("EQUAL이면 직전 회차 금액이 아니라 현재 ACTIVE 참여자 수(전체 인원) 기준으로 재계산한다")
         void recalculatesEqualAmountByCurrentActiveCount() {
             RecurringSettlementDTO recurring = recurring(SplitType.EQUAL);
             SettlementDTO previous = previousSettlement();
@@ -155,13 +156,13 @@ class RecurringSettlementCycleGeneratorTest {
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
-            when(settlementAmountCalculator.calculateEqualAmount(BigDecimal.valueOf(300000), 1))
+            when(settlementAmountCalculator.calculateEqualAmountForTotalCount(BigDecimal.valueOf(300000), 1))
                     .thenReturn(BigDecimal.valueOf(300000)); // 1명이면 전액
 
             SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
             assertThat(result).isNotNull();
-            verify(settlementAmountCalculator).calculateEqualAmount(BigDecimal.valueOf(300000), 1);
+            verify(settlementAmountCalculator).calculateEqualAmountForTotalCount(BigDecimal.valueOf(300000), 1);
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(300000)));
             // EQUAL이면 직전 obligation을 조회할 필요가 없어야 함
             verify(paymentObligationMapper, never()).findByParticipantId(any());
@@ -186,7 +187,7 @@ class RecurringSettlementCycleGeneratorTest {
 
             assertThat(result).isNotNull();
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(150000)));
-            verify(settlementAmountCalculator, never()).calculateEqualAmount(any(), anyInt());
+            verify(settlementAmountCalculator, never()).calculateEqualAmountForTotalCount(any(), anyInt());
         }
 
         @Test
@@ -229,7 +230,7 @@ class RecurringSettlementCycleGeneratorTest {
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
-            when(settlementAmountCalculator.calculateEqualAmount(BigDecimal.valueOf(300000), 2))
+            when(settlementAmountCalculator.calculateEqualAmountForTotalCount(BigDecimal.valueOf(300000), 2))
                     .thenReturn(BigDecimal.valueOf(150000));
 
             SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
