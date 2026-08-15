@@ -12,6 +12,8 @@ import java.util.Optional;
 
 @Mapper
 public interface PaymentObligationMapper {
+    Optional<PaymentObligationDTO> findByParticipantId(@Param("participantId") Long participantId);
+
     Optional<PaymentObligationDTO> findByIdForUpdate(
             @Param("paymentObligationId") Long paymentObligationId
     );
@@ -27,6 +29,5 @@ public interface PaymentObligationMapper {
     );
 
     int insert(PaymentObligationDTO paymentObligation);
-
 }
 

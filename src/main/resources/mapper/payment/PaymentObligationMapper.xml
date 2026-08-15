@@ -157,4 +157,11 @@
         #{obligationStatus}
         )
     </insert>
+
+    <select id="findByParticipantId" resultMap="PaymentObligationResultMap">
+        SELECT payment_obligation_id, participant_id, expected_amount,
+        payment_status, review_status, obligation_status
+        FROM payment_obligation
+        WHERE participant_id = #{participantId}
+    </select>
 </mapper>
