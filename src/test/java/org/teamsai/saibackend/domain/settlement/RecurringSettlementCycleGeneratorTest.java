@@ -194,9 +194,6 @@ class RecurringSettlementCycleGeneratorTest {
             assertThat(result).isNotNull();
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(150000)));
             verify(settlementAmountCalculator, never()).calculateEqualAmountForTotalCount(any(), anyInt());
-            // N+1 제거 확인: 단건 조회(findByParticipantId)는 더 이상 호출되지 않아야 함
-            verify(paymentObligationMapper, never()).findByParticipantId(any());
-            // 배치 조회는 정확히 1번만 호출되어야 함 (참여자 수와 무관하게)
             verify(paymentObligationMapper, times(1)).findByParticipantIds(any());
         }
 
@@ -211,7 +208,6 @@ class RecurringSettlementCycleGeneratorTest {
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
-            // "최신 것 고르기"는 이제 SQL 책임이므로, Mock은 이미 걸러진 결과 1건만 반환
             when(paymentObligationMapper.findByParticipantIds(List.of(1L)))
                     .thenReturn(List.of(obligation(600L, 1L, BigDecimal.valueOf(150000))));
 
@@ -295,9 +291,7 @@ class RecurringSettlementCycleGeneratorTest {
 
             assertThat(result).isNotNull();
             verify(participantMapper, times(3)).insert(any());
-            // 참여자가 3명이어도 obligation 조회는 딱 1번만 (N+1이 아니라 배치 조회임을 검증)
             verify(paymentObligationMapper, times(1)).findByParticipantIds(any());
-            verify(paymentObligationMapper, never()).findByParticipantId(any());
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(100000)));
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(120000)));
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(80000)));

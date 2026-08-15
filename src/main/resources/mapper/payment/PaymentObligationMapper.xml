@@ -158,16 +158,6 @@
         )
     </insert>
 
-    <select id="findByParticipantId" resultMap="PaymentObligationResultMap">
-        SELECT payment_obligation_id, participant_id, expected_amount,
-        payment_status, review_status, obligation_status
-        FROM payment_obligation
-        WHERE participant_id = #{participantId}
-        AND obligation_status = 'ACTIVE'
-        ORDER BY payment_obligation_id DESC
-        LIMIT 1
-    </select>
-
     <select id="findByParticipantIds" resultMap="PaymentObligationResultMap">
         SELECT po.payment_obligation_id, po.participant_id, po.expected_amount,
         po.payment_status, po.review_status, po.obligation_status
