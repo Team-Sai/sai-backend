@@ -15,50 +15,45 @@ import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
-import org.teamsai.saibackend.domain.settlement.type.SettlementParticipantStatus;
-import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
-import org.teamsai.saibackend.domain.settlement.type.SettlementType;
+import org.teamsai.saibackend.domain.settlement.type.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class RecurringSettlementCycleGenerator {
+
     private final SettlementMapper settlementMapper;
     private final SettlementParticipantMapper participantMapper;
     private final PaymentObligationMapper paymentObligationMapper;
-    private final SettlementPaymentService settlementPaymentService; // 기존 서비스 재사용
-
+    private final SettlementPaymentService settlementPaymentService;
+    private final SettlementAmountCalculator settlementAmountCalculator;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void generateNextCycle(RecurringSettlementDTO recurring, LocalDate baseDate) {
-        SettlementDTO latestSettlement =
-                settlementMapper.findLatestByRecurringId(recurring.getRecurringSettlementId());
+    public SettlementDTO generateOneCycle(RecurringSettlementDTO recurring, SettlementDTO previousSettlement, LocalDate cycleDate) {
+        SettlementDTO lockedLatest =
+                settlementMapper.findLatestByRecurringIdForUpdate(recurring.getRecurringSettlementId());
 
-        if (latestSettlement == null) {
-            log.warn("직전 회차 없음, 생성 스킵 recurringId={}", recurring.getRecurringSettlementId());
-            return;
-        }
-
-        if (!isDueToday(recurring, latestSettlement, baseDate)) {
-            return;
+        if (lockedLatest == null || !lockedLatest.getSettlementId().equals(previousSettlement.getSettlementId())) {
+            log.warn("동시 생성 감지, 스킵 recurringId={}", recurring.getRecurringSettlementId());
+            return null;
         }
 
         List<SettlementParticipantDTO> activeParticipants =
-                participantMapper.findBySettlementId(latestSettlement.getSettlementId())
+                participantMapper.findBySettlementId(previousSettlement.getSettlementId())
                         .stream()
                         .filter(p -> p.getParticipantStatus() == SettlementParticipantStatus.ACTIVE)
                         .toList();
 
         if (activeParticipants.isEmpty()) {
-            log.warn("ACTIVE 참여자 없음, 생성 스킵 recurringId={}", recurring.getRecurringSettlementId());
-            return;
+            log.warn("ACTIVE 참여자 없음, 생성 스킵 recurringId={}, cycleDate={}",
+                    recurring.getRecurringSettlementId(), cycleDate);
+            return null;
         }
 
         SettlementDTO newSettlement = SettlementDTO.builder()
@@ -70,7 +65,7 @@ public class RecurringSettlementCycleGenerator {
                 .title(recurring.getTitle())
                 .splitType(recurring.getSplitType())
                 .totalAmount(recurring.getTotalAmount())
-                .cycleDate(baseDate)
+                .cycleDate(cycleDate)
                 .dueDate(null)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -80,43 +75,20 @@ public class RecurringSettlementCycleGenerator {
             throw SettlementErrorCode.SETTLEMENT_CREATE_FAILED.toException();
         }
 
+        BigDecimal equalAmount = recurring.getSplitType() == SplitType.EQUAL
+                ? settlementAmountCalculator.calculateEqualAmount(recurring.getTotalAmount(), activeParticipants.size())
+                : null;
+
         for (SettlementParticipantDTO oldParticipant : activeParticipants) {
-            copyParticipantWithObligation(oldParticipant, newSettlement.getSettlementId());
+            copyParticipantWithObligation(oldParticipant, newSettlement.getSettlementId(), recurring.getSplitType(), equalAmount);
         }
+
+        return newSettlement;
     }
 
-    private boolean isDueToday(RecurringSettlementDTO recurring, SettlementDTO latestSettlement, LocalDate baseDate) {
-        LocalDate lastCycleDate = latestSettlement.getCycleDate();
-
-        return switch (recurring.getCycleRule()) {
-            case DAILY -> !lastCycleDate.isEqual(baseDate);
-            case WEEKLY -> ChronoUnit.WEEKS.between(lastCycleDate, baseDate) >= 1;
-            case MONTHLY -> isDueByMonthlyAnchor(recurring.getStartDate(), lastCycleDate, baseDate);
-            case YEARLY -> isDueByYearlyAnchor(recurring.getStartDate(), lastCycleDate, baseDate);
-        };
-    }
-
-    private boolean isDueByMonthlyAnchor(LocalDate startDate, LocalDate lastCycleDate, LocalDate baseDate) {
-        int anchorDay = startDate.getDayOfMonth();
-        YearMonth nextTargetMonth = YearMonth.from(lastCycleDate).plusMonths(1);
-        LocalDate expectedNextDate = clampToMonth(nextTargetMonth, anchorDay);
-        return !baseDate.isBefore(expectedNextDate);
-    }
-
-    private boolean isDueByYearlyAnchor(LocalDate startDate, LocalDate lastCycleDate, LocalDate baseDate) {
-        int anchorMonth = startDate.getMonthValue();
-        int anchorDay = startDate.getDayOfMonth();
-        YearMonth nextTargetMonth = YearMonth.of(lastCycleDate.getYear() + 1, anchorMonth);
-        LocalDate expectedNextDate = clampToMonth(nextTargetMonth, anchorDay);
-        return !baseDate.isBefore(expectedNextDate);
-    }
-
-    private LocalDate clampToMonth(YearMonth targetMonth, int anchorDay) {
-        int actualDay = Math.min(anchorDay, targetMonth.lengthOfMonth());
-        return targetMonth.atDay(actualDay);
-    }
-
-    private void copyParticipantWithObligation(SettlementParticipantDTO oldParticipant, Long newSettlementId) {
+    private void copyParticipantWithObligation(
+            SettlementParticipantDTO oldParticipant, Long newSettlementId, SplitType splitType, BigDecimal equalAmount
+    ) {
         SettlementParticipantDTO newParticipant = SettlementParticipantDTO.builder()
                 .userId(oldParticipant.getUserId())
                 .settlementId(newSettlementId)
@@ -130,10 +102,29 @@ public class RecurringSettlementCycleGenerator {
             throw SettlementErrorCode.SETTLEMENT_PARTICIPANT_CREATE_FAILED.toException();
         }
 
-        BigDecimal expectedAmount = paymentObligationMapper.findByParticipantId(oldParticipant.getParticipantId())
-                .map(PaymentObligationDTO::getExpectedAmount)
-                .orElseThrow(PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND::toException);
+        BigDecimal expectedAmount;
+        if (splitType == SplitType.EQUAL) {
+            expectedAmount = equalAmount;
+        } else {
+            expectedAmount = paymentObligationMapper.findByParticipantId(oldParticipant.getParticipantId())
+                    .map(PaymentObligationDTO::getExpectedAmount)
+                    .orElseThrow(PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND::toException);
+        }
 
         settlementPaymentService.createObligation(newParticipant.getParticipantId(), expectedAmount);
+    }
+
+    public LocalDate calculateNthCycleDate(LocalDate startDate, CycleRule cycleRule, int n) {
+        return switch (cycleRule) {
+            case DAILY -> startDate.plusDays(n);
+            case WEEKLY -> startDate.plusWeeks(n);
+            case MONTHLY -> clampToMonth(YearMonth.from(startDate).plusMonths(n), startDate.getDayOfMonth());
+            case YEARLY -> clampToMonth(YearMonth.of(startDate.getYear() + n, startDate.getMonthValue()), startDate.getDayOfMonth());
+        };
+    }
+
+    private LocalDate clampToMonth(YearMonth targetMonth, int anchorDay) {
+        int actualDay = Math.min(anchorDay, targetMonth.lengthOfMonth());
+        return targetMonth.atDay(actualDay);
     }
 }

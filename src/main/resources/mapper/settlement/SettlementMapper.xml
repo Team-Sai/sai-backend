@@ -185,4 +185,20 @@
 
     </select>
 
+    <select id="countByRecurringId" resultType="int">
+        SELECT COUNT(*)
+        FROM settlement
+        WHERE recurring_settlement_id = #{recurringSettlementId}
+    </select>
+
+    <select id="findLatestByRecurringIdForUpdate" resultMap="settlementResultMap">
+        SELECT settlement_id, recurring_settlement_id, owner_id, settlement_type, settlement_status,
+        settlement_category, title, split_type, total_amount, due_date, cycle_date, created_at, closed_at
+        FROM settlement
+        WHERE recurring_settlement_id = #{recurringSettlementId}
+        ORDER BY cycle_date DESC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
 </mapper>

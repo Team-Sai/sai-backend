@@ -163,5 +163,7 @@
         payment_status, review_status, obligation_status
         FROM payment_obligation
         WHERE participant_id = #{participantId}
+        ORDER BY payment_obligation_id DESC
+        LIMIT 1
     </select>
 </mapper>
