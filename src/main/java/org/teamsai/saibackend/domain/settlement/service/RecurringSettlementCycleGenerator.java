@@ -22,6 +22,7 @@ import org.teamsai.saibackend.domain.settlement.type.SettlementType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -90,12 +91,29 @@ public class RecurringSettlementCycleGenerator {
         return switch (recurring.getCycleRule()) {
             case DAILY -> !lastCycleDate.isEqual(baseDate);
             case WEEKLY -> ChronoUnit.WEEKS.between(lastCycleDate, baseDate) >= 1;
-            case MONTHLY -> ChronoUnit.MONTHS.between(lastCycleDate, baseDate) >= 1
-                    && lastCycleDate.getDayOfMonth() == baseDate.getDayOfMonth();
-            case YEARLY -> ChronoUnit.YEARS.between(lastCycleDate, baseDate) >= 1
-                    && lastCycleDate.getMonth() == baseDate.getMonth()
-                    && lastCycleDate.getDayOfMonth() == baseDate.getDayOfMonth();
+            case MONTHLY -> isDueByMonthlyAnchor(recurring.getStartDate(), lastCycleDate, baseDate);
+            case YEARLY -> isDueByYearlyAnchor(recurring.getStartDate(), lastCycleDate, baseDate);
         };
+    }
+
+    private boolean isDueByMonthlyAnchor(LocalDate startDate, LocalDate lastCycleDate, LocalDate baseDate) {
+        int anchorDay = startDate.getDayOfMonth();
+        YearMonth nextTargetMonth = YearMonth.from(lastCycleDate).plusMonths(1);
+        LocalDate expectedNextDate = clampToMonth(nextTargetMonth, anchorDay);
+        return !baseDate.isBefore(expectedNextDate);
+    }
+
+    private boolean isDueByYearlyAnchor(LocalDate startDate, LocalDate lastCycleDate, LocalDate baseDate) {
+        int anchorMonth = startDate.getMonthValue();
+        int anchorDay = startDate.getDayOfMonth();
+        YearMonth nextTargetMonth = YearMonth.of(lastCycleDate.getYear() + 1, anchorMonth);
+        LocalDate expectedNextDate = clampToMonth(nextTargetMonth, anchorDay);
+        return !baseDate.isBefore(expectedNextDate);
+    }
+
+    private LocalDate clampToMonth(YearMonth targetMonth, int anchorDay) {
+        int actualDay = Math.min(anchorDay, targetMonth.lengthOfMonth());
+        return targetMonth.atDay(actualDay);
     }
 
     private void copyParticipantWithObligation(SettlementParticipantDTO oldParticipant, Long newSettlementId) {
@@ -115,7 +133,7 @@ public class RecurringSettlementCycleGenerator {
         BigDecimal expectedAmount = paymentObligationMapper.findByParticipantId(oldParticipant.getParticipantId())
                 .map(PaymentObligationDTO::getExpectedAmount)
                 .orElseThrow(PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND::toException);
-        
+
         settlementPaymentService.createObligation(newParticipant.getParticipantId(), expectedAmount);
     }
 }
