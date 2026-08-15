@@ -167,4 +167,21 @@
         ORDER BY payment_obligation_id DESC
         LIMIT 1
     </select>
+
+    <select id="findByParticipantIds" resultMap="PaymentObligationResultMap">
+        SELECT po.payment_obligation_id, po.participant_id, po.expected_amount,
+        po.payment_status, po.review_status, po.obligation_status
+        FROM payment_obligation po
+        INNER JOIN (
+        SELECT participant_id, MAX(payment_obligation_id) AS latest_id
+        FROM payment_obligation
+        WHERE participant_id IN
+        <foreach item="id" collection="participantIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND obligation_status = 'ACTIVE'
+        GROUP BY participant_id
+        ) latest ON latest.participant_id = po.participant_id
+        AND latest.latest_id = po.payment_obligation_id
+    </select>
 </mapper>

@@ -25,7 +25,6 @@ import org.teamsai.saibackend.global.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -78,6 +77,14 @@ class RecurringSettlementCycleGeneratorTest {
                 .build();
     }
 
+    private PaymentObligationDTO obligation(Long obligationId, Long participantId, BigDecimal expectedAmount) {
+        return PaymentObligationDTO.builder()
+                .paymentObligationId(obligationId)
+                .participantId(participantId)
+                .expectedAmount(expectedAmount)
+                .build();
+    }
+
     @Nested
     @DisplayName("동시성 락 검증")
     class LockValidation {
@@ -89,7 +96,7 @@ class RecurringSettlementCycleGeneratorTest {
             SettlementDTO previous = previousSettlement();
 
             SettlementDTO alreadyCreatedByOther = SettlementDTO.builder()
-                    .settlementId(11L) // previous.getSettlementId()=10L과 다름
+                    .settlementId(11L)
                     .recurringSettlementId(1L)
                     .cycleDate(LocalDate.of(2026, 2, 28))
                     .build();
@@ -152,24 +159,24 @@ class RecurringSettlementCycleGeneratorTest {
             SettlementDTO previous = previousSettlement();
             when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(previous);
             when(participantMapper.findBySettlementId(10L)).thenReturn(List.of(
-                    activeParticipant(1L, 100L) // 참여자 1명만 남음 (탈퇴로 인원 감소)
+                    activeParticipant(1L, 100L)
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
             when(settlementAmountCalculator.calculateEqualAmountForTotalCount(BigDecimal.valueOf(300000), 1))
-                    .thenReturn(BigDecimal.valueOf(300000)); // 1명이면 전액
+                    .thenReturn(BigDecimal.valueOf(300000));
 
             SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
             assertThat(result).isNotNull();
             verify(settlementAmountCalculator).calculateEqualAmountForTotalCount(BigDecimal.valueOf(300000), 1);
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(300000)));
-            // EQUAL이면 직전 obligation을 조회할 필요가 없어야 함
-            verify(paymentObligationMapper, never()).findByParticipantId(any());
+            // EQUAL이면 배치 조회 자체를 안 해야 함 (N+1 제거 후에도 EQUAL 경로는 조회 불필요)
+            verify(paymentObligationMapper, never()).findByParticipantIds(any());
         }
 
         @Test
-        @DisplayName("EQUAL이 아니면 직전 회차의 expectedAmount를 그대로 유지한다")
+        @DisplayName("EQUAL이 아니면 참여자ID 목록으로 한 번에 조회한 뒤 직전 회차의 expectedAmount를 그대로 유지한다")
         void keepsPreviousAmountWhenNotEqual() {
             RecurringSettlementDTO recurring = recurring(SplitType.CUSTOM);
             SettlementDTO previous = previousSettlement();
@@ -179,15 +186,38 @@ class RecurringSettlementCycleGeneratorTest {
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
-            when(paymentObligationMapper.findByParticipantId(1L))
-                    .thenReturn(Optional.of(PaymentObligationDTO.builder()
-                            .expectedAmount(BigDecimal.valueOf(150000)).build()));
+            when(paymentObligationMapper.findByParticipantIds(List.of(1L)))
+                    .thenReturn(List.of(obligation(500L, 1L, BigDecimal.valueOf(150000))));
 
             SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
             assertThat(result).isNotNull();
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(150000)));
             verify(settlementAmountCalculator, never()).calculateEqualAmountForTotalCount(any(), anyInt());
+            // N+1 제거 확인: 단건 조회(findByParticipantId)는 더 이상 호출되지 않아야 함
+            verify(paymentObligationMapper, never()).findByParticipantId(any());
+            // 배치 조회는 정확히 1번만 호출되어야 함 (참여자 수와 무관하게)
+            verify(paymentObligationMapper, times(1)).findByParticipantIds(any());
+        }
+
+        @Test
+        @DisplayName("같은 참여자에게 obligation이 여러 건 있어도, 쿼리는 이미 최신 것 하나만 반환한다고 가정하고 그 값을 사용한다")
+        void usesTheSingleObligationReturnedByQuery() {
+            RecurringSettlementDTO recurring = recurring(SplitType.CUSTOM);
+            SettlementDTO previous = previousSettlement();
+            when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(previous);
+            when(participantMapper.findBySettlementId(10L)).thenReturn(List.of(
+                    activeParticipant(1L, 100L)
+            ));
+            when(settlementMapper.insertSettlement(any())).thenReturn(1);
+            when(participantMapper.insert(any())).thenReturn(1);
+            // "최신 것 고르기"는 이제 SQL 책임이므로, Mock은 이미 걸러진 결과 1건만 반환
+            when(paymentObligationMapper.findByParticipantIds(List.of(1L)))
+                    .thenReturn(List.of(obligation(600L, 1L, BigDecimal.valueOf(150000))));
+
+            sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+
+            verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(150000)));
         }
 
         @Test
@@ -201,7 +231,7 @@ class RecurringSettlementCycleGeneratorTest {
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
-            when(paymentObligationMapper.findByParticipantId(1L)).thenReturn(Optional.empty());
+            when(paymentObligationMapper.findByParticipantIds(List.of(1L))).thenReturn(List.of());
 
             assertThatThrownBy(() -> sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28)))
                     .isInstanceOf(DomainException.class)
@@ -239,6 +269,38 @@ class RecurringSettlementCycleGeneratorTest {
             assertThat(result.getCycleDate()).isEqualTo(LocalDate.of(2026, 2, 28));
             verify(participantMapper, times(2)).insert(any()); // REMOVED는 제외되어 2명만
             verify(settlementPaymentService, times(2)).createObligation(any(), eq(BigDecimal.valueOf(150000)));
+        }
+
+        @Test
+        @DisplayName("CUSTOM 참여자 복수 명에 대해 배치 조회가 정확히 1번만 호출된다 (N+1 검증)")
+        void batchQueriesObligationsOnceForMultipleParticipants() {
+            RecurringSettlementDTO recurring = recurring(SplitType.CUSTOM);
+            SettlementDTO previous = previousSettlement();
+            when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(previous);
+            when(participantMapper.findBySettlementId(10L)).thenReturn(List.of(
+                    activeParticipant(1L, 100L),
+                    activeParticipant(2L, 200L),
+                    activeParticipant(3L, 300L)
+            ));
+            when(settlementMapper.insertSettlement(any())).thenReturn(1);
+            when(participantMapper.insert(any())).thenReturn(1);
+            when(paymentObligationMapper.findByParticipantIds(List.of(1L, 2L, 3L)))
+                    .thenReturn(List.of(
+                            obligation(500L, 1L, BigDecimal.valueOf(100000)),
+                            obligation(501L, 2L, BigDecimal.valueOf(120000)),
+                            obligation(502L, 3L, BigDecimal.valueOf(80000))
+                    ));
+
+            SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+
+            assertThat(result).isNotNull();
+            verify(participantMapper, times(3)).insert(any());
+            // 참여자가 3명이어도 obligation 조회는 딱 1번만 (N+1이 아니라 배치 조회임을 검증)
+            verify(paymentObligationMapper, times(1)).findByParticipantIds(any());
+            verify(paymentObligationMapper, never()).findByParticipantId(any());
+            verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(100000)));
+            verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(120000)));
+            verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(80000)));
         }
 
         @Test

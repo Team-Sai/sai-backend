@@ -13,6 +13,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
 import org.teamsai.saibackend.domain.settlement.service.RecurringSettlementGenerationService;
+import org.teamsai.saibackend.domain.settlement.type.SplitType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -135,6 +136,65 @@ class RecurringSettlementGenerationServiceIntegrationTest {
     }
 
     @Nested
+    @DisplayName("CUSTOM 분할 시 재청구 이력 중 최신 obligation 사용")
+    class LatestObligationAmongMultipleRecords {
+
+        @Test
+        @DisplayName("한 참여자에게 obligation이 여러 건(재청구 이력) 있으면, ID가 가장 큰 최신 것의 금액으로 다음 회차가 생성된다")
+        void usesLatestObligationAmountWhenMultipleExistForSameParticipant() {
+            Long ownerId = 75001L;
+            Long userA = 75002L;
+            Long recurringId = 75101L;
+            Long settlement1Id = 75201L;
+            Long participant1Id = 75301L;
+
+            insertUser(ownerId, "채무자 관리자");
+            insertUser(userA, "참여자 A");
+            insertRecurringSettlement(recurringId, ownerId, LocalDate.of(2026, 1, 31), SplitType.CUSTOM);
+            insertSettlementInstance(settlement1Id, recurringId, ownerId, LocalDate.of(2026, 1, 31), SplitType.CUSTOM);
+            insertParticipant(participant1Id, settlement1Id, userA, "ACTIVE");
+
+            // 재청구 이력: 오래된 obligation(취소/제외 처리됐다고 가정)과 최신 obligation이 공존
+            insertObligation(85001L, participant1Id, "100000.00", "EXCLUDED");
+            insertObligation(85002L, participant1Id, "150000.00", "ACTIVE"); // 더 최근에 생성된, ID가 더 큰 것
+
+            generationService.generateTodaySettlements(LocalDate.of(2026, 2, 28));
+
+            var latest = settlementMapper.findLatestByRecurringId(recurringId);
+            assertThat(latest).isNotNull();
+            assertThat(latest.getSettlementId()).isNotEqualTo(settlement1Id);
+
+            Map<Long, BigDecimal> obligationByUserId = fetchObligationAmountsByUser(latest.getSettlementId());
+            assertThat(obligationByUserId.get(userA)).isEqualByComparingTo(new BigDecimal("150000"));
+        }
+
+        @Test
+        @DisplayName("ACTIVE 상태인 obligation이 여러 건이어도, 그중 ID가 가장 큰(가장 최근) 것을 사용한다")
+        void usesHighestIdAmongMultipleActiveObligations() {
+            Long ownerId = 76001L;
+            Long userA = 76002L;
+            Long recurringId = 76101L;
+            Long settlement1Id = 76201L;
+            Long participant1Id = 76301L;
+
+            insertUser(ownerId, "채무자 관리자");
+            insertUser(userA, "참여자 A");
+            insertRecurringSettlement(recurringId, ownerId, LocalDate.of(2026, 1, 31), SplitType.CUSTOM);
+            insertSettlementInstance(settlement1Id, recurringId, ownerId, LocalDate.of(2026, 1, 31), SplitType.CUSTOM);
+            insertParticipant(participant1Id, settlement1Id, userA, "ACTIVE");
+
+            insertObligation(86001L, participant1Id, "80000.00", "ACTIVE");
+            insertObligation(86002L, participant1Id, "200000.00", "ACTIVE"); // ID가 더 큼
+
+            generationService.generateTodaySettlements(LocalDate.of(2026, 2, 28));
+
+            var latest = settlementMapper.findLatestByRecurringId(recurringId);
+            Map<Long, BigDecimal> obligationByUserId = fetchObligationAmountsByUser(latest.getSettlementId());
+            assertThat(obligationByUserId.get(userA)).isEqualByComparingTo(new BigDecimal("200000"));
+        }
+    }
+
+    @Nested
     @DisplayName("밀린 회차 캐치업")
     class CatchUpMultipleCycles {
 
@@ -228,32 +288,15 @@ class RecurringSettlementGenerationServiceIntegrationTest {
     }
 
     private void insertRecurringSettlement(Long recurringSettlementId, Long ownerId, LocalDate startDate) {
-        jdbcTemplate.update(
-                """
-                INSERT INTO recurring_settlement (
-                    recurring_settlement_id, owner_id, settlement_category, title,
-                    split_type, total_amount, cycle_rule, start_date, end_date, created_at
-                )
-                VALUES (?, ?, '월세', '자취방 월세', 'EQUAL', 300000, 'MONTHLY', ?, NULL, NOW())
-                """,
-                recurringSettlementId, ownerId, startDate
-        );
+        insertRecurringSettlement(recurringSettlementId, ownerId, startDate, SplitType.EQUAL);
     }
 
-    private void insertSettlementInstance(
-            Long settlementId, Long recurringSettlementId, Long ownerId, LocalDate cycleDate
-    ) {
-        jdbcTemplate.update(
-                """
-                INSERT INTO settlement (
-                    settlement_id, recurring_settlement_id, owner_id, settlement_type,
-                    settlement_status, settlement_category, title, split_type,
-                    total_amount, due_date, cycle_date, created_at
-                )
-                VALUES (?, ?, ?, 'RECURRING', 'IN_PROGRESS', '월세', '자취방 월세', 'EQUAL', 300000, NULL, ?, NOW())
-                """,
-                settlementId, recurringSettlementId, ownerId, cycleDate
-        );
+    private void insertSettlementInstance(Long settlementId, Long recurringSettlementId, Long ownerId, LocalDate cycleDate) {
+        insertSettlementInstance(settlementId, recurringSettlementId, ownerId, cycleDate, SplitType.EQUAL);
+    }
+
+    private void insertObligation(Long obligationId, Long participantId, String expectedAmount) {
+        insertObligation(obligationId, participantId, expectedAmount, "ACTIVE");
     }
 
     private void insertParticipant(Long participantId, Long settlementId, Long userId, String status) {
@@ -268,16 +311,45 @@ class RecurringSettlementGenerationServiceIntegrationTest {
         );
     }
 
-    private void insertObligation(Long obligationId, Long participantId, String expectedAmount) {
+    private void insertRecurringSettlement(Long recurringSettlementId, Long ownerId, LocalDate startDate, SplitType splitType) {
+        jdbcTemplate.update(
+                """
+                INSERT INTO recurring_settlement (
+                    recurring_settlement_id, owner_id, settlement_category, title,
+                    split_type, total_amount, cycle_rule, start_date, end_date, created_at
+                )
+                VALUES (?, ?, '차용금', '월 상환액', ?, 300000, 'MONTHLY', ?, NULL, NOW())
+                """,
+                recurringSettlementId, ownerId, splitType.name(), startDate
+        );
+    }
+
+    private void insertSettlementInstance(
+            Long settlementId, Long recurringSettlementId, Long ownerId, LocalDate cycleDate, SplitType splitType
+    ) {
+        jdbcTemplate.update(
+                """
+                INSERT INTO settlement (
+                    settlement_id, recurring_settlement_id, owner_id, settlement_type,
+                    settlement_status, settlement_category, title, split_type,
+                    total_amount, due_date, cycle_date, created_at
+                )
+                VALUES (?, ?, ?, 'RECURRING', 'IN_PROGRESS', '차용금', '월 상환액', ?, 300000, NULL, ?, NOW())
+                """,
+                settlementId, recurringSettlementId, ownerId, splitType.name(), cycleDate
+        );
+    }
+
+    private void insertObligation(Long obligationId, Long participantId, String expectedAmount, String obligationStatus) {
         jdbcTemplate.update(
                 """
                 INSERT INTO payment_obligation (
                     payment_obligation_id, participant_id, expected_amount,
                     payment_status, review_status, obligation_status
                 )
-                VALUES (?, ?, ?, 'UNPAID', 'NORMAL', 'ACTIVE')
+                VALUES (?, ?, ?, 'UNPAID', 'NORMAL', ?)
                 """,
-                obligationId, participantId, new BigDecimal(expectedAmount)
+                obligationId, participantId, new BigDecimal(expectedAmount), obligationStatus
         );
     }
 }
