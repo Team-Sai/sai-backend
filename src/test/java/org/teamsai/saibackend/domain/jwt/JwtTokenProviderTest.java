@@ -20,30 +20,36 @@ class JwtTokenProviderTest {
 
     private static final long ACCESS_TOKEN_EXPIRATION_MS =
             60 * 60 * 1000L;
-    private static final long LINK_STATE_EXPIRATION_Ms =
+    private static final long LINK_STATE_EXPIRATION_MS =
             10 * 60 * 1000L;
-
     private static final Long USER_ID = 1L;
+    private static final String TEST_LINK_IDENTITY_HASH_SECRET = "test-link-identity-secret";
 
-    private String secret;
+    private String accessSecret;
+    private String linkStateSecret;
     private SecretKey signingKey;
     private JwtTokenProvider jwtTokenProvider;
 
     @BeforeEach
     void setUp() {
-        byte[] keyBytes =
+        byte[] accessKeyBytes =
                 "01234567890123456789012345678901"
                         .getBytes(StandardCharsets.UTF_8);
+        accessSecret = Encoders.BASE64.encode(accessKeyBytes);
+        signingKey = Keys.hmacShaKeyFor(accessKeyBytes);
 
-        secret = Encoders.BASE64.encode(keyBytes);
-        signingKey = Keys.hmacShaKeyFor(keyBytes);
+        byte[] linkStateKeyBytes =
+                "98765432109876543210987654321098"
+                        .getBytes(StandardCharsets.UTF_8);
+        linkStateSecret = Encoders.BASE64.encode(linkStateKeyBytes);
 
-        jwtTokenProvider =
-                new JwtTokenProvider(
-                        secret,
-                        ACCESS_TOKEN_EXPIRATION_MS,
-                        LINK_STATE_EXPIRATION_Ms
-                );
+        jwtTokenProvider = new JwtTokenProvider(
+                accessSecret,
+                linkStateSecret,
+                ACCESS_TOKEN_EXPIRATION_MS,
+                LINK_STATE_EXPIRATION_MS,
+                TEST_LINK_IDENTITY_HASH_SECRET
+        );
     }
 
     @Test
@@ -101,7 +107,6 @@ class JwtTokenProviderTest {
         byte[] otherKeyBytes =
                 "abcdefghijklmnopqrstuvwxyz123456"
                         .getBytes(StandardCharsets.UTF_8);
-
         SecretKey otherSigningKey =
                 Keys.hmacShaKeyFor(otherKeyBytes);
 
@@ -120,13 +125,23 @@ class JwtTokenProviderTest {
         assertThat(parsedUserId).isEmpty();
     }
 
+    @Test
+    @DisplayName("createAccessToken으로 만든 토큰은 getUserIdFromLinkState로 검증되지 않는다")
+    void accessTokenIsNotValidAsLinkState() {
+        String accessToken = jwtTokenProvider.createAccessToken(USER_ID);
+
+        Optional<Long> parsedUserId =
+                jwtTokenProvider.getUserIdFromLinkState(accessToken);
+
+        assertThat(parsedUserId).isEmpty();
+    }
+
     private String createToken(
             String subject,
             Date expiration,
             SecretKey key
     ) {
         Date issuedAt = new Date();
-
         return Jwts.builder()
                 .subject(subject)
                 .issuedAt(issuedAt)
