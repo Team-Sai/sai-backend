@@ -19,7 +19,7 @@
         <constructor>
             <arg column="target_type"
                  javaType="org.teamsai.saibackend.domain.matching.type.MatchingTargetType"/>
-            <arg column="obligation_id"
+            <arg column="target_id"
                  javaType="java.lang.Long"/>
             <arg column="participant_id"
                  javaType="java.lang.Long"/>
@@ -53,22 +53,21 @@
 
     <select id="findMatchCandidatesByLinkedAccountId"
             resultMap="MatchingCandidateResultMap">
+
         SELECT
         'SETTLEMENT' AS target_type,
-        po.payment_obligation_id AS obligation_id,
+        po.payment_obligation_id AS target_id,
         po.participant_id AS participant_id,
         u.name AS participant_name,
-        po.expected_amount - COALESCE(SUM(pr.amount), 0) AS remaining_amount
+        po.expected_amount - COALESCE(SUM(pr.amount), 0)
+        AS remaining_amount
         FROM payment_obligation po
         JOIN settlement_participant sp
         ON sp.participant_id = po.participant_id
-
         JOIN settlement s
         ON s.settlement_id = sp.settlement_id
-
         JOIN settlement_account sa
         ON sa.settlement_id = s.settlement_id
-
         JOIN users u
         ON u.user_id = sp.user_id
         LEFT JOIN payment_record pr
@@ -91,7 +90,55 @@
         po.participant_id,
         u.name,
         po.expected_amount
-        HAVING po.expected_amount - COALESCE(SUM(pr.amount), 0) &gt; 0
+        HAVING
+        po.expected_amount - COALESCE(SUM(pr.amount), 0) &gt; 0
+
+        UNION ALL
+
+        SELECT
+        'LOAN' AS target_type,
+        rs.schedule_id AS target_id,
+        lc.debtor_id AS participant_id,
+        debtor.name AS participant_name,
+        rs.total_payment_due - COALESCE(SUM(pr.amount), 0)
+        AS remaining_amount
+        FROM repayment_schedule rs
+        JOIN loan_contract lc
+        ON lc.contract_id = rs.contract_id
+        JOIN contract_account ca
+        ON ca.contract_id = lc.contract_id
+        JOIN users debtor
+        ON debtor.user_id = lc.debtor_id
+        LEFT JOIN payment_record pr
+        ON pr.payment_target_type = 'LOAN'
+        AND pr.target_id = rs.schedule_id
+        AND pr.record_status = 'CONFIRMED'
+        WHERE ca.linked_account_id = #{linkedAccountId}
+        AND ca.selected_at &lt;= #{transactionAt}
+        AND (
+        ca.ended_at IS NULL
+        OR ca.ended_at &gt; #{transactionAt}
+        )
+        AND ca.account_status = 'ACTIVE'
+        AND lc.status = 'COMPLETED'
+        AND lc.created_at &lt;= #{transactionAt}
+        AND rs.created_at &lt;= #{transactionAt}
+        AND rs.status = 'PENDING'
+        AND NOT EXISTS (
+        SELECT 1
+        FROM repayment_schedule earlier
+        WHERE earlier.contract_id = rs.contract_id
+        AND earlier.status = 'PENDING'
+        AND earlier.sequence &lt; rs.sequence
+        )
+        GROUP BY
+        rs.schedule_id,
+        lc.debtor_id,
+        debtor.name,
+        rs.total_payment_due
+        HAVING
+        rs.total_payment_due - COALESCE(SUM(pr.amount), 0) &gt; 0
+
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="paymentObligationId">

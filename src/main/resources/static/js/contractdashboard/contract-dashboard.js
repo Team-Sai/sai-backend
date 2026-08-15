@@ -132,6 +132,71 @@ document.getElementById('sortSelect').addEventListener('change', (e) => {
     fetchDashboard();
 });
 
+const syncButton = document.getElementById('btnSyncTransactions');
+
+syncButton.addEventListener('click', syncTransactions);
+
+async function syncTransactions() {
+    const originalText = syncButton.textContent;
+
+    try {
+        syncButton.disabled = true;
+        syncButton.textContent = '동기화 중...';
+
+        const response = await fetch('/api/transactions/sync', {
+            method: 'POST',
+            headers: authHeaders()
+        });
+
+        const result = await readJsonSafely(response);
+
+        if (!response.ok) {
+            throw new Error(
+                result?.message || '거래내역 동기화에 실패했습니다.'
+            );
+        }
+
+        if (!result) {
+            throw new Error('거래내역 동기화 결과를 확인할 수 없습니다.');
+        }
+
+        alert(
+            `거래내역 동기화가 완료되었습니다.\n` +
+            `자동 반영: ${result.appliedCount}건\n` +
+            `확인 필요: ${result.needsCheckCount}건\n` +
+            `미매칭: ${result.unmatchedCount}건\n` +
+            `중복: ${result.duplicateCount}건\n` +
+            `실패: ${result.failedCount}건`
+        );
+
+        // 상환 금액과 납부 상태를 다시 조회한다.
+        fetchDashboard();
+    } catch (error) {
+        console.error('거래내역 동기화 실패:', error);
+
+        alert(
+            error.message || '거래내역 동기화에 실패했습니다.'
+        );
+    } finally {
+        syncButton.disabled = false;
+        syncButton.textContent = originalText;
+    }
+}
+
+async function readJsonSafely(response) {
+    const text = await response.text();
+
+    if (!text) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return null;
+    }
+}
+
 document.getElementById('btnCreateContract').addEventListener('click', () => {
     window.location.href = '/contracts/new';
 })

@@ -22,11 +22,20 @@ public class GlobalExceptionHandler {
     ) {
         HttpStatus httpStatus = exception.getHttpStatus();
 
-        log.warn(
-                "도메인 예외 발생: status={}, message={}",
-                httpStatus.value(),
-                exception.getMessage()
-        );
+        if (httpStatus.is5xxServerError()) {
+            log.error(
+                    "도메인 예외 발생: status={}, message={}",
+                    httpStatus.value(),
+                    exception.getMessage(),
+                    exception
+            );
+        } else {
+            log.warn(
+                    "도메인 예외 발생: status={}, message={}",
+                    httpStatus.value(),
+                    exception.getMessage()
+            );
+        }
 
         return ResponseEntity
                 .status(httpStatus)
