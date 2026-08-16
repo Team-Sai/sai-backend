@@ -60,10 +60,22 @@ public class MockBankClient {
                 .uri("/api/link/confirm-key")
                 .header("X-Internal-Api-Key", internalApiKey)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new ConfirmKeyRequest(userKey))
+                .body(new UserKeyRequest(userKey))
                 .retrieve()
                 .toBodilessEntity();
     }
+
+    public void revokeUserKey(String userKey) {
+        restClient.post()
+                .uri("/api/link/revoke-key")
+                .header("X-Internal-Api-Key", internalApiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UserKeyRequest(userKey))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    private record UserKeyRequest(String userKey) {}
 
     private record ConfirmKeyRequest(String userKey) {}
 

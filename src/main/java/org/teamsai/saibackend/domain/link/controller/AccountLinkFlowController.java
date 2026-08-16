@@ -50,8 +50,7 @@ public class AccountLinkFlowController {
 
     @Operation(
             summary = "계좌 연동 시작",
-            description = "본인확인 정보를 검증하고 사이은행 연동 페이지로 이동할 redirectUrl을 발급합니다. "
-                    + "이미 연동된 계좌 ID는 excludeAccountIds로 전달되어 사이은행 선택 화면에서 제외됩니다."
+            description = "본인확인 정보를 검증하고 사이은행 연동 페이지로 이동할 redirectUrl을 발급"
     )
     @PostMapping("/api/accounts/link/start")
     public ResponseEntity<Map<String, String>> startLink(
@@ -76,9 +75,7 @@ public class AccountLinkFlowController {
 
     @Operation(
             summary = "계좌 연동 콜백",
-            description = "사이은행에서 계좌 선택을 마친 사용자가 리다이렉트되어 도달하는 엔드포인트입니다. "
-                    + "state 검증, 로컬 userKey/계좌 저장을 마친 뒤 사이은행에 userKey 확정(confirm) 신호를 보냅니다. "
-                    + "confirm 신호 전송이 실패해도 로컬 연동은 이미 완료된 상태이므로 사용자에게는 성공 화면이 표시됩니다."
+            description = "사이은행에서 계좌 선택을 마친 사용자가 리다이렉트되어 도달"
     )
     @GetMapping("/accounts/link/callback")
     public String linkCallback(
@@ -125,6 +122,7 @@ public class AccountLinkFlowController {
                     userId, userKey.substring(0, Math.min(8, userKey.length())), e);
             return errorView(model, "계좌 연동에 실패했습니다.");
         }
+
         try {
             accountLinkService.completeLink(userId, userKey, ids);
         } catch (DomainException e) {
@@ -132,10 +130,25 @@ public class AccountLinkFlowController {
                     "[AccountLinkFlowController] 계좌 연동 실패 - userId: {}, accountIds: {}, errorCode: {}",
                     userId, ids, e.getErrorCode()
             );
+            revokeConfirmedKey(userId, userKey);
             return errorView(model, "계좌 연동에 실패했습니다.");
         }
+
         model.addAttribute("success", true);
         return "link/link-complete";
+    }
+
+    private void revokeConfirmedKey(Long userId, String userKey) {
+        try {
+            mockBankClient.revokeUserKey(userKey);
+            log.info("[AccountLinkFlowController] 로컬 연동 실패로 mock-bank confirm 취소 완료 - userId: {}", userId);
+        } catch (Exception e) {
+            log.error(
+                    "[AccountLinkFlowController] mock-bank confirm 취소마저 실패 - userId: {}, userKey 앞 8자: {}. "
+                            + "mock-bank에 이 userKey가 ACTIVE 상태로 남아있을 수 있어 수동 확인이 필요합니다.",
+                    userId, userKey.substring(0, Math.min(8, userKey.length())), e
+            );
+        }
     }
 
     private String errorView(Model model, String message) {

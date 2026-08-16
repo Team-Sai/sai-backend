@@ -107,6 +107,44 @@ class MockBankClientTest {
     }
 
     @Test
+    @DisplayName("revokeUserKey - 성공하면 예외 없이 완료된다")
+    void revokeUserKey_성공() {
+        mockServer.expect(requestTo(BASE_URL + "/api/link/revoke-key"))
+                .andExpect(method(org.springframework.http.HttpMethod.POST))
+                .andExpect(header("X-Internal-Api-Key", API_KEY))
+                .andExpect(jsonPath("$.userKey").value("mb_rawkey"))
+                .andRespond(withSuccess());
+
+        mockBankClient.revokeUserKey("mb_rawkey");
+
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("revokeUserKey - mock-bank가 실패 응답을 주면 예외가 그대로 전파된다")
+    void revokeUserKey_실패시_예외전파() {
+        mockServer.expect(requestTo(BASE_URL + "/api/link/revoke-key"))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+
+        assertThatThrownBy(() -> mockBankClient.revokeUserKey("mb_rawkey"))
+                .isInstanceOf(Exception.class);
+
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("revokeUserKey - 네트워크 오류(5xx)도 예외로 전파된다")
+    void revokeUserKey_서버오류시_예외전파() {
+        mockServer.expect(requestTo(BASE_URL + "/api/link/revoke-key"))
+                .andRespond(withServerError());
+
+        assertThatThrownBy(() -> mockBankClient.revokeUserKey("mb_rawkey"))
+                .isInstanceOf(Exception.class);
+
+        mockServer.verify();
+    }
+
+    @Test
     @DisplayName("getAccountsByUserKey - X-User-Key 헤더를 포함해 요청한다")
     void getAccountsByUserKey_헤더포함() {
         mockServer.expect(requestTo(BASE_URL + "/api/mock-bank/accounts"))

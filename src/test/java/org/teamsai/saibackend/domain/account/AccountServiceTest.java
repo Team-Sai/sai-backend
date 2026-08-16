@@ -118,5 +118,42 @@ class AccountServiceTest {
             verify(mockBankClient, never()).requestUserKey(anyString(), anyString());
             verify(mockBankClient, never()).confirmUserKey(anyString());
         }
+
+        @Test
+        @DisplayName("confirm은 성공했지만 로컬 저장이 실패하면 revoke를 요청하고 BANK_SERVER_UNAVAILABLE 예외를 던진다")
+        void revokesConfirmedKeyWhenLocalSaveFails() {
+            given(userMapper.findById(USER_ID)).willReturn(Optional.of(createUser(null)));
+            given(mockBankClient.requestUserKey(USER_NAME, USER_TOKEN)).willReturn(NEW_KEY);
+            willThrow(new org.springframework.dao.DataAccessResourceFailureException("DB 연결 실패"))
+                    .given(linkMapper).updateUserKey(USER_ID, NEW_KEY);
+
+            assertThatThrownBy(() -> accountService.issueOrGetUserKey(USER_ID))
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.BANK_SERVER_UNAVAILABLE);
+
+            var inOrder = org.mockito.Mockito.inOrder(mockBankClient, linkMapper);
+            inOrder.verify(mockBankClient).confirmUserKey(NEW_KEY);
+            inOrder.verify(linkMapper).updateUserKey(USER_ID, NEW_KEY);
+            inOrder.verify(mockBankClient).revokeUserKey(NEW_KEY);
+        }
+
+        @Test
+        @DisplayName("로컬 저장 실패 후 revoke마저 실패해도 예외는 BANK_SERVER_UNAVAILABLE로 동일하게 던져진다")
+        void stillThrowsExpectedExceptionWhenRevokeAlsoFails() {
+            given(userMapper.findById(USER_ID)).willReturn(Optional.of(createUser(null)));
+            given(mockBankClient.requestUserKey(USER_NAME, USER_TOKEN)).willReturn(NEW_KEY);
+            willThrow(new org.springframework.dao.DataAccessResourceFailureException("DB 연결 실패"))
+                    .given(linkMapper).updateUserKey(USER_ID, NEW_KEY);
+            willThrow(new RuntimeException("mock-bank 다운"))
+                    .given(mockBankClient).revokeUserKey(NEW_KEY);
+
+            assertThatThrownBy(() -> accountService.issueOrGetUserKey(USER_ID))
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.BANK_SERVER_UNAVAILABLE);
+
+            verify(mockBankClient).revokeUserKey(NEW_KEY);
+        }
     }
 }

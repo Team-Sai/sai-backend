@@ -149,8 +149,8 @@ class AccountLinkFlowControllerTest {
     }
 
     @Test
-    @DisplayName("confirm은 성공했지만 계좌 연동 자체가 실패하면 에러 뷰를 반환한다")
-    void linkCallback_연동실패시_에러뷰() throws Exception {
+    @DisplayName("confirm은 성공했지만 계좌 연동이 실패하면 mock-bank에 revoke를 요청하고 에러 뷰를 반환한다")
+    void linkCallback_연동실패시_revoke요청후_에러뷰() throws Exception {
         given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
         willThrow(UserErrorCode.LINK_KEY_UPDATE_CONFLICT.toException())
                 .given(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
@@ -162,8 +162,28 @@ class AccountLinkFlowControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("success", false));
 
-        // confirm은 이미 호출된 뒤라는 것도 명시적으로 검증
-        verify(mockBankClient).confirmUserKey(USER_KEY);
-        verify(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
+        var inOrder = org.mockito.Mockito.inOrder(mockBankClient, accountLinkService);
+        inOrder.verify(mockBankClient).confirmUserKey(USER_KEY);
+        inOrder.verify(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
+        inOrder.verify(mockBankClient).revokeUserKey(USER_KEY);
+    }
+
+    @Test
+    @DisplayName("revoke 요청마저 실패해도 에러 뷰는 정상 반환된다 (예외가 사용자에게 전파되지 않음)")
+    void linkCallback_revoke도_실패해도_에러뷰는_정상반환() throws Exception {
+        given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
+        willThrow(UserErrorCode.LINK_KEY_UPDATE_CONFLICT.toException())
+                .given(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
+        willThrow(new RuntimeException("mock-bank 다운"))
+                .given(mockBankClient).revokeUserKey(USER_KEY);
+
+        mockMvc.perform(get("/accounts/link/callback")
+                        .param("state", STATE)
+                        .param("userKey", USER_KEY)
+                        .param("accountIds", "1"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("success", false));
+
+        verify(mockBankClient).revokeUserKey(USER_KEY);
     }
 }
