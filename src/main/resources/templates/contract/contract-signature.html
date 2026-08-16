@@ -6,30 +6,16 @@
   <title>금전차용계약서 서명 | 사이원장</title>
   <link rel="stylesheet" as="style" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+  <th:block
+          th:replace="~{fragments/app-shell :: commonStyles}">
+  </th:block>
   <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="../../static/css/contract/contract-form.css" />
   <link rel="stylesheet" th:href="@{/css/contract/contract-debtor-approve.css}" href="../../static/css/contract/contract-debtor-approve.css" />
 </head>
-<body>
+<body class="app-shell-page">
 
-<header class="topnav">
-  <div class="topnav__inner">
-    <div class="topnav__logo">사이원장</div>
-
-    <nav class="topnav__menu">
-      <a class="topnav__link" href="#">서비스 소개</a>
-      <a class="topnav__link is-active" href="#">금전소비대차</a>
-      <a class="topnav__link" href="#">정산관리</a>
-      <a class="topnav__link" href="#">거래 일정</a>
-    </nav>
-
-    <a class="topnav__bell" href="/notifications" aria-label="알림">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
-        <path d="M12 3a6 6 0 0 0-6 6v3.2c0 .5-.18 1-.5 1.4L4 15.5c-.6.7-.1 1.8.8 1.8h14.4c.9 0 1.4-1.1.8-1.8l-1.5-1.9a2.2 2.2 0 0 1-.5-1.4V9a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-        <path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-      </svg>
-      <span class="topnav__bell-badge" id="topnavBellBadge" hidden></span>
-    </a>
-  </div>
+<header
+        th:replace="~{fragments/app-shell :: appHeader('contract')}">
 </header>
 
 <main class="page">
@@ -110,19 +96,12 @@
   </div>
 </main>
 
-<footer class="site-footer">
-  <div class="footer-inner">
-    <div>
-      <strong>사이원장</strong>
-      <p>© Sai-Wonjang. All rights reserved.</p>
-    </div>
-    <nav>
-      <a href="#">이용약관</a>
-      <a href="#">개인정보처리방침</a>
-      <a href="#">고객센터</a>
-    </nav>
-  </div>
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
 </footer>
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
 
 <script th:src="@{/js/contract/contract-signature.js}" src="../../static/js/contract/contract-signature.js"></script>
 </body>

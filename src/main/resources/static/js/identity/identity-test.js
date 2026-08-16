@@ -18,14 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     async function startVerification() {
-        const accessToken = getAccessToken();
-
-        if (!accessToken) {
-            printResult(
-                "로그인 정보가 없습니다. 먼저 로그인해 주세요."
-            );
-            return;
-        }
 
         setLoading(true);
 
@@ -36,7 +28,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const prepare =
                 await prepareIdentityVerification(
-                    accessToken,
                     purposeSelect.value
                 );
 
@@ -52,7 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const completeResult =
                 await completeIdentityVerification(
-                    accessToken,
                     prepare.identityVerificationId
                 );
 
@@ -94,18 +84,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function prepareIdentityVerification(
-        accessToken,
         purpose
     ) {
-        const response = await fetch(
+        const response = await authFetch(
             "/api/identity-verifications",
             {
                 method: "POST",
 
                 headers: {
-                    "Authorization":
-                        `Bearer ${accessToken}`,
-
                     "Content-Type":
                         "application/json"
                 },
@@ -172,21 +158,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function completeIdentityVerification(
-        accessToken,
         identityVerificationId
     ) {
         const encodedId =
             encodeURIComponent(identityVerificationId);
 
-        const response = await fetch(
+        const response = await authFetch(
             `/api/identity-verifications/${encodedId}/complete`,
             {
-                method: "POST",
-
-                headers: {
-                    "Authorization":
-                        `Bearer ${accessToken}`
-                }
+                method: "POST"
             }
         );
 
@@ -212,52 +192,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 "본인인증 준비 응답이 올바르지 않습니다."
             );
         }
-    }
-
-    function getAccessToken() {
-        const directToken =
-            sessionStorage.getItem("accessToken")
-            ?? sessionStorage.getItem(
-                "saiwonjangAccessToken"
-            );
-
-        if (directToken) {
-            return removeBearerPrefix(directToken);
-        }
-
-        const authJson =
-            sessionStorage.getItem("saiwonjangAuth");
-
-        if (!authJson) {
-            return null;
-        }
-
-        try {
-            const auth = JSON.parse(authJson);
-
-            const token =
-                auth.accessToken
-                ?? auth.token
-                ?? null;
-
-            return token
-                ? removeBearerPrefix(token)
-                : null;
-
-        } catch (error) {
-            console.error(
-                "로그인 정보 파싱 실패",
-                error
-            );
-
-            return null;
-        }
-    }
-
-    function removeBearerPrefix(token) {
-        return token
-            .trim()
-            .replace(/^Bearer\s+/i, "");
     }
 
     async function readResponse(response) {

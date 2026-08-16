@@ -1,11 +1,3 @@
-function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-}
-
 const contractId = document.getElementById('contractId').value;
 
 let allSchedules = [];
@@ -25,8 +17,12 @@ const CONTRACT_STATUS_LABELS = {
 };
 
 Promise.all([
-    fetch(`/api/contracts/${contractId}/schedules`, { headers: authHeaders() }),
-    fetch(`/api/contracts/${contractId}/contract-detail`, { headers: authHeaders() })
+    authFetch(
+        `/api/contracts/${contractId}/schedules`
+    ),
+    authFetch(
+        `/api/contracts/${contractId}/contract-detail`
+    )
 ])
     .then(([scheduleRes, contractRes]) => {
         if (!scheduleRes.ok || !contractRes.ok) {

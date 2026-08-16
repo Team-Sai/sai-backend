@@ -11,14 +11,6 @@
 
     let currentPage = 1;
 
-    function authHeaders(extra) {
-        const token = sessionStorage.getItem("accessToken");
-        return Object.assign(
-            token ? { Authorization: `Bearer ${token}` } : {},
-            extra || {}
-        );
-    }
-
     function escapeHtml(value) {
         if (value == null) return "";
         return String(value)
@@ -76,9 +68,13 @@
 
     async function downloadContractPdf(contractId) {
         try {
-            const response = await fetch(
+            const response = await authFetch(
                 `/api/contracts/${contractId}/pdf`,
-                { headers: authHeaders({ Accept: "application/pdf" }) }
+                {
+                    headers: {
+                        Accept: "application/pdf"
+                    }
+                }
             );
 
             if (!response.ok) {
@@ -121,25 +117,18 @@
     }
 
     async function loadArchive() {
-        const token = sessionStorage.getItem("accessToken");
-        if (!token) {
-            window.location.href = "/login?required=true";
-            return;
-        }
 
         const listEl = document.getElementById("archiveList");
 
         try {
-            const response = await fetch(
+            const response = await authFetch(
                 `/api/dashboard?roleFilter=ALL&page=${currentPage}`,
-                { headers: authHeaders({ Accept: "application/json" }) }
+                {
+                    headers: {
+                        Accept: "application/json"
+                    }
+                }
             );
-
-            if (response.status === 401) {
-                sessionStorage.removeItem("accessToken");
-                window.location.href = "/login?required=true";
-                return;
-            }
 
             if (!response.ok) {
                 throw new Error("보관함 조회 실패");
