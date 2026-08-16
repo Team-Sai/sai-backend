@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.matching.mapper.BankTransactionMatchCandidateMapper">
+
+    <resultMap id="BankTransactionMatchCandidateResultMap"
+               type="org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateDTO">
+        <id property="matchCandidateId" column="match_candidate_id"/>
+        <result property="bankTransactionId" column="bank_transaction_id"/>
+        <result property="targetType"
+                column="target_type"
+                javaType="org.teamsai.saibackend.domain.matching.type.MatchingTargetType"/>
+        <result property="targetId" column="target_id"/>
+        <result property="expectedRemainingAmount"
+                column="expected_remaining_amount"/>
+        <result property="amountMatchType"
+                column="amount_match_type"
+                javaType="org.teamsai.saibackend.domain.matching.type.MatchingAmountType"/>
+        <result property="candidateStatus"
+                column="candidate_status"
+                javaType="org.teamsai.saibackend.domain.matching.type.MatchingCandidateStatus"/>
+        <result property="invalidatedAt" column="invalidated_at"/>
+        <result property="invalidationReason"
+                column="invalidation_reason"
+                javaType="org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <resultMap id="BankTransactionMatchCandidateQueryResultMap"
+               type="org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateQueryDTO">
+        <id property="matchCandidateId" column="match_candidate_id"/>
+        <result property="bankTransactionId" column="bank_transaction_id"/>
+        <result property="targetType"
+                column="target_type"
+                javaType="org.teamsai.saibackend.domain.matching.type.MatchingTargetType"/>
+        <result property="targetId" column="target_id"/>
+        <result property="participantName" column="participant_name"/>
+        <result property="expectedRemainingAmount"
+                column="expected_remaining_amount"/>
+        <result property="amountMatchType"
+                column="amount_match_type"
+                javaType="org.teamsai.saibackend.domain.matching.type.MatchingAmountType"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <sql id="BankTransactionMatchCandidateColumns">
+        match_candidate_id,
+        bank_transaction_id,
+        target_type,
+        target_id,
+        expected_remaining_amount,
+        amount_match_type,
+        candidate_status,
+        invalidated_at,
+        invalidation_reason,
+        created_at
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO bank_transaction_match_candidate (
+            bank_transaction_id,
+            target_type,
+            target_id,
+            expected_remaining_amount,
+            amount_match_type,
+            candidate_status,
+            created_at
+        )
+        VALUES
+        <foreach collection="candidates"
+                 item="candidate"
+                 separator=",">
+            (
+                #{candidate.bankTransactionId},
+                #{candidate.targetType},
+                #{candidate.targetId},
+                #{candidate.expectedRemainingAmount},
+                #{candidate.amountMatchType},
+                #{candidate.candidateStatus},
+                #{candidate.createdAt}
+            )
+        </foreach>
+    </insert>
+
+    <select id="findAllByBankTransactionId"
+            resultMap="BankTransactionMatchCandidateResultMap">
+        SELECT
+        <include refid="BankTransactionMatchCandidateColumns"/>
+        FROM bank_transaction_match_candidate
+        WHERE bank_transaction_id = #{bankTransactionId}
+        ORDER BY match_candidate_id ASC
+    </select>
+
+    <select id="findAllForReviewByBankTransactionId"
+            resultMap="BankTransactionMatchCandidateQueryResultMap">
+        SELECT
+            mc.match_candidate_id,
+            mc.bank_transaction_id,
+            mc.target_type,
+            mc.target_id,
+            COALESCE(settlement_user.name, debtor.name)
+                AS participant_name,
+            mc.expected_remaining_amount,
+            mc.amount_match_type,
+            mc.created_at
+        FROM bank_transaction_match_candidate mc
+        LEFT JOIN payment_obligation obligation
+            ON mc.target_type = 'SETTLEMENT'
+            AND obligation.payment_obligation_id = mc.target_id
+        LEFT JOIN settlement_participant participant
+            ON participant.participant_id = obligation.participant_id
+        LEFT JOIN users settlement_user
+            ON settlement_user.user_id = participant.user_id
+        LEFT JOIN repayment_schedule schedule
+            ON mc.target_type = 'LOAN'
+            AND schedule.schedule_id = mc.target_id
+        LEFT JOIN loan_contract contract
+            ON contract.contract_id = schedule.contract_id
+        LEFT JOIN users debtor
+            ON debtor.user_id = contract.debtor_id
+        WHERE mc.bank_transaction_id = #{bankTransactionId}
+        AND mc.candidate_status = 'AVAILABLE'
+        ORDER BY mc.match_candidate_id ASC
+    </select>
+
+    <select id="findByIdAndBankTransactionId"
+            resultMap="BankTransactionMatchCandidateResultMap">
+        SELECT
+        <include refid="BankTransactionMatchCandidateColumns"/>
+        FROM bank_transaction_match_candidate
+        WHERE match_candidate_id = #{matchCandidateId}
+        AND bank_transaction_id = #{bankTransactionId}
+        AND candidate_status = 'AVAILABLE'
+    </select>
+
+    <update id="invalidate">
+        UPDATE bank_transaction_match_candidate
+        SET candidate_status = 'INVALIDATED',
+            invalidated_at = #{invalidatedAt},
+            invalidation_reason = #{invalidationReason}
+        WHERE match_candidate_id = #{matchCandidateId}
+        AND bank_transaction_id = #{bankTransactionId}
+        AND candidate_status = 'AVAILABLE'
+    </update>
+
+    <select id="countAvailableByBankTransactionId"
+            resultType="int">
+        SELECT COUNT(*)
+        FROM bank_transaction_match_candidate
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND candidate_status = 'AVAILABLE'
+    </select>
+
+</mapper>

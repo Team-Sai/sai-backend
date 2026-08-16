@@ -25,7 +25,7 @@ public class TransactionSyncFacade {
 
     public AutoMatchingExecutionResult syncAndMatch(Long userId, Long linkedAccountId) {
         transactionSyncService.syncTransactions(userId, linkedAccountId);
-        return bankMatchingService.execute(linkedAccountId);
+        return bankMatchingService.execute(userId, linkedAccountId);
     }
 
     public TransactionSyncAllResponse syncAll(Long userId){

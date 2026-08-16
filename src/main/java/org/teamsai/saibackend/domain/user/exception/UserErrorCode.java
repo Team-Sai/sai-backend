@@ -61,6 +61,10 @@ public enum UserErrorCode
             HttpStatus.CONFLICT,
             "계좌 연동 처리 중 충돌이 발생했습니다. 다시 시도해주세요."
 
+    ),
+    INVALID_REFRESH_TOKEN(
+            HttpStatus.UNAUTHORIZED,
+            "리프레시 토큰이 유효하지 않거나 만료되었습니다."
     );
 
     private final HttpStatus httpStatus;

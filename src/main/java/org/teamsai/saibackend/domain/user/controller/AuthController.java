@@ -6,18 +6,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
+import org.teamsai.saibackend.domain.user.dto.UserLoginDTO;
 import org.teamsai.saibackend.domain.user.dto.request.UserLoginRequest;
 import org.teamsai.saibackend.domain.user.dto.request.UserSignUpRequest;
+import org.teamsai.saibackend.domain.user.dto.response.AccessTokenResponse;
 import org.teamsai.saibackend.domain.user.dto.response.UserLoginResponse;
 import org.teamsai.saibackend.domain.user.dto.response.UserSignUpResponse;
 import org.teamsai.saibackend.domain.user.service.AuthService;
+
+import java.time.Duration;
 
 @Tag(
         name = "인증/인가 API",
@@ -28,6 +32,9 @@ import org.teamsai.saibackend.domain.user.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
+
+    @Value("${jwt.cookie.secure:false}")
+    private boolean cookieSecure;
 
     @GetMapping("/login")
     public String loginPage() {
@@ -86,9 +93,87 @@ public class AuthController {
     })
     @ResponseBody
     @PostMapping("/api/auth/login")
-    public UserLoginResponse login(
+    public ResponseEntity<UserLoginResponse> login(
             @Valid @RequestBody UserLoginRequest request
     ) {
-        return authService.login(request);
+        UserLoginDTO loginDTO =
+                authService.login(request);
+
+        ResponseCookie refreshTokenCookie =
+                ResponseCookie.from(
+                                "refreshToken",
+                                loginDTO.getRefreshToken()
+                        )
+                        .httpOnly(true)
+                        .secure(cookieSecure)
+                        .sameSite("Lax")
+                        .path("/api/auth")
+                        .maxAge(Duration.ofDays(14))
+                        .build();
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        refreshTokenCookie.toString()
+                )
+                .body(
+                        UserLoginResponse.from(
+                                loginDTO
+                        )
+                );
+    }
+
+    @Operation(
+            summary = "Access Token 재발급",
+            description = "Refresh Token을 검증하여 새로운 Access Token을 발급합니다."
+    )
+    @ResponseBody
+    @PostMapping("/api/auth/reissue")
+    public AccessTokenResponse reissue(
+            @CookieValue(
+                    value = "refreshToken",
+                    required = false
+            )
+            String refreshToken
+    ) {
+        return authService.reissue(
+                refreshToken
+        );
+    }
+
+    @Operation(
+            summary = "로그아웃",
+            description = "Refresh Token을 삭제하여 로그아웃합니다."
+    )
+    @ResponseBody
+    @PostMapping("/api/auth/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(
+                    value = "refreshToken",
+                    required = false
+            )
+            String refreshToken
+    ) {
+        authService.logout(refreshToken);
+
+        ResponseCookie expiredCookie =
+                ResponseCookie.from(
+                                "refreshToken",
+                                ""
+                        )
+                        .httpOnly(true)
+                        .secure(cookieSecure)
+                        .sameSite("Lax")
+                        .path("/api/auth")
+                        .maxAge(Duration.ZERO)
+                        .build();
+
+        return ResponseEntity
+                .noContent()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        expiredCookie.toString()
+                )
+                .build();
     }
 }

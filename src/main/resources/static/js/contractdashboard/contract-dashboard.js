@@ -1,11 +1,3 @@
-function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-}
-
 let currentKeyword = '';
 let currentRoleFilter = 'ALL';
 let currentSortType = '';
@@ -23,7 +15,7 @@ function fetchDashboard() {
         + `&sortType=${currentSortType}`
         + `&page=${currentPage}`;
 
-    fetch(url, { headers: authHeaders() })
+    authFetch(url)
         .then(response => {
             if (!response.ok) throw new Error('조회 실패');
             return response.json();

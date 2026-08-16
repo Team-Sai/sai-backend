@@ -48,25 +48,60 @@ public class AccountLinkFlowController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUserId();
-        UserDTO myInfo = userService.getUser(userId);
 
-        identityValidator.validateUserInformation(myInfo);
+        UserDTO myInfo =
+                userService.getUser(userId);
 
-        String state = jwtTokenProvider.createLinkStateToken(userId, myInfo.getName(), myInfo.getBirthDate());
+        identityValidator.validateUserInformation(
+                myInfo
+        );
 
-        List<Long> alreadyLinkedAccountIds = linkedBankAccountService.getLinkedAccountIds(userId);
-        String linkedIdsParam = alreadyLinkedAccountIds.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(","));
+        String state =
+                jwtTokenProvider.createLinkStateToken(
+                        userId,
+                        myInfo.getName(),
+                        myInfo.getBirthDate()
+                );
 
-        String redirectUrl = UriComponentsBuilder
-                .fromUriString(mockBankBaseUrl + "/link/start")
-                .queryParam("returnUrl", backendBaseUrl + "/accounts/link/callback")
-                .queryParam("state", state)
-                .queryParam("excludeAccountIds", linkedIdsParam)
-                .toUriString();
+        List<Long> alreadyLinkedAccountIds =
+                linkedBankAccountService.getLinkedAccountIds(
+                        userId
+                );
 
-        return ResponseEntity.ok(Map.of("redirectUrl", redirectUrl));
+        String linkedIdsParam =
+                alreadyLinkedAccountIds.stream()
+                        .map(String::valueOf)
+                        .collect(
+                                Collectors.joining(",")
+                        );
+
+        String redirectUrl =
+                UriComponentsBuilder
+                        .fromUriString(
+                                mockBankBaseUrl
+                                        + "/link/start"
+                        )
+                        .queryParam(
+                                "returnUrl",
+                                backendBaseUrl
+                                        + "/accounts/link/callback"
+                        )
+                        .queryParam(
+                                "state",
+                                state
+                        )
+                        .queryParam(
+                                "excludeAccountIds",
+                                linkedIdsParam
+                        )
+                        .toUriString();
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "redirectUrl",
+                        redirectUrl
+                )
+        );
     }
 
     @GetMapping("/accounts/link/callback")

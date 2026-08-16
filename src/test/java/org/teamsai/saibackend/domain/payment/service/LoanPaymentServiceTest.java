@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.matching;
+package org.teamsai.saibackend.domain.payment.service;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,9 +12,7 @@ import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentSche
 import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
-import org.teamsai.saibackend.domain.matching.service.LoanPaymentService;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
-import org.teamsai.saibackend.domain.payment.service.PaymentRecordService;
 import org.teamsai.saibackend.domain.payment.type.PaymentTargetType;
 import org.teamsai.saibackend.domain.payment.type.SourceType;
 import org.teamsai.saibackend.global.exception.DomainException;
@@ -166,6 +164,78 @@ class LoanPaymentServiceTest {
 
             verify(paymentRecordService, never()).createConfirmedRecord(any(), any(), any(), any(), any());
             verify(repaymentScheduleService, never()).markAsPaid(any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자 선택 납부 반영")
+    class ApplyManuallyMatchedPayment {
+
+        @Test
+        @DisplayName("초과입금은 현재 잔여금액까지만 수동 납부로 반영한다")
+        void limitsExcessAmountToCurrentRemainingAmount() {
+            given(repaymentScheduleService
+                    .getScheduleByScheduleId(SCHEDULE_ID))
+                    .willReturn(schedule(
+                            RepaymentScheduleStatus.PENDING,
+                            new BigDecimal("100000")
+                    ));
+            given(paymentRecordService.sumConfirmedAmountByTarget(
+                    PaymentTargetType.LOAN,
+                    SCHEDULE_ID
+            )).willReturn(new BigDecimal("70000"));
+
+            loanPaymentService.applyManuallyMatchedPayment(
+                    SCHEDULE_ID,
+                    BANK_TRANSACTION_ID,
+                    new BigDecimal("32000")
+            );
+
+            verify(paymentRecordService).createConfirmedRecord(
+                    BANK_TRANSACTION_ID,
+                    PaymentTargetType.LOAN,
+                    SCHEDULE_ID,
+                    new BigDecimal("30000"),
+                    SourceType.MANUAL
+            );
+            verify(repaymentScheduleService).markAsPaid(
+                    eq(SCHEDULE_ID),
+                    any()
+            );
+        }
+
+        @Test
+        @DisplayName("확정 납부금액상 잔여액이 없으면 수동 납부를 반영하지 않는다")
+        void rejectsPaymentWhenConfirmedAmountAlreadyCoversSchedule() {
+            given(repaymentScheduleService
+                    .getScheduleByScheduleId(SCHEDULE_ID))
+                    .willReturn(schedule(
+                            RepaymentScheduleStatus.PENDING,
+                            new BigDecimal("100000")
+                    ));
+            given(paymentRecordService.sumConfirmedAmountByTarget(
+                    PaymentTargetType.LOAN,
+                    SCHEDULE_ID
+            )).willReturn(new BigDecimal("100000"));
+
+            assertThatThrownBy(() ->
+                    loanPaymentService.applyManuallyMatchedPayment(
+                            SCHEDULE_ID,
+                            BANK_TRANSACTION_ID,
+                            new BigDecimal("10000")
+                    )
+            ).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(
+                                    RepaymentScheduleErrorCode
+                                            .SCHEDULE_NOT_PENDING
+                            )
+            );
+
+            verify(paymentRecordService, never()).createConfirmedRecord(
+                    any(), any(), any(), any(), any()
+            );
         }
     }
 
