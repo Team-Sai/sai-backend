@@ -27,14 +27,6 @@
 
   if (nextBtn) nextBtn.disabled = true;
 
-  function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-      token ? { Authorization: `Bearer ${token}` } : {},
-      extra || {}
-    );
-  }
-
   function showStatus(message, isError) {
     statusEl.textContent = message;
     statusEl.classList.toggle("is-error", Boolean(isError));
@@ -52,10 +44,15 @@
   }
 
   async function loadContract() {
-    const response = await fetch(`/api/contracts/${contractId}/listdetails`, {
-      method: "GET",
-      headers: authHeaders({ Accept: "application/json" }),
-    });
+    const response = await authFetch(
+        `/api/contracts/${contractId}/listdetails`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json"
+          },
+        }
+    );
     if (!response.ok) {
       const error = new Error(`HTTP ${response.status}`);
       error.status = response.status;
@@ -96,10 +93,12 @@
   }
 
   async function linkAsDebtor() {
-    const response = await fetch(`/api/contracts/${contractId}/debtor`, {
-      method: "PATCH",
-      headers: authHeaders(),
-    });
+    const response = await authFetch(
+        `/api/contracts/${contractId}/debtor`,
+        {
+          method: "PATCH"
+        }
+    );
     if (!response.ok) {
       const body = await response.json().catch(() => null);
       throw new Error(body?.message || "계약서에 채무자로 연결하지 못했습니다.");

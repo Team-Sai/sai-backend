@@ -5,11 +5,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
+import org.teamsai.saibackend.domain.user.dto.UserLoginDTO;
 import org.teamsai.saibackend.domain.user.dto.request.UserLoginRequest;
 import org.teamsai.saibackend.domain.user.dto.request.UserSignUpRequest;
-import org.teamsai.saibackend.domain.user.dto.response.UserLoginResponse;
+import org.teamsai.saibackend.domain.user.dto.response.AccessTokenResponse;
 import org.teamsai.saibackend.domain.user.dto.response.UserSignUpResponse;
-import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
@@ -19,13 +20,13 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class AuthService {
 
     private final UserMapper userMapper;
     private final AuthValidator authValidator;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public UserSignUpResponse signUp(
@@ -61,7 +62,7 @@ public class AuthService {
         return UserSignUpResponse.from(user);
     }
 
-    public UserLoginResponse login(UserLoginRequest request) {
+    public UserLoginDTO login(UserLoginRequest request) {
         String email = normalizeEmail(request.getEmail());
 
         UserDTO user = userMapper.findByEmail(email)
@@ -76,9 +77,17 @@ public class AuthService {
         String accessToken =
                 jwtTokenProvider.createAccessToken(user.getUserId());
 
-        return UserLoginResponse.of(
+        String refreshToken =
+                jwtTokenProvider.createRefreshToken(user.getUserId());
+
+        refreshTokenService.save(user.getUserId(),refreshToken);
+
+
+
+        return UserLoginDTO.of(
                 user,
-                accessToken
+                accessToken,
+                refreshToken
         );
     }
 
@@ -128,6 +137,70 @@ public class AuthService {
         }
 
         return false;
+    }
+
+    public AccessTokenResponse reissue(
+            String refreshToken
+    ) {
+        if (
+                refreshToken == null ||
+                        refreshToken.isBlank()
+        ) {
+            throw UserErrorCode
+                    .INVALID_REFRESH_TOKEN
+                    .toException();
+        }
+
+        Long userId =
+                jwtTokenProvider
+                        .getUserIdFromRefreshToken(
+                                refreshToken
+                        )
+                        .orElseThrow(
+                                UserErrorCode
+                                        .INVALID_REFRESH_TOKEN
+                                        ::toException
+                        );
+
+        if (!refreshTokenService.matches(
+                userId,
+                refreshToken
+        )) {
+            throw UserErrorCode
+                    .INVALID_REFRESH_TOKEN
+                    .toException();
+        }
+
+        String accessToken =
+                jwtTokenProvider.createAccessToken(
+                        userId
+                );
+
+        return new AccessTokenResponse(
+                accessToken
+        );
+    }
+
+    public void logout(
+            String refreshToken
+    ) {
+        if (refreshToken == null || refreshToken.isBlank()
+        ) {
+            return;
+        }
+
+        jwtTokenProvider
+                .getUserIdFromRefreshToken(
+                        refreshToken
+                )
+                .filter(
+                        userId ->
+                                refreshTokenService.matches(userId, refreshToken
+                                )
+                )
+                .ifPresent(
+                        refreshTokenService::delete
+                );
     }
 
 }

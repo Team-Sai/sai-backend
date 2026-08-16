@@ -13,21 +13,6 @@ function initNotificationCenter() {
         document.getElementById("notifList");
 
 
-    function authHeaders(extra = {}) {
-        const token =
-            sessionStorage.getItem("accessToken");
-
-        return {
-            ...(token
-                ? {
-                    Authorization:
-                        `Bearer ${token}`
-                }
-                : {}),
-            ...extra
-        };
-    }
-
 
     function escapeHtml(value) {
 
@@ -204,49 +189,18 @@ function initNotificationCenter() {
 
     async function fetchNotifications() {
 
-        const token =
-            sessionStorage.getItem(
-                "accessToken"
-            );
-
-        if (!token) {
-            window.location.href =
-                "/login?required=true";
-            return;
-        }
-
         try {
-
             const response =
-                await fetch(
+                await authFetch(
                     "/api/notifications",
                     {
                         method: "GET",
-
-                        headers:
-                            authHeaders({
-                                Accept:
-                                    "application/json"
-                            }),
-
-                        credentials:
-                            "include"
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
                     }
                 );
-
-
-            if (response.status === 401) {
-
-                sessionStorage.removeItem(
-                    "accessToken"
-                );
-
-                window.location.href =
-                    "/login?required=true";
-
-                return;
-            }
-
 
             if (!response.ok) {
                 throw new Error(
