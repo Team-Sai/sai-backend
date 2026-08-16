@@ -7,6 +7,7 @@ import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.Repayme
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateDTO;
 import org.teamsai.saibackend.domain.matching.dto.response.MatchingReviewProcessResponse;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+import org.teamsai.saibackend.domain.matching.policy.MatchingReviewValidator;
 import org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason;
 import org.teamsai.saibackend.domain.matching.type.MatchingReviewResult;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
@@ -17,7 +18,6 @@ import org.teamsai.saibackend.domain.transaction.dto.response.BankTransactionDet
 import org.teamsai.saibackend.domain.transaction.service.BankTransactionQueryService;
 import org.teamsai.saibackend.domain.transaction.service.BankTransactionService;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionProcessingStatus;
-import org.teamsai.saibackend.domain.transaction.type.BankTransactionType;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 @Service
@@ -29,6 +29,7 @@ public class BankTransactionMatchingReviewService {
     private final SettlementPaymentService settlementPaymentService;
     private final LoanPaymentService loanPaymentService;
     private final BankTransactionService bankTransactionService;
+    private final MatchingReviewValidator matchingReviewValidator;
 
     @Transactional
     public MatchingReviewProcessResponse applyCandidate(
@@ -114,14 +115,7 @@ public class BankTransactionMatchingReviewService {
                         bankTransactionId
                 );
 
-        if (transaction.processingStatus()
-                != BankTransactionProcessingStatus.NEEDS_CHECK
-                || transaction.transactionType()
-                != BankTransactionType.DEPOSIT) {
-            throw MatchingErrorCode
-                    .MATCHING_REVIEW_NOT_REQUIRED
-                    .toException();
-        }
+        matchingReviewValidator.validate(transaction);
 
         return transaction;
     }

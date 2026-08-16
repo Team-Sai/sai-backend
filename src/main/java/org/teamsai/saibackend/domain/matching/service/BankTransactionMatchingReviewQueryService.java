@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateQueryDTO;
 import org.teamsai.saibackend.domain.matching.dto.response.BankTransactionMatchCandidateResponse;
 import org.teamsai.saibackend.domain.matching.dto.response.BankTransactionMatchingReviewResponse;
+import org.teamsai.saibackend.domain.matching.policy.MatchingReviewValidator;
 import org.teamsai.saibackend.domain.matching.type.MatchingReviewChannel;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.transaction.dto.response.BankTransactionDetailResponse;
@@ -20,6 +21,7 @@ public class BankTransactionMatchingReviewQueryService {
 
     private final BankTransactionQueryService bankTransactionQueryService;
     private final BankTransactionMatchCandidateService candidateService;
+    private final MatchingReviewValidator matchingReviewValidator;
 
     public BankTransactionMatchingReviewResponse getReview(
             Long userId,
@@ -32,6 +34,8 @@ public class BankTransactionMatchingReviewQueryService {
                         linkedAccountId,
                         bankTransactionId
                 );
+
+        matchingReviewValidator.validate(transaction);
 
         List<BankTransactionMatchCandidateQueryDTO> candidates =
                 candidateService.findAllForReviewByBankTransactionId(

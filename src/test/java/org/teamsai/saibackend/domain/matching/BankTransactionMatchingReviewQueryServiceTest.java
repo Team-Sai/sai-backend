@@ -1,13 +1,15 @@
 package org.teamsai.saibackend.domain.matching;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateQueryDTO;
 import org.teamsai.saibackend.domain.matching.dto.response.BankTransactionMatchingReviewResponse;
+import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+import org.teamsai.saibackend.domain.matching.policy.MatchingReviewValidator;
 import org.teamsai.saibackend.domain.matching.service.BankTransactionMatchCandidateService;
 import org.teamsai.saibackend.domain.matching.service.BankTransactionMatchingReviewQueryService;
 import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
@@ -17,13 +19,16 @@ import org.teamsai.saibackend.domain.transaction.dto.response.BankTransactionDet
 import org.teamsai.saibackend.domain.transaction.service.BankTransactionQueryService;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionProcessingStatus;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionType;
+import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,8 +45,16 @@ class BankTransactionMatchingReviewQueryServiceTest {
     @Mock
     private BankTransactionMatchCandidateService candidateService;
 
-    @InjectMocks
     private BankTransactionMatchingReviewQueryService reviewQueryService;
+
+    @BeforeEach
+    void setUp() {
+        reviewQueryService = new BankTransactionMatchingReviewQueryService(
+                bankTransactionQueryService,
+                candidateService,
+                new MatchingReviewValidator()
+        );
+    }
 
     @Test
     @DisplayName("한 도메인의 후보만 있으면 거래내역 검토 대상으로 반환한다")
@@ -145,13 +158,79 @@ class BankTransactionMatchingReviewQueryServiceTest {
         assertThat(response.candidates()).isEmpty();
     }
 
+    @Test
+    @DisplayName("이미 처리된 거래의 과거 후보는 반환하지 않는다")
+    void rejectsReviewForProcessedTransaction() {
+        given(bankTransactionQueryService.getTransactionDetail(
+                USER_ID,
+                LINKED_ACCOUNT_ID,
+                BANK_TRANSACTION_ID
+        )).willReturn(transaction(
+                BankTransactionProcessingStatus.APPLIED,
+                BankTransactionType.DEPOSIT
+        ));
+
+        assertThatThrownBy(() -> reviewQueryService.getReview(
+                USER_ID,
+                LINKED_ACCOUNT_ID,
+                BANK_TRANSACTION_ID
+        )).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(
+                                MatchingErrorCode.MATCHING_REVIEW_NOT_REQUIRED
+                        )
+        );
+
+        verify(candidateService, never())
+                .findAllForReviewByBankTransactionId(BANK_TRANSACTION_ID);
+    }
+
+    @Test
+    @DisplayName("출금 거래의 매칭 후보는 반환하지 않는다")
+    void rejectsReviewForWithdrawalTransaction() {
+        given(bankTransactionQueryService.getTransactionDetail(
+                USER_ID,
+                LINKED_ACCOUNT_ID,
+                BANK_TRANSACTION_ID
+        )).willReturn(transaction(
+                BankTransactionProcessingStatus.NEEDS_CHECK,
+                BankTransactionType.WITHDRAWAL
+        ));
+
+        assertThatThrownBy(() -> reviewQueryService.getReview(
+                USER_ID,
+                LINKED_ACCOUNT_ID,
+                BANK_TRANSACTION_ID
+        )).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(
+                                MatchingErrorCode.MATCHING_REVIEW_NOT_REQUIRED
+                        )
+        );
+
+        verify(candidateService, never())
+                .findAllForReviewByBankTransactionId(BANK_TRANSACTION_ID);
+    }
+
     private BankTransactionDetailResponse transaction() {
+        return transaction(
+                BankTransactionProcessingStatus.NEEDS_CHECK,
+                BankTransactionType.DEPOSIT
+        );
+    }
+
+    private BankTransactionDetailResponse transaction(
+            BankTransactionProcessingStatus processingStatus,
+            BankTransactionType transactionType
+    ) {
         return new BankTransactionDetailResponse(
                 BANK_TRANSACTION_ID,
                 LINKED_ACCOUNT_ID,
                 new BigDecimal("5000.00"),
-                BankTransactionType.DEPOSIT,
-                BankTransactionProcessingStatus.NEEDS_CHECK,
+                transactionType,
+                processingStatus,
                 LocalDateTime.of(2026, 8, 15, 10, 0),
                 "홍길동",
                 null,
