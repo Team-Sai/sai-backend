@@ -179,6 +179,7 @@
         WHERE payment_obligation_id = #{paymentObligationId}
         AND payment_status != 'PAID'
         AND overdue_since IS NULL
+        AND obligation_status = 'ACTIVE'
     </update>
 
     <update id="clearOverdueSince">

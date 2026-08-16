@@ -16,7 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,44 +39,30 @@ class OverdueSettlementServiceTest {
         LocalDate baseDate = LocalDate.of(2026, 2, 1);
         SettlementDTO overdue = settlement(1L);
         SettlementDTO notOverdue = settlement(2L);
+        LocalDate overdueRefDate = LocalDate.of(2026, 1, 15);
+        LocalDate notOverdueRefDate = LocalDate.of(2026, 2, 15);
 
         when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(List.of(overdue, notOverdue));
-        when(overdueCriteria.isOverdue(overdue, baseDate)).thenReturn(true);
-        when(overdueCriteria.isOverdue(notOverdue, baseDate)).thenReturn(false);
+        when(overdueCriteria.resolveReferenceDate(overdue)).thenReturn(overdueRefDate);
+        when(overdueCriteria.resolveReferenceDate(notOverdue)).thenReturn(notOverdueRefDate);
+        when(overdueCriteria.isOverdue(overdue, baseDate, overdueRefDate)).thenReturn(true);
+        when(overdueCriteria.isOverdue(notOverdue, baseDate, notOverdueRefDate)).thenReturn(false);
 
         sut.updateOverdueStatus(baseDate);
 
-        verify(overdueSettlementUpdater).updateOverdueForSettlement(overdue, baseDate);
-        verify(overdueSettlementUpdater, never()).updateOverdueForSettlement(eq(notOverdue), eq(baseDate));
-    }
-
-    @Test
-    @DisplayName("한 정산 갱신이 실패해도 나머지 정산은 계속 처리된다")
-    void continuesProcessingWhenOneUpdateFails() {
-        LocalDate baseDate = LocalDate.of(2026, 2, 1);
-        SettlementDTO s1 = settlement(1L);
-        SettlementDTO s2 = settlement(2L);
-
-        when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(List.of(s1, s2));
-        when(overdueCriteria.isOverdue(s1, baseDate)).thenReturn(true);
-        when(overdueCriteria.isOverdue(s2, baseDate)).thenReturn(true);
-        doThrow(new IllegalStateException("갱신 실패"))
-                .when(overdueSettlementUpdater).updateOverdueForSettlement(s1, baseDate);
-
-        sut.updateOverdueStatus(baseDate);
-
-        verify(overdueSettlementUpdater).updateOverdueForSettlement(s1, baseDate);
-        verify(overdueSettlementUpdater).updateOverdueForSettlement(s2, baseDate); // s1 실패와 무관하게 호출됨
+        verify(overdueSettlementUpdater).updateOverdueForSettlement(overdue, overdueRefDate);
+        verify(overdueSettlementUpdater, never()).updateOverdueForSettlement(eq(notOverdue), any());
     }
 
     @Test
     @DisplayName("첫 페이지가 PAGE_SIZE 미만이면 다음 페이지를 조회하지 않고 종료한다")
     void stopsWhenFirstPageIsPartial() {
         LocalDate baseDate = LocalDate.of(2026, 2, 1);
-        List<SettlementDTO> partialPage = List.of(settlement(1L), settlement(2L)); // 200개 미만
+        List<SettlementDTO> partialPage = List.of(settlement(1L), settlement(2L));
 
         when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(partialPage);
-        when(overdueCriteria.isOverdue(any(), eq(baseDate))).thenReturn(false);
+        when(overdueCriteria.resolveReferenceDate(any())).thenReturn(LocalDate.of(2026, 3, 1));
+        when(overdueCriteria.isOverdue(any(), eq(baseDate), any())).thenReturn(false);
 
         sut.updateOverdueStatus(baseDate);
 
@@ -94,13 +80,13 @@ class OverdueSettlementServiceTest {
 
         when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(fullFirstPage);
         when(settlementMapper.findInProgressSettlements(200, 200)).thenReturn(secondPage);
-        when(overdueCriteria.isOverdue(any(), eq(baseDate))).thenReturn(false);
+        when(overdueCriteria.resolveReferenceDate(any())).thenReturn(LocalDate.of(2026, 3, 1));
+        when(overdueCriteria.isOverdue(any(), eq(baseDate), any())).thenReturn(false);
 
         sut.updateOverdueStatus(baseDate);
 
         verify(settlementMapper).findInProgressSettlements(0, 200);
         verify(settlementMapper).findInProgressSettlements(200, 200);
-        // 두 번째 페이지(1건, PAGE_SIZE 미만)에서 종료되므로 세 번째 조회는 없어야 함
         verify(settlementMapper, times(2)).findInProgressSettlements(anyInt(), anyInt());
     }
 
@@ -113,5 +99,28 @@ class OverdueSettlementServiceTest {
         sut.updateOverdueStatus(baseDate);
 
         verify(overdueSettlementUpdater, never()).updateOverdueForSettlement(any(), any());
+    }
+
+    @Test
+    @DisplayName("한 정산 갱신이 실패해도 나머지 정산은 계속 처리된다")
+    void continuesProcessingWhenOneUpdateFails() {
+        LocalDate baseDate = LocalDate.of(2026, 2, 1);
+        SettlementDTO s1 = settlement(1L);
+        SettlementDTO s2 = settlement(2L);
+        LocalDate refDate1 = LocalDate.of(2026, 1, 15);
+        LocalDate refDate2 = LocalDate.of(2026, 1, 16);
+
+        when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(List.of(s1, s2));
+        when(overdueCriteria.resolveReferenceDate(s1)).thenReturn(refDate1);
+        when(overdueCriteria.resolveReferenceDate(s2)).thenReturn(refDate2);
+        when(overdueCriteria.isOverdue(s1, baseDate, refDate1)).thenReturn(true);
+        when(overdueCriteria.isOverdue(s2, baseDate, refDate2)).thenReturn(true);
+        doThrow(new IllegalStateException("갱신 실패"))
+                .when(overdueSettlementUpdater).updateOverdueForSettlement(s1, refDate1);
+
+        sut.updateOverdueStatus(baseDate);
+
+        verify(overdueSettlementUpdater).updateOverdueForSettlement(s1, refDate1);
+        verify(overdueSettlementUpdater).updateOverdueForSettlement(s2, refDate2);
     }
 }

@@ -20,13 +20,12 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class OverdueSettlementUpdater {
-
-    private final OverdueCriteria overdueCriteria;
+    
     private final SettlementParticipantMapper participantMapper;
     private final PaymentObligationMapper paymentObligationMapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateOverdueForSettlement(SettlementDTO settlement, LocalDate baseDate) {
+    public void updateOverdueForSettlement(SettlementDTO settlement, LocalDate referenceDate) {
         List<Long> activeParticipantIds = participantMapper.findBySettlementId(settlement.getSettlementId())
                 .stream()
                 .filter(p -> p.getParticipantStatus() == SettlementParticipantStatus.ACTIVE)
@@ -44,8 +43,6 @@ public class OverdueSettlementUpdater {
             return;
         }
 
-
-        LocalDate referenceDate = overdueCriteria.resolveReferenceDate(settlement);
         LocalDateTime overdueSince = referenceDate.atStartOfDay();
 
         for (PaymentObligationDTO obligation : unpaidObligations) {

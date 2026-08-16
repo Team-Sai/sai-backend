@@ -34,11 +34,12 @@ public class OverdueSettlementService {
             }
 
             for (SettlementDTO settlement : page) {
-                if (!overdueCriteria.isOverdue(settlement, baseDate)) {
+                LocalDate referenceDate = overdueCriteria.resolveReferenceDate(settlement);
+                if (!overdueCriteria.isOverdue(settlement, baseDate, referenceDate)) {
                     continue;
                 }
                 try {
-                    overdueSettlementUpdater.updateOverdueForSettlement(settlement, baseDate);
+                    overdueSettlementUpdater.updateOverdueForSettlement(settlement, referenceDate);
                 } catch (Exception e) {
                     log.error("연체 상태 갱신 실패, 다음 배치에서 재시도 예정 settlementId={}",
                             settlement.getSettlementId(), e);

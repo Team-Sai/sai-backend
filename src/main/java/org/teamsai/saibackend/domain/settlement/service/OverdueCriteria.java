@@ -8,16 +8,15 @@ import java.time.LocalDate;
 
 @Component
 public class OverdueCriteria {
-    public boolean isOverdue(SettlementDTO settlement, LocalDate baseDate) {
+    public boolean isOverdue(SettlementDTO settlement, LocalDate baseDate, LocalDate referenceDate) {
         if (settlement.getSettlementStatus() != SettlementStatus.IN_PROGRESS) {
             return false;
         }
-        LocalDate referenceDate = resolveReferenceDate(settlement);
         return referenceDate != null && referenceDate.isBefore(baseDate);
     }
 
-    public LocalDate resolveReferenceDate(SettlementDTO settlement){
-        return switch (settlement.getSettlementType()){
+    public LocalDate resolveReferenceDate(SettlementDTO settlement) {
+        return switch (settlement.getSettlementType()) {
             case SHARED -> settlement.getDueDate();
             case RECURRING -> settlement.getCycleDate();
         };
