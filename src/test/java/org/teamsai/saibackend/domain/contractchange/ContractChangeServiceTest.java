@@ -520,4 +520,163 @@ class ContractChangeServiceTest {
             verify(fileService, never()).saveSignatureFile(any(), any());
         }
     }
+
+    @Nested
+    @DisplayName("변경 요청 취소")
+    class CancelChangeRequest {
+
+        private static final Long CHANGE_REQUEST_ID = 300L;
+        private static final Long V2_CONTRACT_ID = 301L;
+
+        private LoanContractChangeDTO changeRequestDTO(
+                ChangeRequestStatus status, Long ownerUserId, Long contractId, String requesterSignature
+        ) {
+            return LoanContractChangeDTO.builder()
+                    .changeRequestId(CHANGE_REQUEST_ID)
+                    .userId(ownerUserId)
+                    .contractId(contractId)
+                    .changeReason("이자율 조정 요청")
+                    .status(status)
+                    .requesterSignature(requesterSignature)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+        }
+
+        private LoanContractResponse pendingV2() {
+            return LoanContractResponse.builder()
+                    .contractId(V2_CONTRACT_ID)
+                    .previousContractId(CONTRACT_ID)
+                    .status(ContractStatus.PENDING)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("서명 전 요청은 요청자 본인이 취소할 수 있고, 임시 계약도 함께 무효화한다")
+        void cancelChangeRequestSuccess() {
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID, null)));
+            given(contractChangeMapper.updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.CANCELLED))
+                    .willReturn(1);
+            given(loanContractService.findPendingContractByPreviousId(CONTRACT_ID))
+                    .willReturn(Optional.of(pendingV2()));
+
+            contractChangeService.cancelChangeRequest(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID);
+
+            verify(contractChangeMapper).updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.CANCELLED);
+            verify(loanContractService).rejectChangedContract(V2_CONTRACT_ID);
+        }
+
+        @Test
+        @DisplayName("이미 서명을 제출한 요청은 취소할 수 없다")
+        void cancelChangeRequestFailsWhenAlreadySigned() {
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(
+                            ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID, "uploads/signatures/change_300_signature.png"
+                    )));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.cancelChangeRequest(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.ALREADY_SIGNED)
+                    );
+
+            verify(contractChangeMapper, never()).updateStatus(any(), any());
+            verify(loanContractService, never()).rejectChangedContract(any());
+        }
+
+        @Test
+        @DisplayName("요청을 등록한 당사자가 아니면 취소할 수 없다")
+        void cancelChangeRequestFailsWhenNotRequester() {
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID, null)));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.cancelChangeRequest(CONTRACT_ID, CHANGE_REQUEST_ID, DEBTOR_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.NOT_CONTRACT_PARTY)
+                    );
+
+            verify(contractChangeMapper, never()).updateStatus(any(), any());
+            verify(loanContractService, never()).rejectChangedContract(any());
+        }
+
+        @Test
+        @DisplayName("이미 처리된(승인/반려/취소) 요청이면 취소할 수 없다")
+        void cancelChangeRequestFailsWhenAlreadyProcessed() {
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.APPROVED, USER_ID, CONTRACT_ID, null)));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.cancelChangeRequest(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.ALREADY_BEING_REQUEST)
+                    );
+
+            verify(contractChangeMapper, never()).updateStatus(any(), any());
+            verify(loanContractService, never()).rejectChangedContract(any());
+        }
+
+        @Test
+        @DisplayName("변경 요청이 해당 계약의 것이 아니면 취소할 수 없다")
+        void cancelChangeRequestFailsWhenContractIdMismatch() {
+            Long otherContractId = 999L;
+
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, otherContractId, null)));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.cancelChangeRequest(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND)
+                    );
+
+            verify(contractChangeMapper, never()).updateStatus(any(), any());
+            verify(loanContractService, never()).rejectChangedContract(any());
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 변경 요청이면 취소할 수 없다")
+        void cancelChangeRequestFailsWhenChangeRequestNotFound() {
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() ->
+                    contractChangeService.cancelChangeRequest(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND)
+                    );
+
+            verify(contractChangeMapper, never()).updateStatus(any(), any());
+        }
+
+        @Test
+        @DisplayName("동시 요청으로 이미 상태가 바뀌어 갱신 행이 0건이면 예외가 발생한다")
+        void cancelChangeRequestFailsWhenRaceConditionLeavesZeroRowsUpdated() {
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID, null)));
+            given(contractChangeMapper.updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.CANCELLED))
+                    .willReturn(0);
+
+            assertThatThrownBy(() ->
+                    contractChangeService.cancelChangeRequest(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.ALREADY_BEING_REQUEST)
+                    );
+
+            verify(loanContractService, never()).rejectChangedContract(any());
+        }
+    }
 }
