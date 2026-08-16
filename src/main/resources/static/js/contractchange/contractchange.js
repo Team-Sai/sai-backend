@@ -7,15 +7,8 @@ const REPAYMENT_TYPE_LABELS = {
     BULLET_REPAYMENT: '만기일시상환'
 };
 
-function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-}
-
-fetch(`/api/contracts/${contractId}`, { headers: authHeaders() })
+authFetch(
+    `/api/contracts/${contractId}`)
     .then(response => {
         if (!response.ok) {
             throw new Error('계약 조회 실패');
@@ -122,9 +115,11 @@ document.getElementById('changeRequestForm').addEventListener('submit', function
         newTerms: document.getElementById('newTerms').value.trim() || null,
     };
 
-    fetch(`/api/contracts/${contractId}/change-requests`, {
+    authFetch(`/api/contracts/${contractId}/change-requests`, {
         method: 'POST',
-        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify(requestBody)
     })
         .then(response => {
