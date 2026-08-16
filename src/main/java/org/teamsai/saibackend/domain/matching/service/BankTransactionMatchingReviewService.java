@@ -7,6 +7,8 @@ import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.Repayme
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateDTO;
 import org.teamsai.saibackend.domain.matching.dto.response.MatchingReviewProcessResponse;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
+import org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason;
+import org.teamsai.saibackend.domain.matching.type.MatchingReviewResult;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.service.LoanPaymentService;
@@ -55,14 +57,19 @@ public class BankTransactionMatchingReviewService {
                     == PaymentErrorCode.DUPLICATE_PAYMENT_RECORD) {
                 return updateStatus(
                         bankTransactionId,
-                        BankTransactionProcessingStatus.APPLIED
+                        BankTransactionProcessingStatus.APPLIED,
+                        MatchingReviewResult.APPLIED
                 );
             }
 
-            if (isIrrecoverableTargetError(exception)) {
-                return updateStatus(
+            MatchingCandidateInvalidationReason invalidationReason =
+                    toInvalidationReason(exception);
+
+            if (invalidationReason != null) {
+                return invalidateCandidate(
                         bankTransactionId,
-                        BankTransactionProcessingStatus.FAILED
+                        candidate.getMatchCandidateId(),
+                        invalidationReason
                 );
             }
 
@@ -71,7 +78,8 @@ public class BankTransactionMatchingReviewService {
 
         return updateStatus(
                 bankTransactionId,
-                BankTransactionProcessingStatus.APPLIED
+                BankTransactionProcessingStatus.APPLIED,
+                MatchingReviewResult.APPLIED
         );
     }
 
@@ -89,7 +97,8 @@ public class BankTransactionMatchingReviewService {
 
         return updateStatus(
                 bankTransactionId,
-                BankTransactionProcessingStatus.UNMATCHED
+                BankTransactionProcessingStatus.UNMATCHED,
+                MatchingReviewResult.REJECTED
         );
     }
 
@@ -142,22 +151,70 @@ public class BankTransactionMatchingReviewService {
         throw MatchingErrorCode.MATCHING_TARGET_NOT_FOUND.toException();
     }
 
-    private boolean isIrrecoverableTargetError(
+    private MatchingReviewProcessResponse invalidateCandidate(
+            Long bankTransactionId,
+            Long matchCandidateId,
+            MatchingCandidateInvalidationReason invalidationReason
+    ) {
+        candidateService.invalidateCandidate(
+                matchCandidateId,
+                bankTransactionId,
+                invalidationReason
+        );
+
+        int availableCandidateCount =
+                candidateService.countAvailableCandidates(
+                        bankTransactionId
+                );
+
+        if (availableCandidateCount > 0) {
+            return new MatchingReviewProcessResponse(
+                    bankTransactionId,
+                    BankTransactionProcessingStatus.NEEDS_CHECK,
+                    MatchingReviewResult.CANDIDATE_INVALIDATED
+            );
+        }
+
+        boolean targetNotAvailable = invalidationReason
+                == MatchingCandidateInvalidationReason.TARGET_NOT_AVAILABLE;
+
+        BankTransactionProcessingStatus nextStatus =
+                targetNotAvailable
+                        ? BankTransactionProcessingStatus.UNMATCHED
+                        : BankTransactionProcessingStatus.FAILED;
+
+        return updateStatus(
+                bankTransactionId,
+                nextStatus,
+                MatchingReviewResult.CANDIDATE_INVALIDATED
+        );
+    }
+
+    private MatchingCandidateInvalidationReason toInvalidationReason(
             DomainException exception
     ) {
-        return exception.getErrorCode()
+        if (exception.getErrorCode()
                 == PaymentErrorCode.PAYMENT_OBLIGATION_NOT_FOUND
                 || exception.getErrorCode()
+                == RepaymentScheduleErrorCode.SCHEDULE_NOT_FOUND) {
+            return MatchingCandidateInvalidationReason.TARGET_NOT_FOUND;
+        }
+
+        if (exception.getErrorCode()
                 == PaymentErrorCode.PAYMENT_OBLIGATION_NOT_ACTIVE
                 || exception.getErrorCode()
-                == RepaymentScheduleErrorCode.SCHEDULE_NOT_FOUND
-                || exception.getErrorCode()
-                == RepaymentScheduleErrorCode.SCHEDULE_NOT_PENDING;
+                == RepaymentScheduleErrorCode.SCHEDULE_NOT_PENDING) {
+            return MatchingCandidateInvalidationReason
+                    .TARGET_NOT_AVAILABLE;
+        }
+
+        return null;
     }
 
     private MatchingReviewProcessResponse updateStatus(
             Long bankTransactionId,
-            BankTransactionProcessingStatus nextStatus
+            BankTransactionProcessingStatus nextStatus,
+            MatchingReviewResult reviewResult
     ) {
         bankTransactionService.updateStatus(
                 bankTransactionId,
@@ -167,7 +224,8 @@ public class BankTransactionMatchingReviewService {
 
         return new MatchingReviewProcessResponse(
                 bankTransactionId,
-                nextStatus
+                nextStatus,
+                reviewResult
         );
     }
 }

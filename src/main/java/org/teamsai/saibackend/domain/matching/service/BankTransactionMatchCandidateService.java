@@ -8,6 +8,8 @@ import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateQ
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.mapper.BankTransactionMatchCandidateMapper;
 import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
+import org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason;
+import org.teamsai.saibackend.domain.matching.type.MatchingCandidateStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -73,12 +75,7 @@ public class BankTransactionMatchCandidateService {
             Long matchCandidateId,
             Long bankTransactionId
     ) {
-        if (matchCandidateId == null || matchCandidateId <= 0) {
-            throw MatchingErrorCode
-                    .INVALID_MATCHING_REQUEST
-                    .toException();
-        }
-
+        validateMatchCandidateId(matchCandidateId);
         validateBankTransactionId(bankTransactionId);
 
         return candidateMapper.findByIdAndBankTransactionId(
@@ -90,6 +87,43 @@ public class BankTransactionMatchCandidateService {
                                 .MATCHING_CANDIDATE_NOT_FOUND
                                 ::toException
                 );
+    }
+
+    @Transactional
+    public void invalidateCandidate(
+            Long matchCandidateId,
+            Long bankTransactionId,
+            MatchingCandidateInvalidationReason invalidationReason
+    ) {
+        validateMatchCandidateId(matchCandidateId);
+        validateBankTransactionId(bankTransactionId);
+
+        if (invalidationReason == null) {
+            throw MatchingErrorCode
+                    .INVALID_MATCHING_REQUEST
+                    .toException();
+        }
+
+        int updatedCount = candidateMapper.invalidate(
+                matchCandidateId,
+                bankTransactionId,
+                invalidationReason,
+                LocalDateTime.now()
+        );
+
+        if (updatedCount != 1) {
+            throw MatchingErrorCode
+                    .MATCHING_CANDIDATE_INVALIDATION_FAILED
+                    .toException();
+        }
+    }
+
+    public int countAvailableCandidates(Long bankTransactionId) {
+        validateBankTransactionId(bankTransactionId);
+
+        return candidateMapper.countAvailableByBankTransactionId(
+                bankTransactionId
+        );
     }
 
     private BankTransactionMatchCandidateDTO toDto(
@@ -111,6 +145,7 @@ public class BankTransactionMatchCandidateService {
                 .amountMatchType(
                         evaluatedCandidate.amountMatchType()
                 )
+                .candidateStatus(MatchingCandidateStatus.AVAILABLE)
                 .createdAt(createdAt)
                 .build();
     }
@@ -132,6 +167,14 @@ public class BankTransactionMatchCandidateService {
 
     private void validateBankTransactionId(Long bankTransactionId) {
         if (bankTransactionId == null || bankTransactionId <= 0) {
+            throw MatchingErrorCode
+                    .INVALID_MATCHING_REQUEST
+                    .toException();
+        }
+    }
+
+    private void validateMatchCandidateId(Long matchCandidateId) {
+        if (matchCandidateId == null || matchCandidateId <= 0) {
             throw MatchingErrorCode
                     .INVALID_MATCHING_REQUEST
                     .toException();

@@ -15,6 +15,20 @@ CREATE TABLE IF NOT EXISTS bank_transaction_match_candidate (
         amount_match_type IN ('EXACT', 'PARTIAL', 'EXCESS')
     ),
 
+    candidate_status VARCHAR(30) NOT NULL DEFAULT 'AVAILABLE' CHECK (
+        candidate_status IN ('AVAILABLE', 'INVALIDATED')
+    ),
+
+    invalidated_at DATETIME NULL,
+
+    invalidation_reason VARCHAR(50) NULL CHECK (
+        invalidation_reason IS NULL
+        OR invalidation_reason IN (
+            'TARGET_NOT_FOUND',
+            'TARGET_NOT_AVAILABLE'
+        )
+    ),
+
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (match_candidate_id),
@@ -28,7 +42,22 @@ CREATE TABLE IF NOT EXISTS bank_transaction_match_candidate (
 
     CONSTRAINT fk_match_candidate_bank_transaction
         FOREIGN KEY (bank_transaction_id)
-        REFERENCES bank_transaction (bank_transaction_id)
+        REFERENCES bank_transaction (bank_transaction_id),
+
+    CONSTRAINT chk_match_candidate_invalidation
+        CHECK (
+            (
+                candidate_status = 'AVAILABLE'
+                AND invalidated_at IS NULL
+                AND invalidation_reason IS NULL
+            )
+            OR
+            (
+                candidate_status = 'INVALIDATED'
+                AND invalidated_at IS NOT NULL
+                AND invalidation_reason IS NOT NULL
+            )
+        )
 ) ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_unicode_ci;

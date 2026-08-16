@@ -14,6 +14,8 @@ import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.service.BankTransactionMatchCandidateService;
 import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
+import org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason;
+import org.teamsai.saibackend.domain.matching.type.MatchingCandidateStatus;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.global.exception.DomainException;
 
@@ -83,7 +85,8 @@ class BankTransactionMatchCandidateServiceTest {
                         BankTransactionMatchCandidateDTO::getTargetType,
                         BankTransactionMatchCandidateDTO::getTargetId,
                         BankTransactionMatchCandidateDTO::getExpectedRemainingAmount,
-                        BankTransactionMatchCandidateDTO::getAmountMatchType
+                        BankTransactionMatchCandidateDTO::getAmountMatchType,
+                        BankTransactionMatchCandidateDTO::getCandidateStatus
                 )
                 .containsExactly(
                         org.assertj.core.groups.Tuple.tuple(
@@ -91,16 +94,23 @@ class BankTransactionMatchCandidateServiceTest {
                                 MatchingTargetType.SETTLEMENT,
                                 10L,
                                 new BigDecimal("10000"),
-                                MatchingAmountType.PARTIAL
+                                MatchingAmountType.PARTIAL,
+                                MatchingCandidateStatus.AVAILABLE
                         ),
                         org.assertj.core.groups.Tuple.tuple(
                                 100L,
                                 MatchingTargetType.LOAN,
                                 20L,
                                 new BigDecimal("20000"),
-                                MatchingAmountType.EXACT
+                                MatchingAmountType.EXACT,
+                                MatchingCandidateStatus.AVAILABLE
                         )
                 );
+        assertThat(savedCandidates)
+                .allSatisfy(candidate -> {
+                    assertThat(candidate.getInvalidatedAt()).isNull();
+                    assertThat(candidate.getInvalidationReason()).isNull();
+                });
         assertThat(savedCandidates)
                 .extracting(BankTransactionMatchCandidateDTO::getCreatedAt)
                 .doesNotContainNull()
@@ -224,6 +234,90 @@ class BankTransactionMatchCandidateServiceTest {
         );
     }
 
+    @Test
+    void invalidatesAvailableCandidate() {
+        when(candidateMapper.invalidate(
+                org.mockito.ArgumentMatchers.eq(1L),
+                org.mockito.ArgumentMatchers.eq(100L),
+                org.mockito.ArgumentMatchers.eq(
+                        MatchingCandidateInvalidationReason
+                                .TARGET_NOT_AVAILABLE
+                ),
+                org.mockito.ArgumentMatchers.any(LocalDateTime.class)
+        )).thenReturn(1);
+
+        candidateService.invalidateCandidate(
+                1L,
+                100L,
+                MatchingCandidateInvalidationReason.TARGET_NOT_AVAILABLE
+        );
+
+        verify(candidateMapper).invalidate(
+                org.mockito.ArgumentMatchers.eq(1L),
+                org.mockito.ArgumentMatchers.eq(100L),
+                org.mockito.ArgumentMatchers.eq(
+                        MatchingCandidateInvalidationReason
+                                .TARGET_NOT_AVAILABLE
+                ),
+                org.mockito.ArgumentMatchers.any(LocalDateTime.class)
+        );
+    }
+
+    @Test
+    void failsWhenCandidateCannotBeInvalidated() {
+        when(candidateMapper.invalidate(
+                org.mockito.ArgumentMatchers.eq(1L),
+                org.mockito.ArgumentMatchers.eq(100L),
+                org.mockito.ArgumentMatchers.eq(
+                        MatchingCandidateInvalidationReason.TARGET_NOT_FOUND
+                ),
+                org.mockito.ArgumentMatchers.any(LocalDateTime.class)
+        )).thenReturn(0);
+
+        assertThatThrownBy(() -> candidateService.invalidateCandidate(
+                1L,
+                100L,
+                MatchingCandidateInvalidationReason.TARGET_NOT_FOUND
+        )).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(
+                                MatchingErrorCode
+                                        .MATCHING_CANDIDATE_INVALIDATION_FAILED
+                        )
+        );
+    }
+
+    @Test
+    void failsWhenInvalidationReasonIsNull() {
+        assertThatThrownBy(() -> candidateService.invalidateCandidate(
+                1L,
+                100L,
+                null
+        )).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(MatchingErrorCode.INVALID_MATCHING_REQUEST)
+        );
+
+        verify(candidateMapper, never()).invalidate(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
+    }
+
+    @Test
+    void returnsAvailableCandidateCount() {
+        when(candidateMapper.countAvailableByBankTransactionId(100L))
+                .thenReturn(2);
+
+        int result = candidateService.countAvailableCandidates(100L);
+
+        assertThat(result).isEqualTo(2);
+    }
+
     private EvaluatedMatchingCandidate evaluatedCandidate(
             MatchingTargetType targetType,
             Long targetId,
@@ -252,6 +346,7 @@ class BankTransactionMatchCandidateServiceTest {
                 .targetId(10L)
                 .expectedRemainingAmount(new BigDecimal("10000"))
                 .amountMatchType(MatchingAmountType.EXACT)
+                .candidateStatus(MatchingCandidateStatus.AVAILABLE)
                 .createdAt(LocalDateTime.now())
                 .build();
     }

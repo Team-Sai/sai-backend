@@ -13,6 +13,9 @@ import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.service.BankTransactionMatchCandidateService;
 import org.teamsai.saibackend.domain.matching.service.BankTransactionMatchingReviewService;
 import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
+import org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason;
+import org.teamsai.saibackend.domain.matching.type.MatchingCandidateStatus;
+import org.teamsai.saibackend.domain.matching.type.MatchingReviewResult;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
 import org.teamsai.saibackend.domain.payment.service.LoanPaymentService;
@@ -101,6 +104,8 @@ class BankTransactionMatchingReviewServiceTest {
         verifyStatusUpdatedTo(BankTransactionProcessingStatus.APPLIED);
         assertThat(response.processingStatus())
                 .isEqualTo(BankTransactionProcessingStatus.APPLIED);
+        assertThat(response.reviewResult())
+                .isEqualTo(MatchingReviewResult.APPLIED);
     }
 
     @Test
@@ -142,6 +147,8 @@ class BankTransactionMatchingReviewServiceTest {
         verifyStatusUpdatedTo(BankTransactionProcessingStatus.UNMATCHED);
         assertThat(response.processingStatus())
                 .isEqualTo(BankTransactionProcessingStatus.UNMATCHED);
+        assertThat(response.reviewResult())
+                .isEqualTo(MatchingReviewResult.REJECTED);
     }
 
     @Test
@@ -175,11 +182,16 @@ class BankTransactionMatchingReviewServiceTest {
                 org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any()
         );
+        verify(candidateService, never()).invalidateCandidate(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
     }
 
     @Test
-    @DisplayName("복구 불가능한 대상 상태 불일치는 실패로 처리한다")
-    void marksIrrecoverableTargetMismatchAsFailed() {
+    @DisplayName("선택한 후보가 무효여도 다른 후보가 남으면 확인 필요 상태를 유지한다")
+    void keepsReviewOpenWhenAnotherCandidateRemains() {
         givenReviewableTransaction();
         given(candidateService.findByIdAndBankTransactionId(
                 MATCH_CANDIDATE_ID,
@@ -192,6 +204,8 @@ class BankTransactionMatchingReviewServiceTest {
                         BANK_TRANSACTION_ID,
                         new BigDecimal("5000")
                 );
+        given(candidateService.countAvailableCandidates(BANK_TRANSACTION_ID))
+                .willReturn(1);
 
         MatchingReviewProcessResponse response =
                 matchingReviewService.applyCandidate(
@@ -201,9 +215,90 @@ class BankTransactionMatchingReviewServiceTest {
                         MATCH_CANDIDATE_ID
                 );
 
+        verifyCandidateInvalidatedAs(
+                MatchingCandidateInvalidationReason.TARGET_NOT_AVAILABLE
+        );
+        verify(bankTransactionService, never()).updateStatus(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
+        assertThat(response.processingStatus())
+                .isEqualTo(BankTransactionProcessingStatus.NEEDS_CHECK);
+        assertThat(response.reviewResult())
+                .isEqualTo(MatchingReviewResult.CANDIDATE_INVALIDATED);
+    }
+
+    @Test
+    @DisplayName("마지막 후보가 더 이상 처리 가능하지 않으면 미매칭으로 처리한다")
+    void marksTransactionAsUnmatchedWhenLastCandidateIsUnavailable() {
+        givenReviewableTransaction();
+        given(candidateService.findByIdAndBankTransactionId(
+                MATCH_CANDIDATE_ID,
+                BANK_TRANSACTION_ID
+        )).willReturn(candidate(MatchingTargetType.SETTLEMENT, 10L));
+        willThrow(PaymentErrorCode.PAYMENT_OBLIGATION_NOT_ACTIVE.toException())
+                .given(settlementPaymentService)
+                .applyManuallyMatchedPayment(
+                        10L,
+                        BANK_TRANSACTION_ID,
+                        new BigDecimal("5000")
+                );
+        given(candidateService.countAvailableCandidates(BANK_TRANSACTION_ID))
+                .willReturn(0);
+
+        MatchingReviewProcessResponse response =
+                matchingReviewService.applyCandidate(
+                        USER_ID,
+                        LINKED_ACCOUNT_ID,
+                        BANK_TRANSACTION_ID,
+                        MATCH_CANDIDATE_ID
+                );
+
+        verifyCandidateInvalidatedAs(
+                MatchingCandidateInvalidationReason.TARGET_NOT_AVAILABLE
+        );
+        verifyStatusUpdatedTo(BankTransactionProcessingStatus.UNMATCHED);
+        assertThat(response.processingStatus())
+                .isEqualTo(BankTransactionProcessingStatus.UNMATCHED);
+        assertThat(response.reviewResult())
+                .isEqualTo(MatchingReviewResult.CANDIDATE_INVALIDATED);
+    }
+
+    @Test
+    @DisplayName("마지막 후보의 실제 대상이 없으면 실패로 처리한다")
+    void marksTransactionAsFailedWhenLastCandidateTargetIsMissing() {
+        givenReviewableTransaction();
+        given(candidateService.findByIdAndBankTransactionId(
+                MATCH_CANDIDATE_ID,
+                BANK_TRANSACTION_ID
+        )).willReturn(candidate(MatchingTargetType.LOAN, 20L));
+        willThrow(RepaymentScheduleErrorCode.SCHEDULE_NOT_FOUND.toException())
+                .given(loanPaymentService)
+                .applyManuallyMatchedPayment(
+                        20L,
+                        BANK_TRANSACTION_ID,
+                        new BigDecimal("5000")
+                );
+        given(candidateService.countAvailableCandidates(BANK_TRANSACTION_ID))
+                .willReturn(0);
+
+        MatchingReviewProcessResponse response =
+                matchingReviewService.applyCandidate(
+                        USER_ID,
+                        LINKED_ACCOUNT_ID,
+                        BANK_TRANSACTION_ID,
+                        MATCH_CANDIDATE_ID
+                );
+
+        verifyCandidateInvalidatedAs(
+                MatchingCandidateInvalidationReason.TARGET_NOT_FOUND
+        );
         verifyStatusUpdatedTo(BankTransactionProcessingStatus.FAILED);
         assertThat(response.processingStatus())
                 .isEqualTo(BankTransactionProcessingStatus.FAILED);
+        assertThat(response.reviewResult())
+                .isEqualTo(MatchingReviewResult.CANDIDATE_INVALIDATED);
     }
 
     @Test
@@ -233,6 +328,8 @@ class BankTransactionMatchingReviewServiceTest {
         verifyStatusUpdatedTo(BankTransactionProcessingStatus.APPLIED);
         assertThat(response.processingStatus())
                 .isEqualTo(BankTransactionProcessingStatus.APPLIED);
+        assertThat(response.reviewResult())
+                .isEqualTo(MatchingReviewResult.APPLIED);
     }
 
     @Test
@@ -301,8 +398,19 @@ class BankTransactionMatchingReviewServiceTest {
                 .targetId(targetId)
                 .expectedRemainingAmount(new BigDecimal("10000"))
                 .amountMatchType(MatchingAmountType.PARTIAL)
+                .candidateStatus(MatchingCandidateStatus.AVAILABLE)
                 .createdAt(LocalDateTime.of(2026, 8, 15, 10, 5))
                 .build();
+    }
+
+    private void verifyCandidateInvalidatedAs(
+            MatchingCandidateInvalidationReason invalidationReason
+    ) {
+        verify(candidateService).invalidateCandidate(
+                MATCH_CANDIDATE_ID,
+                BANK_TRANSACTION_ID,
+                invalidationReason
+        );
     }
 
     private void verifyStatusUpdatedTo(

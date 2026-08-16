@@ -18,6 +18,13 @@
         <result property="amountMatchType"
                 column="amount_match_type"
                 javaType="org.teamsai.saibackend.domain.matching.type.MatchingAmountType"/>
+        <result property="candidateStatus"
+                column="candidate_status"
+                javaType="org.teamsai.saibackend.domain.matching.type.MatchingCandidateStatus"/>
+        <result property="invalidatedAt" column="invalidated_at"/>
+        <result property="invalidationReason"
+                column="invalidation_reason"
+                javaType="org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason"/>
         <result property="createdAt" column="created_at"/>
     </resultMap>
 
@@ -45,6 +52,9 @@
         target_id,
         expected_remaining_amount,
         amount_match_type,
+        candidate_status,
+        invalidated_at,
+        invalidation_reason,
         created_at
     </sql>
 
@@ -55,6 +65,7 @@
             target_id,
             expected_remaining_amount,
             amount_match_type,
+            candidate_status,
             created_at
         )
         VALUES
@@ -67,6 +78,7 @@
                 #{candidate.targetId},
                 #{candidate.expectedRemainingAmount},
                 #{candidate.amountMatchType},
+                #{candidate.candidateStatus},
                 #{candidate.createdAt}
             )
         </foreach>
@@ -109,6 +121,7 @@
         LEFT JOIN users debtor
             ON debtor.user_id = contract.debtor_id
         WHERE mc.bank_transaction_id = #{bankTransactionId}
+        AND mc.candidate_status = 'AVAILABLE'
         ORDER BY mc.match_candidate_id ASC
     </select>
 
@@ -119,6 +132,25 @@
         FROM bank_transaction_match_candidate
         WHERE match_candidate_id = #{matchCandidateId}
         AND bank_transaction_id = #{bankTransactionId}
+        AND candidate_status = 'AVAILABLE'
+    </select>
+
+    <update id="invalidate">
+        UPDATE bank_transaction_match_candidate
+        SET candidate_status = 'INVALIDATED',
+            invalidated_at = #{invalidatedAt},
+            invalidation_reason = #{invalidationReason}
+        WHERE match_candidate_id = #{matchCandidateId}
+        AND bank_transaction_id = #{bankTransactionId}
+        AND candidate_status = 'AVAILABLE'
+    </update>
+
+    <select id="countAvailableByBankTransactionId"
+            resultType="int">
+        SELECT COUNT(*)
+        FROM bank_transaction_match_candidate
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND candidate_status = 'AVAILABLE'
     </select>
 
 </mapper>

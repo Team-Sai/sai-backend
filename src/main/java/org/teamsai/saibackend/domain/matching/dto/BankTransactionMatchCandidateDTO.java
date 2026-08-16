@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
+import org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason;
+import org.teamsai.saibackend.domain.matching.type.MatchingCandidateStatus;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 
 import java.math.BigDecimal;
@@ -29,5 +31,12 @@ public class BankTransactionMatchCandidateDTO {
 
     private MatchingAmountType amountMatchType;
 
+    private MatchingCandidateStatus candidateStatus;
+
+    private LocalDateTime invalidatedAt;
+
+    private MatchingCandidateInvalidationReason invalidationReason;
+
     private LocalDateTime createdAt;
+
 }
