@@ -3,5 +3,6 @@ package org.teamsai.saibackend.domain.notification.type;
 public enum NotificationType {
     SETTLEMENT_PARTICIPANT_ADDED,
     CONTRACT_REQUESTED,
-    CONTRACT_CHANGE
+    CONTRACT_CHANGE,
+    BANK_TRANSACTION_MATCHING_REVIEW
 }
