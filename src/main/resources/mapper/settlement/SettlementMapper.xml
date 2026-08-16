@@ -116,8 +116,7 @@
         s.title AS title,
 
         CASE
-        WHEN s.owner_id = #{userId}
-        THEN 'OWNER'
+        WHEN s.owner_id = #{userId} THEN 'OWNER'
         ELSE 'MEMBER'
         END AS role,
 
@@ -126,6 +125,8 @@
         s.split_type AS splitType,
         s.settlement_status AS settlementStatus,
         s.due_date AS dueDate,
+        rs.start_date AS startDate,
+        rs.end_date AS endDate,
         s.created_at AS createdAt
 
         FROM settlement s
@@ -134,6 +135,9 @@
         ON sp.settlement_id = s.settlement_id
         AND sp.user_id = #{userId}
         AND sp.participant_status = 'ACTIVE'
+
+        LEFT JOIN recurring_settlement rs
+        ON rs.recurring_settlement_id = s.recurring_settlement_id
 
         WHERE
         s.owner_id = #{userId}
@@ -153,15 +157,13 @@
         s.settlement_status AS settlementStatus,
         s.split_type AS splitType,
         s.due_date AS dueDate,
+        rs.start_date AS startDate,
+        rs.end_date AS endDate,
         s.created_at AS createdAt,
 
         CASE
-        WHEN s.owner_id = #{userId}
-        THEN 'OWNER'
-
-        WHEN sp.participant_id IS NOT NULL
-        THEN 'MEMBER'
-
+        WHEN s.owner_id = #{userId} THEN 'OWNER'
+        WHEN sp.participant_id IS NOT NULL THEN 'MEMBER'
         ELSE 'NONE'
         END AS role
 
@@ -171,6 +173,9 @@
         ON sp.settlement_id = s.settlement_id
         AND sp.user_id = #{userId}
         AND sp.participant_status = 'ACTIVE'
+
+        LEFT JOIN recurring_settlement rs
+        ON rs.recurring_settlement_id = s.recurring_settlement_id
 
         WHERE s.settlement_id = #{settlementId}
 
