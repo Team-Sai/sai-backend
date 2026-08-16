@@ -1,31 +1,33 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0">
     <title>새로운 정산 만들기 | 사이원장</title>
-    <link rel="stylesheet" href="/css/settlement/settlement-common.css">
-    <link rel="stylesheet" href="/css/settlement/settlement-create.css">
-    <link rel="stylesheet" href="/css/settlement/settlement-create-payer.css">
-    <script src="/js/settlement/settlement-create.js" defer></script>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link
+            rel="stylesheet"
+            href="/css/settlement/settlement-common.css">
+
+    <link
+            rel="stylesheet"
+            href="/css/settlement/settlement-create.css">
+
+    <link
+            rel="stylesheet"
+            href="/css/settlement/settlement-create-payer.css">
+
 </head>
-<body>
-<header class="site-header">
-    <div class="header-inner">
-        <a class="brand" href="/">사이원장</a>
-
-        <nav class="main-nav" aria-label="주요 메뉴">
-            <a href="/">서비스 소개</a>
-            <a href="/contracts">금전거래대차</a>
-            <a class="active" href="/settlements">정산</a>
-            <a href="/schedule">거래 일정</a>
-        </nav>
-
-        <div class="header-actions">
-            <a class="text-link" href="/login">로그인</a>
-            <a class="button button-primary button-small" href="/signup">회원가입</a>
-        </div>
-    </div>
+<body class="app-shell-page">
+<header
+        th:replace="~{fragments/app-shell :: appHeader('settlement')}">
 </header>
 
 <main class="create-shell">
@@ -278,20 +280,22 @@
     </div>
 </main>
 
-<footer class="site-footer">
-    <div class="footer-inner">
-        <div>
-            <strong>사이원장</strong>
-            <p>© Sai-Wonjang. All rights reserved.</p>
-        </div>
-        <nav>
-            <a href="#">이용약관</a>
-            <a href="#">개인정보처리방침</a>
-            <a href="#">고객센터</a>
-        </nav>
-    </div>
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
 </footer>
+<div
+        id="toast"
+        class="toast"
+        role="status"
+        aria-live="polite">
+</div>
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script
+        th:src="@{/js/settlement/settlement-create.js}"
+        src="/js/settlement/settlement-create.js">
+</script>
 </body>
 </html>

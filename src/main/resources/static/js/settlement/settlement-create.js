@@ -22,8 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const summaryParticipantCount = document.getElementById("summary-participant-count");
     const summaryPerPersonAmount = document.getElementById("summary-per-person-amount");
     const ownerChip = document.getElementById("owner-chip");
-
-    // key: userToken, value: 조회된 사용자 정보
     const selectedParticipants = new Map();
 
     setMinimumDueDate();
@@ -128,31 +126,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const accessToken = getAccessToken();
-
-        if (!accessToken) {
-            window.location.href = "/login?required=true";
-            return;
-        }
-
         setParticipantLookupLoading(true);
 
         try {
-            const response = await fetch(
-                `/api/users/by-token/${encodeURIComponent(userToken)}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    },
-                    credentials: "include"
-                }
+            const response = await authFetch(
+                `/api/users/by-token/${encodeURIComponent(userToken)}`
             );
-
-            if (response.status === 401) {
-                clearStoredAuth();
-                window.location.href = "/login?required=true";
-                return;
-            }
 
             const responseBody = await readJsonSafely(response);
 
@@ -192,29 +171,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     async function loadLinkedAccounts() {
-        const token = getAccessToken();
-
-        if (!token) {
-            return;
-        }
-
         try {
-            const response = await fetch(
+            const response = await authFetch(
                 "/api/linked-accounts",
                 {
                     method: "GET",
                     headers: {
-                        "Accept": "application/json",
-                        Authorization: `Bearer ${token}`
+                        "Accept": "application/json"
                     }
                 }
             );
-
-            if (response.status === 401 || response.status === 403) {
-                clearStoredAuth();
-                window.location.href = "/login?required=true";
-                return;
-            }
 
             if (!response.ok) {
                 throw new Error(
@@ -327,19 +293,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function loadCurrentUser() {
-        const token = getAccessToken();
-
-        if (!token) {
-            return;
-        }
-
         try {
-            const response = await fetch("/api/users/me", {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
-                credentials: "include"
-            });
+            const response = await authFetch(
+                "/api/users/me"
+            );
 
             if (!response.ok) {
                 return;
@@ -386,31 +343,19 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const token = getAccessToken();
-
-        if (!token) {
-            window.location.href = "/login?required=true";
-            return;
-        }
-
         setSubmitting(true);
 
         try {
-            const response = await fetch("/api/settlements/shared", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-                credentials: "include",
-                body: JSON.stringify(payload)
-            });
-
-            if (response.status === 401) {
-                clearStoredAuth();
-                window.location.href = "/login?required=true";
-                return;
-            }
+            const response = await authFetch(
+                "/api/settlements/shared",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                }
+            );
 
             const responseBody =
                 await readJsonSafely(response);
@@ -543,14 +488,6 @@ document.addEventListener("DOMContentLoaded", () => {
         submitButton.textContent = isSubmitting
             ? "생성 중..."
             : "공동정산 생성";
-    }
-
-    function getAccessToken() {
-        return sessionStorage.getItem("accessToken");
-    }
-
-    function clearStoredAuth() {
-        sessionStorage.removeItem("accessToken");
     }
 
     function getValidationMessage(body) {

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+
+<!-- ① 공통 CSS -->
+<th:block th:fragment="commonStyles">
+
+    <link
+            rel="stylesheet"
+            th:href="@{/css/common/app-shell.css}">
+
+</th:block>
+
+
+
+<!-- ② 공통 Header -->
+<header
+        th:fragment="appHeader(activeMenu)"
+        class="app-header">
+
+    <a
+            class="app-brand"
+            th:href="@{/integration/dashboard}"
+            aria-label="사이원장 홈">
+
+        <span class="app-brand__mark">S</span>
+        <span class="app-brand__name">사이원장</span>
+
+    </a>
+
+
+    <nav
+            class="app-nav"
+            aria-label="주요 메뉴">
+
+        <a
+                class="app-nav__link"
+                th:classappend="${activeMenu == 'dashboard'} ? ' is-active' : ''"
+                th:href="@{/integration/dashboard}">
+            대시보드
+        </a>
+
+        <a
+                class="app-nav__link"
+                th:classappend="${activeMenu == 'settlement'} ? ' is-active' : ''"
+                th:href="@{/settlements}">
+            정산
+        </a>
+
+        <a
+                class="app-nav__link"
+                th:classappend="${activeMenu == 'contract'} ? ' is-active' : ''"
+                th:href="@{/dashboard}">
+            금전소비대차
+        </a>
+
+        <a
+                class="app-nav__link"
+                th:classappend="${activeMenu == 'calendar'} ? ' is-active' : ''"
+                href="#">
+            캘린더
+        </a>
+
+    </nav>
+
+
+    <div
+            class="app-header-actions"
+            aria-label="사용자 메뉴">
+
+        <a
+                class="app-icon-button"
+                th:href="@{/notifications}"
+                aria-label="알림">
+            !
+        </a>
+
+        <a
+                class="app-profile-button"
+                th:href="@{/mypage}">
+            마이페이지
+        </a>
+
+    </div>
+
+</header>
+
+
+
+<!-- ③ 공통 Footer -->
+<footer
+        th:fragment="appFooter"
+        class="app-footer">
+
+    <div>
+        <strong>사이원장</strong>
+
+        <p>
+            정산과 차용증 거래를 한 곳에서 확인하세요.
+        </p>
+    </div>
+
+    <nav aria-label="푸터 메뉴">
+        <a href="#">이용약관</a>
+        <a href="#">개인정보처리방침</a>
+        <a href="#">고객센터</a>
+    </nav>
+
+</footer>
+
+
+
+<!-- ④ 공통 JS -->
+<th:block th:fragment="commonScripts">
+
+    <script
+            th:src="@{/js/common/auth.js}">
+    </script>
+
+</th:block>
+
+
+</body>
+</html>
