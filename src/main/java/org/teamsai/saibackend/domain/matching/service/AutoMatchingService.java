@@ -7,12 +7,14 @@ import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingResult;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingTransactionResult;
+import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.policy.AutoMatchingJudge;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
+import org.teamsai.saibackend.domain.payment.service.LoanPaymentService;
 import org.teamsai.saibackend.domain.payment.service.SettlementPaymentService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
@@ -29,6 +31,7 @@ public class AutoMatchingService {
     private final AutoMatchingJudge autoMatchingJudge;
     private final SettlementPaymentService settlementPaymentService;
     private final LoanPaymentService loanPaymentService;
+    private final BankTransactionMatchCandidateService candidateService;
 
     public AutoMatchingExecutionResult execute(
             List<MatchingTransaction> transactions,
@@ -170,10 +173,41 @@ public class AutoMatchingService {
         }
 
         if (result.needsCheck()) {
+            candidateService.saveAll(
+                    transaction.transactionId(),
+                    result.evaluatedCandidates()
+            );
+
             return AutoMatchingProcessResult.needsCheck();
         }
 
-        MatchingCandidate candidate = result.matchedCandidate();
+        EvaluatedMatchingCandidate evaluatedCandidate =
+                result.matchedCandidate();
+
+        try {
+            return applyPayment(transaction, evaluatedCandidate);
+        } catch (DomainException exception) {
+            AutoMatchingProcessResult processResult =
+                    classifyPaymentException(transaction, exception);
+
+            if (processResult.status()
+                    == AutoMatchingProcessStatus.NEEDS_CHECK) {
+                candidateService.saveAll(
+                        transaction.transactionId(),
+                        List.of(evaluatedCandidate)
+                );
+            }
+
+            return processResult;
+        }
+    }
+
+    private AutoMatchingProcessResult applyPayment(
+            MatchingTransaction transaction,
+            EvaluatedMatchingCandidate evaluatedCandidate
+    ) {
+
+        MatchingCandidate candidate = evaluatedCandidate.candidate();
 
         // 1. SETTLEMENT(정산) 타입 처리
         if (candidate.targetType() == MatchingTargetType.SETTLEMENT) {
@@ -182,7 +216,9 @@ public class AutoMatchingService {
                     transaction.transactionId(),
                     transaction.amount()
             );
-            return AutoMatchingProcessResult.applied(AppliedCandidateKey.from(candidate));
+            return AutoMatchingProcessResult.applied(
+                    AppliedCandidateKey.from(candidate)
+            );
         }
 
         // 2. LOAN(차용증) 타입 처리
@@ -192,7 +228,9 @@ public class AutoMatchingService {
                     transaction.transactionId(),
                     transaction.amount()
             );
-            return AutoMatchingProcessResult.applied(AppliedCandidateKey.from(candidate));
+            return AutoMatchingProcessResult.applied(
+                    AppliedCandidateKey.from(candidate)
+            );
         }
 
         return AutoMatchingProcessResult.needsCheck();
