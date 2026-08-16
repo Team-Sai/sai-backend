@@ -41,8 +41,8 @@ class OverdueSettlementUpdaterTest {
     }
 
     @Test
-    @DisplayName("ACTIVE 참여자의 미납 obligation에 overdueSince를 주어진 referenceDate로 채운다")
-    void updatesOverdueSinceUsingGivenReferenceDate() {
+    @DisplayName("ACTIVE 참여자의 미납 obligation들을 벌크로 한 번에 갱신한다")
+    void updatesOverdueSinceInBulk() {
         LocalDate referenceDate = LocalDate.of(2026, 2, 1);
         SettlementDTO settlement = settlement(1L);
 
@@ -54,12 +54,35 @@ class OverdueSettlementUpdaterTest {
                 PaymentObligationDTO.builder().paymentObligationId(9001L).build(),
                 PaymentObligationDTO.builder().paymentObligationId(9002L).build()
         ));
+        when(paymentObligationMapper.updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.atStartOfDay()))
+                .thenReturn(2);
 
         sut.updateOverdueForSettlement(settlement, referenceDate);
 
-        verify(paymentObligationMapper).updateOverdueSince(9001L, referenceDate.atStartOfDay());
-        verify(paymentObligationMapper).updateOverdueSince(9002L, referenceDate.atStartOfDay());
-        verify(paymentObligationMapper).findUnpaidByParticipantIds(List.of(101L));
+        verify(paymentObligationMapper).updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.atStartOfDay());
+    }
+
+    @Test
+    @DisplayName("일부만 갱신되면(이미 완납 등) 로그로 남기되 예외는 던지지 않는다")
+    void logsWhenPartiallyUpdated() {
+        LocalDate referenceDate = LocalDate.of(2026, 2, 1);
+        SettlementDTO settlement = settlement(1L);
+
+        when(participantMapper.findBySettlementId(1L)).thenReturn(List.of(
+                participant(101L, SettlementParticipantStatus.ACTIVE)
+        ));
+        when(paymentObligationMapper.findUnpaidByParticipantIds(List.of(101L))).thenReturn(List.of(
+                PaymentObligationDTO.builder().paymentObligationId(9001L).build(),
+                PaymentObligationDTO.builder().paymentObligationId(9002L).build()
+        ));
+        // 2건 대상인데 1건만 실제 갱신됨 (나머지는 이미 완납 등으로 조건 불일치)
+        when(paymentObligationMapper.updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.atStartOfDay()))
+                .thenReturn(1);
+
+        sut.updateOverdueForSettlement(settlement, referenceDate);
+
+        verify(paymentObligationMapper).updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.atStartOfDay());
+        // 예외 없이 정상 종료되는지가 핵심 (별도 assertion 불필요, 예외 발생 시 테스트 자체가 실패함)
     }
 
     @Test
@@ -90,6 +113,6 @@ class OverdueSettlementUpdaterTest {
 
         sut.updateOverdueForSettlement(settlement, referenceDate);
 
-        verify(paymentObligationMapper, never()).updateOverdueSince(any(), any());
+        verify(paymentObligationMapper, never()).updateOverdueSinceBulk(any(), any());
     }
 }

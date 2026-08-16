@@ -187,4 +187,16 @@
         SET overdue_since = NULL
         WHERE payment_obligation_id = #{paymentObligationId}
     </update>
+
+    <update id="updateOverdueSinceBulk">
+        UPDATE payment_obligation
+        SET overdue_since = #{overdueSince}
+        WHERE payment_obligation_id IN
+        <foreach item="id" collection="paymentObligationIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND payment_status != 'PAID'
+        AND overdue_since IS NULL
+        AND obligation_status = 'ACTIVE'
+    </update>
 </mapper>

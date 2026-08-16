@@ -20,7 +20,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class OverdueSettlementUpdater {
-    
+
     private final SettlementParticipantMapper participantMapper;
     private final PaymentObligationMapper paymentObligationMapper;
 
@@ -44,14 +44,15 @@ public class OverdueSettlementUpdater {
         }
 
         LocalDateTime overdueSince = referenceDate.atStartOfDay();
+        List<Long> obligationIds = unpaidObligations.stream()
+                .map(PaymentObligationDTO::getPaymentObligationId)
+                .toList();
 
-        for (PaymentObligationDTO obligation : unpaidObligations) {
-            int updatedCount = paymentObligationMapper.updateOverdueSince(
-                    obligation.getPaymentObligationId(), overdueSince);
-            if (updatedCount == 0) {
-                log.info("연체 처리 스킵 (이미 완납 등으로 조건 불일치) paymentObligationId={}",
-                        obligation.getPaymentObligationId());
-            }
+        int updatedCount = paymentObligationMapper.updateOverdueSinceBulk(obligationIds, overdueSince);
+
+        if (updatedCount < obligationIds.size()) {
+            log.info("일부 연체 처리 스킵됨 (이미 완납 등으로 조건 불일치) settlementId={}, 대상={}건, 실제갱신={}건",
+                    settlement.getSettlementId(), obligationIds.size(), updatedCount);
         }
     }
 }
