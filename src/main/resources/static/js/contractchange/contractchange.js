@@ -127,17 +127,19 @@ document.getElementById('changeRequestForm').addEventListener('submit', function
         headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(requestBody)
     })
-        .then(response => {
+        .then(async response => {
             if (!response.ok) {
-                throw new Error('요청 실패');
+                const body = await response.json().catch(() => null);
+                throw new Error(body?.message || '요청 실패');
             }
             return response.json();
         })
-        .then(() => {
-            window.location.href = `/contracts/edit-complete?contractId=${encodeURIComponent(contractId)}`;
+        .then(changeDTO => {
+            window.location.href =
+                `/contracts/${contractId}/change-requests/${changeDTO.changeRequestId}/signature`;
         })
-        .catch(() => {
-            alert('변경 요청 중 오류가 발생했습니다.');
+        .catch(err => {
+            alert(err.message || '변경 요청 중 오류가 발생했습니다.');
         });
 });
 

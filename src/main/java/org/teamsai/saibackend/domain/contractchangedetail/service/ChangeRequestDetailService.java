@@ -100,6 +100,7 @@ public class ChangeRequestDetailService {
             case PENDING -> "승인 대기 중";
             case APPROVED -> "승인됨";
             case REJECTED -> "거절됨";
+            case CANCELLED -> "취소됨";
 
         };
 

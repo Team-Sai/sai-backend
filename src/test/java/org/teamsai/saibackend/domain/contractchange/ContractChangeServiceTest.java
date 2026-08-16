@@ -8,11 +8,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
+import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
@@ -21,21 +23,23 @@ import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
+import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ContractChangeService 단위 테스트")
@@ -56,6 +60,9 @@ class ContractChangeServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private LoanContractFileService fileService;
 
     @InjectMocks
     private ContractChangeService contractChangeService;
@@ -129,6 +136,8 @@ class ContractChangeServiceTest {
                 .build();
     }
 
+
+
     @Nested
     @DisplayName("변경 요청 저장")
     class RequestChange {
@@ -140,8 +149,6 @@ class ContractChangeServiceTest {
                     .willReturn(createContract(ContractStatus.COMPLETED));
             given(contractChangeMapper.findByContractId(CONTRACT_ID))
                     .willReturn(List.of());
-            given(userService.getMyInfo(USER_ID))
-                    .willReturn(UserResponse.builder().name("채권자").build());
 
             contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID);
 
@@ -383,6 +390,134 @@ class ContractChangeServiceTest {
                     );
 
             verify(loanContractService, never()).rejectChangedContract(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("변경 요청 전자서명 제출")
+    class SubmitRequesterSignature {
+
+        private static final Long CHANGE_REQUEST_ID = 200L;
+        private static final String SAVED_PATH = "uploads/signatures/change_200_signature.png";
+
+        private LoanContractChangeDTO changeRequestDTO(ChangeRequestStatus status, Long ownerUserId, Long contractId) {
+            return LoanContractChangeDTO.builder()
+                    .changeRequestId(CHANGE_REQUEST_ID)
+                    .userId(ownerUserId)
+                    .contractId(contractId)
+                    .changeReason("이자율 조정 요청")
+                    .status(status)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+        }
+
+        @Test
+        @DisplayName("요청 등록 당사자가 대기 중인 요청에 서명하면 서명을 저장하고 상대방에게 알림을 보낸다")
+        void submitRequesterSignatureSuccess() {
+            MultipartFile signature = mock(MultipartFile.class);
+
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID)));
+            given(fileService.saveSignatureFile(CHANGE_REQUEST_ID, signature))
+                    .willReturn(SAVED_PATH);
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(userService.getMyInfo(USER_ID))
+                    .willReturn(UserResponse.builder().name("채권자").build());
+
+            contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature);
+
+            verify(fileService).saveSignatureFile(CHANGE_REQUEST_ID, signature);
+            verify(contractChangeMapper).updateRequesterSignature(CHANGE_REQUEST_ID, SAVED_PATH);
+            verify(notificationService).create(
+                    eq(DEBTOR_ID),
+                    eq(NotificationType.CONTRACT_CHANGE),
+                    any(),
+                    any(),
+                    eq(CONTRACT_ID),
+                    eq(CHANGE_REQUEST_ID)
+            );
+        }
+
+        @Test
+        @DisplayName("요청을 등록한 당사자가 아니면 예외가 발생한다")
+        void submitRequesterSignatureFailsWhenNotRequester() {
+            MultipartFile signature = mock(MultipartFile.class);
+
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID)));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, DEBTOR_ID, signature))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.NOT_CONTRACT_PARTY)
+                    );
+
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractChangeMapper, never()).updateRequesterSignature(any(), any());
+        }
+
+        @Test
+        @DisplayName("이미 처리된 요청이면 예외가 발생한다")
+        void submitRequesterSignatureFailsWhenAlreadyProcessed() {
+            MultipartFile signature = mock(MultipartFile.class);
+
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.APPROVED, USER_ID, CONTRACT_ID)));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.ALREADY_BEING_REQUEST)
+                    );
+
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractChangeMapper, never()).updateRequesterSignature(any(), any());
+        }
+
+        @Test
+        @DisplayName("변경 요청이 해당 계약의 것이 아니면 예외가 발생한다")
+        void submitRequesterSignatureFailsWhenContractIdMismatch() {
+            MultipartFile signature = mock(MultipartFile.class);
+            Long otherContractId = 999L;
+
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, otherContractId)));
+
+            assertThatThrownBy(() ->
+                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND)
+                    );
+
+            verify(fileService, never()).saveSignatureFile(any(), any());
+            verify(contractChangeMapper, never()).updateRequesterSignature(any(), any());
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 변경 요청이면 예외가 발생한다")
+        void submitRequesterSignatureFailsWhenChangeRequestNotFound() {
+            MultipartFile signature = mock(MultipartFile.class);
+
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.empty());
+
+            assertThatThrownBy(() ->
+                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND)
+                    );
+
+            verify(fileService, never()).saveSignatureFile(any(), any());
         }
     }
 }

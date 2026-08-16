@@ -38,3 +38,13 @@ ALTER TABLE loan_contract_change_request
 
 ALTER TABLE loan_contract_change_request
     MODIFY COLUMN new_repayment_type VARCHAR(30) NULL;
+
+ALTER TABLE loan_contract_change_request
+    ADD COLUMN requester_signature VARCHAR(255) NULL AFTER return_reason;
+
+ALTER TABLE loan_contract_change_request
+DROP CONSTRAINT status;
+
+ALTER TABLE loan_contract_change_request
+    ADD CONSTRAINT chk_change_request_status
+        CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'));
