@@ -1,178 +1,274 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
-
 * {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    padding: 24px 16px 60px;
+    padding: 0;
+
     background: #f7f7f8;
-    font-family: "Pretendard", sans-serif;
+
+    font-family:
+            "Pretendard",
+            sans-serif;
 }
 
 .archive-container {
-    max-width: 720px;
+    width: 100%;
+    max-width: 960px;
+
     margin: 0 auto;
+    padding: 32px 24px 60px;
+}
+
+.archive-heading {
+    margin-bottom: 20px;
 }
 
 h1 {
+    margin: 0 0 4px;
+
+    color: #1a1a1a;
+
     font-size: 20px;
     font-weight: 700;
-    color: #1a1a1a;
-    margin: 0 0 4px;
 }
 
 .subtitle {
-    font-size: 13px;
+    margin: 0;
+
     color: #888;
-    margin: 0 0 20px;
+
+    font-size: 13px;
 }
 
 .archive-list {
     display: flex;
     flex-direction: column;
+
     gap: 12px;
 }
 
+
 .archive-card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    padding: 16px 18px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 12px;
-    transition: box-shadow 0.15s ease;
+
+    padding: 16px 18px;
+
+    background: #ffffff;
+
+    border-radius: 12px;
+
+    box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.06);
+
+    cursor: pointer;
+
+    transition:
+            box-shadow 0.15s ease,
+            transform 0.15s ease;
 }
 
 .archive-card:hover {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+    box-shadow:
+            0 4px 14px rgba(0, 0, 0, 0.1);
+
+    transform: translateY(-1px);
 }
 
 .archive-card-main {
     display: flex;
     flex-direction: column;
+
     gap: 6px;
+
     min-width: 0;
 }
 
 .archive-card-title {
+    overflow: hidden;
+
+    color: #1a1a1a;
+
     font-size: 16px;
     font-weight: 600;
-    color: #1a1a1a;
+
     white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .archive-card-sub {
-    font-size: 13px;
     color: #888;
+
+    font-size: 13px;
 }
 
 .role-badge {
     display: inline-block;
+
+    margin-right: 6px;
     padding: 2px 8px;
+
     border-radius: 999px;
+
     font-size: 12px;
     font-weight: 600;
-    margin-right: 6px;
 }
 
-.role-badge.creditor { background: #e6f4ec; color: #0b3d2e; }
-.role-badge.debtor { background: #fdeee6; color: #a63d1a; }
+.role-badge.creditor {
+    background: #e6f4ec;
+    color: #0b3d2e;
+}
+
+.role-badge.debtor {
+    background: #fdeee6;
+    color: #a63d1a;
+}
+
 
 .status-pill {
     flex-shrink: 0;
+
     padding: 4px 12px;
+
     border-radius: 999px;
+
     font-size: 12px;
     font-weight: 600;
 }
 
-.status-pill.ongoing { background: #eef4ff; color: #1d4ed8; }
-.status-pill.completed { background: #f0f0f0; color: #666; }
+.status-pill.ongoing {
+    background: #eef4ff;
+    color: #1d4ed8;
+}
+
+.status-pill.completed {
+    background: #f0f0f0;
+    color: #666;
+}
+
 
 .card-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+
     flex-shrink: 0;
+
+    gap: 8px;
 }
 
 .btn-pdf-download {
-    border: 1px solid #0b3d2e;
-    background: #fff;
-    color: #0b3d2e;
-    border-radius: 6px;
     padding: 6px 10px;
+
+    border: 1px solid #0b3d2e;
+    border-radius: 6px;
+
+    background: #ffffff;
+    color: #0b3d2e;
+
+    font-family:
+            "Pretendard",
+            sans-serif;
+
     font-size: 12px;
     font-weight: 600;
+
     cursor: pointer;
-    font-family: "Pretendard", sans-serif;
+
+    transition:
+            background-color 0.15s ease;
 }
 
 .btn-pdf-download:hover {
     background: #f0f7f3;
 }
 
-.empty-state, .error-state {
-    text-align: center;
+.empty-state,
+.error-state {
     padding: 60px 0;
+
     color: #999;
+
     font-size: 14px;
+
+    text-align: center;
 }
+
 
 .pager {
     display: flex;
+    align-items: center;
     justify-content: center;
+
     margin-top: 20px;
 }
 
 .pager button {
-    border: 1px solid #ddd;
-    background: #fff;
-    border-radius: 8px;
     padding: 8px 16px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    font-family:
+            "Pretendard",
+            sans-serif;
+
     font-size: 13px;
+
     cursor: pointer;
-    font-family: "Pretendard", sans-serif;
 }
 
 .pager button:disabled {
     color: #ccc;
+
     cursor: not-allowed;
 }
 
 .pager-label {
-    margin: 0 12px;
     align-self: center;
-    font-size: 13px;
-    color: #666;
-}
 
+    margin: 0 12px;
+
+    color: #666;
+
+    font-size: 13px;
+}
 
 .print-only {
     position: fixed;
+
     top: 0;
     left: -10000px;
+
     width: 210mm;
+
     background: #ffffff;
+
     z-index: -9999;
 }
 
 .page {
     width: 210mm;
     min-height: 297mm;
+
+    margin: 0 auto 10px;
     padding: 20mm;
-    margin: 0 auto 10px auto;
+
     background: #ffffff;
-    box-sizing: border-box;
     color: #1a1a1a;
-    font-family: "Pretendard", sans-serif;
+
+    box-sizing: border-box;
+
+    font-family:
+            "Pretendard",
+            sans-serif;
 
     page-break-after: always;
     break-after: page;
@@ -180,17 +276,71 @@ h1 {
 
 .page .doc {
     padding: 0;
+
     border: none;
-    box-shadow: none;
     border-radius: 0;
+
+    box-shadow: none;
+}
+
+@media (max-width: 760px) {
+
+    .archive-container {
+        padding:
+                24px 16px
+                48px;
+    }
+
+    .archive-card {
+        align-items: flex-start;
+
+        padding: 15px 16px;
+    }
+
+    .card-actions {
+        align-items: flex-end;
+        flex-direction: column;
+    }
+}
+
+
+@media (max-width: 520px) {
+
+    .archive-container {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .archive-card {
+        flex-direction: column;
+
+        gap: 14px;
+    }
+
+    .archive-card-main {
+        width: 100%;
+    }
+
+    .card-actions {
+        width: 100%;
+
+        align-items: center;
+        flex-direction: row;
+        justify-content: flex-end;
+    }
 }
 
 @media print {
+
     body {
-        background: #ffffff;
+        margin: 0;
         padding: 0;
+
+        background: #ffffff;
     }
 
+    .app-header,
+    .app-footer,
     .archive-container,
     .pager {
         display: none !important;
@@ -198,7 +348,11 @@ h1 {
 
     .print-only {
         position: static;
+
         left: 0;
+
         width: 100%;
+
+        z-index: auto;
     }
 }

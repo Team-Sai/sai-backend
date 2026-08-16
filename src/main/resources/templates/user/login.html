@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,19 +9,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
     <link rel="stylesheet"
           th:href="@{/css/user/login.css}"
           href="/css/user/login.css">
 </head>
-<script th:src="@{/js/user/login.js}"
-        src="/js/user/login.js"
-        defer></script>
 <body>
+<header
+        th:replace="~{fragments/app-shell :: appHeader('mypage')}">
+</header>
 <div class="page">
-    <header class="site-header">
-        <a class="logo" data-route="main" href="/">사이원장</a>
-        <a class="header-link" data-route="signup" href="/signup">회원가입</a>
-    </header>
 
     <main class="auth-main">
         <section class="auth-wrap">
@@ -96,17 +97,19 @@
             </div>
         </section>
     </main>
-
-    <footer class="site-footer">
-        <div class="footer-links">
-            <a href="/terms">이용약관</a>
-            <span>|</span>
-            <a href="/privacy"><strong>개인정보 처리방침</strong></a>
-        </div>
-        <p class="copyright">© 2026 Sai-Wonjang. All rights reserved.</p>
-    </footer>
 </div>
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
 
-<script src="./login.js"></script>
+
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+
+<script
+        th:src="@{/js/user/login.js}"
+        src="/js/user/login.js">
+</script>
 </body>
 </html>

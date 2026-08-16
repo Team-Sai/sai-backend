@@ -19,11 +19,6 @@ const transactionStatusClasses = {
     IN_PROGRESS: "waiting"
 };
 
-function authHeaders() {
-    const token = sessionStorage.getItem("accessToken");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 function toAmount(value) {
     const amount = Number(value);
     return Number.isFinite(amount) ? amount : 0;
@@ -47,12 +42,6 @@ function toYearMonth(date) {
 }
 
 async function loadDashboard(calendarOnly = false) {
-    const token = sessionStorage.getItem("accessToken");
-
-    if (!token) {
-        window.location.href = "/login?required=true";
-        return;
-    }
 
     if (!calendarOnly) {
         setLoadingState();
@@ -62,15 +51,9 @@ async function loadDashboard(calendarOnly = false) {
         const params = new URLSearchParams({
             yearMonth: toYearMonth(calendarCursor)
         });
-        const response = await fetch(`/api/integration/dashboard?${params}`, {
-            headers: authHeaders()
-        });
-
-        if (response.status === 401) {
-            sessionStorage.removeItem("accessToken");
-            window.location.href = "/login?required=true";
-            return;
-        }
+        const response = await authFetch(
+            `/api/integration/dashboard?${params}`
+        );
 
         if (!response.ok) {
             throw new Error(`통합 대시보드 조회 실패: ${response.status}`);

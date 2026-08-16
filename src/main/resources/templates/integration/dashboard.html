@@ -4,26 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>사이원장 통합 대시보드</title>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
     <link rel="stylesheet" th:href="@{/css/integration/dashboard.css}" href="/css/integration/dashboard.css">
 </head>
-<body>
-<div class="dashboard-shell">
-    <header class="site-header">
-        <a class="brand" href="/integration/dashboard" aria-label="사이원장 홈">
-            <span class="brand__mark">S</span>
-            <span class="brand__name">사이원장</span>
-        </a>
-        <nav class="site-nav" aria-label="주요 메뉴">
-            <a class="site-nav__link is-active" href="/integration/dashboard">대시보드</a>
-            <a class="site-nav__link" href="/settlements">정산</a>
-            <a class="site-nav__link" href="/dashboard">금전소비대차</a>
-            <a class="site-nav__link" href="#">캘린더</a>
-        </nav>
-        <div class="header-actions" aria-label="사용자 메뉴">
-            <a class="icon-button" href="/notifications" aria-label="알림">!</a>
-            <a class="profile-button" href="/mypage">마이페이지</a>
-        </div>
-    </header>
+<body class="app-shell-page">
+<header
+        th:replace="~{fragments/app-shell :: appHeader('dashboard')}">
+</header>
 
     <main class="dashboard-main">
         <h1 class="page-title">통합 대시보드</h1>
@@ -108,20 +97,16 @@
             </div>
         </section>
     </main>
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
 
-    <footer class="site-footer">
-        <div>
-            <strong>사이원장</strong>
-            <p>정산과 차용증 거래를 한 곳에서 확인하세요.</p>
-        </div>
-        <nav aria-label="푸터 메뉴">
-            <a href="#">이용약관</a>
-            <a href="#">개인정보처리방침</a>
-            <a href="#">고객센터</a>
-        </nav>
-    </footer>
-</div>
-
-<script th:src="@{/js/integration/dashboard.js}" src="/js/integration/dashboard.js"></script>
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+<script
+        th:src="@{/js/integration/dashboard.js}"
+        src="/js/integration/dashboard.js">
+</script>
 </body>
 </html>
