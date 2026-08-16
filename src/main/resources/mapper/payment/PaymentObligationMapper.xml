@@ -39,7 +39,8 @@
         expected_amount,
         payment_status,
         review_status,
-        obligation_status
+        obligation_status,
+        overdue_since
         FROM payment_obligation
         WHERE payment_obligation_id = #{paymentObligationId}
         FOR UPDATE
@@ -176,6 +177,8 @@
         UPDATE payment_obligation
         SET overdue_since = #{overdueSince}
         WHERE payment_obligation_id = #{paymentObligationId}
+        AND payment_status != 'PAID'
+        AND overdue_since IS NULL
     </update>
 
     <update id="clearOverdueSince">

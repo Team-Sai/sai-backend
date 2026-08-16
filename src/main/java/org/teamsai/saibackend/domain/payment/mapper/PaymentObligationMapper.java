@@ -2,7 +2,6 @@ package org.teamsai.saibackend.domain.payment.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.cglib.core.Local;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO;
 import org.teamsai.saibackend.domain.payment.type.PaymentStatus;

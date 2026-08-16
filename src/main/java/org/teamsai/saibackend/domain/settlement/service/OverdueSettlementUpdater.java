@@ -1,6 +1,7 @@
 package org.teamsai.saibackend.domain.settlement.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +16,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OverdueSettlementUpdater {
 
+    private final OverdueCriteria overdueCriteria;
     private final SettlementParticipantMapper participantMapper;
     private final PaymentObligationMapper paymentObligationMapper;
 
@@ -37,10 +40,21 @@ public class OverdueSettlementUpdater {
         List<PaymentObligationDTO> unpaidObligations =
                 paymentObligationMapper.findUnpaidByParticipantIds(activeParticipantIds);
 
-        LocalDateTime overdueSince = baseDate.atStartOfDay();
+        if (unpaidObligations.isEmpty()) {
+            return;
+        }
+
+
+        LocalDate referenceDate = overdueCriteria.resolveReferenceDate(settlement);
+        LocalDateTime overdueSince = referenceDate.atStartOfDay();
 
         for (PaymentObligationDTO obligation : unpaidObligations) {
-            paymentObligationMapper.updateOverdueSince(obligation.getPaymentObligationId(), overdueSince);
+            int updatedCount = paymentObligationMapper.updateOverdueSince(
+                    obligation.getPaymentObligationId(), overdueSince);
+            if (updatedCount == 0) {
+                log.info("연체 처리 스킵 (이미 완납 등으로 조건 불일치) paymentObligationId={}",
+                        obligation.getPaymentObligationId());
+            }
         }
     }
 }

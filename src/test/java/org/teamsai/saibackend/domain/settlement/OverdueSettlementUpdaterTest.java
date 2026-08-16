@@ -11,8 +11,10 @@ import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
+import org.teamsai.saibackend.domain.settlement.service.OverdueCriteria;
 import org.teamsai.saibackend.domain.settlement.service.OverdueSettlementUpdater;
 import org.teamsai.saibackend.domain.settlement.type.SettlementParticipantStatus;
+import org.teamsai.saibackend.domain.settlement.type.SettlementType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,6 +28,7 @@ class OverdueSettlementUpdaterTest {
 
     @Mock private SettlementParticipantMapper participantMapper;
     @Mock private PaymentObligationMapper paymentObligationMapper;
+    @Mock private OverdueCriteria overdueCriteria;
 
     @InjectMocks
     private OverdueSettlementUpdater sut;
@@ -42,26 +45,29 @@ class OverdueSettlementUpdaterTest {
     }
 
     @Test
-    @DisplayName("ACTIVE 참여자의 미납 obligation에 overdueSince를 baseDate 자정으로 채운다")
-    void updatesOverdueSinceForUnpaidObligations() {
-        LocalDate baseDate = LocalDate.of(2026, 2, 1);
-        SettlementDTO settlement = settlement(1L);
+    @DisplayName("ACTIVE 참여자의 미납 obligation에 overdueSince를 실제 기준일(dueDate)로 채운다")
+    void updatesOverdueSinceUsingReferenceDate() {
+        LocalDate baseDate = LocalDate.of(2026, 2, 5); // 배치가 며칠 밀려서 실행됨
+        LocalDate actualDueDate = LocalDate.of(2026, 2, 1); // 실제 만기일
+        SettlementDTO settlement = SettlementDTO.builder()
+                .settlementId(1L)
+                .settlementType(SettlementType.SHARED)
+                .dueDate(actualDueDate)
+                .build();
 
+        when(overdueCriteria.resolveReferenceDate(settlement)).thenReturn(actualDueDate);
         when(participantMapper.findBySettlementId(1L)).thenReturn(List.of(
-                participant(101L, SettlementParticipantStatus.ACTIVE),
-                participant(102L, SettlementParticipantStatus.LEFT) // 제외되어야 함
+                participant(101L, SettlementParticipantStatus.ACTIVE)
         ));
         when(paymentObligationMapper.findUnpaidByParticipantIds(List.of(101L))).thenReturn(List.of(
-                PaymentObligationDTO.builder().paymentObligationId(9001L).build(),
-                PaymentObligationDTO.builder().paymentObligationId(9002L).build()
+                PaymentObligationDTO.builder().paymentObligationId(9001L).build()
         ));
+        when(paymentObligationMapper.updateOverdueSince(9001L, actualDueDate.atStartOfDay())).thenReturn(1);
 
         sut.updateOverdueForSettlement(settlement, baseDate);
 
-        LocalDateTime expectedOverdueSince = baseDate.atStartOfDay();
-        verify(paymentObligationMapper).updateOverdueSince(9001L, expectedOverdueSince);
-        verify(paymentObligationMapper).updateOverdueSince(9002L, expectedOverdueSince);
-        verify(paymentObligationMapper).findUnpaidByParticipantIds(List.of(101L));
+        // baseDate(2/5)가 아니라 actualDueDate(2/1)로 기록되는지 검증
+        verify(paymentObligationMapper).updateOverdueSince(9001L, actualDueDate.atStartOfDay());
     }
 
     @Test

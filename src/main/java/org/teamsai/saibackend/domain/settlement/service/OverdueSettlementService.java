@@ -21,7 +21,11 @@ public class OverdueSettlementService {
     private final OverdueSettlementUpdater overdueSettlementUpdater;
 
     public void updateOverdueStatus(LocalDate baseDate) {
+        int totalCount = settlementMapper.countInProgressSettlements();
+        log.info("연체 상태 갱신 배치 시작, 대상 정산 총 {}건, baseDate={}", totalCount, baseDate);
+
         int offset = 0;
+        int processedCount = 0;
 
         while (true) {
             List<SettlementDTO> page = settlementMapper.findInProgressSettlements(offset, PAGE_SIZE);
@@ -41,10 +45,13 @@ public class OverdueSettlementService {
                 }
             }
 
+            processedCount += page.size();
             if (page.size() < PAGE_SIZE) {
                 break;
             }
             offset += PAGE_SIZE;
         }
+
+        log.info("연체 상태 갱신 배치 종료, 처리 대상 조회 완료 {}건 (총 {}건 중)", processedCount, totalCount);
     }
 }

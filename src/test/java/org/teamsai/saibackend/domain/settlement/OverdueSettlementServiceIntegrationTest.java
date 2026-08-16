@@ -68,7 +68,7 @@ class OverdueSettlementServiceIntegrationTest {
             overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 1, 11));
 
             LocalDateTime overdueSince = fetchOverdueSince(91301L);
-            assertThat(overdueSince).isEqualTo(LocalDate.of(2026, 1, 11).atStartOfDay());
+            assertThat(overdueSince).isEqualTo(LocalDate.of(2026, 1, 10).atStartOfDay()); // baseDate(1/11)가 아니라 dueDate(1/10)
         }
 
         @Test
@@ -102,6 +102,21 @@ class OverdueSettlementServiceIntegrationTest {
 
             assertThat(secondOverdueSince).isEqualTo(firstOverdueSince); // 최초 연체일 그대로 유지
         }
+
+        @Test
+        @DisplayName("배치가 며칠 밀려 실행돼도 overdueSince는 baseDate가 아닌 실제 dueDate로 기록된다")
+        void recordsActualDueDateNotBatchExecutionDate() {
+            insertUser(99001L, "채권자");
+            insertUser(99002L, "채무자");
+            insertSharedSettlement(99101L, 99001L, LocalDate.of(2026, 1, 10)); // 실제 만기일
+            insertParticipant(99201L, 99101L, 99002L, "ACTIVE");
+            insertObligation(99301L, 99201L, "UNPAID");
+
+            // 배치가 5일 밀려서 1/15에 실행됨
+            overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 1, 15));
+
+            assertThat(fetchOverdueSince(99301L)).isEqualTo(LocalDate.of(2026, 1, 10).atStartOfDay()); // baseDate(1/15)가 아님
+        }
     }
 
     @Nested
@@ -119,7 +134,7 @@ class OverdueSettlementServiceIntegrationTest {
 
             overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 2, 1));
 
-            assertThat(fetchOverdueSince(92301L)).isEqualTo(LocalDate.of(2026, 2, 1).atStartOfDay());
+            assertThat(fetchOverdueSince(92301L)).isEqualTo(LocalDate.of(2026, 1, 31).atStartOfDay()); // baseDate(2/1)가 아니라 cycleDate(1/31)
         }
     }
 
@@ -227,6 +242,51 @@ class OverdueSettlementServiceIntegrationTest {
                     Integer.class
             );
             assertThat(overdueCount).isEqualTo(settlementCount); // 210건 전부 처리됨
+        }
+    }
+
+    @Nested
+    @DisplayName("동시성 - 배치와 완납이 겹치는 경우")
+    class ConcurrentPaymentDuringOverdueUpdate {
+
+        @Test
+        @DisplayName("연체 대상 조회 이후 완납 처리된 obligation은 overdueSince로 갱신되지 않는다")
+        void doesNotMarkOverdueWhenAlreadyPaidBeforeUpdate() {
+            insertUser(97001L, "채권자");
+            insertUser(97002L, "채무자");
+            insertLinkedAccount(97401L, 97001L);
+            insertSharedSettlement(97101L, 97001L, LocalDate.of(2026, 1, 10));
+            insertParticipant(97201L, 97101L, 97002L, "ACTIVE");
+            insertObligation(97301L, 97201L, "UNPAID", "150000.00");
+            insertBankTransaction(97501L, 97401L, "150000.00");
+
+            settlementPaymentService.applyAutoMatchedPayment(97301L, 97501L, new BigDecimal("150000.00"));
+
+            overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 1, 11));
+
+            assertThat(fetchOverdueSince(97301L)).isNull();
+        }
+
+        @Test
+        @DisplayName("조건부 UPDATE는 이미 overdueSince가 채워진 건을 다시 덮어쓰지 않는다 (재실행 시 완납된 건 보호)")
+        void conditionalUpdateProtectsAlreadyPaidObligation() {
+            insertUser(98001L, "채권자");
+            insertUser(98002L, "채무자");
+            insertLinkedAccount(98401L, 98001L);
+            insertSharedSettlement(98101L, 98001L, LocalDate.of(2026, 1, 10));
+            insertParticipant(98201L, 98101L, 98002L, "ACTIVE");
+            insertObligation(98301L, 98201L, "UNPAID", "150000.00");
+            insertBankTransaction(98501L, 98401L, "150000.00");
+
+            overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 1, 11));
+            assertThat(fetchOverdueSince(98301L)).isNotNull();
+
+            settlementPaymentService.applyAutoMatchedPayment(98301L, 98501L, new BigDecimal("150000.00"));
+            assertThat(fetchOverdueSince(98301L)).isNull(); // 완납으로 해제됨
+
+            // 배치가 다시 돌아도(예: 재시도), 이미 완납된 건이 연체로 잘못 마킹되면 안 됨
+            overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 1, 15));
+            assertThat(fetchOverdueSince(98301L)).isNull(); // 여전히 null 유지
         }
     }
 
