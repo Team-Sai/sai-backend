@@ -32,14 +32,6 @@
   const loanAccountNumber = document.getElementById("loanAccountNumber");
   const loanAccountHolder = document.getElementById("loanAccountHolder");
 
-  function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-  }
-
   function showStatus(message, isError) {
     statusEl.textContent = message;
     statusEl.classList.toggle("is-error", Boolean(isError));
@@ -201,9 +193,11 @@
     if (!linkedAccountSelect) return;
 
     try {
-      const response = await fetch("/api/contracts/accounts", {
+      const response = await authFetch("/api/contracts/accounts", {
         method: "GET",
-        headers: authHeaders({ Accept: "application/json" }),
+        headers: {
+          Accept: "application/json"
+        },
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const accounts = await response.json();
@@ -234,9 +228,11 @@
 
   async function loadCreditorInfo() {
     try {
-      const response = await fetch("/api/users/me", {
+      const response = await authFetch("/api/users/me", {
         method: "GET",
-        headers: authHeaders({ Accept: "application/json" }),
+        headers: {
+          Accept: "application/json"
+        },
       });
       if (!response.ok) return;
       const user = await response.json();
@@ -253,10 +249,15 @@
     nextBtn.hidden = true;
 
     try {
-      const response = await fetch(`/api/contracts/${contractId}/listdetails`, {
-        method: "GET",
-        headers: authHeaders({ Accept: "application/json" }),
-      });
+      const response = await authFetch(
+          `/api/contracts/${contractId}/listdetails`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json"
+            },
+          }
+      );
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
 

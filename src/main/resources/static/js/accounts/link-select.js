@@ -13,14 +13,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const selectedIds = new Set();
     let accounts = [];
 
-    function getToken() {
-        return sessionStorage.getItem("accessToken");
-    }
-
-    function redirectToLogin() {
-        window.location.replace("/login?required=true");
-    }
-
     function showError(message) {
         errorEl.textContent = message;
         errorEl.hidden = false;
@@ -138,26 +130,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     async function loadAccounts() {
-        const token = getToken();
-
-        if (!token) {
-            redirectToLogin();
-            return;
-        }
-
         try {
-            const response = await fetch(API.available, {
+            const response = await authFetch(API.available, {
                 method: "GET",
                 headers: {
-                    "Accept": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Accept": "application/json"
                 }
             });
-
-            if (response.status === 401 || response.status === 403) {
-                redirectToLogin();
-                return;
-            }
 
             if (!response.ok) {
                 throw new Error("계좌 목록을 불러오지 못했습니다.");
@@ -179,11 +158,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     confirmButton?.addEventListener("click", async () => {
-        const token = getToken();
-        if (!token) {
-            redirectToLogin();
-            return;
-        }
 
         const selectedAccounts = accounts
             .filter(account => selectedIds.has(account.accountId))
@@ -202,13 +176,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         confirmButton.textContent = "연결 중...";
 
         try {
-            const response = await fetch(API.link, {
+            const response = await authFetch(API.link, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ selectedAccounts })
+                body: JSON.stringify({
+                    selectedAccounts
+                })
             });
 
             if (!response.ok) {

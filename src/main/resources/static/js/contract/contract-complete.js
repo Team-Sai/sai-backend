@@ -13,15 +13,6 @@
     btnViewContract.disabled = true;
     return;
   }
-
-  function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-  }
-
   btnViewContract.addEventListener("click", () => {
     window.location.href = `/contracts/${encodeURIComponent(contractId)}/contract-detail`;
   });
@@ -30,9 +21,11 @@
     window.location.href = "/dashboard";
   });
 
-  fetch(`/api/contracts/${contractId}/listdetails`, {
+  authFetch(`/api/contracts/${contractId}/listdetails`, {
     method: "GET",
-    headers: authHeaders({ Accept: "application/json" }),
+    headers: {
+      Accept: "application/json"
+    },
   })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {

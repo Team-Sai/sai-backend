@@ -46,6 +46,22 @@ public class BankTransactionService {
     }
 
     @Transactional
+    public BankTransactionDTO findByIdAndLinkedAccountIdForUpdate(
+            Long bankTransactionId,
+            Long linkedAccountId
+    ) {
+        return bankTransactionMapper
+                .findByIdAndLinkedAccountIdForUpdate(
+                        bankTransactionId,
+                        linkedAccountId
+                )
+                .orElseThrow(
+                        BankTransactionErrorCode
+                                .BANK_TRANSACTION_NOT_FOUND::toException
+                );
+    }
+
+    @Transactional
     public void updateStatus(
             Long bankTransactionId,
             BankTransactionProcessingStatus currentStatus,
@@ -105,12 +121,30 @@ public class BankTransactionService {
             BankTransactionProcessingStatus currentStatus,
             BankTransactionProcessingStatus nextStatus
     ) {
-        if (currentStatus != BankTransactionProcessingStatus.PENDING
-                || !isTerminalStatus(nextStatus)) {
+        if (!isValidStatusTransition(currentStatus, nextStatus)) {
             throw BankTransactionErrorCode
                     .INVALID_BANK_TRANSACTION_STATUS_TRANSITION
                     .toException();
         }
+    }
+
+    private boolean isValidStatusTransition(
+            BankTransactionProcessingStatus currentStatus,
+            BankTransactionProcessingStatus nextStatus
+    ) {
+        if (currentStatus == BankTransactionProcessingStatus.PENDING) {
+            return isTerminalStatus(nextStatus);
+        }
+
+        if (currentStatus == BankTransactionProcessingStatus.NEEDS_CHECK) {
+            return nextStatus == BankTransactionProcessingStatus.APPLIED
+                    || nextStatus
+                    == BankTransactionProcessingStatus.UNMATCHED
+                    || nextStatus
+                    == BankTransactionProcessingStatus.FAILED;
+        }
+
+        return false;
     }
 
     private boolean isTerminalStatus(

@@ -37,22 +37,47 @@
             resultType="org.teamsai.saibackend.domain.notification.dto.response.NotificationResponse">
 
         SELECT
-        notification_id AS notificationId,
-        notification_type AS notificationType,
-        title,
-        content,
-        reference_id AS referenceId,
-        secondary_reference_id AS secondaryReferenceId,
-        created_at AS createdAt
+        n.notification_id AS notificationId,
+        n.notification_type AS notificationType,
+        n.title,
+        n.content,
+        n.reference_id AS referenceId,
+        n.secondary_reference_id AS secondaryReferenceId,
+        bt.processing_status AS relatedTransactionStatus,
+        CASE
+            WHEN n.notification_type =
+                 'BANK_TRANSACTION_MATCHING_REVIEW'
+             AND bt.processing_status IS NOT NULL
+             AND bt.processing_status != 'NEEDS_CHECK'
+            THEN TRUE
+            ELSE FALSE
+        END AS resolved,
+        n.created_at AS createdAt
 
-        FROM notification
+        FROM notification n
+        LEFT JOIN bank_transaction bt
+            ON n.notification_type =
+               'BANK_TRANSACTION_MATCHING_REVIEW'
+            AND bt.bank_transaction_id = n.reference_id
+            AND bt.linked_account_id = n.secondary_reference_id
 
-        WHERE user_id = #{userId}
+        WHERE n.user_id = #{userId}
 
         ORDER BY
-        created_at DESC,
-        notification_id DESC
+        n.created_at DESC,
+        n.notification_id DESC
 
+    </select>
+
+    <select id="existsByUserIdAndTypeAndReferenceId"
+            resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM notification
+            WHERE user_id = #{userId}
+            AND notification_type = #{notificationType}
+            AND reference_id = #{referenceId}
+        )
     </select>
 
 </mapper>

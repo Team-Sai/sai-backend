@@ -183,13 +183,23 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loginWithApi() {
         const response = await fetch(API.login, {
             method: "POST",
+
             headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Content-Type":
+                    "application/json",
+
+                "Accept":
+                    "application/json"
             },
+
+            credentials: "include",
+
             body: JSON.stringify({
-                email: emailInput.value.trim(),
-                password: passwordInput.value
+                email:
+                    emailInput.value.trim(),
+
+                password:
+                passwordInput.value
             })
         });
 

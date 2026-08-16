@@ -44,4 +44,9 @@ public interface BankTransactionMapper {
                        @Param("condition") BankTransactionSearchCondition condition);
 
     Optional<BankTransactionDTO> findByIdAndLinkedAccountId(@Param("bankTransactionId") Long bankTransactionId, @Param("linkedAccountId") Long linkedAccountId);
+
+    Optional<BankTransactionDTO> findByIdAndLinkedAccountIdForUpdate(
+            @Param("bankTransactionId") Long bankTransactionId,
+            @Param("linkedAccountId") Long linkedAccountId
+    );
 }

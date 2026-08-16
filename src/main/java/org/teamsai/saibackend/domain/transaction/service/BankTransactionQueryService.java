@@ -52,6 +52,28 @@ public class BankTransactionQueryService {
         return BankTransactionDetailResponse.from(transaction);
     }
 
+    @Transactional
+    public BankTransactionDetailResponse getTransactionDetailForUpdate(
+            Long userId,
+            Long linkedAccountId,
+            Long bankTransactionId
+    ) {
+        validateOwnership(userId, linkedAccountId);
+
+        BankTransactionDTO transaction = bankTransactionMapper
+                .findByIdAndLinkedAccountIdForUpdate(
+                        bankTransactionId,
+                        linkedAccountId
+                )
+                .orElseThrow(
+                        BankTransactionErrorCode
+                                .BANK_TRANSACTION_NOT_FOUND
+                                ::toException
+                );
+
+        return BankTransactionDetailResponse.from(transaction);
+    }
+
     private void validateOwnership(Long userId, Long linkedAccountId) {
         LinkedBankAccountDTO linkedAccount = linkedBankAccountMapper.findById(linkedAccountId)
                 .orElseThrow(AccountErrorCode.LINKED_ACCOUNT_NOT_FOUND::toException);
