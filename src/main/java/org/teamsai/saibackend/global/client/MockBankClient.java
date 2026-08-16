@@ -21,8 +21,9 @@ public class MockBankClient {
     private static final String USER_KEY_HEADER = "X-User-Key";
 
     private final RestClient restClient;
+    private final String internalApiKey;
 
-    public MockBankClient(@Value("${sai.mock-bank.base-url}") String baseUrl) {
+    public MockBankClient(@Value("${sai.mock-bank.base-url}") String baseUrl, @Value("${link-callback.api-key}") String internalApiKey) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000);
         requestFactory.setReadTimeout(5000);
@@ -31,6 +32,7 @@ public class MockBankClient {
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
                 .build();
+        this.internalApiKey = internalApiKey;
     }
 
     private <T> T requireBody(T body) {
@@ -52,6 +54,18 @@ public class MockBankClient {
 
         return requireBody(response).userKey();
     }
+
+    public void confirmUserKey(String userKey) {
+        restClient.post()
+                .uri("/api/link/confirm-key")
+                .header("X-Internal-Api-Key", internalApiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ConfirmKeyRequest(userKey))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    private record ConfirmKeyRequest(String userKey) {}
 
     public List<LinkableAccountResponse> getAccountsByUserKey(String userKey) {
         return requireBody(

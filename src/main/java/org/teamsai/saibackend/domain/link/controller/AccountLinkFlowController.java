@@ -17,6 +17,7 @@ import org.teamsai.saibackend.domain.link.service.AccountLinkService;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.service.UserService;
+import org.teamsai.saibackend.global.client.MockBankClient;
 import org.teamsai.saibackend.global.exception.DomainException;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
@@ -42,6 +43,7 @@ public class AccountLinkFlowController {
     private final AccountLinkService accountLinkService;
     private final UserService userService;
     private final IdentityValidator identityValidator;
+    private final MockBankClient mockBankClient;
 
     @PostMapping("/api/accounts/link/start")
     public ResponseEntity<Map<String, String>> startLink(
@@ -115,6 +117,15 @@ public class AccountLinkFlowController {
                     userId, ids, e.getErrorCode()
             );
             return errorView(model, "계좌 연동에 실패했습니다.");
+        }
+
+
+        try {
+            mockBankClient.confirmUserKey(userKey);
+        } catch (Exception e) {
+            log.warn("[AccountLinkFlowController] mock-bank confirm 실패 - userId: {}, userKey 앞 8자: {}",
+                    userId, userKey.substring(0, Math.min(8, userKey.length())), e);
+            // 사용자에게는 성공으로 보여줌 — 로컬 연동은 이미 완료됨
         }
 
         model.addAttribute("success", true);
