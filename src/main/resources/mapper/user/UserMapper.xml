@@ -18,6 +18,13 @@
 
     </resultMap>
 
+    <update id="updateUserKeyByUserId">
+        UPDATE users
+        SET user_key = #{userKey}
+        WHERE user_id = #{userId}
+        AND user_key &lt;=&gt; #{expectedPreviousKey}
+    </update>
+
     <select id="existsByEmail"
             resultType="boolean">
         SELECT EXISTS (
