@@ -173,15 +173,6 @@
         AND overdue_since IS NULL
     </select>
 
-    <update id="updateOverdueSince">
-        UPDATE payment_obligation
-        SET overdue_since = #{overdueSince}
-        WHERE payment_obligation_id = #{paymentObligationId}
-        AND payment_status != 'PAID'
-        AND overdue_since IS NULL
-        AND obligation_status = 'ACTIVE'
-    </update>
-
     <update id="clearOverdueSince">
         UPDATE payment_obligation
         SET overdue_since = NULL

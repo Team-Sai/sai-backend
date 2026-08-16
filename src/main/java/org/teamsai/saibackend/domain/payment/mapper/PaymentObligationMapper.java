@@ -30,8 +30,6 @@ public interface PaymentObligationMapper {
 
     List<PaymentObligationDTO> findUnpaidByParticipantIds(@Param("participantIds") List<Long> participantIds);
 
-    int updateOverdueSince(@Param("paymentObligationId") Long paymentObligationId, @Param("overdueSince")LocalDateTime overdueSince);
-
     int updateOverdueSinceBulk(@Param("paymentObligationIds") List<Long> paymentObligationIds,
                                @Param("overdueSince") LocalDateTime overdueSince);
 
