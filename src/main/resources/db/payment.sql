@@ -17,7 +17,9 @@ CREATE TABLE IF NOT EXISTS payment_obligation (
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS payment_record (
+ALTER TABLE payment_obligation ADD COLUMN IF NOT EXISTS overdue_since DATETIME NULL;
+
+    CREATE TABLE IF NOT EXISTS payment_record (
     payment_record_id BIGINT NOT NULL AUTO_INCREMENT,
     bank_transaction_id BIGINT NOT NULL,
 
