@@ -74,6 +74,7 @@
 
     async function loadMonth() {
         monthTitle.textContent = `${viewYear}년 ${viewMonth + 1}월`;
+        daysGrid.innerHTML = '<p class="empty-state">달력을 불러오는 중이에요...</p>';
 
         const yearMonth = toYearMonth(viewYear, viewMonth);
         const res = await fetch(`/api/integration/dashboard?yearMonth=${yearMonth}`, {
@@ -161,6 +162,7 @@
 
     async function loadDayDetail(dateStr) {
         detailDate.textContent = dateStr.replaceAll('-', '. ') + '.';
+        detailList.innerHTML = '<p class="empty-state">일정을 불러오는 중이에요...</p>';
 
         const res = await fetch(`/api/dashboard/calendar/${dateStr}`, {
             headers: authHeaders()
