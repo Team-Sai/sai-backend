@@ -24,17 +24,17 @@ CREATE TABLE IF NOT EXISTS loan_contract_change_request (
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;
 
-ALTER TABLE loan_contract_change_request
-    ADD COLUMN IF NOT EXISTS new_terms TEXT NULL AFTER new_repayment_date;
+ ALTER TABLE loan_contract_change_request
+   ADD COLUMN IF NOT EXISTS new_terms TEXT NULL AFTER new_repayment_date;
 
-ALTER TABLE loan_contract_change_request
-    ADD COLUMN IF NOT EXISTS pending_lock_key BIGINT AS (CASE WHEN status = 'PENDING' THEN contract_id ELSE NULL END) VIRTUAL;
+ ALTER TABLE loan_contract_change_request
+   ADD COLUMN IF NOT EXISTS pending_lock_key BIGINT AS (CASE WHEN status = 'PENDING' THEN contract_id ELSE NULL END) VIRTUAL;
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_pending_per_contract
-    ON loan_contract_change_request (pending_lock_key);
+ CREATE UNIQUE INDEX IF NOT EXISTS uq_pending_per_contract
+   ON loan_contract_change_request (pending_lock_key);
 
-ALTER TABLE loan_contract_change_request
-    ADD COLUMN IF NOT EXISTS return_reason TEXT NULL AFTER new_terms;
+ ALTER TABLE loan_contract_change_request
+   ADD COLUMN IF NOT EXISTS return_reason TEXT NULL AFTER new_terms;
 
-ALTER TABLE loan_contract_change_request
-    MODIFY COLUMN new_repayment_type VARCHAR(30) NULL;
+ ALTER TABLE loan_contract_change_request
+   MODIFY COLUMN new_repayment_type VARCHAR(30) NULL;

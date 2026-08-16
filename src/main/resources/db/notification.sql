@@ -18,4 +18,4 @@ CREATE TABLE IF NOT EXISTS notification (
     COLLATE = utf8mb4_unicode_ci;
 
 ALTER TABLE notification
-    ADD COLUMN IF NOT EXISTS secondary_reference_id BIGINT NULL;
+     ADD COLUMN IF NOT EXISTS secondary_reference_id BIGINT NULL;
