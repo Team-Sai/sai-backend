@@ -97,14 +97,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         setText("settlement-title", detail.title || "이름 없는 정산");
         setText("settlement-category", detail.settlementCategory || "-");
-        setText("created-at", formatDate(detail.createdAt));
         setText("split-type", getSplitTypeText(detail.splitType));
         setText("settlement-status-badge", getSettlementStatusText(detail.settlementStatus));
         setText("settlement-role-badge", getRoleText(detail.role));
 
         const typeBadge = document.getElementById("settlement-type-badge");
         if (typeBadge) {
-            typeBadge.textContent = detail.settlementType === "RECURRING" ? "정기정산" : "공동정산";
+            typeBadge.textContent = recurring ? "정기정산" : "공동정산";
         }
 
         const sharedDateInfo = document.getElementById("shared-date-info");
@@ -112,15 +111,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const recurringEndInfo = document.getElementById("recurring-end-info");
         const recurringDateDivider = document.getElementById("recurring-date-divider");
 
-        if (sharedDateInfo) sharedDateInfo.hidden = recurring;
-        if (recurringStartInfo) recurringStartInfo.hidden = !recurring;
-        if (recurringEndInfo) recurringEndInfo.hidden = !recurring;
-        if (recurringDateDivider) recurringDateDivider.hidden = !recurring;
-
         if (recurring) {
+            if (sharedDateInfo) sharedDateInfo.style.display = "none";
+            if (recurringStartInfo) recurringStartInfo.style.display = "";
+            if (recurringEndInfo) recurringEndInfo.style.display = "";
+            if (recurringDateDivider) recurringDateDivider.style.display = "";
+
             setText("recurring-start-date", formatDate(detail.startDate));
-            setText("recurring-end-date", detail.endDate ? formatDate(detail.endDate) : "종료일 없음");
+            setText(
+                "recurring-end-date",
+                detail.endDate ? formatDate(detail.endDate) : "종료일 없음"
+            );
         } else {
+            if (sharedDateInfo) sharedDateInfo.style.display = "";
+            if (recurringStartInfo) recurringStartInfo.style.display = "none";
+            if (recurringEndInfo) recurringEndInfo.style.display = "none";
+            if (recurringDateDivider) recurringDateDivider.style.display = "none";
+
             setText("due-date", formatDate(detail.dueDate));
         }
 

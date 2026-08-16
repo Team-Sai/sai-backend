@@ -18,9 +18,17 @@ public class RecurringSettlementValidator {
 
         Set<String> userTokens = new HashSet<>();
 
-        for(CreateSettlementParticipantRequest participant : request.getParticipants()){
-            if(participant == null || participant.getUserToken() == null || participant.getUserToken().isBlank()){
-                throw  SettlementErrorCode.INVALID_SETTLEMENT_PARTICIPANT.toException();
+        for (CreateSettlementParticipantRequest participant : request.getParticipants()) {
+            if (
+                    participant == null ||
+                            participant.getUserToken() == null ||
+                            participant.getUserToken().isBlank()
+            ) {
+                throw SettlementErrorCode.INVALID_SETTLEMENT_PARTICIPANT.toException();
+            }
+
+            if (!userTokens.add(participant.getUserToken())) {
+                throw SettlementErrorCode.DUPLICATE_SETTLEMENT_PARTICIPANT.toException();
             }
         }
     }
