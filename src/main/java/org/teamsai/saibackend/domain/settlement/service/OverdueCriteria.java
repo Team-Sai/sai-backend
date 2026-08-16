@@ -3,12 +3,16 @@ package org.teamsai.saibackend.domain.settlement.service;
 import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Component;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
+import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
 
 import java.time.LocalDate;
 
 @Component
 public class OverdueCriteria {
-    public boolean isOverdue(SettlementDTO settlement, LocalDate baseDate){
+    public boolean isOverdue(SettlementDTO settlement, LocalDate baseDate) {
+        if (settlement.getSettlementStatus() != SettlementStatus.IN_PROGRESS) {
+            return false;
+        }
         LocalDate referenceDate = resolveReferenceDate(settlement);
         return referenceDate != null && referenceDate.isBefore(baseDate);
     }
