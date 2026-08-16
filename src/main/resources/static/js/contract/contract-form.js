@@ -15,6 +15,7 @@
   const viewMode = Boolean(contractId);
 
   const FIELD_IDS = [
+    "relationType",
     "principalAmount",
     "interestRate",
     "startDate",
@@ -25,6 +26,11 @@
     "terms",
     "selectedLinkedAccountId",
   ];
+
+  const relationTypeInput = document.getElementById("relationType");
+  if (relationTypeInput && !viewMode) {
+    relationTypeInput.value = params.get("relation") === "FAMILY" ? "FAMILY" : "ACQUAINTANCE";
+  }
 
   const linkedAccountSelect = document.getElementById("selectedLinkedAccountId");
   const loanAccountSummary = document.getElementById("loanAccountSummary");
@@ -158,11 +164,117 @@
     });
   }
 
-  nextBtn?.addEventListener("click", () => {
-    if (!validate()) return;
+  const STANDARD_INTEREST_RATE = 4.6;
+  const GIFT_TAX_THRESHOLD = 10000000;
 
+  const taxGuideModalOverlay = document.getElementById("taxGuideModalOverlay");
+  const taxGuideCloseBtn = document.getElementById("taxGuideCloseBtn");
+  const btnModalAction = document.getElementById("btnModalAction");
+  const txtPrevAmount = document.getElementById("txtPrevAmount");
+  const txtCurrentAmount = document.getElementById("txtCurrentAmount");
+  const txtTotalAmount = document.getElementById("txtTotalAmount");
+  const taxResultArea = document.getElementById("taxResultArea");
+  const interestRateInput = document.getElementById("interestRate");
+
+  let modalPreviousAmount = 0;
+  let modalMode = "proceed";
+
+  function formatWon(amount) {
+    return `${Math.round(amount).toLocaleString("ko-KR")}원`;
+  }
+
+
+  function computeSafeInterestRate(totalAmount) {
+    if (totalAmount <= 0) return 0.1;
+
+    const minRate = STANDARD_INTEREST_RATE - (GIFT_TAX_THRESHOLD * 100) / totalAmount;
+    const roundedUp = Math.ceil(minRate * 10 - 1e-9) / 10;
+
+    return Math.min(20, Math.max(0.1, roundedUp));
+  }
+
+  async function fetchPreviousAmount() {
+    try {
+      const response = await fetch("/api/contracts/previous-sum", {
+        method: "GET",
+        headers: authHeaders({ Accept: "application/json" }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const amount = await response.json();
+      return Number(amount) || 0;
+    } catch (err) {
+      return 0;
+    }
+  }
+
+  function renderTaxGuide(previousAmount, currentAmount, interestRate) {
+    const totalAmount = previousAmount + currentAmount;
+    const standardInterest = totalAmount * (STANDARD_INTEREST_RATE / 100);
+    const actualInterest = totalAmount * (interestRate / 100);
+    const savedInterestRaw = standardInterest - actualInterest;
+    const savedInterest = Math.max(0, Math.round(savedInterestRaw)); // 음수 표시 방지
+
+    txtPrevAmount.textContent = formatWon(previousAmount);
+    txtCurrentAmount.textContent = formatWon(currentAmount);
+    txtTotalAmount.textContent = formatWon(totalAmount);
+
+    const isSafe = savedInterestRaw < GIFT_TAX_THRESHOLD;
+    const safeRate = computeSafeInterestRate(totalAmount);
+
+    if (isSafe) {
+      taxResultArea.innerHTML = `
+        <p class="result-badge result-badge--safe">🟢 세금 안전 범위</p>
+        <p class="result-safe-line">안전 이자선: 연 ${safeRate}% 이상</p>
+        <p class="result-desc">연간 이자로 아낀 금액이 <strong>${formatWon(savedInterest)}</strong>으로 1,000만 원 미만이라 채무자(돈을 빌리는 분)에게 증여세가 발생하지 않아요!</p>
+      `;
+      btnModalAction.textContent = "이대로 작성 완료하기";
+      modalMode = "proceed";
+    } else {
+      taxResultArea.innerHTML = `
+        <p class="result-badge result-badge--danger">⚠️ 증여세 과세 위험</p>
+        <p class="result-safe-line">증여세를 피하려면 연 ${safeRate}% 이상으로 설정해야 해요.</p>
+        <p class="result-desc">⚠️ 연간 이자로 아낀 금액이 <strong>${formatWon(savedInterest)}</strong>으로 1,000만 원을 초과하여 채무자(돈을 빌리는 분)가 증여세 대상이 될 수 있어요!</p>
+      `;
+      btnModalAction.textContent = `안전 이자율(${safeRate}%) 적용하기`;
+      modalMode = "apply-safe-rate";
+    }
+  }
+
+  function proceedToNextStep() {
+    if (taxGuideModalOverlay) taxGuideModalOverlay.style.display = "none";
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify(serializeForm()));
     window.location.href = `/identity-test?returnTo=${encodeURIComponent("/contracts/signature")}`;
+  }
+
+  nextBtn?.addEventListener("click", async () => {
+    if (!validate()) return;
+
+    const currentAmount = Number(document.getElementById("principalAmount").value.replace(/,/g, "")) || 0;
+    const interestRate = Number(document.getElementById("interestRate").value) || 0;
+
+    modalPreviousAmount = await fetchPreviousAmount();
+
+    renderTaxGuide(modalPreviousAmount, currentAmount, interestRate);
+
+    if (taxGuideModalOverlay) taxGuideModalOverlay.style.display = "flex";
+  });
+
+  taxGuideCloseBtn?.addEventListener("click", () => {
+    if (taxGuideModalOverlay) taxGuideModalOverlay.style.display = "none";
+  });
+
+  btnModalAction?.addEventListener("click", () => {
+    if (modalMode === "apply-safe-rate") {
+      const currentAmount = Number(document.getElementById("principalAmount").value.replace(/,/g, "")) || 0;
+      const totalAmount = modalPreviousAmount + currentAmount;
+      const safeRate = computeSafeInterestRate(totalAmount);
+
+      interestRateInput.value = safeRate;
+      renderTaxGuide(modalPreviousAmount, currentAmount, safeRate);
+      return;
+    }
+
+    proceedToNextStep();
   });
 
   const principalInput = document.getElementById("principalAmount");
@@ -260,6 +372,7 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
 
+      if (relationTypeInput) relationTypeInput.value = data.relationType ?? "ACQUAINTANCE";
       document.getElementById("principalAmount").value = data.principalAmount ?? "";
       document.getElementById("interestRate").value = data.interestRate ?? "";
       document.getElementById("startDate").value = data.startDate ?? "";

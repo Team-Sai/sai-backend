@@ -8,6 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractRelationType;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
@@ -110,6 +111,7 @@ class ContractChangeServiceTest {
                 .status(status)
                 .creditorId(USER_ID)
                 .debtorId(DEBTOR_ID)
+                .relationType(ContractRelationType.FAMILY)
                 .principalAmount(BigDecimal.valueOf(1_000_000))
                 .repaymentDay(15)
                 .creditorAddress("서울시 강남구")
@@ -154,6 +156,7 @@ class ContractChangeServiceTest {
             ChangeLoanContractResponse changedContract = captor.getValue();
             assertThat(changedContract.getPreviousContractId()).isEqualTo(CONTRACT_ID);
             assertThat(changedContract.getStatus()).isEqualTo(ContractStatus.PENDING);
+            assertThat(changedContract.getRelationType()).isEqualTo(ContractRelationType.FAMILY);
         }
 
         @Test

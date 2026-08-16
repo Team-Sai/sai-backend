@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractRelationType;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 
@@ -36,6 +37,7 @@ public class LoanContractResponse {
     private String debtorAddress;
     private String debtorSignature;
 
+    private ContractRelationType relationType;
     private BigDecimal principalAmount;
     private BigDecimal interestRate;
     private RepaymentMethod repaymentType;

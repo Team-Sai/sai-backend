@@ -128,6 +128,7 @@ public class ContractChangeService {
                 .previousContractId(contractId)
                 .creditorId(contract.getCreditorId())
                 .debtorId(contract.getDebtorId())
+                .relationType(contract.getRelationType())
                 .principalAmount(contract.getPrincipalAmount())
                 .interestRate(request.getNewInterestRate() != null ? request.getNewInterestRate() : contract.getInterestRate())
                 .repaymentType(request.getNewRepaymentType() != null ? RepaymentMethod.valueOf(request.getNewRepaymentType()) : contract.getRepaymentType())
