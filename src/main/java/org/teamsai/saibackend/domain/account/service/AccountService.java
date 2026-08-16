@@ -1,7 +1,9 @@
-package org.teamsai.saibackend.domain.user.service;
+package org.teamsai.saibackend.domain.account.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
 import org.teamsai.saibackend.domain.link.mapper.LinkMapper;
 import org.teamsai.saibackend.domain.link.dto.response.UserKeyResponse;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
@@ -9,6 +11,7 @@ import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.global.client.MockBankClient;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountService {
@@ -26,8 +29,15 @@ public class AccountService {
         }
 
         String newKey = mockBankClient.requestUserKey(user.getName(), user.getUserToken());
-        user.setUserKey(newKey);
-        linkMapper.updateUserKey(user.getUserId(), newKey);
+
+        try {
+            mockBankClient.confirmUserKey(newKey);
+        } catch (Exception e) {
+            log.warn("[AccountService] userKey confirm 실패 - userId: {}", userId, e);
+            throw AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
+        }
+
+        linkMapper.updateUserKey(userId, newKey);
 
         return new UserKeyResponse(newKey);
     }
