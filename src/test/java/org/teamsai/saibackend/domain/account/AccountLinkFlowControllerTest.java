@@ -186,4 +186,23 @@ class AccountLinkFlowControllerTest {
 
         verify(mockBankClient).revokeUserKey(USER_KEY);
     }
+
+    @Test
+    @DisplayName("completeLink에서 예상치 못한 예외가 발생하면 revoke 요청 후 예외가 전파되어 500이 반환된다")
+    void linkCallback_예상치못한예외_revoke후_전파() throws Exception {
+        given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
+        willThrow(new RuntimeException("예상치 못한 DB 오류"))
+                .given(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
+
+        mockMvc.perform(get("/accounts/link/callback")
+                        .param("state", STATE)
+                        .param("userKey", USER_KEY)
+                        .param("accountIds", "1"))
+                .andExpect(status().isInternalServerError());
+
+        var inOrder = org.mockito.Mockito.inOrder(mockBankClient, accountLinkService);
+        inOrder.verify(mockBankClient).confirmUserKey(USER_KEY);
+        inOrder.verify(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
+        inOrder.verify(mockBankClient).revokeUserKey(USER_KEY);
+    }
 }

@@ -135,6 +135,13 @@ public class AccountLinkFlowController {
             );
             revokeConfirmedKey(userId, userKey);
             return errorView(model, "계좌 연동에 실패했습니다.");
+        } catch (Exception e) {
+            log.error(
+                    "[AccountLinkFlowController] 계좌 연동 처리 중 예상치 못한 오류 발생 - userId: {}, accountIds: {}",
+                    userId, ids, e
+            );
+            revokeConfirmedKey(userId, userKey);
+            throw e;
         }
 
         model.addAttribute("success", true);

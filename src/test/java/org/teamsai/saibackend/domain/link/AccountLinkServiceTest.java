@@ -14,7 +14,6 @@ import org.teamsai.saibackend.domain.link.event.PreviousUserKeyRevokedEvent;
 import org.teamsai.saibackend.domain.link.service.AccountLinkService;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
-import org.teamsai.saibackend.global.client.MockBankClient;
 import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.util.List;
@@ -37,8 +36,6 @@ class AccountLinkServiceTest {
     private LinkedBankAccountService linkedBankAccountService;
     @Mock
     private ApplicationEventPublisher eventPublisher;
-    @Mock
-    private MockBankClient mockBankClient;
     @InjectMocks
     private AccountLinkService accountLinkService;
 
@@ -90,8 +87,8 @@ class AccountLinkServiceTest {
         }
 
         @Test
-        @DisplayName("동시 요청 경합으로 userKey 갱신이 0건이면 새 키를 revoke하고 LINK_KEY_UPDATE_CONFLICT 예외를 던진다")
-        void revokesNewKeyAndThrowsWhenUpdateAffectsZeroRowsDueToRace() {
+        @DisplayName("동시 요청 경합으로 userKey 갱신이 0건이면 LINK_KEY_UPDATE_CONFLICT 예외를 던진다 (revoke는 호출부 책임)")
+        void throwsConflictWhenUpdateAffectsZeroRowsDueToRace() {
             given(userMapper.findUserKeyByUserId(USER_ID)).willReturn(OLD_KEY);
             given(userMapper.updateUserKeyByUserId(USER_ID, NEW_KEY, OLD_KEY)).willReturn(0);
 
@@ -100,7 +97,8 @@ class AccountLinkServiceTest {
                     .extracting("errorCode")
                     .isEqualTo(UserErrorCode.LINK_KEY_UPDATE_CONFLICT);
 
-            verify(mockBankClient).revokeUserKey(NEW_KEY);
+            // 새로 발급된 키의 revoke는 AccountLinkFlowController가 DomainException catch 시
+            // 일괄 처리하므로, 여기서는 서비스가 직접 revoke를 호출하지 않는다.
             verify(linkedBankAccountService, never()).linkAccountsByIds(anyLong(), anyString(), anyList());
             verify(eventPublisher, never()).publishEvent(any(PreviousUserKeyRevokedEvent.class));
         }
