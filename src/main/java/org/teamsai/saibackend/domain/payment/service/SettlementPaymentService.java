@@ -80,6 +80,10 @@ public class SettlementPaymentService {
         if (updatedCount != 1) {
             throw PaymentErrorCode.PAYMENT_STATUS_UPDATE_FAILED.toException();
         }
+
+        if (newPaymentStatus == PaymentStatus.PAID) {
+            paymentObligationMapper.clearOverdueSince(paymentObligationId);
+        }
     }
 
     public Long createObligation(Long participantId, BigDecimal expectedAmount){
