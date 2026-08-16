@@ -128,19 +128,23 @@ public class AccountLinkFlowController {
 
         try {
             accountLinkService.completeLink(userId, userKey, ids);
-        } catch (DomainException e) {
-            log.warn(
-                    "[AccountLinkFlowController] 계좌 연동 실패 - userId: {}, accountIds: {}, errorCode: {}",
-                    userId, ids, e.getErrorCode()
-            );
-            revokeConfirmedKey(userId, userKey);
-            return errorView(model, "계좌 연동에 실패했습니다.");
         } catch (Exception e) {
-            log.error(
-                    "[AccountLinkFlowController] 계좌 연동 처리 중 예상치 못한 오류 발생 - userId: {}, accountIds: {}",
-                    userId, ids, e
-            );
+            // 실패 사유(도메인 예외/예상치 못한 예외)와 무관하게 confirm된 userKey는 항상 한 번만 revoke한다.
             revokeConfirmedKey(userId, userKey);
+
+            if (e instanceof DomainException domainException) {
+                log.warn(
+                        "[AccountLinkFlowController] 계좌 연동 실패 - userId: {}, accountIds: {}, errorCode: {}",
+                        userId, ids, domainException.getErrorCode()
+                );
+                return errorView(model, "계좌 연동에 실패했습니다.");
+            }
+
+            // 스택트레이스가 필요한 ERROR 로그는 GlobalExceptionHandler가 남기므로 여기서는 중복 로깅하지 않는다.
+            log.warn(
+                    "[AccountLinkFlowController] 계좌 연동 처리 중 예상치 못한 오류 발생 - userId: {}, accountIds: {}, message: {}",
+                    userId, ids, e.getMessage()
+            );
             throw e;
         }
 

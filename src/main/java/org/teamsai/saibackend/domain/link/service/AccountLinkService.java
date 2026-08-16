@@ -32,7 +32,8 @@ public class AccountLinkService {
                     userId
             );
             // 새로 발급된 userKey의 revoke는 호출부(AccountLinkFlowController)가
-            // DomainException catch 시 일괄 처리한다. 여기서 또 호출하면 중복 revoke가 된다.
+            // completeLink 실패 시(예외 종류 무관) 일괄 처리한다. 여기서 또 호출하면 중복 revoke가 된다.
+            // completeLink를 직접 호출하는 새 caller가 생긴다면 동일하게 revoke를 책임져야 한다.
             throw UserErrorCode.LINK_KEY_UPDATE_CONFLICT.toException();
         }
 
