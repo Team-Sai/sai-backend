@@ -6,23 +6,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO;
-import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
-import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
-import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
 import org.teamsai.saibackend.domain.settlement.service.OverdueCriteria;
 import org.teamsai.saibackend.domain.settlement.service.OverdueSettlementService;
-import org.teamsai.saibackend.domain.settlement.type.SettlementParticipantStatus;
-import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
-import org.teamsai.saibackend.domain.settlement.type.SettlementType;
+import org.teamsai.saibackend.domain.settlement.service.OverdueSettlementUpdater;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,100 +24,94 @@ class OverdueSettlementServiceTest {
 
     @Mock private OverdueCriteria overdueCriteria;
     @Mock private SettlementMapper settlementMapper;
-    @Mock private SettlementParticipantMapper participantMapper;
-    @Mock private PaymentObligationMapper paymentObligationMapper;
+    @Mock private OverdueSettlementUpdater overdueSettlementUpdater;
 
     @InjectMocks
     private OverdueSettlementService sut;
 
-    private SettlementDTO settlement(Long id, SettlementType type) {
-        return SettlementDTO.builder()
-                .settlementId(id)
-                .settlementType(type)
-                .settlementStatus(SettlementStatus.IN_PROGRESS)
-                .build();
-    }
-
-    private SettlementParticipantDTO participant(Long participantId, SettlementParticipantStatus status) {
-        return SettlementParticipantDTO.builder()
-                .participantId(participantId)
-                .participantStatus(status)
-                .build();
+    private SettlementDTO settlement(Long id) {
+        return SettlementDTO.builder().settlementId(id).build();
     }
 
     @Test
-    @DisplayName("연체로 판정된 정산만 참여자를 조회하고, 판정 안 된 정산은 건드리지 않는다")
-    void onlyProcessesOverdueSettlements() {
+    @DisplayName("연체로 판정된 정산만 updater에 위임하고, 판정 안 된 정산은 건드리지 않는다")
+    void onlyDelegatesOverdueSettlementsToUpdater() {
         LocalDate baseDate = LocalDate.of(2026, 2, 1);
-        SettlementDTO overdue = settlement(1L, SettlementType.SHARED);
-        SettlementDTO notOverdue = settlement(2L, SettlementType.SHARED);
+        SettlementDTO overdue = settlement(1L);
+        SettlementDTO notOverdue = settlement(2L);
 
-        when(settlementMapper.findInProgressSettlements()).thenReturn(List.of(overdue, notOverdue));
+        when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(List.of(overdue, notOverdue));
         when(overdueCriteria.isOverdue(overdue, baseDate)).thenReturn(true);
         when(overdueCriteria.isOverdue(notOverdue, baseDate)).thenReturn(false);
-        when(participantMapper.findBySettlementId(1L)).thenReturn(List.of(
-                participant(101L, SettlementParticipantStatus.ACTIVE)
-        ));
-        when(paymentObligationMapper.findUnpaidByParticipantIds(List.of(101L))).thenReturn(List.of());
 
         sut.updateOverdueStatus(baseDate);
 
-        verify(participantMapper).findBySettlementId(1L);
-        verify(participantMapper, never()).findBySettlementId(2L);
+        verify(overdueSettlementUpdater).updateOverdueForSettlement(overdue, baseDate);
+        verify(overdueSettlementUpdater, never()).updateOverdueForSettlement(eq(notOverdue), eq(baseDate));
     }
 
     @Test
-    @DisplayName("ACTIVE 참여자의 미납 obligation에 overdueSince를 baseDate 자정으로 채운다")
-    void updatesOverdueSinceForUnpaidObligations() {
+    @DisplayName("한 정산 갱신이 실패해도 나머지 정산은 계속 처리된다")
+    void continuesProcessingWhenOneUpdateFails() {
         LocalDate baseDate = LocalDate.of(2026, 2, 1);
-        SettlementDTO overdue = settlement(1L, SettlementType.SHARED);
+        SettlementDTO s1 = settlement(1L);
+        SettlementDTO s2 = settlement(2L);
 
-        when(settlementMapper.findInProgressSettlements()).thenReturn(List.of(overdue));
-        when(overdueCriteria.isOverdue(overdue, baseDate)).thenReturn(true);
-        when(participantMapper.findBySettlementId(1L)).thenReturn(List.of(
-                participant(101L, SettlementParticipantStatus.ACTIVE),
-                participant(102L, SettlementParticipantStatus.LEFT) // 제외되어야 함
-        ));
-        when(paymentObligationMapper.findUnpaidByParticipantIds(List.of(101L))).thenReturn(List.of(
-                PaymentObligationDTO.builder().paymentObligationId(9001L).build(),
-                PaymentObligationDTO.builder().paymentObligationId(9002L).build()
-        ));
+        when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(List.of(s1, s2));
+        when(overdueCriteria.isOverdue(s1, baseDate)).thenReturn(true);
+        when(overdueCriteria.isOverdue(s2, baseDate)).thenReturn(true);
+        doThrow(new IllegalStateException("갱신 실패"))
+                .when(overdueSettlementUpdater).updateOverdueForSettlement(s1, baseDate);
 
         sut.updateOverdueStatus(baseDate);
 
-        LocalDateTime expectedOverdueSince = baseDate.atStartOfDay();
-        verify(paymentObligationMapper).updateOverdueSince(9001L, expectedOverdueSince);
-        verify(paymentObligationMapper).updateOverdueSince(9002L, expectedOverdueSince);
-        // LEFT 참여자는 findUnpaidByParticipantIds 호출 시 애초에 포함 안 됨
-        verify(paymentObligationMapper).findUnpaidByParticipantIds(List.of(101L));
+        verify(overdueSettlementUpdater).updateOverdueForSettlement(s1, baseDate);
+        verify(overdueSettlementUpdater).updateOverdueForSettlement(s2, baseDate); // s1 실패와 무관하게 호출됨
     }
 
     @Test
-    @DisplayName("ACTIVE 참여자가 없으면 obligation 조회 자체를 하지 않는다")
-    void skipsWhenNoActiveParticipants() {
+    @DisplayName("첫 페이지가 PAGE_SIZE 미만이면 다음 페이지를 조회하지 않고 종료한다")
+    void stopsWhenFirstPageIsPartial() {
         LocalDate baseDate = LocalDate.of(2026, 2, 1);
-        SettlementDTO overdue = settlement(1L, SettlementType.SHARED);
+        List<SettlementDTO> partialPage = List.of(settlement(1L), settlement(2L)); // 200개 미만
 
-        when(settlementMapper.findInProgressSettlements()).thenReturn(List.of(overdue));
-        when(overdueCriteria.isOverdue(overdue, baseDate)).thenReturn(true);
-        when(participantMapper.findBySettlementId(1L)).thenReturn(List.of(
-                participant(101L, SettlementParticipantStatus.LEFT)
-        ));
+        when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(partialPage);
+        when(overdueCriteria.isOverdue(any(), eq(baseDate))).thenReturn(false);
 
         sut.updateOverdueStatus(baseDate);
 
-        verify(paymentObligationMapper, never()).findUnpaidByParticipantIds(any());
+        verify(settlementMapper, times(1)).findInProgressSettlements(anyInt(), anyInt());
     }
 
     @Test
-    @DisplayName("연체 대상 정산이 없으면 아무것도 조회하지 않는다")
+    @DisplayName("페이지가 가득 차면 다음 offset으로 계속 조회하고, 빈 페이지가 나오면 종료한다")
+    void continuesToNextPageWhenFull() {
+        LocalDate baseDate = LocalDate.of(2026, 2, 1);
+        List<SettlementDTO> fullFirstPage = IntStream.rangeClosed(1, 200)
+                .mapToObj(i -> settlement((long) i))
+                .toList();
+        List<SettlementDTO> secondPage = List.of(settlement(201L));
+
+        when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(fullFirstPage);
+        when(settlementMapper.findInProgressSettlements(200, 200)).thenReturn(secondPage);
+        when(overdueCriteria.isOverdue(any(), eq(baseDate))).thenReturn(false);
+
+        sut.updateOverdueStatus(baseDate);
+
+        verify(settlementMapper).findInProgressSettlements(0, 200);
+        verify(settlementMapper).findInProgressSettlements(200, 200);
+        // 두 번째 페이지(1건, PAGE_SIZE 미만)에서 종료되므로 세 번째 조회는 없어야 함
+        verify(settlementMapper, times(2)).findInProgressSettlements(anyInt(), anyInt());
+    }
+
+    @Test
+    @DisplayName("대상 정산이 없으면 updater를 전혀 호출하지 않는다")
     void doesNothingWhenNoSettlements() {
         LocalDate baseDate = LocalDate.of(2026, 2, 1);
-        when(settlementMapper.findInProgressSettlements()).thenReturn(List.of());
+        when(settlementMapper.findInProgressSettlements(0, 200)).thenReturn(List.of());
 
         sut.updateOverdueStatus(baseDate);
 
-        verify(participantMapper, never()).findBySettlementId(any());
-        verify(paymentObligationMapper, never()).updateOverdueSince(any(), any());
+        verify(overdueSettlementUpdater, never()).updateOverdueForSettlement(any(), any());
     }
 }

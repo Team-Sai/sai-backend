@@ -43,7 +43,7 @@ class OverdueSettlementServiceIntegrationTest {
 
     @AfterEach
     void cleanUp() {
-        jdbcTemplate.update("DELETE FROM payment_record WHERE payment_record_id >= 90000");
+        jdbcTemplate.update("DELETE FROM payment_record WHERE bank_transaction_id >= 90000");
         jdbcTemplate.update("DELETE FROM bank_transaction WHERE bank_transaction_id >= 90000");
         jdbcTemplate.update("DELETE FROM linked_bank_account WHERE linked_account_id >= 90000");
         jdbcTemplate.update("DELETE FROM payment_obligation WHERE payment_obligation_id >= 90000");
@@ -163,6 +163,70 @@ class OverdueSettlementServiceIntegrationTest {
             settlementPaymentService.applyAutoMatchedPayment(94301L, 94501L, new BigDecimal("50000.00"));
 
             assertThat(fetchOverdueSince(94301L)).isNotNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("정산 단위 독립 처리 (부분 실패 격리)")
+    class PartialFailureIsolation {
+
+        @Test
+        @DisplayName("한 정산에 문제가 있어도, 다른 정산의 연체 갱신은 정상적으로 처리된다")
+        void continuesOtherSettlementsWhenOneFails() {
+            insertUser(95001L, "채권자");
+            insertUser(95002L, "채무자A");
+            insertUser(95003L, "채무자B");
+
+            // 정상 처리될 정산
+            insertSharedSettlement(95101L, 95001L, LocalDate.of(2026, 1, 10));
+            insertParticipant(95201L, 95101L, 95002L, "ACTIVE");
+            insertObligation(95301L, 95201L, "UNPAID");
+
+            // 참여자가 아예 없어서 스킵되지만, 예외 없이 넘어가는지 확인용 정산
+            insertSharedSettlement(95102L, 95001L, LocalDate.of(2026, 1, 10));
+            // 의도적으로 참여자를 넣지 않음
+
+            // 정상 처리될 또 다른 정산
+            insertSharedSettlement(95103L, 95001L, LocalDate.of(2026, 1, 10));
+            insertParticipant(95202L, 95103L, 95003L, "ACTIVE");
+            insertObligation(95302L, 95202L, "UNPAID");
+
+            overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 1, 11));
+
+            assertThat(fetchOverdueSince(95301L)).isNotNull();
+            assertThat(fetchOverdueSince(95302L)).isNotNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("페이징 - 다수 정산 처리")
+    class PagingMultipleSettlements {
+
+        @Test
+        @DisplayName("PAGE_SIZE(200)를 넘는 정산이 있어도 모두 처리된다")
+        void processesAllSettlementsAcrossMultiplePages() {
+            insertUser(96001L, "채권자");
+
+            int settlementCount = 210; // PAGE_SIZE(200)를 넘기도록
+            for (int i = 0; i < settlementCount; i++) {
+                long userId = 96100L + i;
+                long settlementId = 96200L + i;
+                long participantId = 96500L + i;
+                long obligationId = 96800L + i;
+
+                insertUser(userId, "참여자" + i);
+                insertSharedSettlement(settlementId, 96001L, LocalDate.of(2026, 1, 10));
+                insertParticipant(participantId, settlementId, userId, "ACTIVE");
+                insertObligation(obligationId, participantId, "UNPAID");
+            }
+
+            overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 1, 11));
+
+            Integer overdueCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM payment_obligation WHERE payment_obligation_id BETWEEN 96800 AND 97009 AND overdue_since IS NOT NULL",
+                    Integer.class
+            );
+            assertThat(overdueCount).isEqualTo(settlementCount); // 210건 전부 처리됨
         }
     }
 
