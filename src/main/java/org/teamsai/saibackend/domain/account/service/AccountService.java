@@ -37,13 +37,21 @@ public class AccountService {
             throw AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
         }
 
+        int updatedRow;
         try {
-            linkMapper.updateUserKey(userId, newKey);
+            updatedRow = linkMapper.updateUserKey(userId, newKey);
         } catch (Exception e) {
-            log.error("[AccountService] confirm 성공 후 로컬 저장 실패 - userId: {}. "
+            log.error("[AccountService] confirm 성공 후 로컬 저장 중 오류 - userId: {}. "
                     + "mock-bank에 이 userKey가 ACTIVE 상태로 남아있어 revoke를 시도합니다.", userId, e);
             revokeConfirmedKey(userId, newKey);
-            throw AccountErrorCode.BANK_SERVER_UNAVAILABLE.toException();
+            throw AccountErrorCode.LOCAL_KEY_SAVE_FAILED.toException();
+        }
+
+        if (updatedRow == 0) {
+            log.warn("[AccountService] 동시 요청으로 userKey 저장 충돌 - userId: {}. "
+                    + "다른 요청이 이미 userKey를 저장한 것으로 추정되어 이 키는 revoke합니다.", userId);
+            revokeConfirmedKey(userId, newKey);
+            throw AccountErrorCode.USER_KEY_ALREADY_LINKED.toException();
         }
 
         return new UserKeyResponse(newKey);

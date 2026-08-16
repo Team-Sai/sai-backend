@@ -77,8 +77,6 @@ public class MockBankClient {
 
     private record UserKeyRequest(String userKey) {}
 
-    private record ConfirmKeyRequest(String userKey) {}
-
     public List<LinkableAccountResponse> getAccountsByUserKey(String userKey) {
         return requireBody(
                 restClient.get()

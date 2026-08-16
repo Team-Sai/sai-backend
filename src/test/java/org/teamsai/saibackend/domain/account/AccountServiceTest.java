@@ -8,12 +8,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.account.exception.AccountErrorCode;
+import org.teamsai.saibackend.domain.account.service.AccountService;
 import org.teamsai.saibackend.domain.link.dto.response.UserKeyResponse;
 import org.teamsai.saibackend.domain.link.mapper.LinkMapper;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
-import org.teamsai.saibackend.domain.account.service.AccountService;
 import org.teamsai.saibackend.global.client.MockBankClient;
 import org.teamsai.saibackend.global.exception.DomainException;
 
@@ -78,6 +78,7 @@ class AccountServiceTest {
         void issuesConfirmsAndSavesNewKey() {
             given(userMapper.findById(USER_ID)).willReturn(Optional.of(createUser(null)));
             given(mockBankClient.requestUserKey(USER_NAME, USER_TOKEN)).willReturn(NEW_KEY);
+            given(linkMapper.updateUserKey(USER_ID, NEW_KEY)).willReturn(1);
 
             UserKeyResponse response = accountService.issueOrGetUserKey(USER_ID);
 
@@ -87,6 +88,7 @@ class AccountServiceTest {
             inOrder.verify(mockBankClient).requestUserKey(USER_NAME, USER_TOKEN);
             inOrder.verify(mockBankClient).confirmUserKey(NEW_KEY);
             inOrder.verify(linkMapper).updateUserKey(USER_ID, NEW_KEY);
+            verify(mockBankClient, never()).revokeUserKey(anyString());
         }
 
         @Test
@@ -103,6 +105,59 @@ class AccountServiceTest {
                     .isEqualTo(AccountErrorCode.BANK_SERVER_UNAVAILABLE);
 
             verify(linkMapper, never()).updateUserKey(anyLong(), anyString());
+            verify(mockBankClient, never()).revokeUserKey(anyString());
+        }
+
+        @Test
+        @DisplayName("confirm 성공 후 로컬 저장 중 예외가 나면 revoke를 요청하고 LOCAL_KEY_SAVE_FAILED 예외를 던진다")
+        void revokesConfirmedKeyWhenLocalSaveThrows() {
+            given(userMapper.findById(USER_ID)).willReturn(Optional.of(createUser(null)));
+            given(mockBankClient.requestUserKey(USER_NAME, USER_TOKEN)).willReturn(NEW_KEY);
+            willThrow(new org.springframework.dao.DataAccessResourceFailureException("DB 연결 실패"))
+                    .given(linkMapper).updateUserKey(USER_ID, NEW_KEY);
+
+            assertThatThrownBy(() -> accountService.issueOrGetUserKey(USER_ID))
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.LOCAL_KEY_SAVE_FAILED);
+
+            var inOrder = org.mockito.Mockito.inOrder(mockBankClient, linkMapper);
+            inOrder.verify(mockBankClient).confirmUserKey(NEW_KEY);
+            inOrder.verify(linkMapper).updateUserKey(USER_ID, NEW_KEY);
+            inOrder.verify(mockBankClient).revokeUserKey(NEW_KEY);
+        }
+
+        @Test
+        @DisplayName("동시 요청으로 저장이 0 rows면 revoke를 요청하고 USER_KEY_ALREADY_LINKED 예외를 던진다")
+        void revokesConfirmedKeyWhenUpdateAffectsZeroRows() {
+            given(userMapper.findById(USER_ID)).willReturn(Optional.of(createUser(null)));
+            given(mockBankClient.requestUserKey(USER_NAME, USER_TOKEN)).willReturn(NEW_KEY);
+            given(linkMapper.updateUserKey(USER_ID, NEW_KEY)).willReturn(0);
+
+            assertThatThrownBy(() -> accountService.issueOrGetUserKey(USER_ID))
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.USER_KEY_ALREADY_LINKED);
+
+            verify(mockBankClient).revokeUserKey(NEW_KEY);
+        }
+
+        @Test
+        @DisplayName("로컬 저장 실패 후 revoke마저 실패해도 원래 예외(LOCAL_KEY_SAVE_FAILED)가 그대로 던져진다")
+        void stillThrowsLocalKeySaveFailedWhenRevokeAlsoFails() {
+            given(userMapper.findById(USER_ID)).willReturn(Optional.of(createUser(null)));
+            given(mockBankClient.requestUserKey(USER_NAME, USER_TOKEN)).willReturn(NEW_KEY);
+            willThrow(new org.springframework.dao.DataAccessResourceFailureException("DB 연결 실패"))
+                    .given(linkMapper).updateUserKey(USER_ID, NEW_KEY);
+            willThrow(new RuntimeException("mock-bank 다운"))
+                    .given(mockBankClient).revokeUserKey(NEW_KEY);
+
+            assertThatThrownBy(() -> accountService.issueOrGetUserKey(USER_ID))
+                    .isInstanceOf(DomainException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(AccountErrorCode.LOCAL_KEY_SAVE_FAILED);
+
+            verify(mockBankClient).revokeUserKey(NEW_KEY);
         }
 
         @Test
@@ -117,43 +172,6 @@ class AccountServiceTest {
 
             verify(mockBankClient, never()).requestUserKey(anyString(), anyString());
             verify(mockBankClient, never()).confirmUserKey(anyString());
-        }
-
-        @Test
-        @DisplayName("confirm은 성공했지만 로컬 저장이 실패하면 revoke를 요청하고 BANK_SERVER_UNAVAILABLE 예외를 던진다")
-        void revokesConfirmedKeyWhenLocalSaveFails() {
-            given(userMapper.findById(USER_ID)).willReturn(Optional.of(createUser(null)));
-            given(mockBankClient.requestUserKey(USER_NAME, USER_TOKEN)).willReturn(NEW_KEY);
-            willThrow(new org.springframework.dao.DataAccessResourceFailureException("DB 연결 실패"))
-                    .given(linkMapper).updateUserKey(USER_ID, NEW_KEY);
-
-            assertThatThrownBy(() -> accountService.issueOrGetUserKey(USER_ID))
-                    .isInstanceOf(DomainException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(AccountErrorCode.BANK_SERVER_UNAVAILABLE);
-
-            var inOrder = org.mockito.Mockito.inOrder(mockBankClient, linkMapper);
-            inOrder.verify(mockBankClient).confirmUserKey(NEW_KEY);
-            inOrder.verify(linkMapper).updateUserKey(USER_ID, NEW_KEY);
-            inOrder.verify(mockBankClient).revokeUserKey(NEW_KEY);
-        }
-
-        @Test
-        @DisplayName("로컬 저장 실패 후 revoke마저 실패해도 예외는 BANK_SERVER_UNAVAILABLE로 동일하게 던져진다")
-        void stillThrowsExpectedExceptionWhenRevokeAlsoFails() {
-            given(userMapper.findById(USER_ID)).willReturn(Optional.of(createUser(null)));
-            given(mockBankClient.requestUserKey(USER_NAME, USER_TOKEN)).willReturn(NEW_KEY);
-            willThrow(new org.springframework.dao.DataAccessResourceFailureException("DB 연결 실패"))
-                    .given(linkMapper).updateUserKey(USER_ID, NEW_KEY);
-            willThrow(new RuntimeException("mock-bank 다운"))
-                    .given(mockBankClient).revokeUserKey(NEW_KEY);
-
-            assertThatThrownBy(() -> accountService.issueOrGetUserKey(USER_ID))
-                    .isInstanceOf(DomainException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(AccountErrorCode.BANK_SERVER_UNAVAILABLE);
-
-            verify(mockBankClient).revokeUserKey(NEW_KEY);
         }
     }
 }
