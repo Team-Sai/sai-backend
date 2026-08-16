@@ -13,6 +13,7 @@
         <result property="paymentStatus" column="payment_status"/>
         <result property="reviewStatus" column="review_status"/>
         <result property="obligationStatus" column="obligation_status"/>
+        <result property="overdueSince" column="overdue_since"/>
     </resultMap>
     <resultMap id="MatchingCandidateResultMap"
                type="org.teamsai.saibackend.domain.matching.model.MatchingCandidate">
@@ -157,4 +158,29 @@
         #{obligationStatus}
         )
     </insert>
+
+    <select id="findUnpaidByParticipantIds" resultMap="PaymentObligationResultMap">
+        SELECT payment_obligation_id, participant_id, expected_amount,
+        payment_status, review_status, obligation_status, overdue_since
+        FROM payment_obligation
+        WHERE participant_id IN
+        <foreach item="id" collection="participantIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND payment_status != 'PAID'
+        AND obligation_status = 'ACTIVE'
+        AND overdue_since IS NULL
+    </select>
+
+    <update id="updateOverdueSince">
+        UPDATE payment_obligation
+        SET overdue_since = #{overdueSince}
+        WHERE payment_obligation_id = #{paymentObligationId}
+    </update>
+
+    <update id="clearOverdueSince">
+        UPDATE payment_obligation
+        SET overdue_since = NULL
+        WHERE payment_obligation_id = #{paymentObligationId}
+    </update>
 </mapper>

@@ -34,4 +34,5 @@ public interface SettlementMapper {
             @Param("userId") Long userId
     );
 
+    List<SettlementDTO> findInProgressSettlements();
 }
