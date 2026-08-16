@@ -226,6 +226,11 @@ function renderCalendar() {
                 ${calendarDay.hasOutbound ? '<i class="dot dot--outbound"></i>' : ""}
             </span>
         `;
+
+        dayButton.addEventListener("click", () => {
+            window.location.href = `/calendar?date=${dateKey}`;
+        });
+
         grid.appendChild(dayButton);
     });
 }
