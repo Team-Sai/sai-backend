@@ -15,6 +15,7 @@ import org.teamsai.saibackend.domain.link.service.AccountLinkService;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.client.MockBankClient;
+import org.teamsai.saibackend.global.client.UserKeyRevoker;
 import org.teamsai.saibackend.global.jwt.JwtAuthenticationEntryPoint;
 import org.teamsai.saibackend.global.jwt.JwtAuthenticationFilter;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
@@ -54,6 +55,8 @@ class AccountLinkFlowControllerTest {
     private IdentityValidator identityValidator;
     @MockitoBean
     private MockBankClient mockBankClient;
+    @MockitoBean
+    private UserKeyRevoker userKeyRevoker;
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
     @MockitoBean
@@ -162,29 +165,10 @@ class AccountLinkFlowControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("success", false));
 
-        var inOrder = org.mockito.Mockito.inOrder(mockBankClient, accountLinkService);
+        var inOrder = org.mockito.Mockito.inOrder(mockBankClient, accountLinkService, userKeyRevoker);
         inOrder.verify(mockBankClient).confirmUserKey(USER_KEY);
         inOrder.verify(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
-        inOrder.verify(mockBankClient).revokeUserKey(USER_KEY);
-    }
-
-    @Test
-    @DisplayName("revoke 요청마저 실패해도 에러 뷰는 정상 반환된다 (예외가 사용자에게 전파되지 않음)")
-    void linkCallback_revoke도_실패해도_에러뷰는_정상반환() throws Exception {
-        given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
-        willThrow(UserErrorCode.LINK_KEY_UPDATE_CONFLICT.toException())
-                .given(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
-        willThrow(new RuntimeException("mock-bank 다운"))
-                .given(mockBankClient).revokeUserKey(USER_KEY);
-
-        mockMvc.perform(get("/accounts/link/callback")
-                        .param("state", STATE)
-                        .param("userKey", USER_KEY)
-                        .param("accountIds", "1"))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute("success", false));
-
-        verify(mockBankClient).revokeUserKey(USER_KEY);
+        inOrder.verify(userKeyRevoker).revokeBestEffort("AccountLinkFlowController", USER_ID, USER_KEY);
     }
 
     @Test
@@ -200,9 +184,9 @@ class AccountLinkFlowControllerTest {
                         .param("accountIds", "1"))
                 .andExpect(status().isInternalServerError());
 
-        var inOrder = org.mockito.Mockito.inOrder(mockBankClient, accountLinkService);
+        var inOrder = org.mockito.Mockito.inOrder(mockBankClient, accountLinkService, userKeyRevoker);
         inOrder.verify(mockBankClient).confirmUserKey(USER_KEY);
         inOrder.verify(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
-        inOrder.verify(mockBankClient).revokeUserKey(USER_KEY);
+        inOrder.verify(userKeyRevoker).revokeBestEffort("AccountLinkFlowController", USER_ID, USER_KEY);
     }
 }

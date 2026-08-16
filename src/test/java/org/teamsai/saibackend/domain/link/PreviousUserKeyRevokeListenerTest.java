@@ -8,9 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.link.event.PreviousUserKeyRevokeListener;
 import org.teamsai.saibackend.domain.link.event.PreviousUserKeyRevokedEvent;
-import org.teamsai.saibackend.global.client.MockBankClient;
+import org.teamsai.saibackend.global.client.UserKeyRevoker;
 
-import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -18,7 +17,7 @@ import static org.mockito.Mockito.verify;
 class PreviousUserKeyRevokeListenerTest {
 
     @Mock
-    private MockBankClient mockBankClient;
+    private UserKeyRevoker userKeyRevoker;
     @InjectMocks
     private PreviousUserKeyRevokeListener listener;
 
@@ -26,22 +25,10 @@ class PreviousUserKeyRevokeListenerTest {
     private static final String OLD_KEY = "mb_oldkey";
 
     @Test
-    @DisplayName("이벤트를 받으면 mock-bank에 이전 userKey revoke를 요청한다")
-    void revokesPreviousUserKeyOnEvent() {
+    @DisplayName("이벤트를 받으면 UserKeyRevoker에 이전 userKey revoke를 위임한다")
+    void delegatesRevokeToUserKeyRevokerOnEvent() {
         listener.handle(new PreviousUserKeyRevokedEvent(USER_ID, OLD_KEY));
 
-        verify(mockBankClient).revokeUserKey(OLD_KEY);
-    }
-
-    @Test
-    @DisplayName("revoke 호출이 실패해도 예외를 전파하지 않고 삼킨다")
-    void doesNotPropagateExceptionWhenRevokeFails() {
-        willThrow(new RuntimeException("mock-bank 다운"))
-                .given(mockBankClient).revokeUserKey(OLD_KEY);
-
-        // 예외가 던져지지 않아야 함 (assertThatCode 대신 그냥 호출해서 확인)
-        listener.handle(new PreviousUserKeyRevokedEvent(USER_ID, OLD_KEY));
-
-        verify(mockBankClient).revokeUserKey(OLD_KEY);
+        verify(userKeyRevoker).revokeBestEffort("PreviousUserKeyRevokeListener", USER_ID, OLD_KEY);
     }
 }

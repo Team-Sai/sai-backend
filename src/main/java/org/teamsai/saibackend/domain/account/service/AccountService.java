@@ -10,15 +10,19 @@ import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.global.client.MockBankClient;
+import org.teamsai.saibackend.global.client.UserKeyRevoker;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountService {
 
+    private static final String CALLER = "AccountService";
+
     private final UserMapper userMapper;
     private final LinkMapper linkMapper;
     private final MockBankClient mockBankClient;
+    private final UserKeyRevoker userKeyRevoker;
 
     public UserKeyResponse issueOrGetUserKey(Long userId) {
         UserDTO user = userMapper.findById(userId)
@@ -43,30 +47,17 @@ public class AccountService {
         } catch (Exception e) {
             log.error("[AccountService] confirm 성공 후 로컬 저장 중 오류 - userId: {}. "
                     + "mock-bank에 이 userKey가 ACTIVE 상태로 남아있어 revoke를 시도합니다.", userId, e);
-            revokeConfirmedKey(userId, newKey);
+            userKeyRevoker.revokeBestEffort(CALLER, userId, newKey);
             throw AccountErrorCode.LOCAL_KEY_SAVE_FAILED.toException();
         }
 
         if (updatedRow == 0) {
             log.warn("[AccountService] 동시 요청으로 userKey 저장 충돌 - userId: {}. "
                     + "다른 요청이 이미 userKey를 저장한 것으로 추정되어 이 키는 revoke합니다.", userId);
-            revokeConfirmedKey(userId, newKey);
+            userKeyRevoker.revokeBestEffort(CALLER, userId, newKey);
             throw AccountErrorCode.USER_KEY_ALREADY_LINKED.toException();
         }
 
         return new UserKeyResponse(newKey);
-    }
-
-    private void revokeConfirmedKey(Long userId, String userKey) {
-        try {
-            mockBankClient.revokeUserKey(userKey);
-            log.info("[AccountService] 로컬 저장 실패로 mock-bank confirm 취소 완료 - userId: {}", userId);
-        } catch (Exception e) {
-            log.error(
-                    "[AccountService] mock-bank confirm 취소마저 실패 - userId: {}. "
-                            + "mock-bank에 이 userKey가 ACTIVE 상태로 남아있을 수 있어 수동 확인이 필요합니다.",
-                    userId, e
-            );
-        }
     }
 }

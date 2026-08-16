@@ -20,6 +20,7 @@ import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.client.MockBankClient;
+import org.teamsai.saibackend.global.client.UserKeyRevoker;
 import org.teamsai.saibackend.global.exception.DomainException;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
@@ -35,6 +36,8 @@ import java.util.stream.Collectors;
 @Tag(name = "계좌 연동", description = "사이은행(mock-bank) 계좌 연동 시작/콜백 처리 API")
 public class AccountLinkFlowController {
 
+    private static final String CALLER = "AccountLinkFlowController";
+
     @Value("${sai.mock-bank.base-url}")
     private String mockBankBaseUrl;
 
@@ -47,6 +50,7 @@ public class AccountLinkFlowController {
     private final UserService userService;
     private final IdentityValidator identityValidator;
     private final MockBankClient mockBankClient;
+    private final UserKeyRevoker userKeyRevoker;
 
     @Operation(
             summary = "계좌 연동 시작",
@@ -130,7 +134,7 @@ public class AccountLinkFlowController {
             accountLinkService.completeLink(userId, userKey, ids);
         } catch (Exception e) {
             // 실패 사유(도메인 예외/예상치 못한 예외)와 무관하게 confirm된 userKey는 항상 한 번만 revoke한다.
-            revokeConfirmedKey(userId, userKey);
+            userKeyRevoker.revokeBestEffort(CALLER, userId, userKey);
 
             if (e instanceof DomainException domainException) {
                 log.warn(
@@ -150,19 +154,6 @@ public class AccountLinkFlowController {
 
         model.addAttribute("success", true);
         return "link/link-complete";
-    }
-
-    private void revokeConfirmedKey(Long userId, String userKey) {
-        try {
-            mockBankClient.revokeUserKey(userKey);
-            log.info("[AccountLinkFlowController] 로컬 연동 실패로 mock-bank confirm 취소 완료 - userId: {}", userId);
-        } catch (Exception e) {
-            log.error(
-                    "[AccountLinkFlowController] mock-bank confirm 취소마저 실패 - userId: {}, userKey 앞 8자: {}. "
-                            + "mock-bank에 이 userKey가 ACTIVE 상태로 남아있을 수 있어 수동 확인이 필요합니다.",
-                    userId, userKey.substring(0, Math.min(8, userKey.length())), e
-            );
-        }
     }
 
     private String errorView(Model model, String message) {
