@@ -16,14 +16,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
+import org.teamsai.saibackend.domain.user.dto.UserLoginDTO;
 import org.teamsai.saibackend.domain.user.dto.request.UserLoginRequest;
 import org.teamsai.saibackend.domain.user.dto.request.UserSignUpRequest;
-import org.teamsai.saibackend.domain.user.dto.response.UserLoginResponse;
+import org.teamsai.saibackend.domain.user.dto.response.AccessTokenResponse;
 import org.teamsai.saibackend.domain.user.dto.response.UserSignUpResponse;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.domain.user.service.AuthService;
 import org.teamsai.saibackend.domain.user.service.AuthValidator;
+import org.teamsai.saibackend.domain.user.service.RefreshTokenService;
 import org.teamsai.saibackend.global.exception.DomainException;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
 
@@ -35,10 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService 단위 테스트")
@@ -66,6 +65,9 @@ class AuthServiceTest {
 
     @Mock
     private JwtTokenProvider jwtTokenProvider;
+
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private AuthService authService;
@@ -320,7 +322,7 @@ class AuthServiceTest {
             given(jwtTokenProvider.createAccessToken(USER_ID))
                     .willReturn("access-token");
 
-            UserLoginResponse response =
+            UserLoginDTO response =
                     authService.login(request);
 
             verify(authValidator)
@@ -405,6 +407,194 @@ class AuthServiceTest {
 
             verify(jwtTokenProvider, never())
                     .createAccessToken(anyLong());
+        }
+        @Nested
+        @DisplayName("AccessToken 재발급")
+        class Reissue {
+
+            private static final String REFRESH_TOKEN = "refresh-token";
+            private static final String NEW_ACCESS_TOKEN = "new-access-token";
+            private static final Long USER_ID = 1L;
+
+            @Test
+            @DisplayName("유효한 RefreshToken이고 Redis 값과 일치하면 AccessToken을 재발급한다")
+            void reissueSuccess() {
+                given(
+                        jwtTokenProvider.getUserIdFromRefreshToken(
+                                REFRESH_TOKEN
+                        )
+                ).willReturn(
+                        Optional.of(USER_ID)
+                );
+
+                given(
+                        refreshTokenService.matches(
+                                USER_ID,
+                                REFRESH_TOKEN
+                        )
+                ).willReturn(true);
+
+                given(
+                        jwtTokenProvider.createAccessToken(
+                                USER_ID
+                        )
+                ).willReturn(
+                        NEW_ACCESS_TOKEN
+                );
+
+                AccessTokenResponse response =
+                        authService.reissue(
+                                REFRESH_TOKEN
+                        );
+
+                assertThat(
+                        response.getAccessToken()
+                ).isEqualTo(
+                        NEW_ACCESS_TOKEN
+                );
+
+                verify(refreshTokenService)
+                        .matches(
+                                USER_ID,
+                                REFRESH_TOKEN
+                        );
+
+                verify(jwtTokenProvider)
+                        .createAccessToken(
+                                USER_ID
+                        );
+            }
+
+            @Test
+            @DisplayName("만료되거나 조작된 RefreshToken이면 재발급에 실패한다")
+            void reissueFailsWhenRefreshTokenIsInvalid() {
+                given(
+                        jwtTokenProvider.getUserIdFromRefreshToken(
+                                REFRESH_TOKEN
+                        )
+                ).willReturn(
+                        Optional.empty()
+                );
+
+                assertThatThrownBy(
+                        () -> authService.reissue(
+                                REFRESH_TOKEN
+                        )
+                ).isInstanceOf(
+                        DomainException.class
+                );
+
+                verify(
+                        refreshTokenService,
+                        never()
+                ).matches(
+                        anyLong(),
+                        anyString()
+                );
+
+                verify(
+                        jwtTokenProvider,
+                        never()
+                ).createAccessToken(
+                        anyLong()
+                );
+            }
+
+            @Test
+            @DisplayName("RefreshToken이 Redis에 저장된 값과 다르면 재발급에 실패한다")
+            void reissueFailsWhenRedisTokenDoesNotMatch() {
+                given(
+                        jwtTokenProvider.getUserIdFromRefreshToken(
+                                REFRESH_TOKEN
+                        )
+                ).willReturn(
+                        Optional.of(USER_ID)
+                );
+
+                given(
+                        refreshTokenService.matches(
+                                USER_ID,
+                                REFRESH_TOKEN
+                        )
+                ).willReturn(false);
+
+                assertThatThrownBy(
+                        () -> authService.reissue(
+                                REFRESH_TOKEN
+                        )
+                ).isInstanceOf(
+                        DomainException.class
+                );
+
+                verify(
+                        jwtTokenProvider,
+                        never()
+                ).createAccessToken(
+                        anyLong()
+                );
+            }
+        }
+
+        @Nested
+        @DisplayName("로그아웃")
+        class Logout {
+
+            private static final String REFRESH_TOKEN = "refresh-token";
+            private static final Long USER_ID = 1L;
+
+            @Test
+            @DisplayName("유효한 RefreshToken이면 Redis에서 RefreshToken을 삭제한다")
+            void logoutDeletesRefreshToken() {
+                given(
+                        jwtTokenProvider.getUserIdFromRefreshToken(
+                                REFRESH_TOKEN
+                        )
+                ).willReturn(
+                        Optional.of(USER_ID)
+                );
+
+                given(
+                        refreshTokenService.matches(
+                                USER_ID,
+                                REFRESH_TOKEN
+                        )
+                ).willReturn(true);
+
+                authService.logout(
+                        REFRESH_TOKEN
+                );
+
+                verify(refreshTokenService)
+                        .delete(USER_ID);
+            }
+
+            @Test
+            @DisplayName("Redis의 RefreshToken과 일치하지 않으면 삭제하지 않는다")
+            void logoutDoesNotDeleteWhenTokenDoesNotMatch() {
+                given(
+                        jwtTokenProvider.getUserIdFromRefreshToken(
+                                REFRESH_TOKEN
+                        )
+                ).willReturn(
+                        Optional.of(USER_ID)
+                );
+
+                given(
+                        refreshTokenService.matches(
+                                USER_ID,
+                                REFRESH_TOKEN
+                        )
+                ).willReturn(false);
+
+                authService.logout(
+                        REFRESH_TOKEN
+                );
+
+                verify(
+                        refreshTokenService,
+                        never()
+                ).delete(anyLong());
+            }
         }
     }
 

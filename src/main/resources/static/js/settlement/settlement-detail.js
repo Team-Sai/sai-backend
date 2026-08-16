@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const token = sessionStorage.getItem("accessToken");
     const settlementId = getSettlementIdFromPath();
 
     const toast = document.getElementById("toast");
@@ -14,11 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
             "정산 ID를 확인할 수 없습니다.",
             true
         );
-        return;
-    }
-
-    if (!token) {
-        redirectToLogin();
         return;
     }
 
@@ -144,28 +138,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function requestSettlementAccount() {
         const response =
-            await fetch(
+            await authFetch(
                 `/api/settlements/${settlementId}/account`,
                 {
-                    method: "GET",
-                    headers: {
-                        "Authorization":
-                            `Bearer ${token}`
-                    }
+                    method: "GET"
                 }
             );
-
-        if (response.status === 401) {
-            sessionStorage.removeItem(
-                "accessToken"
-            );
-
-            redirectToLogin();
-
-            throw new Error(
-                "로그인이 필요합니다."
-            );
-        }
 
         if (response.status === 403) {
             throw new Error(
@@ -190,32 +168,10 @@ document.addEventListener("DOMContentLoaded", () => {
         options = {}
     ) {
         const response =
-            await fetch(
+            await authFetch(
                 url,
-                {
-                    ...options,
-
-                    headers: {
-                        ...(options.headers || {}),
-
-                        "Authorization":
-                            `Bearer ${token}`
-                    }
-                }
+                options
             );
-
-
-        if (response.status === 401) {
-            sessionStorage.removeItem(
-                "accessToken"
-            );
-
-            redirectToLogin();
-
-            throw new Error(
-                "로그인이 필요합니다."
-            );
-        }
 
         if (response.status === 403) {
             throw new Error(
@@ -242,8 +198,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     message;
 
             } catch (error) {
-                // JSON 응답이 아니면
-                // 기본 메시지 사용
             }
 
             throw new Error(message);
@@ -883,11 +837,6 @@ document.addEventListener("DOMContentLoaded", () => {
             loading
                 ? "불러오는 중..."
                 : "↻ 새로고침";
-    }
-
-    function redirectToLogin() {
-        window.location.href =
-            "/login?required=true";
     }
 
     function showToast(

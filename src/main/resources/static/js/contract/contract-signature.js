@@ -22,14 +22,6 @@
   let hasSignature = false;
   let drawing = false;
 
-  function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-  }
-
   function showStatus(message, isError) {
     statusEl.textContent = message;
     statusEl.classList.toggle("is-error", Boolean(isError));
@@ -114,9 +106,11 @@
       identityVerificationId,
     };
 
-    const response = await fetch("/api/contracts/write", {
+    const response = await authFetch("/api/contracts/write", {
       method: "POST",
-      headers: authHeaders({ "Content-Type": "application/json" }),
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(payload),
     });
 
@@ -137,11 +131,13 @@
     formData.append("debtorUserToken", debtorUserTokenInput.value.trim());
     formData.append("signature", blob, "signature.png");
 
-    const response = await fetch(`/api/contracts/${contractId}/signature`, {
-      method: "PATCH",
-      headers: authHeaders(),
-      body: formData,
-    });
+    const response = await authFetch(
+        `/api/contracts/${contractId}/signature`,
+        {
+          method: "PATCH",
+          body: formData,
+        }
+    );
 
     if (!response.ok) {
       const body = await response.json().catch(() => null);

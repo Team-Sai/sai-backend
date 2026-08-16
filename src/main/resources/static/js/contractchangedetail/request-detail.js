@@ -2,15 +2,9 @@ const contractId = document.getElementById('contractId').value;
 const changeRequestId = document.getElementById('changeRequestId').value;
 let newContractId = null;
 
-function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-}
-
-fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}`, { headers: authHeaders() })
+authFetch(
+    `/api/contracts/${contractId}/change-requests/${changeRequestId}`
+)
     .then(response => {
         if (!response.ok) {
             throw new Error('변경 요청 조회 실패');
@@ -95,11 +89,18 @@ rejectConfirmButton.addEventListener('click', function () {
         return;
     }
 
-    fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}/reject`, {
-        method: 'PATCH',
-        headers: authHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ returnReason: returnReason })
-    })
+    authFetch(
+        `/api/contracts/${contractId}/change-requests/${changeRequestId}/reject`,
+        {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                returnReason: returnReason
+            })
+        }
+    )
         .then(response => {
             if (!response.ok) {
                 throw new Error('반려 처리 실패');

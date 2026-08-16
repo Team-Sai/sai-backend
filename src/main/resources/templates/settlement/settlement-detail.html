@@ -1,25 +1,24 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0">
   <title>정산 상세 | 사이원장</title>
-  <link rel="stylesheet" href="/css/settlement/settlement-detail.css">
+  <th:block
+          th:replace="~{fragments/app-shell :: commonStyles}">
+  </th:block>
+  <link
+          rel="stylesheet"
+          href="/css/settlement/settlement-detail.css">
+
 </head>
-<body>
-<header class="site-header">
-  <div class="header-inner">
-    <a class="brand" href="/">
-      <span class="brand-mark"></span><span>사이원장</span>
-    </a>
-    <nav class="main-nav">
-      <a href="/">서비스소개</a>
-      <a href="/contracts">금전소비대차</a>
-      <a class="active" href="/settlements">정산</a>
-      <a href="/calendar">캘린더</a>
-    </nav>
-    <div class="profile-chip"></div>
-  </div>
+<body class="app-shell-page">
+<header
+        th:replace="~{fragments/app-shell :: appHeader('settlement')}">
 </header>
 
 <main class="page-shell">
@@ -128,7 +127,22 @@
   </div>
 </main>
 
-<div id="toast" class="toast"></div>
-<script src="/js/settlement/settlement-detail.js"></script>
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+
+
+<div
+        id="toast"
+        class="toast">
+</div>
+
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+<script
+        th:src="@{/js/settlement/settlement-detail.js}"
+        src="/js/settlement/settlement-detail.js">
+</script>
 </body>
 </html>

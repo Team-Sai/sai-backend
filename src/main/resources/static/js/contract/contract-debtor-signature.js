@@ -35,14 +35,6 @@
     return;
   }
 
-  function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-      token ? { Authorization: `Bearer ${token}` } : {},
-      extra || {}
-    );
-  }
-
   function showStatus(message, isError) {
     statusEl.textContent = message;
     statusEl.classList.toggle("is-error", Boolean(isError));
@@ -113,11 +105,13 @@
     formData.append("signature", blob, "signature.png");
     formData.append("identityVerificationId", identityVerificationId);
 
-    const response = await fetch(`/api/contracts/${contractId}/approve`, {
-      method: "PATCH",
-      headers: authHeaders(),
-      body: formData,
-    });
+    const response = await authFetch(
+        `/api/contracts/${contractId}/approve`,
+        {
+          method: "PATCH",
+          body: formData,
+        }
+    );
 
     if (!response.ok) {
       const body = await response.json().catch(() => null);

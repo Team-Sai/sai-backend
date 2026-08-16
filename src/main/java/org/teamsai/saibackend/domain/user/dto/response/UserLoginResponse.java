@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.teamsai.saibackend.domain.user.dto.UserDTO;
+import org.teamsai.saibackend.domain.user.dto.UserLoginDTO;
 
 @Getter
 @Builder
@@ -16,14 +16,13 @@ public class UserLoginResponse {
     private String userToken;
     private String name;
 
-    public static UserLoginResponse of(
-            UserDTO user,
-            String accessToken
+    public static UserLoginResponse from(
+            UserLoginDTO loginDTO
     ) {
         return UserLoginResponse.builder()
-                .accessToken(accessToken)
-                .userToken(user.getUserToken())
-                .name(user.getName())
+                .accessToken(loginDTO.getAccessToken())
+                .userToken(loginDTO.getUserToken())
+                .name(loginDTO.getName())
                 .build();
     }
 }

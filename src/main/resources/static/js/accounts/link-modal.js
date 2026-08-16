@@ -6,15 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const agreeCheckbox = document.getElementById("link-agree-checkbox");
     const agreeDetailButton = document.getElementById("link-agree-detail");
 
-    document.addEventListener("DOMContentLoaded", () => {
-        const token = sessionStorage.getItem("accessToken");
-
-        if (!token) {
-            window.location.replace("/login?required=true");
-            return;
-        }
-    });
-
     function openModal() {
         backdrop.hidden = false;
         document.body.style.overflow = "hidden";
@@ -49,15 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
         confirmButton.textContent = "연동 중...";
 
         try {
-            const token = sessionStorage.getItem("accessToken");
-
-            const response = await fetch("/api/mock-bank/link", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`
+            const response = await authFetch(
+                "/api/mock-bank/link",
+                {
+                    method: "POST"
                 }
-            });
-
+            );
             if (!response.ok) {
                 throw new Error("계좌 연동 준비에 실패했습니다.");
             }
