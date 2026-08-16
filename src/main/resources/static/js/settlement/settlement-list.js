@@ -27,28 +27,17 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             syncButton.disabled = true;
 
-            const token = sessionStorage.getItem("accessToken");
-
-            if (!token) {
-                window.location.href = "/login?required=true";
-                return;
-            }
-
-            const response = await fetch("/api/transactions/sync", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`
+            const response = await authFetch(
+                "/api/transactions/sync",
+                {
+                    method: "POST"
                 }
-            });
+            );
 
             if (!response.ok) {
-                if (response.status === 401) {
-                    sessionStorage.removeItem("accessToken");
-                    window.location.href = "/login?required=true";
-                    return;
-                }
-
-                throw new Error("거래내역 동기화에 실패했습니다.");
+                throw new Error(
+                    "거래내역 동기화에 실패했습니다."
+                );
             }
 
             const result = await response.json();
@@ -168,34 +157,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function loadSettlements() {
-        const token = sessionStorage.getItem("accessToken");
-
-        if (!token) {
-            window.location.href = "/login?required=true";
-            return;
-        }
-
-        const requestOptions = {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${token}`
-            }
-        };
-
         await Promise.all([
-            loadSettlementList(requestOptions),
-            loadSummary(requestOptions)
+            loadSettlementList(),
+            loadSummary()
         ]);
     }
 
-    async function loadSettlementList(requestOptions) {
+    async function loadSettlementList() {
         try {
-            const response = await fetch("/api/settlements", requestOptions);
-
-            if (response.status === 401) {
-                handleUnauthorized();
-                return;
-            }
+            const response = await authFetch(
+                "/api/settlements"
+            );
 
             if (!response.ok) {
                 throw new Error("정산 목록 조회에 실패했습니다.");
@@ -211,17 +183,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function loadSummary(requestOptions) {
+    async function loadSummary() {
         try {
-            const response = await fetch(
-                "/api/settlements/summary",
-                requestOptions
+            const response = await authFetch(
+                "/api/settlements/summary"
             );
-
-            if (response.status === 401) {
-                handleUnauthorized();
-                return;
-            }
 
             if (!response.ok) {
                 throw new Error("정산 요약 조회에 실패했습니다.");
@@ -233,11 +199,6 @@ document.addEventListener("DOMContentLoaded", () => {
             updateSummary({});
             showToast("정산 요약을 불러오지 못했습니다.", true);
         }
-    }
-
-    function handleUnauthorized() {
-        sessionStorage.removeItem("accessToken");
-        window.location.href = "/login?required=true";
     }
 
     function formatAmount(value) {

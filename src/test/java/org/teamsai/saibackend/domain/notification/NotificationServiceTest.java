@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -101,6 +102,8 @@ class NotificationServiceTest {
                                 "정산 금액 30000원이 등록되었습니다.",
                                 10L,
                                 null,          // ← 이 줄 추가 (secondaryReferenceId)
+                                null,
+                                false,
                                 createdAt
                         )
                 );
@@ -111,5 +114,56 @@ class NotificationServiceTest {
 
         assertThat(result).isEqualTo(expected);
         verify(notificationMapper).findAllByUserId(userId);
+    }
+
+    @Test
+    @DisplayName("같은 은행 거래의 매칭 검토 알림이 없으면 생성한다")
+    void createsMatchingReviewNotificationWhenItDoesNotExist() {
+        when(notificationMapper.existsByUserIdAndTypeAndReferenceId(
+                2L,
+                NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
+                100L
+        )).thenReturn(false);
+
+        notificationService.createIfAbsent(
+                2L,
+                NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
+                "입금 거래 확인이 필요합니다.",
+                "정산과 차용증 후보가 모두 발견되었습니다.",
+                100L,
+                10L
+        );
+
+        verify(notificationMapper).insert(
+                org.mockito.ArgumentMatchers.argThat(notification ->
+                        notification.getUserId().equals(2L)
+                                && notification.getReferenceId().equals(100L)
+                                && notification.getSecondaryReferenceId()
+                                .equals(10L)
+                )
+        );
+    }
+
+    @Test
+    @DisplayName("같은 은행 거래의 매칭 검토 알림이 있으면 중복 생성하지 않는다")
+    void doesNotCreateDuplicatedMatchingReviewNotification() {
+        when(notificationMapper.existsByUserIdAndTypeAndReferenceId(
+                2L,
+                NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
+                100L
+        )).thenReturn(true);
+
+        notificationService.createIfAbsent(
+                2L,
+                NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
+                "입금 거래 확인이 필요합니다.",
+                "정산과 차용증 후보가 모두 발견되었습니다.",
+                100L,
+                10L
+        );
+
+        verify(notificationMapper, never()).insert(
+                org.mockito.ArgumentMatchers.any()
+        );
     }
 }

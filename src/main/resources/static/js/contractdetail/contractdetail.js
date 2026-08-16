@@ -8,15 +8,9 @@ const REPAYMENT_TYPE_LABELS = {
     BULLET_REPAYMENT: '만기일시상환'
 };
 
-function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-}
-
-fetch(`/api/contracts/${contractId}/contract-detail`, { headers: authHeaders() })
+authFetch(
+    `/api/contracts/${contractId}/contract-detail`
+)
     .then(response => {
         if (!response.ok) {
             throw new Error("금전차용계약서 조회 실패");

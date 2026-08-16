@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.payment.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
@@ -19,7 +20,7 @@ public class SettlementPaymentService {
     private final PaymentObligationMapper paymentObligationMapper;
     private final PaymentRecordService paymentRecordService;
 
-    @Transactional
+    @Transactional(propagation = Propagation.NESTED)
     public void applyAutoMatchedPayment(
             Long paymentObligationId,
             Long bankTransactionId,
@@ -29,7 +30,23 @@ public class SettlementPaymentService {
                 paymentObligationId,
                 bankTransactionId,
                 amount,
-                SourceType.AUTO_MATCH
+                SourceType.AUTO_MATCH,
+                false
+        );
+    }
+
+    @Transactional(propagation = Propagation.NESTED)
+    public void applyManuallyMatchedPayment(
+            Long paymentObligationId,
+            Long bankTransactionId,
+            BigDecimal amount
+    ) {
+        applyPayment(
+                paymentObligationId,
+                bankTransactionId,
+                amount,
+                SourceType.MANUAL,
+                true
         );
     }
 
@@ -37,7 +54,8 @@ public class SettlementPaymentService {
             Long paymentObligationId,
             Long bankTransactionId,
             BigDecimal amount,
-            SourceType sourceType
+            SourceType sourceType,
+            boolean limitToRemainingAmount
     ) {
         validatePaymentAmount(amount);
         validateBankTransactionId(bankTransactionId);
@@ -56,19 +74,26 @@ public class SettlementPaymentService {
         BigDecimal remainingAmount =
                 obligation.getExpectedAmount().subtract(paidAmount);
 
-        if (amount.compareTo(remainingAmount) > 0) {
+        if (!limitToRemainingAmount
+                && amount.compareTo(remainingAmount) > 0) {
             throw PaymentErrorCode.PAYMENT_AMOUNT_EXCEEDS_REMAINING_AMOUNT.toException();
         }
+
+        BigDecimal paymentAmount = limitToRemainingAmount
+                ? amount.min(remainingAmount)
+                : amount;
+
+        validatePaymentAmount(paymentAmount);
 
         paymentRecordService.createConfirmedRecord(
                 bankTransactionId,
                 PaymentTargetType.SETTLEMENT,
                 paymentObligationId,
-                amount,
+                paymentAmount,
                 sourceType
         );
 
-        BigDecimal newPaidAmount = paidAmount.add(amount);
+        BigDecimal newPaidAmount = paidAmount.add(paymentAmount);
         PaymentStatus newPaymentStatus = calculatePaymentStatus(
                 obligation.getExpectedAmount(),
                 newPaidAmount
@@ -112,7 +137,8 @@ public class SettlementPaymentService {
     }
 
     private void validateActiveObligation(PaymentObligationDTO obligation) {
-        if (obligation.getObligationStatus() != ObligationStatus.ACTIVE) {
+        if (obligation.getObligationStatus() != ObligationStatus.ACTIVE
+                || obligation.getPaymentStatus() == PaymentStatus.PAID) {
             throw PaymentErrorCode.PAYMENT_OBLIGATION_NOT_ACTIVE.toException();
         }
     }
