@@ -135,9 +135,8 @@ async function syncTransactions() {
         syncButton.disabled = true;
         syncButton.textContent = '동기화 중...';
 
-        const response = await fetch('/api/transactions/sync', {
-            method: 'POST',
-            headers: authHeaders()
+        const response = await authFetch('/api/transactions/sync', {
+            method: 'POST'
         });
 
         const result = await readJsonSafely(response);

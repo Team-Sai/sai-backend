@@ -187,9 +187,9 @@
 
   async function fetchPreviousAmount() {
     try {
-      const response = await fetch("/api/contracts/previous-sum", {
+      const response = await authFetch("/api/contracts/previous-sum", {
         method: "GET",
-        headers: authHeaders({ Accept: "application/json" }),
+        headers: { Accept: "application/json" },
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const amount = await response.json();
