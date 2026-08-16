@@ -198,7 +198,7 @@ async function readJsonSafely(response) {
 }
 
 document.getElementById('btnCreateContract').addEventListener('click', () => {
-    window.location.href = '/contracts/new';
+    window.location.href = '/contracts/relation-modal';
 })
 
 function escapeHtml(str) {

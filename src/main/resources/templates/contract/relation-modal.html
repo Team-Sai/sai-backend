@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>관계 선택 안내</title>
+    <link rel="stylesheet" as="style" crossorigin
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" th:href="@{/css/contract/relation-select-modal.css}" href="./relation-select-modal.css" />
+</head>
+<body class="preview-bg">
+
+<div class="modal-overlay" id="relationModalOverlay">
+  <div class="notice" role="dialog" aria-modal="true" aria-labelledby="relationNoticeTitle">
+
+    <header class="notice__header">
+      <span class="notice__eyebrow" id="relationNoticeTitle">안내문</span>
+      <button type="button" class="notice__close" id="relationCloseBtn" aria-label="닫기">
+        <svg viewBox="0 0 20 20" width="14" height="14" fill="none" aria-hidden="true">
+          <path d="M4 4L16 16M16 4L4 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="notice__body">
+      <div class="notice__intro">
+        <h2 class="notice__question">거래 당사자와의 관계를<br />선택해 주세요</h2>
+        <p class="notice__desc">관계에 따라 세법상 적용되는 이자 기준이 달라집니다.</p>
+      </div>
+
+      <div class="relation-options" role="radiogroup" aria-label="거래 당사자와의 관계" id="relationOptions">
+
+        <button type="button" class="relation-option" data-relation="FAMILY" role="radio" aria-checked="false">
+          <span class="relation-option__icon">
+            <!-- family icon -->
+            <svg viewBox="0 0 64 44" width="47" height="32" aria-hidden="true">
+              <g>
+                <circle cx="16" cy="10" r="8" fill="#F6C892"/>
+                <path d="M2 40c0-9.4 6.3-16 14-16s14 6.6 14 16" fill="#5B8DEF"/>
+              </g>
+              <g>
+                <circle cx="32" cy="8" r="7.2" fill="#FBD7A5"/>
+                <path d="M32 8c-2.6 0-3.6-2-3.2-3.6.4-1.6 1.8-2.6 3.2-2.6" fill="none" stroke="#7A4A2B" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M19.4 41c0-9 5.6-15.4 12.6-15.4S44.6 32 44.6 41" fill="#F2A65A"/>
+              </g>
+              <g>
+                <circle cx="49" cy="12" r="6.4" fill="#F6C892"/>
+                <path d="M38 41c0-7.6 4.9-13 11-13s11 5.4 11 13" fill="#2FBF71"/>
+              </g>
+            </svg>
+          </span>
+          <span class="relation-option__label">가족 / 친인척</span>
+        </button>
+
+        <button type="button" class="relation-option" data-relation="ACQUAINTANCE" role="radio" aria-checked="false">
+          <span class="relation-option__icon">
+            <!-- handshake icon -->
+            <svg viewBox="0 0 48 44" width="27" height="25" aria-hidden="true">
+              <path d="M2 20l9-9 8 4 5-4 9 9-7 7-7-3-4 4-6-2z" fill="#F6C892"/>
+              <path d="M46 20l-9-9-8 4-5-4-9 9 7 7 7-3 4 4 6-2z" fill="#F2A65A"/>
+              <path d="M9 22l7 6 4-3.5" fill="none" stroke="#8A5A2E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M39 22l-7 6-4-3.5" fill="none" stroke="#8A5A2E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="relation-option__label">지인 / 기타</span>
+        </button>
+
+      </div>
+    </div>
+
+    <footer class="notice__footer">
+      <button type="button" class="btn btn--primary btn--block" id="relationConfirmBtn" disabled>확인</button>
+    </footer>
+
+  </div>
+</div>
+
+<script src="./relation-select-modal.js"></script>
+</body>
+</html>
