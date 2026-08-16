@@ -287,6 +287,10 @@ function bindEvents() {
         await loadDashboard(true);
     });
 
+    document.getElementById("calendarViewAllButton").addEventListener("click", () => {
+        window.location.href = `/calendar?date=${toDateKey(calendarCursor)}`;
+    });
+
     document.querySelectorAll(".filter-tab").forEach((button) => {
         button.addEventListener("click", () => {
             document.querySelectorAll(".filter-tab").forEach((tab) => tab.classList.remove("is-active"));
