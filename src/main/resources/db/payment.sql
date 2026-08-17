@@ -50,3 +50,24 @@ CREATE TABLE IF NOT EXISTS payment_record (
 ) ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_unicode_ci;
+
+SET @constraint_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.TABLE_CONSTRAINTS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'settlement'
+      AND CONSTRAINT_NAME = 'chk_recurring_fields'
+);
+
+SET @sql = IF(@constraint_exists = 0,
+              'ALTER TABLE settlement ADD CONSTRAINT chk_recurring_fields
+                  CHECK (
+                      settlement_type != ''RECURRING''
+                      OR (recurring_settlement_id IS NOT NULL AND cycle_date IS NOT NULL)
+                  )',
+              'SELECT ''chk_recurring_fields already exists'' AS message'
+           );
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

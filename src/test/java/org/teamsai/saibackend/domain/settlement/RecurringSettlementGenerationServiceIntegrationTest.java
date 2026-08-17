@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -260,6 +261,21 @@ class RecurringSettlementGenerationServiceIntegrationTest {
             );
 
             assertThat(count).isEqualTo(1); // 두 번 호출해도 1건만 존재
+        }
+
+        @Test
+        @DisplayName("RECURRING 타입인데 recurring_settlement_id 또는 cycle_date가 NULL이면 CHECK 제약 위반으로 insert가 거부된다")
+        void rejectsRecurringSettlementWithMissingRequiredFields() {
+            assertThatThrownBy(() -> jdbcTemplate.update(
+                    """
+                    INSERT INTO settlement (
+                        settlement_id, owner_id, settlement_type, settlement_status,
+                        settlement_category, title, split_type, total_amount, cycle_date, created_at
+                    )
+                    VALUES (?, ?, 'RECURRING', 'IN_PROGRESS', '월세', '위반 테스트', 'EQUAL', 150000, NULL, NOW())
+                    """,
+                    99901L, 99001L
+            )).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
         }
     }
 

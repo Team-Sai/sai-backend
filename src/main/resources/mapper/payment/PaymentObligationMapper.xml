@@ -157,7 +157,9 @@
         #{obligationStatus}
         )
     </insert>
-
+    
+    <!-- 주의: obligation_status='ACTIVE'는 "정산이 진행 중"이 아니라 "이 obligation이 취소/제외되지 않음"을 의미.
+         정산 종료 여부는 상위 settlement.settlement_status로 별도 판단해야 함. -->
     <select id="findByParticipantIds" resultMap="PaymentObligationResultMap">
         SELECT po.payment_obligation_id, po.participant_id, po.expected_amount,
         po.payment_status, po.review_status, po.obligation_status

@@ -17,8 +17,7 @@ import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
-import org.teamsai.saibackend.domain.settlement.service.RecurringSettlementCycleGenerator;
-import org.teamsai.saibackend.domain.settlement.service.SettlementAmountCalculator;
+import org.teamsai.saibackend.domain.settlement.service.*;
 import org.teamsai.saibackend.domain.settlement.type.*;
 import org.teamsai.saibackend.global.exception.DomainException;
 
@@ -46,13 +45,17 @@ class RecurringSettlementCycleGeneratorTest {
     private RecurringSettlementCycleGenerator sut;
 
     private RecurringSettlementDTO recurring(SplitType splitType) {
+        return recurring(splitType, BigDecimal.valueOf(300000));
+    }
+
+    private RecurringSettlementDTO recurring(SplitType splitType, BigDecimal totalAmount) {
         return RecurringSettlementDTO.builder()
                 .recurringSettlementId(1L)
                 .ownerId(100L)
                 .settlementCategory("월세")
                 .title("자취방 월세")
                 .splitType(splitType)
-                .totalAmount(BigDecimal.valueOf(300000))
+                .totalAmount(totalAmount)
                 .cycleRule(CycleRule.MONTHLY)
                 .startDate(LocalDate.of(2026, 1, 31))
                 .endDate(null)
@@ -90,8 +93,8 @@ class RecurringSettlementCycleGeneratorTest {
     class LockValidation {
 
         @Test
-        @DisplayName("락 획득 시점의 직전 회차가 넘겨받은 previousSettlement와 다르면 null을 반환하고 아무것도 생성하지 않는다")
-        void returnsNullWhenConcurrentGenerationDetected() {
+        @DisplayName("락 획득 시점의 직전 회차가 넘겨받은 previousSettlement와 다르면 CONCURRENTLY_SKIPPED를 반환하고 아무것도 생성하지 않는다")
+        void returnsConcurrentlySkippedWhenConcurrentGenerationDetected() {
             RecurringSettlementDTO recurring = recurring(SplitType.EQUAL);
             SettlementDTO previous = previousSettlement();
 
@@ -103,23 +106,24 @@ class RecurringSettlementCycleGeneratorTest {
             when(settlementMapper.findLatestByRecurringIdForUpdate(1L))
                     .thenReturn(alreadyCreatedByOther);
 
-            SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+            CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
-            assertThat(result).isNull();
+            assertThat(outcome.result()).isEqualTo(CycleGenerationResult.CONCURRENTLY_SKIPPED);
+            assertThat(outcome.settlement()).isNull();
             verify(settlementMapper, never()).insertSettlement(any());
             verify(participantMapper, never()).findBySettlementId(any());
         }
 
         @Test
-        @DisplayName("락 획득 시점의 직전 회차가 null이면 null을 반환한다")
-        void returnsNullWhenLockedLatestIsNull() {
+        @DisplayName("락 획득 시점의 직전 회차가 null이면 CONCURRENTLY_SKIPPED를 반환한다")
+        void returnsConcurrentlySkippedWhenLockedLatestIsNull() {
             RecurringSettlementDTO recurring = recurring(SplitType.EQUAL);
             SettlementDTO previous = previousSettlement();
             when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(null);
 
-            SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+            CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
-            assertThat(result).isNull();
+            assertThat(outcome.result()).isEqualTo(CycleGenerationResult.CONCURRENTLY_SKIPPED);
             verify(settlementMapper, never()).insertSettlement(any());
         }
     }
@@ -129,8 +133,8 @@ class RecurringSettlementCycleGeneratorTest {
     class ActiveParticipantCheck {
 
         @Test
-        @DisplayName("ACTIVE 참여자가 없으면 null을 반환하고 생성하지 않는다")
-        void returnsNullWhenNoActiveParticipants() {
+        @DisplayName("ACTIVE 참여자가 없으면 NO_ACTIVE_PARTICIPANT를 반환하고 생성하지 않는다")
+        void returnsNoActiveParticipantWhenNoneExist() {
             RecurringSettlementDTO recurring = recurring(SplitType.EQUAL);
             SettlementDTO previous = previousSettlement();
             when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(previous);
@@ -141,19 +145,20 @@ class RecurringSettlementCycleGeneratorTest {
                             .build()
             ));
 
-            SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+            CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
-            assertThat(result).isNull();
+            assertThat(outcome.result()).isEqualTo(CycleGenerationResult.NO_ACTIVE_PARTICIPANT);
+            assertThat(outcome.settlement()).isNull();
             verify(settlementMapper, never()).insertSettlement(any());
         }
     }
 
     @Nested
-    @DisplayName("EQUAL 분할 재계산")
+    @DisplayName("EQUAL 분할 재계산 (나머지 배정 포함)")
     class EqualSplitRecalculation {
 
         @Test
-        @DisplayName("EQUAL이면 직전 회차 금액이 아니라 현재 ACTIVE 참여자 수(전체 인원) 기준으로 재계산한다")
+        @DisplayName("EQUAL이면 직전 회차 금액이 아니라 현재 ACTIVE 참여자 수 기준으로 분배 리스트를 요청한다")
         void recalculatesEqualAmountByCurrentActiveCount() {
             RecurringSettlementDTO recurring = recurring(SplitType.EQUAL);
             SettlementDTO previous = previousSettlement();
@@ -163,16 +168,44 @@ class RecurringSettlementCycleGeneratorTest {
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
-            when(settlementAmountCalculator.calculateEqualAmountForTotalCount(BigDecimal.valueOf(300000), 1))
-                    .thenReturn(BigDecimal.valueOf(300000));
+            when(settlementAmountCalculator.distributeEqualAmounts(BigDecimal.valueOf(300000), 1))
+                    .thenReturn(List.of(BigDecimal.valueOf(300000)));
 
-            SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+            CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
-            assertThat(result).isNotNull();
-            verify(settlementAmountCalculator).calculateEqualAmountForTotalCount(BigDecimal.valueOf(300000), 1);
+            assertThat(outcome.result()).isEqualTo(CycleGenerationResult.CREATED);
+            assertThat(outcome.settlement()).isNotNull();
+            verify(settlementAmountCalculator).distributeEqualAmounts(BigDecimal.valueOf(300000), 1);
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(300000)));
-            // EQUAL이면 배치 조회 자체를 안 해야 함 (N+1 제거 후에도 EQUAL 경로는 조회 불필요)
             verify(paymentObligationMapper, never()).findByParticipantIds(any());
+        }
+
+        @Test
+        @DisplayName("나머지가 발생하면 분배 리스트가 순서대로 참여자에게 배정된다 (3명, 10000원 -> 3333/3333/3334)")
+        void assignsRemainderToLastParticipantAmount() {
+            RecurringSettlementDTO recurring = recurring(SplitType.EQUAL, BigDecimal.valueOf(10000));
+            SettlementDTO previous = previousSettlement();
+            when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(previous);
+            when(participantMapper.findBySettlementId(10L)).thenReturn(List.of(
+                    activeParticipant(1L, 100L),
+                    activeParticipant(2L, 200L),
+                    activeParticipant(3L, 300L)
+            ));
+            when(settlementMapper.insertSettlement(any())).thenReturn(1);
+            when(participantMapper.insert(any())).thenReturn(1);
+            when(settlementAmountCalculator.distributeEqualAmounts(BigDecimal.valueOf(10000), 3))
+                    .thenReturn(List.of(
+                            BigDecimal.valueOf(3333),
+                            BigDecimal.valueOf(3333),
+                            BigDecimal.valueOf(3334)
+                    ));
+
+            CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+
+            assertThat(outcome.result()).isEqualTo(CycleGenerationResult.CREATED);
+
+            verify(settlementPaymentService, times(2)).createObligation(any(), eq(BigDecimal.valueOf(3333)));
+            verify(settlementPaymentService, times(1)).createObligation(any(), eq(BigDecimal.valueOf(3334)));
         }
 
         @Test
@@ -189,31 +222,12 @@ class RecurringSettlementCycleGeneratorTest {
             when(paymentObligationMapper.findByParticipantIds(List.of(1L)))
                     .thenReturn(List.of(obligation(500L, 1L, BigDecimal.valueOf(150000))));
 
-            SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+            CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
-            assertThat(result).isNotNull();
+            assertThat(outcome.result()).isEqualTo(CycleGenerationResult.CREATED);
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(150000)));
-            verify(settlementAmountCalculator, never()).calculateEqualAmountForTotalCount(any(), anyInt());
+            verify(settlementAmountCalculator, never()).distributeEqualAmounts(any(), anyInt());
             verify(paymentObligationMapper, times(1)).findByParticipantIds(any());
-        }
-
-        @Test
-        @DisplayName("같은 참여자에게 obligation이 여러 건 있어도, 쿼리는 이미 최신 것 하나만 반환한다고 가정하고 그 값을 사용한다")
-        void usesTheSingleObligationReturnedByQuery() {
-            RecurringSettlementDTO recurring = recurring(SplitType.CUSTOM);
-            SettlementDTO previous = previousSettlement();
-            when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(previous);
-            when(participantMapper.findBySettlementId(10L)).thenReturn(List.of(
-                    activeParticipant(1L, 100L)
-            ));
-            when(settlementMapper.insertSettlement(any())).thenReturn(1);
-            when(participantMapper.insert(any())).thenReturn(1);
-            when(paymentObligationMapper.findByParticipantIds(List.of(1L)))
-                    .thenReturn(List.of(obligation(600L, 1L, BigDecimal.valueOf(150000))));
-
-            sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
-
-            verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(150000)));
         }
 
         @Test
@@ -226,7 +240,7 @@ class RecurringSettlementCycleGeneratorTest {
                     activeParticipant(1L, 100L)
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
-            when(participantMapper.insert(any())).thenReturn(1);
+            // when(participantMapper.insert(any())).thenReturn(1);  ← 이 줄 삭제
             when(paymentObligationMapper.findByParticipantIds(List.of(1L))).thenReturn(List.of());
 
             assertThatThrownBy(() -> sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28)))
@@ -241,8 +255,8 @@ class RecurringSettlementCycleGeneratorTest {
     class HappyPath {
 
         @Test
-        @DisplayName("ACTIVE 참여자만 복사하고 생성된 SettlementDTO를 반환한다")
-        void copiesOnlyActiveParticipantsAndReturnsCreatedSettlement() {
+        @DisplayName("ACTIVE 참여자만 복사하고, 분배된 금액이 순서대로 배정되며, CREATED 결과와 생성된 SettlementDTO를 반환한다")
+        void copiesOnlyActiveParticipantsWithDistributedAmounts() {
             RecurringSettlementDTO recurring = recurring(SplitType.EQUAL);
             SettlementDTO previous = previousSettlement();
             when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(previous);
@@ -256,14 +270,15 @@ class RecurringSettlementCycleGeneratorTest {
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
-            when(settlementAmountCalculator.calculateEqualAmountForTotalCount(BigDecimal.valueOf(300000), 2))
-                    .thenReturn(BigDecimal.valueOf(150000));
+            when(settlementAmountCalculator.distributeEqualAmounts(BigDecimal.valueOf(300000), 2))
+                    .thenReturn(List.of(BigDecimal.valueOf(150000), BigDecimal.valueOf(150000)));
 
-            SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+            CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
-            assertThat(result).isNotNull();
-            assertThat(result.getCycleDate()).isEqualTo(LocalDate.of(2026, 2, 28));
-            verify(participantMapper, times(2)).insert(any()); // REMOVED는 제외되어 2명만
+            assertThat(outcome.result()).isEqualTo(CycleGenerationResult.CREATED);
+            assertThat(outcome.settlement()).isNotNull();
+            assertThat(outcome.settlement().getCycleDate()).isEqualTo(LocalDate.of(2026, 2, 28));
+            verify(participantMapper, times(2)).insert(any());
             verify(settlementPaymentService, times(2)).createObligation(any(), eq(BigDecimal.valueOf(150000)));
         }
 
@@ -287,9 +302,9 @@ class RecurringSettlementCycleGeneratorTest {
                             obligation(502L, 3L, BigDecimal.valueOf(80000))
                     ));
 
-            SettlementDTO result = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
+            CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
 
-            assertThat(result).isNotNull();
+            assertThat(outcome.result()).isEqualTo(CycleGenerationResult.CREATED);
             verify(participantMapper, times(3)).insert(any());
             verify(paymentObligationMapper, times(1)).findByParticipantIds(any());
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(100000)));

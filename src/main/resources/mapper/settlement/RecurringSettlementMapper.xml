@@ -16,11 +16,15 @@
     </resultMap>
 
     <select id="findActiveInRange" resultMap="RecurringSettlementResultMap">
-        SELECT recurring_settlement_id, owner_id, settlement_category, title,
-               split_type, total_amount, cycle_rule, start_date, end_date, created_at
-        FROM recurring_settlement
-        WHERE start_date &lt;= #{baseDate}
-          AND (end_date IS NULL OR end_date &gt;= #{baseDate})
+        SELECT rs.recurring_settlement_id, rs.owner_id, rs.settlement_category, rs.title,
+               rs.split_type, rs.total_amount, rs.cycle_rule, rs.start_date, rs.end_date, rs.created_at
+        FROM recurring_settlement rs
+        WHERE rs.start_date &lt;= #{baseDate}
+          AND NOT EXISTS (
+            SELECT 1 FROM settlement s
+            WHERE s.recurring_settlement_id = rs.recurring_settlement_id
+              AND s.cycle_date &gt;= COALESCE(rs.end_date, #{baseDate})
+        )
     </select>
 
 </mapper>
