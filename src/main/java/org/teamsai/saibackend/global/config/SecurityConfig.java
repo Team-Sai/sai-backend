@@ -78,8 +78,10 @@ public class SecurityConfig {
                                         "/contracts/**",
                                         "/notifications",
                                         "/archive",
+                                        "/calendar",
 
                                         "/integration/dashboard"
+
 
                                 )
                                 .permitAll()
