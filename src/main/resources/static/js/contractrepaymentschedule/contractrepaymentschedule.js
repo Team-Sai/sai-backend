@@ -1,7 +1,9 @@
 const contractId = document.getElementById('contractId').value;
+const syncTransactionButton = document.getElementById('btnSyncTransaction');
 
 let allSchedules = [];
 let currentPage = 1;
+let currentLinkedAccountId = null;
 const PAGE_SIZE = 5;
 
 const REPAYMENT_TYPE_LABELS = {
@@ -15,6 +17,69 @@ const CONTRACT_STATUS_LABELS = {
     PENDING: '서명대기',
     COMPLETED: '진행중'
 };
+
+initializeContractSync();
+
+async function initializeContractSync() {
+    try {
+        const response = await authFetch(`/api/contracts/${contractId}/account`);
+        if (!response.ok) {
+            return;
+        }
+        const account = await response.json();
+        currentLinkedAccountId = account.linkedAccountId;
+        syncTransactionButton.disabled = !currentLinkedAccountId;
+    } catch (error) {
+        console.error('차용증 연동계좌 조회 실패:', error);
+    }
+}
+
+syncTransactionButton.addEventListener('click', syncContractTransactions);
+
+async function syncContractTransactions() {
+    if (!currentLinkedAccountId) {
+        return;
+    }
+
+    const originalText = syncTransactionButton.textContent;
+    try {
+        syncTransactionButton.disabled = true;
+        syncTransactionButton.textContent = '동기화 중...';
+
+        const response = await authFetch(
+            `/api/linked-accounts/${currentLinkedAccountId}/sync`,
+            { method: 'POST' }
+        );
+        const result = await readJsonSafely(response);
+        if (!response.ok) {
+            throw new Error(result?.message || '거래내역 동기화에 실패했습니다.');
+        }
+
+        await MatchingReviewModal.open({
+            reviewChannel: 'TRANSACTION_HISTORY',
+            targetType: 'LOAN',
+            aggregateId: contractId
+        });
+    } catch (error) {
+        console.error('차용증 거래 동기화 실패:', error);
+        alert(error.message || '거래내역 동기화에 실패했습니다.');
+    } finally {
+        syncTransactionButton.disabled = false;
+        syncTransactionButton.textContent = originalText;
+    }
+}
+
+async function readJsonSafely(response) {
+    const text = await response.text();
+    if (!text) {
+        return null;
+    }
+    try {
+        return JSON.parse(text);
+    } catch {
+        return null;
+    }
+}
 
 Promise.all([
     authFetch(
@@ -122,4 +187,8 @@ function formatDateTimeKorean(dateString) {
 
 document.getElementById('btnViewContract').addEventListener('click', function () {
     window.location.href = `/contracts/${contractId}/contract-detail`;
+});
+
+document.addEventListener('matching-review:closed', () => {
+    window.location.reload();
 });

@@ -11,6 +11,7 @@ public record BankTransactionMatchCandidateResponse(
         MatchingTargetType targetType,
         Long targetId,
         Long aggregateId,
+        String targetName,
         String participantName,
         BigDecimal expectedRemainingAmount,
         MatchingAmountType amountMatchType
@@ -24,6 +25,7 @@ public record BankTransactionMatchCandidateResponse(
                 candidate.getTargetType(),
                 candidate.getTargetId(),
                 candidate.getAggregateId(),
+                candidate.getTargetName(),
                 candidate.getParticipantName(),
                 candidate.getExpectedRemainingAmount(),
                 candidate.getAmountMatchType()

@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const refreshButton = document.getElementById("refresh-button");
     const changeAccountButton =
         document.getElementById("change-account-button");
+    let currentLinkedAccountId = null;
 
     if (!settlementId) {
         showToast(
@@ -43,8 +44,14 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             syncButton.disabled = true;
 
+            if (!currentLinkedAccountId) {
+                throw new Error(
+                    "동기화할 수취 계좌를 확인할 수 없습니다."
+                );
+            }
+
             const result = await requestJson(
-                "/api/transactions/sync",
+                `/api/linked-accounts/${currentLinkedAccountId}/sync`,
                 {
                     method: "POST"
                 }
@@ -56,6 +63,12 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             await loadPage();
+
+            await MatchingReviewModal.open({
+                reviewChannel: "TRANSACTION_HISTORY",
+                targetType: "SETTLEMENT",
+                aggregateId: settlementId
+            });
 
         } catch (error) {
             console.error("거래내역 동기화 실패:", error);
@@ -117,10 +130,15 @@ document.addEventListener("DOMContentLoaded", () => {
             setLoading(false);
         }
     }
+
+    document.addEventListener("matching-review:closed", loadPage);
     async function loadSettlementAccount() {
         try {
             const account =
                 await requestSettlementAccount();
+
+            currentLinkedAccountId =
+                account?.linkedAccountId || null;
 
             renderSettlementAccount(
                 account
@@ -133,6 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             renderSettlementAccount(null);
+            currentLinkedAccountId = null;
         }
     }
 

@@ -21,6 +21,7 @@ public class BankTransactionMatchCandidateQueryDTO {
     private MatchingTargetType targetType;
     private Long targetId;
     private Long aggregateId;
+    private String targetName;
     private String participantName;
     private BigDecimal expectedRemainingAmount;
     private MatchingAmountType amountMatchType;

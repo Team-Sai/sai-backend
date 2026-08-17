@@ -76,6 +76,8 @@ class BankTransactionMatchingReviewListQueryServiceTest {
                 .isEqualTo(MatchingReviewChannel.TRANSACTION_HISTORY);
         assertThat(result.content().get(0).candidates().get(0).aggregateId())
                 .isEqualTo(100L);
+        assertThat(result.content().get(0).candidates().get(0).targetName())
+                .isEqualTo("8월 회식비 정산");
     }
 
     @Test
@@ -125,6 +127,7 @@ class BankTransactionMatchingReviewListQueryServiceTest {
                 .targetType(MatchingTargetType.SETTLEMENT)
                 .targetId(30L)
                 .aggregateId(100L)
+                .targetName("8월 회식비 정산")
                 .participantName("participant")
                 .expectedRemainingAmount(new BigDecimal("10000"))
                 .amountMatchType(MatchingAmountType.PARTIAL)

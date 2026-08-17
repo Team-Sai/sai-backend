@@ -14,6 +14,7 @@
   <link
           rel="stylesheet"
           href="/css/settlement/settlement-detail.css">
+  <link rel="stylesheet" href="/css/matching/matching-review-modal.css">
 
 </head>
 <body class="app-shell-page">
@@ -137,9 +138,12 @@
         class="toast">
 </div>
 
+<th:block th:replace="~{fragments/matching-review-modal :: matchingReviewModal}"></th:block>
+
 <th:block
         th:replace="~{fragments/app-shell :: commonScripts}">
 </th:block>
+<script src="/js/matching/matching-review-modal.js"></script>
 <script
         th:src="@{/js/settlement/settlement-detail.js}"
         src="/js/settlement/settlement-detail.js">
