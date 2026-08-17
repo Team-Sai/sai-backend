@@ -129,7 +129,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const roleText =
             settlement.role === "OWNER" ? "정산자" : "참여자";
-
+        const scheduleText =
+            settlement.settlementType === "RECURRING"
+                ? formatPeriod(settlement.startDate, settlement.endDate)
+                : formatDate(settlement.dueDate);
         row.innerHTML = `
             <div class="settlement-name">
                 <span class="type-badge">${escapeHtml(typeText)}</span>
@@ -139,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <span>${escapeHtml(settlement.settlementCategory || "-")}</span>
             <span class="split-badge">${escapeHtml(splitText)}</span>
             <span class="status-badge">${escapeHtml(statusText)}</span>
-            <span>${escapeHtml(formatDate(settlement.dueDate))}</span>
+            <span>${escapeHtml(scheduleText)}</span>
             <a
                 class="detail-link"
                 href="/settlements/${settlement.settlementId}"
@@ -216,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const settlementId = params.get("created");
 
         if (settlementId) {
-            showToast(`공동정산 #${settlementId}이 생성되었습니다.`);
+            showToast(`정산 #${settlementId}이 생성되었습니다.`);
 
             const cleanUrl =
                 window.location.pathname + window.location.hash;
@@ -232,6 +235,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const [year, month, day] = value.split("-");
         return `${year}.${month}.${day}`;
+    }
+
+    function formatPeriod(startDate, endDate) {
+        if (!startDate) return "-";
+        if (!endDate) return `${formatDate(startDate)} ~ 계속`;
+        return `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
     }
 
     function escapeHtml(value) {

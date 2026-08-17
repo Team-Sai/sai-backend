@@ -28,6 +28,7 @@
       <div class="heading-badges">
         <span id="settlement-status-badge" class="badge badge-progress">진행중</span>
         <span id="settlement-role-badge" class="badge badge-role">정산자</span>
+        <span id="settlement-type-badge" class="badge"></span>
       </div>
       <h1 id="settlement-title">정산 상세</h1>
     </div>
@@ -59,13 +60,36 @@
   </section>
 
   <section class="meta-card">
-    <div class="meta-item"><span>생성일</span><strong id="created-at">-</strong></div>
+    <div id="shared-date-info" class="meta-item">
+      <span>마감일</span>
+      <strong id="due-date">-</strong>
+    </div>
+
+    <div id="recurring-start-info" class="meta-item" style="display:none;">
+      <span>시작일</span>
+      <strong id="recurring-start-date">-</strong>
+    </div>
+
+    <div id="recurring-date-divider" class="meta-divider" style="display:none;"></div>
+
+    <div id="recurring-end-info" class="meta-item" style="display:none;">
+      <span>종료일</span>
+      <strong id="recurring-end-date">-</strong>
+    </div>
+
     <div class="meta-divider"></div>
-    <div class="meta-item"><span>마감일</span><strong id="due-date">-</strong></div>
+
+    <div class="meta-item meta-grow">
+      <span>정산 목적</span>
+      <strong id="settlement-category">-</strong>
+    </div>
+
     <div class="meta-divider"></div>
-    <div class="meta-item meta-grow"><span>정산 목적</span><strong id="settlement-category">-</strong></div>
-    <div class="meta-divider"></div>
-    <div class="meta-item"><span>참여 인원</span><strong><span id="participant-count">0</span>명</strong></div>
+
+    <div class="meta-item">
+      <span>참여 인원</span>
+      <strong><span id="participant-count">0</span>명</strong>
+    </div>
   </section>
 
   <div class="detail-grid">
