@@ -40,7 +40,7 @@ ALTER TABLE loan_contract_change_request
     MODIFY COLUMN new_repayment_type VARCHAR(30) NULL;
 
 ALTER TABLE loan_contract_change_request
-    ADD COLUMN requester_signature VARCHAR(255) NULL AFTER return_reason;
+    ADD COLUMN IF NOT EXISTS requester_signature VARCHAR(255) NULL AFTER return_reason;
 
 ALTER TABLE loan_contract_change_request
 DROP CONSTRAINT IF EXISTS status;

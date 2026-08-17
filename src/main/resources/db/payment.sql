@@ -17,7 +17,27 @@ CREATE TABLE IF NOT EXISTS payment_obligation (
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS payment_record (
+SET @index_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'payment_obligation'
+      AND INDEX_NAME = 'idx_payment_obligation_participant_status'
+);
+
+SET @sql = IF(@index_exists = 0,
+              'CREATE INDEX idx_payment_obligation_participant_status
+                  ON payment_obligation (participant_id, obligation_status, payment_status)',
+              'SELECT ''idx_payment_obligation_participant_status already exists'' AS message'
+           );
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+ALTER TABLE payment_obligation ADD COLUMN IF NOT EXISTS overdue_since DATETIME NULL;
+
+    CREATE TABLE IF NOT EXISTS payment_record (
     payment_record_id BIGINT NOT NULL AUTO_INCREMENT,
     bank_transaction_id BIGINT NOT NULL,
 
