@@ -46,12 +46,21 @@
     if (!confirmed) return;
 
     try {
-      await fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}`, {
+      const response = await fetch(`/api/contracts/${contractId}/change-requests/${changeRequestId}`, {
         method: "DELETE",
         headers: authHeaders(),
       });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        showStatus(body?.message || "취소에 실패했습니다. 잠시 후 다시 시도해 주세요.", true);
+        return;
+      }
     } catch (err) {
+      showStatus("취소 요청 중 오류가 발생했습니다. 네트워크를 확인해 주세요.", true);
+      return;
     }
+
     window.location.href = `/contracts/${encodeURIComponent(contractId)}/contract-detail`;
   });
 

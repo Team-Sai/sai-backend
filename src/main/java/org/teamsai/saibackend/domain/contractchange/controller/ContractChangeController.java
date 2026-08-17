@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRejectRequest;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
+import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErrorCode;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 
 @Tag(
@@ -123,6 +124,9 @@ public class ContractChangeController {
             @RequestParam("signature") MultipartFile signature,
             @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
+        if (signature == null || signature.isEmpty()) {
+            throw ContractChangeErrorCode.SIGNATURE_REQUIRED.toException();
+        }
         return contractChangeService.submitRequesterSignature(contractId, changeRequestId, userId, signature);
     }
 

@@ -421,6 +421,8 @@ class ContractChangeServiceTest {
                     .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID)));
             given(fileService.saveSignatureFile(CHANGE_REQUEST_ID, signature))
                     .willReturn(SAVED_PATH);
+            given(contractChangeMapper.updateRequesterSignature(CHANGE_REQUEST_ID, SAVED_PATH))
+                    .willReturn(1);
             given(loanContractService.findContract(CONTRACT_ID, USER_ID))
                     .willReturn(createContract(ContractStatus.COMPLETED));
             given(userService.getMyInfo(USER_ID))
@@ -556,14 +558,14 @@ class ContractChangeServiceTest {
         void cancelChangeRequestSuccess() {
             given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
                     .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID, null)));
-            given(contractChangeMapper.updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.CANCELLED))
+            given(contractChangeMapper.cancelPendingUnsignedRequest(CHANGE_REQUEST_ID))
                     .willReturn(1);
             given(loanContractService.findPendingContractByPreviousId(CONTRACT_ID))
                     .willReturn(Optional.of(pendingV2()));
 
             contractChangeService.cancelChangeRequest(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID);
 
-            verify(contractChangeMapper).updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.CANCELLED);
+            verify(contractChangeMapper).cancelPendingUnsignedRequest(CHANGE_REQUEST_ID);
             verify(loanContractService).rejectChangedContract(V2_CONTRACT_ID);
         }
 
@@ -574,6 +576,8 @@ class ContractChangeServiceTest {
                     .willReturn(Optional.of(changeRequestDTO(
                             ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID, "uploads/signatures/change_300_signature.png"
                     )));
+            given(contractChangeMapper.cancelPendingUnsignedRequest(CHANGE_REQUEST_ID))
+                    .willReturn(0);   // ← DB 조건(requester_signature IS NULL)에 안 걸려서 0건
 
             assertThatThrownBy(() ->
                     contractChangeService.cancelChangeRequest(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID))
@@ -583,7 +587,7 @@ class ContractChangeServiceTest {
                                     .isEqualTo(ContractChangeErrorCode.ALREADY_SIGNED)
                     );
 
-            verify(contractChangeMapper, never()).updateStatus(any(), any());
+            verify(contractChangeMapper).cancelPendingUnsignedRequest(CHANGE_REQUEST_ID);   // never() → 호출은 되지만 실패로 처리됨
             verify(loanContractService, never()).rejectChangedContract(any());
         }
 
@@ -601,7 +605,7 @@ class ContractChangeServiceTest {
                                     .isEqualTo(ContractChangeErrorCode.NOT_CONTRACT_PARTY)
                     );
 
-            verify(contractChangeMapper, never()).updateStatus(any(), any());
+            verify(contractChangeMapper, never()).cancelPendingUnsignedRequest(any());
             verify(loanContractService, never()).rejectChangedContract(any());
         }
 
@@ -619,7 +623,7 @@ class ContractChangeServiceTest {
                                     .isEqualTo(ContractChangeErrorCode.ALREADY_BEING_REQUEST)
                     );
 
-            verify(contractChangeMapper, never()).updateStatus(any(), any());
+            verify(contractChangeMapper, never()).cancelPendingUnsignedRequest(any());
             verify(loanContractService, never()).rejectChangedContract(any());
         }
 
@@ -639,7 +643,7 @@ class ContractChangeServiceTest {
                                     .isEqualTo(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND)
                     );
 
-            verify(contractChangeMapper, never()).updateStatus(any(), any());
+            verify(contractChangeMapper, never()).cancelPendingUnsignedRequest(any());
             verify(loanContractService, never()).rejectChangedContract(any());
         }
 
@@ -657,15 +661,15 @@ class ContractChangeServiceTest {
                                     .isEqualTo(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND)
                     );
 
-            verify(contractChangeMapper, never()).updateStatus(any(), any());
+            verify(contractChangeMapper, never()).cancelPendingUnsignedRequest(any());
         }
 
         @Test
-        @DisplayName("동시 요청으로 이미 상태가 바뀌어 갱신 행이 0건이면 예외가 발생한다")
+        @DisplayName("동시 요청으로 이미 서명이 제출되어 갱신 행이 0건이면 예외가 발생한다")
         void cancelChangeRequestFailsWhenRaceConditionLeavesZeroRowsUpdated() {
             given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
                     .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID, null)));
-            given(contractChangeMapper.updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.CANCELLED))
+            given(contractChangeMapper.cancelPendingUnsignedRequest(CHANGE_REQUEST_ID))
                     .willReturn(0);
 
             assertThatThrownBy(() ->
@@ -673,7 +677,7 @@ class ContractChangeServiceTest {
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
-                                    .isEqualTo(ContractChangeErrorCode.ALREADY_BEING_REQUEST)
+                                    .isEqualTo(ContractChangeErrorCode.ALREADY_SIGNED)
                     );
 
             verify(loanContractService, never()).rejectChangedContract(any());

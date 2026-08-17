@@ -264,13 +264,9 @@ public class ContractChangeService {
             throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
         }
 
-        if (changeDTO.getRequesterSignature() != null) {
-            throw ContractChangeErrorCode.ALREADY_SIGNED.toException();
-        }
-
-        int updatedRows = contractChangeMapper.updateStatus(changeRequestId, ChangeRequestStatus.CANCELLED);
+        int updatedRows = contractChangeMapper.cancelPendingUnsignedRequest(changeRequestId);
         if (updatedRows == 0) {
-            throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
+            throw ContractChangeErrorCode.ALREADY_SIGNED.toException();
         }
 
         LoanContractResponse v2 = getPendingChangedContract(contractId);
@@ -289,11 +285,11 @@ public class ContractChangeService {
     ) {
         LoanContractChangeDTO changeDTO = getChangeRequest(changeRequestId);
 
-        if(!changeDTO.getContractId().equals(contractId)) {
+        if (!changeDTO.getContractId().equals(contractId)) {
             throw ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
         }
 
-        if(!changeDTO.getUserId().equals(userId)) {
+        if (!changeDTO.getUserId().equals(userId)) {
             throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
         }
 
@@ -302,7 +298,11 @@ public class ContractChangeService {
         }
 
         String savedPath = fileService.saveSignatureFile(changeRequestId, signature);
-        contractChangeMapper.updateRequesterSignature(changeRequestId, savedPath);
+
+        int updatedRows = contractChangeMapper.updateRequesterSignature(changeRequestId, savedPath);
+        if (updatedRows == 0) {
+            throw ContractChangeErrorCode.ALREADY_SIGNED.toException();
+        }
 
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
         UserResponse requesterInfo = userService.getMyInfo(userId);

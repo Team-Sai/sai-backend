@@ -58,6 +58,17 @@
         UPDATE loan_contract_change_request
         SET requester_signature = #{requesterSignature}
         WHERE change_request_id = #{changeRequestId}
+          AND status = 'PENDING'
+          AND requester_signature IS NULL
+    </update>
+
+    <update id="cancelPendingUnsignedRequest">
+        UPDATE loan_contract_change_request
+        SET status = 'CANCELLED',
+            updated_at = NOW()
+        WHERE change_request_id = #{changeRequestId}
+          AND status = 'PENDING'
+          AND requester_signature IS NULL
     </update>
 
 </mapper>

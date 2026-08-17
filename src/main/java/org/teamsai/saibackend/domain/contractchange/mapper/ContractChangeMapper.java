@@ -40,5 +40,7 @@ public interface ContractChangeMapper {
             @Param("requesterSignature") String requesterSignature
     );
 
+    int cancelPendingUnsignedRequest(@Param("changeRequestId") Long changeRequestId);
+
 
 }
