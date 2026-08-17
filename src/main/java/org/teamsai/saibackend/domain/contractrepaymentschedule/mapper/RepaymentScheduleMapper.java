@@ -4,12 +4,17 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Mapper
 public interface RepaymentScheduleMapper {
+
+    List<RepaymentScheduleDTO> findOverdueCandidates(@Param("baseDate")LocalDate baseDate);
+
+    void updateStatusToOverdue(@Param("scheduleId") Long scheduleId);
 
     int deletePendingByContractId(@Param("contractId") Long contractId);
 

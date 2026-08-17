@@ -16,3 +16,6 @@ CREATE TABLE IF NOT EXISTS repayment_schedule (
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE repayment_schedule
+    MODIFY COLUMN status varchar(20) NOT NULL CHECK (status IN ('PENDING', 'OVERDUE', 'PAID'));

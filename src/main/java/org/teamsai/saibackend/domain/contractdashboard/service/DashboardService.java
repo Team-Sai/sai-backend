@@ -50,7 +50,7 @@ public class DashboardService {
 
     private BigDecimal calculateTotalRemaining(List<RepaymentScheduleDTO> schedules) {
         return schedules.stream()
-                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING)
+                .filter(s -> s.getStatus().isUnresolved())
                 .map(RepaymentScheduleDTO::getTotalPaymentDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -58,7 +58,7 @@ public class DashboardService {
     private BigDecimal calculateThisMonthDue(List<RepaymentScheduleDTO> schedules) {
         YearMonth thisMonth = YearMonth.now();
         return schedules.stream()
-                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING
+                .filter(s -> s.getStatus().isUnresolved()
                         && YearMonth.from(s.getDueDate()).equals(thisMonth))
                 .map(RepaymentScheduleDTO::getTotalPaymentDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -66,7 +66,7 @@ public class DashboardService {
 
     private BigDecimal calculateYearMonthDue(List<RepaymentScheduleDTO> schedules, YearMonth targetMonth) {
         return schedules.stream()
-                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING
+                .filter(s -> s.getStatus().isUnresolved()
                         && YearMonth.from(s.getDueDate()).equals(targetMonth))
                 .map(RepaymentScheduleDTO::getTotalPaymentDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -334,7 +334,7 @@ public class DashboardService {
 
     private Optional<RepaymentScheduleDTO> findNearestSchedule(List<RepaymentScheduleDTO> schedules) {
         return schedules.stream()
-                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING)
+                .filter(s -> s.getStatus().isUnresolved())
                 .min(Comparator.comparing(RepaymentScheduleDTO::getDueDate));
     }
 

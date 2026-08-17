@@ -4,6 +4,21 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper">
 
+    <select id="findOverdueCandidates" resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
+        SELECT *
+        FROM repayment_schedule
+        WHERE due_date &lt; #{baseDate}
+          AND status = 'PENDING'
+        ORDER BY schedule_id
+    </select>
+
+    <update id="updateStatusToOverdue">
+        UPDATE repayment_schedule
+        SET status = 'OVERDUE'
+        WHERE schedule_id = #{scheduleId}
+          AND status = 'PENDING'
+    </update>
+
     <insert id="insertAll">
         INSERT INTO repayment_schedule (
         contract_id, sequence, due_date,
@@ -68,7 +83,7 @@
         status, paid_at AS paidAt, created_at AS createdAt
         FROM repayment_schedule
         WHERE contract_id = #{contractId}
-        AND status = 'PENDING'
+        AND status IN ('PENDING', 'OVERDUE')
         ORDER BY sequence ASC
         LIMIT 1
     </select>
