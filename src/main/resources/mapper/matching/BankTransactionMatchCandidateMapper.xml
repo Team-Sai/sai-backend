@@ -213,7 +213,16 @@
     <select id="findByIdAndBankTransactionId"
             resultMap="BankTransactionMatchCandidateResultMap">
         SELECT
-        <include refid="BankTransactionMatchCandidateColumns"/>
+        mc.match_candidate_id,
+        mc.bank_transaction_id,
+        mc.target_type,
+        mc.target_id,
+        mc.expected_remaining_amount,
+        mc.amount_match_type,
+        mc.candidate_status,
+        mc.invalidated_at,
+        mc.invalidation_reason,
+        mc.created_at
         FROM bank_transaction_match_candidate mc
         JOIN bank_transaction bt
             ON bt.bank_transaction_id = mc.bank_transaction_id

@@ -55,7 +55,15 @@
 
     <select id="findMatchCandidatesByLinkedAccountId"
             resultMap="MatchingCandidateResultMap">
+        <include refid="findMatchCandidatesQuery"/>
+    </select>
 
+    <select id="findMatchCandidatesByLinkedAccountIdAndTarget"
+            resultMap="MatchingCandidateResultMap">
+        <include refid="findMatchCandidatesQuery"/>
+    </select>
+
+    <sql id="findMatchCandidatesQuery">
         SELECT
         'SETTLEMENT' AS target_type,
         po.payment_obligation_id AS target_id,
@@ -87,6 +95,10 @@
         AND po.obligation_status = 'ACTIVE'
         AND po.payment_status != 'PAID'
         AND sp.participant_status = 'ACTIVE'
+        <if test="targetType != null and aggregateId != null">
+        AND #{targetType} = 'SETTLEMENT'
+        AND s.settlement_id = #{aggregateId}
+        </if>
         GROUP BY
         po.payment_obligation_id,
         po.participant_id,
@@ -126,6 +138,10 @@
         AND lc.created_at &lt;= #{transactionAt}
         AND rs.created_at &lt;= #{transactionAt}
         AND rs.status = 'PENDING'
+        <if test="targetType != null and aggregateId != null">
+        AND #{targetType} = 'LOAN'
+        AND lc.contract_id = #{aggregateId}
+        </if>
         AND NOT EXISTS (
         SELECT 1
         FROM repayment_schedule earlier
@@ -141,7 +157,7 @@
         HAVING
         rs.total_payment_due - COALESCE(SUM(pr.amount), 0) &gt; 0
 
-    </select>
+    </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="paymentObligationId">
         INSERT INTO payment_obligation (

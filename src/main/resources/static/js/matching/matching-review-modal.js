@@ -2,6 +2,7 @@
     "use strict";
 
     const PAGE_SIZE = 20;
+    const LOADING_MESSAGE_DELAY_MS = 300;
     const state = {
         options: null,
         page: 0,
@@ -12,10 +13,12 @@
         pendingRejectTransactionId: null,
         lastFocusedElement: null,
         hasServerChanges: false,
+        hasLoaded: false,
         loading: false
     };
 
     let elements;
+    let loadingTimer = null;
 
     function initialize() {
         if (elements) {
@@ -63,8 +66,8 @@
             transaction: null
         };
         resetState();
-        showModal();
         await loadPage(false);
+        showModal();
     }
 
     async function openTransaction(options) {
@@ -82,11 +85,12 @@
             }
         };
         resetState();
-        showModal();
         await loadTransaction();
+        showModal();
     }
 
     function resetState() {
+        clearLoadingTimer();
         state.page = 0;
         state.totalCount = 0;
         state.transactions = [];
@@ -94,6 +98,7 @@
         state.resultStates.clear();
         state.pendingRejectTransactionId = null;
         state.hasServerChanges = false;
+        state.hasLoaded = false;
         hideMessage();
     }
 
@@ -102,13 +107,13 @@
         elements.overlay.hidden = false;
         document.body.classList.add("matching-review-scroll-locked");
         elements.closeButton.focus();
-        renderLoading();
     }
 
     function close() {
         if (!elements) {
             return;
         }
+        clearLoadingTimer();
         elements.overlay.hidden = true;
         elements.confirmOverlay.hidden = true;
         document.body.classList.remove("matching-review-scroll-locked");
@@ -127,7 +132,7 @@
         state.loading = true;
         elements.moreButton.disabled = true;
         if (!append) {
-            renderLoading();
+            scheduleLoadingMessage();
         }
 
         try {
@@ -154,6 +159,7 @@
                 : body.content || [];
             state.totalCount = Number(body.totalCount || 0);
             state.page = Number(body.page || 0) + 1;
+            state.hasLoaded = true;
             render();
         } catch (error) {
             console.error("매칭 검토 목록 조회 실패", error);
@@ -166,6 +172,7 @@
 
     async function loadTransaction() {
         const { linkedAccountId, bankTransactionId } = state.options.transaction;
+        scheduleLoadingMessage();
         try {
             const response = await authFetch(
                 `/api/linked-accounts/${linkedAccountId}/transactions/${bankTransactionId}/match-candidates`
@@ -176,6 +183,7 @@
             }
             state.transactions = [body];
             state.totalCount = 1;
+            state.hasLoaded = true;
             render();
         } catch (error) {
             console.error("매칭 검토 조회 실패", error);
@@ -184,16 +192,40 @@
     }
 
     function renderLoading() {
+        clearLoadingTimer();
         elements.list.innerHTML = '<div class="matching-review-loading">확인 필요 거래를 불러오는 중입니다.</div>';
         elements.footer.hidden = true;
     }
 
+    function scheduleLoadingMessage() {
+        clearLoadingTimer();
+        loadingTimer = window.setTimeout(() => {
+            loadingTimer = null;
+            if (state.loading && !state.hasLoaded) {
+                renderLoading();
+            }
+        }, LOADING_MESSAGE_DELAY_MS);
+    }
+
+    function clearLoadingTimer() {
+        if (loadingTimer !== null) {
+            window.clearTimeout(loadingTimer);
+            loadingTimer = null;
+        }
+    }
+
     function renderError(message) {
+        clearLoadingTimer();
         elements.list.innerHTML = `<div class="matching-review-empty">${escapeHtml(message)}</div>`;
         elements.footer.hidden = true;
     }
 
     function render() {
+        clearLoadingTimer();
+        if (!state.hasLoaded) {
+            return;
+        }
+
         const deferredCount = Array.from(state.resultStates.values())
                 .filter(result => result.type === "DEFERRED")
                 .length;
@@ -351,12 +383,12 @@
                 return;
             }
 
-            const review = state.transactions.find(item => item.transaction.bankTransactionId === transactionId);
-            const candidate = review?.candidates.find(item => Number(item.matchCandidateId) === Number(matchCandidateId));
-            state.resultStates.set(transactionId, {
-                type: "APPLIED",
-                message: `${candidate?.targetName || "선택한 대상"}에 ${formatMoney(review?.transaction.amount)}이 반영되었습니다.`
-            });
+            state.transactions = state.transactions.filter(
+                item => item.transaction.bankTransactionId !== transactionId
+            );
+            state.selectedCandidateIds.delete(transactionId);
+            state.resultStates.delete(transactionId);
+            state.totalCount = Math.max(state.totalCount - 1, 0);
             render();
             notifyProcessed(transactionId, body);
         } catch (error) {
