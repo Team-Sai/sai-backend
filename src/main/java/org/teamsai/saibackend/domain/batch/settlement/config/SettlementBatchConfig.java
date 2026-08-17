@@ -11,6 +11,7 @@ import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.teamsai.saibackend.domain.batch.common.listener.LoggingJobExecutionListener;
 
 @Configuration
 @RequiredArgsConstructor
@@ -20,8 +21,9 @@ public class SettlementBatchConfig {
     private final PlatformTransactionManager transactionManager;
 
     @Bean
-    public Job dailySettlementJob(Step settlementStep) {
+    public Job dailySettlementJob(Step settlementStep, LoggingJobExecutionListener listener) {
         return new JobBuilder("dailySettlementJob", jobRepository)
+                .listener(listener)
                 .start(settlementStep)
                 .build();
     }
