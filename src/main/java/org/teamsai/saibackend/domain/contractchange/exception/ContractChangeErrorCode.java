@@ -18,7 +18,9 @@ public enum ContractChangeErrorCode implements BaseErrorCode<DomainException> {
     CHANGE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "변경 요청을 찾을 수 없습니다."),
     CONTRACT_ALREADY_SUPERSEDED(HttpStatus.CONFLICT, "이미 변경된 계약입니다. 최신 계약서를 확인해주세요."),
     NOT_DEBTOR(HttpStatus.FORBIDDEN, "채무자만 접근 가능합니다."),
-    ALREADY_BEING_REQUEST(HttpStatus.CONFLICT, "이미 처리된 요청입니다.");
+    ALREADY_BEING_REQUEST(HttpStatus.CONFLICT, "이미 처리된 요청입니다."),
+    ALREADY_SIGNED(HttpStatus.CONFLICT, "이미 서명을 제출하여 상대방에게 전송된 요청은 취소할 수 없습니다."),
+    SIGNATURE_REQUIRED(HttpStatus.BAD_REQUEST, "서명 이미지가 필요합니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
