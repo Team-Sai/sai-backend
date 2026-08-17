@@ -13,6 +13,8 @@ public record SettlementListResponse(
         String splitType,
         String settlementStatus,
         LocalDate dueDate,
+        LocalDate startDate,
+        LocalDate endDate,
         @JsonIgnore LocalDateTime createdAt
 ) {
 }

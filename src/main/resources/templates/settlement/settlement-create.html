@@ -44,10 +44,7 @@
 
     <div class="settlement-type-tabs" role="tablist">
         <button class="type-tab active" type="button" role="tab" aria-selected="true">공동정산</button>
-        <button class="type-tab disabled" type="button" role="tab" aria-selected="false" disabled>
-            정기정산
-            <span>준비 중</span>
-        </button>
+        <button class="type-tab active" type="button" role="tab" aria-selected="false">정기정산</button>
     </div>
 
     <div class="create-layout">
@@ -88,7 +85,7 @@
                 </div>
             </section>
 
-            <section class="form-card">
+            <section id="shared-date-section" class="form-card">
                 <div class="card-title">
                     <span class="card-icon">□</span>
                     <h2>정산 마감일</h2>
@@ -99,6 +96,70 @@
                     <input id="due-date" name="dueDate" type="date" required>
                     <small class="field-error" data-error-for="dueDate"></small>
                 </label>
+            </section>
+            <section
+                    id="recurring-setting-section"
+                    class="form-card"
+                    hidden>
+
+                <div class="card-title">
+                    <span class="card-icon">↻</span>
+                    <h2>정기정산 설정</h2>
+                </div>
+
+                <div class="field-grid two-column">
+
+                    <label class="form-field">
+                        <span>반복 주기 <em>(필수)</em></span>
+
+                        <select
+                                id="cycle-rule"
+                                name="cycleRule">
+
+                            <option value="">선택해 주세요</option>
+                            <option value="DAILY">매일</option>
+                            <option value="WEEKLY">매주</option>
+                            <option value="MONTHLY">매월</option>
+                            <option value="YEARLY">매년</option>
+
+                        </select>
+
+                        <small
+                                class="field-error"
+                                data-error-for="cycleRule">
+                        </small>
+                    </label>
+
+                    <label class="form-field">
+                        <span>시작일 <em>(필수)</em></span>
+
+                        <input
+                                id="recurring-start-date"
+                                name="startDate"
+                                type="date">
+
+                        <small
+                                class="field-error"
+                                data-error-for="startDate">
+                        </small>
+                    </label>
+
+                    <label class="form-field">
+                        <span>종료일</span>
+
+                        <input
+                                id="recurring-end-date"
+                                name="endDate"
+                                type="date">
+
+                        <small
+                                class="field-error"
+                                data-error-for="endDate">
+                        </small>
+                    </label>
+
+                </div>
+
             </section>
 
             <section class="form-card">

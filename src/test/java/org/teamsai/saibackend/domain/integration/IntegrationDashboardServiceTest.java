@@ -382,7 +382,9 @@ class IntegrationDashboardServiceTest {
     private SettlementListResponse settlement(
             Long id, String title, String role, String status, LocalDate dueDate, LocalDateTime createdAt
     ) {
-        return new SettlementListResponse(id, title, role, "ETC", "ONE_TIME", "EQUAL", status, dueDate, createdAt);
+        return new SettlementListResponse(
+                id, title, role, "ETC", "SHARED", "EQUAL", status, dueDate, null, null, createdAt
+        );
     }
 
     private SettlementPaymentStatusResponse paymentStatus(
