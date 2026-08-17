@@ -29,5 +29,6 @@ public class LoanContractChangeDTO {
     private LocalDateTime updatedAt;
     private Long contractId;
     private String returnReason;
+    private String requesterSignature;
 
 }

@@ -23,7 +23,7 @@
         SELECT
             change_request_id, user_id, change_reason, new_maturity_date, new_interest_rate,
             new_repayment_type, new_repayment_date, new_terms, status, created_at, updated_at, contract_id,
-            return_reason
+            return_reason, requester_signature
         FROM loan_contract_change_request
         WHERE contract_id = #{contractId}
     </select>
@@ -33,7 +33,7 @@
         SELECT
             change_request_id, user_id, change_reason, new_maturity_date, new_interest_rate,
             new_repayment_type, new_repayment_date, new_terms, status, created_at, updated_at, contract_id,
-            return_reason
+            return_reason, requester_signature
         FROM loan_contract_change_request
         WHERE change_request_id = #{changeRequestId}
     </select>
@@ -52,6 +52,23 @@
         updated_at = NOW()
         WHERE change_request_id = #{changeRequestId}
         AND status = 'PENDING'
+    </update>
+
+    <update id="updateRequesterSignature">
+        UPDATE loan_contract_change_request
+        SET requester_signature = #{requesterSignature}
+        WHERE change_request_id = #{changeRequestId}
+          AND status = 'PENDING'
+          AND requester_signature IS NULL
+    </update>
+
+    <update id="cancelPendingUnsignedRequest">
+        UPDATE loan_contract_change_request
+        SET status = 'CANCELLED',
+            updated_at = NOW()
+        WHERE change_request_id = #{changeRequestId}
+          AND status = 'PENDING'
+          AND requester_signature IS NULL
     </update>
 
 </mapper>
