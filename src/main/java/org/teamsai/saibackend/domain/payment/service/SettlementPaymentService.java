@@ -1,6 +1,7 @@
 package org.teamsai.saibackend.domain.payment.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import org.teamsai.saibackend.domain.payment.type.*;
 
 import java.math.BigDecimal;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SettlementPaymentService {
@@ -104,6 +106,13 @@ public class SettlementPaymentService {
 
         if (updatedCount != 1) {
             throw PaymentErrorCode.PAYMENT_STATUS_UPDATE_FAILED.toException();
+        }
+
+        if (newPaymentStatus == PaymentStatus.PAID) {
+            int clearedCount = paymentObligationMapper.clearOverdueSince(paymentObligationId);
+            if (clearedCount == 0) {
+                log.debug("연체 해제 스킵 (원래 연체 상태가 아니었음) paymentObligationId={}", paymentObligationId);
+            }
         }
     }
 
