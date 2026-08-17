@@ -43,7 +43,7 @@ public class OverdueSettlementUpdater {
             return;
         }
 
-        LocalDateTime overdueSince = referenceDate.atStartOfDay();
+        LocalDateTime overdueSince = referenceDate.plusDays(1).atStartOfDay();
         List<Long> obligationIds = unpaidObligations.stream()
                 .map(PaymentObligationDTO::getPaymentObligationId)
                 .toList();

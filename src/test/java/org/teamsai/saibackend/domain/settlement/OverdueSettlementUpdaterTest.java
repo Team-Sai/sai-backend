@@ -54,12 +54,12 @@ class OverdueSettlementUpdaterTest {
                 PaymentObligationDTO.builder().paymentObligationId(9001L).build(),
                 PaymentObligationDTO.builder().paymentObligationId(9002L).build()
         ));
-        when(paymentObligationMapper.updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.atStartOfDay()))
+        when(paymentObligationMapper.updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.plusDays(1).atStartOfDay()))
                 .thenReturn(2);
 
         sut.updateOverdueForSettlement(settlement, referenceDate);
 
-        verify(paymentObligationMapper).updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.atStartOfDay());
+        verify(paymentObligationMapper).updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.plusDays(1).atStartOfDay());
     }
 
     @Test
@@ -75,14 +75,12 @@ class OverdueSettlementUpdaterTest {
                 PaymentObligationDTO.builder().paymentObligationId(9001L).build(),
                 PaymentObligationDTO.builder().paymentObligationId(9002L).build()
         ));
-        // 2건 대상인데 1건만 실제 갱신됨 (나머지는 이미 완납 등으로 조건 불일치)
-        when(paymentObligationMapper.updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.atStartOfDay()))
+        when(paymentObligationMapper.updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.plusDays(1).atStartOfDay()))
                 .thenReturn(1);
 
         sut.updateOverdueForSettlement(settlement, referenceDate);
 
-        verify(paymentObligationMapper).updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.atStartOfDay());
-        // 예외 없이 정상 종료되는지가 핵심 (별도 assertion 불필요, 예외 발생 시 테스트 자체가 실패함)
+        verify(paymentObligationMapper).updateOverdueSinceBulk(List.of(9001L, 9002L), referenceDate.plusDays(1).atStartOfDay());
     }
 
     @Test

@@ -49,6 +49,7 @@ class OverdueSettlementServiceIntegrationTest {
         jdbcTemplate.update("DELETE FROM payment_obligation WHERE payment_obligation_id >= 90000");
         jdbcTemplate.update("DELETE FROM settlement_participant WHERE participant_id >= 90000");
         jdbcTemplate.update("DELETE FROM settlement WHERE settlement_id >= 90000");
+        jdbcTemplate.update("DELETE FROM recurring_settlement WHERE recurring_settlement_id >= 90000"); // 추가
         jdbcTemplate.update("DELETE FROM users WHERE user_id >= 90000");
     }
 
@@ -68,7 +69,7 @@ class OverdueSettlementServiceIntegrationTest {
             overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 1, 11));
 
             LocalDateTime overdueSince = fetchOverdueSince(91301L);
-            assertThat(overdueSince).isEqualTo(LocalDate.of(2026, 1, 10).atStartOfDay()); // baseDate(1/11)가 아니라 dueDate(1/10)
+            assertThat(overdueSince).isEqualTo(LocalDate.of(2026, 1, 11).atStartOfDay());
         }
 
         @Test
@@ -108,13 +109,13 @@ class OverdueSettlementServiceIntegrationTest {
         void recordsActualDueDateNotBatchExecutionDate() {
             insertUser(99001L, "채권자");
             insertUser(99002L, "채무자");
-            insertSharedSettlement(99101L, 99001L, LocalDate.of(2026, 1, 10)); // 실제 만기일
+            insertSharedSettlement(99101L, 99001L, LocalDate.of(2026, 1, 10));
             insertParticipant(99201L, 99101L, 99002L, "ACTIVE");
             insertObligation(99301L, 99201L, "UNPAID");
 
             overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 1, 15));
 
-            assertThat(fetchOverdueSince(99301L)).isEqualTo(LocalDate.of(2026, 1, 10).atStartOfDay()); // baseDate(1/15)가 아님
+            assertThat(fetchOverdueSince(99301L)).isEqualTo(LocalDate.of(2026, 1, 11).atStartOfDay());
         }
     }
 
@@ -133,7 +134,7 @@ class OverdueSettlementServiceIntegrationTest {
 
             overdueSettlementService.updateOverdueStatus(LocalDate.of(2026, 2, 1));
 
-            assertThat(fetchOverdueSince(92301L)).isEqualTo(LocalDate.of(2026, 1, 31).atStartOfDay()); // baseDate(2/1)가 아니라 cycleDate(1/31)
+            assertThat(fetchOverdueSince(92301L)).isEqualTo(LocalDate.of(2026, 2, 1).atStartOfDay()); // baseDate(2/1)가 아니라 cycleDate(1/31)
         }
     }
 
@@ -322,15 +323,29 @@ class OverdueSettlementServiceIntegrationTest {
     }
 
     private void insertRecurringSettlement(Long settlementId, Long ownerId, LocalDate cycleDate) {
+        Long recurringSettlementId = settlementId; // 편의상 동일 값 사용, 별도 시퀀스 관리 불필요
+
+        jdbcTemplate.update(
+                """
+                INSERT INTO recurring_settlement (
+                    recurring_settlement_id, owner_id, settlement_category, title,
+                    split_type, total_amount, cycle_rule, start_date, end_date, created_at
+                )
+                VALUES (?, ?, '월세', '테스트 정기정산', 'EQUAL', 150000, 'MONTHLY', ?, NULL, NOW())
+                """,
+                recurringSettlementId, ownerId, cycleDate
+        );
+
         jdbcTemplate.update(
                 """
                 INSERT INTO settlement (
-                    settlement_id, owner_id, settlement_type, settlement_status,
-                    settlement_category, title, split_type, total_amount, due_date, cycle_date, created_at
+                    settlement_id, recurring_settlement_id, owner_id, settlement_type,
+                    settlement_status, settlement_category, title, split_type,
+                    total_amount, due_date, cycle_date, created_at
                 )
-                VALUES (?, ?, 'RECURRING', 'IN_PROGRESS', '월세', '테스트 정기정산', 'EQUAL', 150000, NULL, ?, NOW())
+                VALUES (?, ?, ?, 'RECURRING', 'IN_PROGRESS', '월세', '테스트 정기정산', 'EQUAL', 150000, NULL, ?, NOW())
                 """,
-                settlementId, ownerId, cycleDate
+                settlementId, recurringSettlementId, ownerId, cycleDate
         );
     }
 
