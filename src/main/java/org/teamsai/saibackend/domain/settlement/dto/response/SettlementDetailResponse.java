@@ -11,6 +11,8 @@ public record SettlementDetailResponse(
         String settlementStatus,
         String splitType,
         LocalDate dueDate,
+        LocalDate startDate,
+        LocalDate endDate,
         LocalDateTime createdAt,
         String role
 ) {
