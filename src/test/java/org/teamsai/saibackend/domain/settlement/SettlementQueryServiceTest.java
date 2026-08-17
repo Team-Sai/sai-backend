@@ -233,7 +233,6 @@ class SettlementQueryServiceTest {
     private SettlementDetailResponse createDetail(
             String role
     ) {
-
         return new SettlementDetailResponse(
                 SETTLEMENT_ID,
                 "테스트 정산",
@@ -241,8 +240,9 @@ class SettlementQueryServiceTest {
                 "SHARED",
                 "IN_PROGRESS",
                 "EQUAL",
-                LocalDate.now()
-                        .plusDays(7),
+                LocalDate.now().plusDays(7),
+                null,
+                null,
                 LocalDateTime.now(),
                 role
         );
