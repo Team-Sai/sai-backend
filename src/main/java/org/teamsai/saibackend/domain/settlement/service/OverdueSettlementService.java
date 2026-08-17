@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OverdueSettlementService {
 
-    private static final int PAGE_SIZE = 200;
+    private static final int PAGE_SIZE = 100;
 
     private final OverdueCriteria overdueCriteria;
     private final SettlementMapper settlementMapper;
