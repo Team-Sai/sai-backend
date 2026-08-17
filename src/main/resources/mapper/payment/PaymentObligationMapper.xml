@@ -53,11 +53,6 @@
         WHERE payment_obligation_id = #{paymentObligationId}
     </update>
 
-    <select id="findMatchCandidatesByLinkedAccountId"
-            resultMap="MatchingCandidateResultMap">
-        <include refid="findMatchCandidatesQuery"/>
-    </select>
-
     <select id="findMatchCandidatesByLinkedAccountIdAndTarget"
             resultMap="MatchingCandidateResultMap">
         <include refid="findMatchCandidatesQuery"/>
