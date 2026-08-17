@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
+import org.teamsai.saibackend.domain.identity.service.IdentityValidator;
 import org.teamsai.saibackend.domain.link.service.AccountLinkService;
+import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
+import org.teamsai.saibackend.domain.user.service.UserService;
 import org.teamsai.saibackend.global.exception.DomainException;
 import org.teamsai.saibackend.global.jwt.JwtTokenProvider;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
@@ -37,27 +40,68 @@ public class AccountLinkFlowController {
     private final JwtTokenProvider jwtTokenProvider;
     private final LinkedBankAccountService linkedBankAccountService;
     private final AccountLinkService accountLinkService;
+    private final UserService userService;
+    private final IdentityValidator identityValidator;
 
     @PostMapping("/api/accounts/link/start")
     public ResponseEntity<Map<String, String>> startLink(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUserId();
-        String state = jwtTokenProvider.createLinkStateToken(userId);
 
-        List<Long> alreadyLinkedAccountIds = linkedBankAccountService.getLinkedAccountIds(userId);
-        String linkedIdsParam = alreadyLinkedAccountIds.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(","));
+        UserDTO myInfo =
+                userService.getUser(userId);
 
-        String redirectUrl = UriComponentsBuilder
-                .fromUriString(mockBankBaseUrl + "/link/start")
-                .queryParam("returnUrl", backendBaseUrl + "/accounts/link/callback")
-                .queryParam("state", state)
-                .queryParam("excludeAccountIds", linkedIdsParam)
-                .toUriString();
+        identityValidator.validateUserInformation(
+                myInfo
+        );
 
-        return ResponseEntity.ok(Map.of("redirectUrl", redirectUrl));
+        String state =
+                jwtTokenProvider.createLinkStateToken(
+                        userId,
+                        myInfo.getName(),
+                        myInfo.getBirthDate()
+                );
+
+        List<Long> alreadyLinkedAccountIds =
+                linkedBankAccountService.getLinkedAccountIds(
+                        userId
+                );
+
+        String linkedIdsParam =
+                alreadyLinkedAccountIds.stream()
+                        .map(String::valueOf)
+                        .collect(
+                                Collectors.joining(",")
+                        );
+
+        String redirectUrl =
+                UriComponentsBuilder
+                        .fromUriString(
+                                mockBankBaseUrl
+                                        + "/link/start"
+                        )
+                        .queryParam(
+                                "returnUrl",
+                                backendBaseUrl
+                                        + "/accounts/link/callback"
+                        )
+                        .queryParam(
+                                "state",
+                                state
+                        )
+                        .queryParam(
+                                "excludeAccountIds",
+                                linkedIdsParam
+                        )
+                        .toUriString();
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "redirectUrl",
+                        redirectUrl
+                )
+        );
     }
 
     @GetMapping("/accounts/link/callback")

@@ -2,37 +2,42 @@ package org.teamsai.saibackend.domain.matching.model;
 
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingDecisionType;
+import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
 
 import java.util.List;
 
 public class AutoMatchingResult {
 
     private final AutoMatchingDecisionType decisionType;
-    private final List<MatchingCandidate> matchedCandidates;
+    private final List<EvaluatedMatchingCandidate> evaluatedCandidates;
 
-    public AutoMatchingResult(List<MatchingCandidate> matchedCandidates) {
-        if (matchedCandidates == null) {
+    public AutoMatchingResult(
+            List<EvaluatedMatchingCandidate> evaluatedCandidates
+    ) {
+        if (evaluatedCandidates == null
+                || evaluatedCandidates.stream()
+                .anyMatch(candidate -> candidate == null)) {
             throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
         }
 
-        this.matchedCandidates = List.copyOf(matchedCandidates);
-        this.decisionType = determineDecisionType(this.matchedCandidates);
+        this.evaluatedCandidates = List.copyOf(evaluatedCandidates);
+        this.decisionType = determineDecisionType(this.evaluatedCandidates);
     }
 
     public AutoMatchingDecisionType decisionType() {
         return decisionType;
     }
 
-    public List<MatchingCandidate> matchedCandidates() {
-        return matchedCandidates;
+    public List<EvaluatedMatchingCandidate> evaluatedCandidates() {
+        return evaluatedCandidates;
     }
 
-    public MatchingCandidate matchedCandidate() {
+    public EvaluatedMatchingCandidate matchedCandidate() {
         if (!isMatchable()) {
             throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
         }
 
-        return matchedCandidates.get(0);
+        return evaluatedCandidates.get(0);
     }
 
     public boolean isMatchable() {
@@ -48,15 +53,15 @@ public class AutoMatchingResult {
     }
 
     private AutoMatchingDecisionType determineDecisionType(
-            List<MatchingCandidate> matchedCandidates
+            List<EvaluatedMatchingCandidate> evaluatedCandidates
     ) {
-        int matchedCandidateCount = matchedCandidates.size();
-
-        if (matchedCandidateCount == 0) {
+        if (evaluatedCandidates.isEmpty()) {
             return AutoMatchingDecisionType.UNMATCHED;
         }
 
-        if (matchedCandidateCount == 1) {
+        if (evaluatedCandidates.size() == 1
+                && evaluatedCandidates.get(0).amountMatchType()
+                == MatchingAmountType.EXACT) {
             return AutoMatchingDecisionType.MATCHABLE;
         }
 

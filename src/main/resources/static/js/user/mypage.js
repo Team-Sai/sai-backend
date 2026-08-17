@@ -238,35 +238,55 @@ document.addEventListener(
         }
 
         async function handleConnectAccountClick() {
+            const bankWindow = window.open(
+                "about:blank",
+                "sai-bank-link",
+                "width=480,height=720"
+            );
 
-            const bankWindow = window.open("about:blank", "sai-bank-link", "width=480,height=720");
-
-            const token = sessionStorage.getItem("accessToken");
-
-            try{
-                const response = await fetch("/api/accounts/link/start", {
-                    method: "POST",
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
+            try {
+                const response = await authFetch(
+                    "/api/accounts/link/start",
+                    {
+                        method: "POST"
+                    }
+                );
 
                 if (!response.ok) {
-                    window.alert("계좌 연동을 시작할 수 없습니다.");
+                    bankWindow?.close();
+
+                    const errorData =
+                        await readJson(response);
+
+                    window.alert(
+                        errorData.message ||
+                        "계좌 연동을 시작할 수 없습니다."
+                    );
+
                     return;
                 }
 
-                const { redirectUrl } = await response.json();
+                const { redirectUrl } =
+                    await readJson(response);
 
                 if (bankWindow) {
-                    bankWindow.location.href = redirectUrl;
+                    bankWindow.location.href =
+                        redirectUrl;
                 }
+
             } catch (error) {
                 bankWindow?.close();
+
                 console.error(error);
-                window.alert("계좌 연동을 시작할 수 없습니다.");
+
+                window.alert(
+                    "계좌 연동을 시작할 수 없습니다."
+                );
             }
-        }
-        window.addEventListener("message", (event) => {
-            if (event.origin !== "http://localhost:8081") return;
+        }window.addEventListener("message", (event) => {
+            if (event.origin !== "http://localhost:8081") {
+                return;
+            }
 
             if (event.data?.type === "SAI_BANK_LINK_COMPLETE") {
                 if (event.data.success) {
@@ -359,34 +379,32 @@ document.addEventListener(
                 return;
             }
 
-            const token =
-                sessionStorage.getItem(
-                    "accessToken"
-                );
+            const [
+                meResponse,
+                accountsResponse
+            ] = await Promise.all([
+                authFetch(
+                    API.me,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        }
+                    }
+                ),
 
-            if (!token) {
-                redirectToLogin(true);
-                return;
-            }
-
-            const authHeaders = {
-                "Accept": "application/json",
-                "Authorization": `Bearer ${token}`
-            };
-
-            const [meResponse, accountsResponse] = await Promise.all([
-                fetch(API.me, { method: "GET", headers: authHeaders }),
-                fetch(API.linkedAccounts, { method: "GET", headers: authHeaders })
+                authFetch(
+                    API.linkedAccounts,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        }
+                    }
+                )
             ]);
-
-            if (
-                meResponse.status === 401 || meResponse.status === 403 ||
-                accountsResponse.status === 401 || accountsResponse.status === 403
-            ) {
-                sessionStorage.removeItem("accessToken");
-                redirectToLogin(true);
-                return;
-            }
 
             const meData = await readJson(meResponse);
 
@@ -425,7 +443,25 @@ document.addEventListener(
             renderMyPage(member);
         }
 
-        function logout() {
+        async function logout() {
+
+            if (!FILE_PREVIEW) {
+                try {
+                    await fetch(
+                        "/api/auth/logout",
+                        {
+                            method: "POST",
+                            credentials: "include"
+                        }
+                    );
+                } catch (error) {
+                    console.error(
+                        "로그아웃 API 호출 실패",
+                        error
+                    );
+                }
+            }
+
             sessionStorage.removeItem(
                 "accessToken"
             );
@@ -459,38 +495,12 @@ document.addEventListener(
                 return;
             }
 
-            const token =
-                sessionStorage.getItem(
-                    "accessToken"
-                );
-
-            if (!token) {
-                redirectToLogin(true);
-                return;
-            }
-
-            const response = await fetch(
+            const response = await authFetch(
                 API.me,
                 {
-                    method: "DELETE",
-                    headers: {
-                        "Authorization":
-                            `Bearer ${token}`
-                    }
+                    method: "DELETE"
                 }
             );
-
-            if (
-                response.status === 401 ||
-                response.status === 403
-            ) {
-                sessionStorage.removeItem(
-                    "accessToken"
-                );
-
-                redirectToLogin(true);
-                return;
-            }
 
             if (!response.ok) {
                 const responseData =
@@ -499,6 +509,21 @@ document.addEventListener(
                 throw new Error(
                     responseData.message ||
                     "회원 탈퇴에 실패했습니다."
+                );
+            }
+
+            try {
+                await fetch(
+                    "/api/auth/logout",
+                    {
+                        method: "POST",
+                        credentials: "include"
+                    }
+                );
+            } catch (error) {
+                console.warn(
+                    "탈퇴 후 토큰 정리 실패",
+                    error
                 );
             }
 

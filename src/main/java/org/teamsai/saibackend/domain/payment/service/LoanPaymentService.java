@@ -1,15 +1,15 @@
-package org.teamsai.saibackend.domain.matching.service;
+package org.teamsai.saibackend.domain.payment.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.payment.exception.PaymentErrorCode;
-import org.teamsai.saibackend.domain.payment.service.PaymentRecordService;
 import org.teamsai.saibackend.domain.payment.type.PaymentTargetType;
 import org.teamsai.saibackend.domain.payment.type.SourceType;
 
@@ -24,8 +24,39 @@ public class LoanPaymentService {
     private final RepaymentScheduleService repaymentScheduleService;
     private final PaymentRecordService paymentRecordService;
 
-    @Transactional
+    @Transactional(propagation = Propagation.NESTED)
     public void applyAutoMatchedPayment(Long targetId, Long bankTransactionId, BigDecimal amount) {
+        applyPayment(
+                targetId,
+                bankTransactionId,
+                amount,
+                SourceType.AUTO_MATCH,
+                false
+        );
+    }
+
+    @Transactional(propagation = Propagation.NESTED)
+    public void applyManuallyMatchedPayment(
+            Long targetId,
+            Long bankTransactionId,
+            BigDecimal amount
+    ) {
+        applyPayment(
+                targetId,
+                bankTransactionId,
+                amount,
+                SourceType.MANUAL,
+                true
+        );
+    }
+
+    private void applyPayment(
+            Long targetId,
+            Long bankTransactionId,
+            BigDecimal amount,
+            SourceType sourceType,
+            boolean limitToRemainingAmount
+    ) {
 
         RepaymentScheduleDTO schedule = repaymentScheduleService.getScheduleByScheduleId(targetId);
 
@@ -44,7 +75,18 @@ public class LoanPaymentService {
         }
 
         BigDecimal expectedTotalAmount = schedule.getTotalPaymentDue();
-        BigDecimal totalPaidAfterThis = existingConfirmedAmount.add(amount);
+        BigDecimal remainingAmount =
+                expectedTotalAmount.subtract(existingConfirmedAmount);
+
+        if (remainingAmount.signum() <= 0) {
+            throw RepaymentScheduleErrorCode.SCHEDULE_NOT_PENDING.toException();
+        }
+
+        BigDecimal paymentAmount = limitToRemainingAmount
+                ? amount.min(remainingAmount)
+                : amount;
+        BigDecimal totalPaidAfterThis =
+                existingConfirmedAmount.add(paymentAmount);
 
 
         if (totalPaidAfterThis.compareTo(expectedTotalAmount) > 0) {
@@ -62,8 +104,8 @@ public class LoanPaymentService {
                 bankTransactionId,
                 PaymentTargetType.LOAN,
                 targetId,
-                amount,
-                SourceType.AUTO_MATCH
+                paymentAmount,
+                sourceType
         );
 
         log.info("[LoanPaymentService] PaymentRecord 생성 완료 - paymentRecordId: {}", paymentRecordId);

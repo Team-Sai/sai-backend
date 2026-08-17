@@ -36,10 +36,10 @@ class ScheduleGeneratorTest {
                 ScheduleGenerator.generateEqualPrincipalAndInterest(contractId, principal, annualInterestRate, months, startDate);
 
         RepaymentScheduleDTO first = schedules.get(0);
-        assertThat(first.getInterestDue()).isEqualByComparingTo("100000.00");
-        assertThat(first.getPrincipalDue()).isEqualByComparingTo("788487.89");
-        assertThat(first.getTotalPaymentDue()).isEqualByComparingTo("888487.89");
-        assertThat(first.getRemainingPrincipal()).isEqualByComparingTo("9211512.11");
+        assertThat(first.getInterestDue()).isEqualByComparingTo("100000");
+        assertThat(first.getPrincipalDue()).isEqualByComparingTo("788487");
+        assertThat(first.getTotalPaymentDue()).isEqualByComparingTo("888487");
+        assertThat(first.getRemainingPrincipal()).isEqualByComparingTo("9211513");
     }
 
     @Test
@@ -74,10 +74,10 @@ class ScheduleGeneratorTest {
         RepaymentScheduleDTO first = schedules.get(0);
         RepaymentScheduleDTO second = schedules.get(1);
 
-        assertThat(first.getPrincipalDue()).isEqualByComparingTo("833333.33");
-        assertThat(first.getInterestDue()).isEqualByComparingTo("100000.00");
-        assertThat(second.getPrincipalDue()).isEqualByComparingTo("833333.33");
-        assertThat(second.getInterestDue()).isEqualByComparingTo("91666.67");
+        assertThat(first.getPrincipalDue()).isEqualByComparingTo("833333");
+        assertThat(first.getInterestDue()).isEqualByComparingTo("100000");
+        assertThat(second.getPrincipalDue()).isEqualByComparingTo("833333");
+        assertThat(second.getInterestDue()).isEqualByComparingTo("91666");
 
         // 원금은 고정, 이자만 줄어서 → 2회차 총액이 1회차보다 작아야 함
         assertThat(second.getTotalPaymentDue()).isLessThan(first.getTotalPaymentDue());
@@ -120,6 +120,91 @@ class ScheduleGeneratorTest {
     }
 
     @Test
+    @DisplayName("무이자 100만원을 3회 상환하면 마지막 회차가 원금 나머지를 부담한다")
+    void zeroInterest_lastRoundAbsorbsPrincipalRemainder() {
+        List<RepaymentScheduleDTO> schedules =
+                ScheduleGenerator.generateEqualPrincipalAndInterest(
+                        contractId,
+                        new BigDecimal("1000000"),
+                        BigDecimal.ZERO,
+                        3,
+                        startDate
+                );
+
+        assertThat(schedules)
+                .extracting(RepaymentScheduleDTO::getPrincipalDue)
+                .containsExactly(
+                        new BigDecimal("333333"),
+                        new BigDecimal("333333"),
+                        new BigDecimal("333334")
+                );
+        assertThat(schedules)
+                .extracting(RepaymentScheduleDTO::getTotalPaymentDue)
+                .containsExactly(
+                        new BigDecimal("333333"),
+                        new BigDecimal("333333"),
+                        new BigDecimal("333334")
+                );
+    }
+
+    @Test
+    @DisplayName("만기일시 0.5% 이자의 정수 나머지는 마지막 회차에 추가한다")
+    void bulletRepayment_lastRoundAbsorbsInterestRemainder() {
+        List<RepaymentScheduleDTO> schedules =
+                ScheduleGenerator.generateBulletRepayment(
+                        contractId,
+                        new BigDecimal("100000"),
+                        new BigDecimal("0.5"),
+                        12,
+                        startDate
+                );
+
+        assertThat(schedules.subList(0, 11))
+                .extracting(RepaymentScheduleDTO::getInterestDue)
+                .containsOnly(new BigDecimal("41"));
+        assertThat(schedules.get(11).getInterestDue()).isEqualByComparingTo("49");
+        assertThat(schedules.stream()
+                .map(RepaymentScheduleDTO::getInterestDue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add))
+                .isEqualByComparingTo("500");
+    }
+
+    @Test
+    @DisplayName("모든 상환방식의 저장 금액은 원 단위이고 원금 합계가 유지된다")
+    void allMethods_generateWholeWonAmountsAndPreservePrincipal() {
+        BigDecimal testPrincipal = new BigDecimal("1000000");
+        BigDecimal testRate = new BigDecimal("0.5");
+
+        List<List<RepaymentScheduleDTO>> schedulesByMethod = List.of(
+                ScheduleGenerator.generateEqualPrincipalAndInterest(
+                        contractId, testPrincipal, testRate, 12, startDate),
+                ScheduleGenerator.generateEqualPrincipal(
+                        contractId, testPrincipal, testRate, 12, startDate),
+                ScheduleGenerator.generateBulletRepayment(
+                        contractId, testPrincipal, testRate, 12, startDate)
+        );
+
+        for (List<RepaymentScheduleDTO> schedules : schedulesByMethod) {
+            assertThat(schedules.stream()
+                    .map(RepaymentScheduleDTO::getPrincipalDue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add))
+                    .isEqualByComparingTo(testPrincipal);
+
+            assertThat(schedules).allSatisfy(schedule -> {
+                assertWholeWon(schedule.getPrincipalDue());
+                assertWholeWon(schedule.getInterestDue());
+                assertWholeWon(schedule.getTotalPaymentDue());
+                assertWholeWon(schedule.getRemainingPrincipal());
+                assertThat(schedule.getTotalPaymentDue())
+                        .isEqualByComparingTo(schedule.getPrincipalDue().add(schedule.getInterestDue()));
+            });
+
+            assertThat(schedules.get(schedules.size() - 1).getRemainingPrincipal())
+                    .isEqualByComparingTo(BigDecimal.ZERO);
+        }
+    }
+
+    @Test
     @DisplayName("세 방식 모두 회차별 contractId와 sequence가 정확하다")
     void allMethods_haveCorrectContractIdAndSequence() {
         List<RepaymentScheduleDTO> schedules =
@@ -130,5 +215,10 @@ class ScheduleGeneratorTest {
             assertThat(schedules.get(i).getSequence()).isEqualTo(i + 1);
             assertThat(schedules.get(i).getStatus()).isEqualTo(RepaymentScheduleStatus.PENDING);
         }
+    }
+
+    private void assertWholeWon(BigDecimal amount) {
+        assertThat(amount.remainder(BigDecimal.ONE))
+                .isEqualByComparingTo(BigDecimal.ZERO);
     }
 }

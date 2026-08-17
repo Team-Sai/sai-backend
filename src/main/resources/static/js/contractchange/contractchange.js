@@ -7,15 +7,8 @@ const REPAYMENT_TYPE_LABELS = {
     BULLET_REPAYMENT: '만기일시상환'
 };
 
-function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-}
-
-fetch(`/api/contracts/${contractId}`, { headers: authHeaders() })
+authFetch(
+    `/api/contracts/${contractId}`)
     .then(response => {
         if (!response.ok) {
             throw new Error('계약 조회 실패');
@@ -91,12 +84,8 @@ function validate() {
 
     if (newInterestRate !== '') {
         const rate = Number(newInterestRate);
-        if (rate > 20) {
-            alert('이율은 20%를 넘을 수 없습니다.');
-            return false;
-        }
-        if (rate <= 0) {
-            alert('이율은 0%보다 커야 합니다.');
+        if (!Number.isFinite(rate) || rate < 0.5 || rate > 20 || !Number.isInteger(rate * 2)) {
+            alert('이율은 0.5% 이상 20% 이하이며, 0.5% 단위여야 합니다.');
             return false;
         }
     }
@@ -126,9 +115,11 @@ document.getElementById('changeRequestForm').addEventListener('submit', function
         newTerms: document.getElementById('newTerms').value.trim() || null,
     };
 
-    fetch(`/api/contracts/${contractId}/change-requests`, {
+    authFetch(`/api/contracts/${contractId}/change-requests`, {
         method: 'POST',
-        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify(requestBody)
     })
         .then(response => {

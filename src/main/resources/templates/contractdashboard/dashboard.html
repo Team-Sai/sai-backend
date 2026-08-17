@@ -3,27 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>계약대시보드</title>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
     <link rel="stylesheet" th:href="@{/css/contractdashboard/contract-dashboard.css}">
     <link rel="stylesheet" href="/css/contractchange/site-common.css" />
 </head>
-<body>
+<body class="app-shell-page">
 
-<header class="site-header">
-    <div class="header-inner">
-        <a class="brand" href="/">사이원장</a>
-        <nav class="main-nav" aria-label="주요 메뉴">
-            <a href="#">서비스 소개</a>
-            <a class="active" href="/dashboard">금전거래대차</a>
-            <a href="/settlements">정산</a>
-            <a href="#">거래 일정</a>
-        </nav>
-        <div class="header-actions">
-            <button class="icon-button" type="button" aria-label="알림">♧</button>
-            <a class="profile-link" href="/mypage" aria-label="마이페이지">
-                <span class="profile-avatar">사</span>
-            </a>
-        </div>
-    </div>
+<header
+        th:replace="~{fragments/app-shell :: appHeader('contract')}">
 </header>
 
 <div class="dashboard-page">
@@ -40,7 +29,7 @@
             </div>
         </div>
         <div class="header-actions">
-            <button type="button" class="btn" disabled>거래내역 동기화</button>
+            <button type="button" class="btn" id="btnSyncTransactions" >거래내역 동기화</button>
             <button type="button" class="btn btn--primary" id="btnCreateContract">+ 계약 생성</button>
         </div>
     </div>
@@ -107,21 +96,12 @@
 
 
 </div>
-
-<script th:src="@{/js/contractdashboard/contract-dashboard.js}"></script>
-<footer class="site-footer">
-    <div class="footer-inner">
-        <div>
-            <strong>사이원장</strong>
-            <p>© Sai-Wonjang. All rights reserved.</p>
-        </div>
-        <nav>
-            <a href="#">이용약관</a>
-            <a href="#">개인정보처리방침</a>
-            <a href="#">고객센터</a>
-        </nav>
-    </div>
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
 </footer>
-
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+<script th:src="@{/js/contractdashboard/contract-dashboard.js}"></script>
 </body>
 </html>
