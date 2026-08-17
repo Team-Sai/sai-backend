@@ -2,8 +2,8 @@ package org.teamsai.saibackend.domain.contractchange.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
+import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +34,13 @@ public interface ContractChangeMapper {
             @Param("status") ChangeRequestStatus status,
             @Param("returnReason") String returnReason
     );
+
+    int updateRequesterSignature(
+            @Param("changeRequestId") Long changeRequestId,
+            @Param("requesterSignature") String requesterSignature
+    );
+
+    int cancelPendingUnsignedRequest(@Param("changeRequestId") Long changeRequestId);
 
 
 }
