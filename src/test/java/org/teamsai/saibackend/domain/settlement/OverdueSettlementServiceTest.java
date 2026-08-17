@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -102,7 +103,7 @@ class OverdueSettlementServiceTest {
     }
 
     @Test
-    @DisplayName("한 정산 갱신이 실패해도 나머지 정산은 계속 처리된다")
+    @DisplayName("한 정산 갱신이 실패해도 나머지 정산은 계속 처리되고, 결과에 성공/실패 건수가 반영된다")
     void continuesProcessingWhenOneUpdateFails() {
         LocalDate baseDate = LocalDate.of(2026, 2, 1);
         SettlementDTO s1 = settlement(1L);
@@ -115,12 +116,15 @@ class OverdueSettlementServiceTest {
         when(overdueCriteria.resolveReferenceDate(s2)).thenReturn(refDate2);
         when(overdueCriteria.isOverdue(s1, baseDate, refDate1)).thenReturn(true);
         when(overdueCriteria.isOverdue(s2, baseDate, refDate2)).thenReturn(true);
+
         doThrow(new IllegalStateException("갱신 실패"))
                 .when(overdueSettlementUpdater).updateOverdueForSettlement(s1, refDate1);
 
-        sut.updateOverdueStatus(baseDate);
+        OverdueUpdateResult result = sut.updateOverdueStatus(baseDate);
 
         verify(overdueSettlementUpdater).updateOverdueForSettlement(s1, refDate1);
         verify(overdueSettlementUpdater).updateOverdueForSettlement(s2, refDate2);
+        assertThat(result.processedCount()).isEqualTo(1);
+        assertThat(result.failedCount()).isEqualTo(1);
     }
 }
