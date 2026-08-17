@@ -88,6 +88,8 @@ class BankTransactionMatchingReviewQueryServiceTest {
         assertThat(response.candidates()).hasSize(1);
         assertThat(response.candidates().get(0).matchCandidateId())
                 .isEqualTo(10L);
+        assertThat(response.candidates().get(0).aggregateId())
+                .isEqualTo(100L);
         assertThat(response.candidates().get(0).participantName())
                 .isEqualTo("홍길동");
         assertThat(response.candidates().get(0).amountMatchType())
@@ -248,6 +250,7 @@ class BankTransactionMatchingReviewQueryServiceTest {
                 .bankTransactionId(BANK_TRANSACTION_ID)
                 .targetType(targetType)
                 .targetId(20L + matchCandidateId)
+                .aggregateId(100L)
                 .participantName("홍길동")
                 .expectedRemainingAmount(new BigDecimal("10000.00"))
                 .amountMatchType(amountMatchType)

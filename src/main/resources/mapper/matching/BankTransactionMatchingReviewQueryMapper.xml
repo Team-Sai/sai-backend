@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.matching.mapper.BankTransactionMatchingReviewQueryMapper">
+
+    <resultMap id="BankTransactionResultMap"
+               type="org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO">
+        <id property="bankTransactionId" column="bank_transaction_id"/>
+        <result property="linkedAccountId" column="linked_account_id"/>
+        <result property="externalTransactionId" column="external_transaction_id"/>
+        <result property="amount" column="amount"/>
+        <result property="transactionType" column="transaction_type"/>
+        <result property="processingStatus" column="processing_status"/>
+        <result property="transactionAt" column="transaction_at"/>
+        <result property="counterpartyName" column="counterparty_name"/>
+        <result property="memo" column="memo"/>
+        <result property="syncedAt" column="synced_at"/>
+    </resultMap>
+
+    <sql id="ReviewSearchCondition">
+        FROM bank_transaction bt
+        INNER JOIN linked_bank_account account
+            ON account.linked_account_id = bt.linked_account_id
+        WHERE account.user_id = #{userId}
+        AND account.connection_status = 'AVAILABLE'
+        AND bt.processing_status = 'NEEDS_CHECK'
+        AND bt.transaction_type = 'DEPOSIT'
+        AND EXISTS (
+            SELECT 1
+            FROM bank_transaction_match_candidate available_candidate
+            WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
+            AND available_candidate.candidate_status = 'AVAILABLE'
+        )
+        <choose>
+            <when test="condition.notificationChannel">
+                AND EXISTS (
+                    SELECT 1
+                    FROM bank_transaction_match_candidate settlement_candidate
+                    WHERE settlement_candidate.bank_transaction_id = bt.bank_transaction_id
+                    AND settlement_candidate.candidate_status = 'AVAILABLE'
+                    AND settlement_candidate.target_type = 'SETTLEMENT'
+                )
+                AND EXISTS (
+                    SELECT 1
+                    FROM bank_transaction_match_candidate loan_candidate
+                    WHERE loan_candidate.bank_transaction_id = bt.bank_transaction_id
+                    AND loan_candidate.candidate_status = 'AVAILABLE'
+                    AND loan_candidate.target_type = 'LOAN'
+                )
+            </when>
+            <otherwise>
+                AND NOT (
+                    EXISTS (
+                        SELECT 1
+                        FROM bank_transaction_match_candidate settlement_candidate
+                        WHERE settlement_candidate.bank_transaction_id = bt.bank_transaction_id
+                        AND settlement_candidate.candidate_status = 'AVAILABLE'
+                        AND settlement_candidate.target_type = 'SETTLEMENT'
+                    )
+                    AND EXISTS (
+                        SELECT 1
+                        FROM bank_transaction_match_candidate loan_candidate
+                        WHERE loan_candidate.bank_transaction_id = bt.bank_transaction_id
+                        AND loan_candidate.candidate_status = 'AVAILABLE'
+                        AND loan_candidate.target_type = 'LOAN'
+                    )
+                )
+                <if test="condition.targetType != null">
+                    AND EXISTS (
+                        SELECT 1
+                        FROM bank_transaction_match_candidate domain_candidate
+                        WHERE domain_candidate.bank_transaction_id = bt.bank_transaction_id
+                        AND domain_candidate.candidate_status = 'AVAILABLE'
+                        AND domain_candidate.target_type = #{condition.targetType}
+                    )
+                </if>
+                <if test="condition.aggregateId != null">
+                    AND EXISTS (
+                        SELECT 1
+                        FROM bank_transaction_match_candidate aggregate_candidate
+                        LEFT JOIN payment_obligation obligation
+                            ON aggregate_candidate.target_type = 'SETTLEMENT'
+                            AND obligation.payment_obligation_id = aggregate_candidate.target_id
+                        LEFT JOIN settlement_participant participant
+                            ON participant.participant_id = obligation.participant_id
+                        LEFT JOIN repayment_schedule schedule
+                            ON aggregate_candidate.target_type = 'LOAN'
+                            AND schedule.schedule_id = aggregate_candidate.target_id
+                        WHERE aggregate_candidate.bank_transaction_id = bt.bank_transaction_id
+                        AND aggregate_candidate.candidate_status = 'AVAILABLE'
+                        AND aggregate_candidate.target_type = #{condition.targetType}
+                        AND CASE
+                            WHEN aggregate_candidate.target_type = 'SETTLEMENT'
+                                THEN participant.settlement_id
+                            WHEN aggregate_candidate.target_type = 'LOAN'
+                                THEN schedule.contract_id
+                            END = #{condition.aggregateId}
+                    )
+                </if>
+            </otherwise>
+        </choose>
+    </sql>
+
+    <select id="search" resultMap="BankTransactionResultMap">
+        SELECT
+            bt.bank_transaction_id,
+            bt.linked_account_id,
+            bt.external_transaction_id,
+            bt.amount,
+            bt.transaction_type,
+            bt.processing_status,
+            bt.transaction_at,
+            bt.counterparty_name,
+            bt.memo,
+            bt.synced_at
+        <include refid="ReviewSearchCondition"/>
+        ORDER BY bt.transaction_at DESC,
+                 bt.bank_transaction_id DESC
+        LIMIT #{condition.size}
+        OFFSET #{condition.offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        <include refid="ReviewSearchCondition"/>
+    </select>
+
+</mapper>

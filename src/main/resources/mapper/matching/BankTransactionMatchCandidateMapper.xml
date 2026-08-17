@@ -36,6 +36,7 @@
                 column="target_type"
                 javaType="org.teamsai.saibackend.domain.matching.type.MatchingTargetType"/>
         <result property="targetId" column="target_id"/>
+        <result property="aggregateId" column="aggregate_id"/>
         <result property="participantName" column="participant_name"/>
         <result property="expectedRemainingAmount"
                 column="expected_remaining_amount"/>
@@ -100,6 +101,12 @@
             mc.bank_transaction_id,
             mc.target_type,
             mc.target_id,
+            CASE
+                WHEN mc.target_type = 'SETTLEMENT'
+                    THEN participant.settlement_id
+                WHEN mc.target_type = 'LOAN'
+                    THEN schedule.contract_id
+            END AS aggregate_id,
             COALESCE(settlement_user.name, debtor.name)
                 AS participant_name,
             mc.expected_remaining_amount,
@@ -133,6 +140,63 @@
         WHERE match_candidate_id = #{matchCandidateId}
         AND bank_transaction_id = #{bankTransactionId}
         AND candidate_status = 'AVAILABLE'
+    </select>
+
+    <select id="findAllForReviewByBankTransactionIds"
+            resultMap="BankTransactionMatchCandidateQueryResultMap">
+        SELECT
+            mc.match_candidate_id,
+            mc.bank_transaction_id,
+            mc.target_type,
+            mc.target_id,
+            CASE
+                WHEN mc.target_type = 'SETTLEMENT'
+                    THEN participant.settlement_id
+                WHEN mc.target_type = 'LOAN'
+                    THEN schedule.contract_id
+            END AS aggregate_id,
+            COALESCE(settlement_user.name, debtor.name)
+                AS participant_name,
+            mc.expected_remaining_amount,
+            mc.amount_match_type,
+            mc.created_at
+        FROM bank_transaction_match_candidate mc
+        LEFT JOIN payment_obligation obligation
+            ON mc.target_type = 'SETTLEMENT'
+            AND obligation.payment_obligation_id = mc.target_id
+        LEFT JOIN settlement_participant participant
+            ON participant.participant_id = obligation.participant_id
+        LEFT JOIN users settlement_user
+            ON settlement_user.user_id = participant.user_id
+        LEFT JOIN repayment_schedule schedule
+            ON mc.target_type = 'LOAN'
+            AND schedule.schedule_id = mc.target_id
+        LEFT JOIN loan_contract contract
+            ON contract.contract_id = schedule.contract_id
+        LEFT JOIN users debtor
+            ON debtor.user_id = contract.debtor_id
+        WHERE mc.bank_transaction_id IN
+        <foreach collection="bankTransactionIds"
+                 item="bankTransactionId"
+                 open="("
+                 separator=","
+                 close=")">
+            #{bankTransactionId}
+        </foreach>
+        AND mc.candidate_status = 'AVAILABLE'
+        <if test="targetType != null">
+            AND mc.target_type = #{targetType}
+        </if>
+        <if test="aggregateId != null">
+            AND CASE
+                WHEN mc.target_type = 'SETTLEMENT'
+                    THEN participant.settlement_id
+                WHEN mc.target_type = 'LOAN'
+                    THEN schedule.contract_id
+                END = #{aggregateId}
+        </if>
+        ORDER BY mc.bank_transaction_id ASC,
+                 mc.match_candidate_id ASC
     </select>
 
     <update id="invalidate">

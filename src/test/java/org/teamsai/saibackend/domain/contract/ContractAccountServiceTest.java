@@ -348,6 +348,70 @@ class ContractAccountServiceTest {
         }
     }
 
+    @Nested
+    class GetCurrentContractAccount {
+
+        @Test
+        void returnsActiveLinkedAccountForCreditor() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.COMPLETED)));
+            given(contractAccountMapper.findActiveAccountByContractId(CONTRACT_ID))
+                    .willReturn(List.of(ContractAccountDTO.builder()
+                            .contractId(CONTRACT_ID)
+                            .linkedAccountId(LINKED_ACCOUNT_ID)
+                            .accountStatus(ContractAccountStatus.ACTIVE)
+                            .build()));
+            given(linkedBankAccountService.getLinkedAccounts(CREDITOR_ID))
+                    .willReturn(List.of(createLinkedAccount(
+                            LINKED_ACCOUNT_ID,
+                            ConnectionStatus.AVAILABLE
+                    )));
+
+            LinkedBankAccountResponse result =
+                    contractAccountService.getCurrentAccount(
+                            CONTRACT_ID,
+                            CREDITOR_ID
+                    );
+
+            assertThat(result.linkedAccountId()).isEqualTo(LINKED_ACCOUNT_ID);
+        }
+
+        @Test
+        void rejectsNonCreditor() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.PENDING)));
+
+            assertThatThrownBy(() -> contractAccountService.getCurrentAccount(
+                    CONTRACT_ID,
+                    OTHER_USER_ID
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+            );
+
+            verify(contractAccountMapper, never())
+                    .findActiveAccountByContractId(any());
+        }
+
+        @Test
+        void rejectsMissingActiveAccount() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.PENDING)));
+            given(contractAccountMapper.findActiveAccountByContractId(CONTRACT_ID))
+                    .willReturn(List.of());
+
+            assertThatThrownBy(() -> contractAccountService.getCurrentAccount(
+                    CONTRACT_ID,
+                    CREDITOR_ID
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(LoanContractErrorCode.CONTRACT_ACCOUNT_NOT_FOUND)
+            );
+        }
+    }
+
     private LinkedBankAccountResponse createLinkedAccount(Long linkedAccountId, ConnectionStatus status) {
         return LinkedBankAccountResponse.builder()
                 .linkedAccountId(linkedAccountId)
