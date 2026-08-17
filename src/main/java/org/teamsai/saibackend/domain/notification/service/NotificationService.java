@@ -36,6 +36,33 @@ public class NotificationService {
         notificationMapper.insert(notification);
     }
 
+    @Transactional
+    public void createIfAbsent(
+            Long userId,
+            NotificationType type,
+            String title,
+            String content,
+            Long referenceId,
+            Long secondaryReferenceId
+    ) {
+        if (notificationMapper.existsByUserIdAndTypeAndReferenceId(
+                userId,
+                type,
+                referenceId
+        )) {
+            return;
+        }
+
+        create(
+                userId,
+                type,
+                title,
+                content,
+                referenceId,
+                secondaryReferenceId
+        );
+    }
+
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications(Long userId) {
         return notificationMapper.findAllByUserId(userId);
