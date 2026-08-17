@@ -209,6 +209,11 @@ function renderCalendar() {
                 ${calendarDay.hasOutbound ? '<i class="dot dot--outbound"></i>' : ""}
             </span>
         `;
+
+        dayButton.addEventListener("click", () => {
+            window.location.href = `/calendar?date=${dateKey}`;
+        });
+
         grid.appendChild(dayButton);
     });
 }
@@ -268,6 +273,10 @@ function bindEvents() {
     document.getElementById("nextMonthButton").addEventListener("click", async () => {
         calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
         await loadDashboard(true);
+    });
+
+    document.getElementById("calendarViewAllButton").addEventListener("click", () => {
+        window.location.href = `/calendar?date=${toDateKey(calendarCursor)}`;
     });
 
     document.querySelectorAll(".filter-tab").forEach((button) => {

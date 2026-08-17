@@ -9,6 +9,7 @@ import org.teamsai.saibackend.domain.payment.type.PaymentStatus;
 import org.teamsai.saibackend.domain.payment.type.ReviewStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -22,4 +23,5 @@ public class PaymentObligationDTO {
     private PaymentStatus paymentStatus;
     private ReviewStatus reviewStatus;
     private ObligationStatus obligationStatus;
+    private LocalDateTime overdueSince;
 }

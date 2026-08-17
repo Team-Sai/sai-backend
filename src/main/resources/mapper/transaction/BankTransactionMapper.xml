@@ -169,5 +169,24 @@
         WHERE bank_transaction_id = #{bankTransactionId}
         AND linked_account_id = #{linkedAccountId}
     </select>
+
+    <select id="findByIdAndLinkedAccountIdForUpdate"
+            resultMap="BankTransactionResultMap">
+        SELECT
+        bank_transaction_id,
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at
+        FROM bank_transaction
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND linked_account_id = #{linkedAccountId}
+        FOR UPDATE
+    </select>
 </mapper>
 
