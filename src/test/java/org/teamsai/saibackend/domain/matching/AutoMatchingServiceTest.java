@@ -9,11 +9,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
+import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
 import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.policy.AutoMatchingJudge;
 import org.teamsai.saibackend.domain.matching.service.AutoMatchingService;
-import org.teamsai.saibackend.domain.matching.service.LoanPaymentService;
+import org.teamsai.saibackend.domain.matching.service.BankTransactionMatchCandidateService;
+import org.teamsai.saibackend.domain.payment.service.LoanPaymentService;
+import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
@@ -43,6 +46,9 @@ class AutoMatchingServiceTest {
     @Mock
     private LoanPaymentService loanPaymentService;
 
+    @Mock
+    private BankTransactionMatchCandidateService candidateService;
+
     private final AutoMatchingJudge autoMatchingJudge = new AutoMatchingJudge();
 
     private AutoMatchingService autoMatchingService;
@@ -52,7 +58,8 @@ class AutoMatchingServiceTest {
         autoMatchingService = new AutoMatchingService(
                 autoMatchingJudge,
                 paymentService,
-                loanPaymentService
+                loanPaymentService,
+                candidateService
         );
     }
 
@@ -134,7 +141,6 @@ class AutoMatchingServiceTest {
                     org.mockito.ArgumentMatchers.any(),
                     org.mockito.ArgumentMatchers.any()
             );
-
             assertThat(result.totalTransactionCount()).isEqualTo(1);
             assertThat(result.appliedCount()).isZero();
             assertThat(result.needsCheckCount()).isZero();
@@ -152,6 +158,48 @@ class AutoMatchingServiceTest {
                                     AutoMatchingProcessStatus.UNMATCHED
                             )
                     );
+        }
+
+        @Test
+        void executeSavesPartialCandidateForReview() {
+            MatchingTransaction transaction = transaction(
+                    101L,
+                    AutoMatchingTransactionType.DEPOSIT,
+                    "HongGilDong",
+                    "5000"
+            );
+            MatchingCandidate candidate = candidate(
+                    MatchingTargetType.SETTLEMENT,
+                    1L,
+                    "HongGilDong",
+                    "10000"
+            );
+
+            AutoMatchingExecutionResult result = autoMatchingService.execute(
+                    List.of(transaction),
+                    List.of(candidate)
+            );
+
+            verify(candidateService).saveAll(
+                    101L,
+                    List.of(
+                            new EvaluatedMatchingCandidate(
+                                    candidate,
+                                    MatchingAmountType.PARTIAL
+                            )
+                    )
+            );
+            verify(paymentService, never()).applyAutoMatchedPayment(
+                    org.mockito.ArgumentMatchers.any(),
+                    org.mockito.ArgumentMatchers.any(),
+                    org.mockito.ArgumentMatchers.any()
+            );
+            verify(loanPaymentService, never()).applyAutoMatchedPayment(
+                    org.mockito.ArgumentMatchers.any(),
+                    org.mockito.ArgumentMatchers.any(),
+                    org.mockito.ArgumentMatchers.any()
+            );
+            assertThat(result.needsCheckCount()).isEqualTo(1);
         }
 
         @Test
@@ -186,6 +234,19 @@ class AutoMatchingServiceTest {
                     org.mockito.ArgumentMatchers.any(),
                     org.mockito.ArgumentMatchers.any(),
                     org.mockito.ArgumentMatchers.any()
+            );
+            verify(candidateService).saveAll(
+                    101L,
+                    List.of(
+                            new EvaluatedMatchingCandidate(
+                                    firstCandidate,
+                                    MatchingAmountType.EXACT
+                            ),
+                            new EvaluatedMatchingCandidate(
+                                    secondCandidate,
+                                    MatchingAmountType.EXACT
+                            )
+                    )
             );
 
             assertThat(result.totalTransactionCount()).isEqualTo(1);
@@ -280,6 +341,13 @@ class AutoMatchingServiceTest {
                     1L,
                     101L,
                     new BigDecimal("10000")
+            );
+            verify(candidateService).saveAll(
+                    101L,
+                    List.of(new EvaluatedMatchingCandidate(
+                            candidate,
+                            MatchingAmountType.EXACT
+                    ))
             );
 
             assertThat(result.totalTransactionCount()).isEqualTo(1);
