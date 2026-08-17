@@ -177,6 +177,8 @@ public class ContractChangeService {
             throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
         }
 
+        loanContractService.supersedeContract(v1ContractId);
+
         repaymentScheduleService.generateChangedSchedule(v1ContractId, v2ContractId);
 
         log.info("계약 변경 승인 처리 완료: v1ContractId={}, v2ContractId={}, changeRequestId={}",

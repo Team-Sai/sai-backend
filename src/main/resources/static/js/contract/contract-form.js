@@ -177,26 +177,26 @@
 
 
   function computeSafeInterestRate(totalAmount) {
-    if (totalAmount <= 0) return 0.1;
+    if (totalAmount <= 0) return 0.5;
 
     const minRate = STANDARD_INTEREST_RATE - (GIFT_TAX_THRESHOLD * 100) / totalAmount;
-    const roundedUp = Math.ceil(minRate * 10 - 1e-9) / 10;
+    const roundedUp = Math.ceil(minRate * 2 - 1e-9) / 2;
 
-    return Math.min(20, Math.max(0.1, roundedUp));
+    return Math.min(20, Math.max(0.5, roundedUp));
   }
 
   async function fetchPreviousAmount() {
-    try {
-      const response = await authFetch("/api/contracts/previous-sum", {
-        method: "GET",
-        headers: { Accept: "application/json" },
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const amount = await response.json();
-      return Number(amount) || 0;
-    } catch (err) {
-      return 0;
+    const response = await authFetch("/api/contracts/previous-sum", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      throw new Error(`이전 차용금 조회 실패 (HTTP ${response.status})`);
     }
+
+    const amount = await response.json();
+    return Number(amount) || 0;
   }
 
   function renderTaxGuide(previousAmount, currentAmount, interestRate) {
@@ -244,11 +244,22 @@
     const currentAmount = Number(document.getElementById("principalAmount").value.replace(/,/g, "")) || 0;
     const interestRate = Number(document.getElementById("interestRate").value) || 0;
 
-    modalPreviousAmount = await fetchPreviousAmount();
+    nextBtn.disabled = true;
+    showStatus("이전 차용금 내역을 확인하는 중입니다...", false);
 
-    renderTaxGuide(modalPreviousAmount, currentAmount, interestRate);
+    try {
+      modalPreviousAmount = await fetchPreviousAmount();
 
-    if (taxGuideModalOverlay) taxGuideModalOverlay.style.display = "flex";
+      renderTaxGuide(modalPreviousAmount, currentAmount, interestRate);
+      showStatus("", false); // 상태 메시지 초기화
+
+      if (taxGuideModalOverlay) taxGuideModalOverlay.style.display = "flex";
+    } catch (err) {
+      console.error("이전 차용금 조회 실패:", err);
+      showStatus("이전 차용금 내역을 불러오지 못했습니다. 네트워크 상태를 확인 후 다시 시도해 주세요.", true);
+    } finally {
+      nextBtn.disabled = false;
+    }
   });
 
   taxGuideCloseBtn?.addEventListener("click", () => {
