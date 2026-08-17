@@ -281,7 +281,7 @@ public class IntegrationDashboardService {
     ) {
         return loanSchedules.stream()
                 .filter(context -> context.schedule().getStatus() == RepaymentScheduleStatus.PENDING)
-                .filter(context -> context.schedule().getDueDate().equals(date))
+                .filter(context -> date.equals(context.schedule().getDueDate()))
                 .map(context -> {
                     boolean isCreditor = userId.equals(context.contract().getCreditorId());
                     return DashboardCalendarItemResponse.builder()

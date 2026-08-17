@@ -62,7 +62,7 @@
     function updateUrl(dateStr) {
         const url = new URL(location.href);
         url.searchParams.set('date', dateStr);
-        history.replaceState(null, '', url);
+        history.pushState({ date: dateStr }, '', url);
     }
 
     function clearSelection() {
@@ -150,15 +150,41 @@
     async function onDateClick(dateStr) {
         selectedDate = dateStr;
         updateUrl(dateStr);
+        await selectDate(dateStr);
+    }
 
+    async function selectDate(dateStr) {
         daysGrid.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
         const target = daysGrid.querySelector(`[data-date="${dateStr}"]`);
         if (target) {
             target.classList.add('selected');
         }
-
         await loadDayDetail(dateStr);
     }
+
+    window.addEventListener('popstate', () => {
+        const params = new URLSearchParams(location.search);
+        const dateStr = params.get('date');
+
+        if (!dateStr) {
+            clearSelection();
+            return;
+        }
+
+        const [y, m] = dateStr.split('-');
+        const targetYear = Number(y);
+        const targetMonth = Number(m) - 1;
+
+        if (targetYear !== viewYear || targetMonth !== viewMonth) {
+            viewYear = targetYear;
+            viewMonth = targetMonth;
+            selectedDate = dateStr;
+            loadMonth().then(() => selectDate(dateStr));
+        } else {
+            selectedDate = dateStr;
+            selectDate(dateStr);
+        }
+    });
 
     async function loadDayDetail(dateStr) {
         detailDate.textContent = dateStr.replaceAll('-', '. ') + '.';
@@ -283,7 +309,7 @@
 
     loadMonth().then(() => {
         if (initialDate) {
-            onDateClick(initialDate);
+            selectDate(initialDate);
         }
     });
 })();

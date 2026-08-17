@@ -214,6 +214,21 @@ public class CalendarTest {
                 .containsExactly("가나다 정산", "차용증 대출");
     }
 
+    @Test
+    void 상환예정일이_없는_스케줄은_예외없이_결과에서_제외된다() {
+        LoanContractResponse contract = buildContract(16L, USER_ID, 2L, "생활비 대출");
+        RepaymentScheduleDTO schedule = buildSchedule(null, RepaymentScheduleStatus.PENDING, 600_000);
+
+        when(contractDashboardService.getIntegrationDashboardData(USER_ID))
+                .thenReturn(loanData(contract, schedule));
+        when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of());
+
+        List<DashboardCalendarItemResponse> result =
+                integrationDashboardService.getCalendarDayDetail(USER_ID, TARGET_DATE);
+
+        assertThat(result).isEmpty();
+    }
+
     private LoanContractResponse buildContract(
             Long contractId, Long creditorId, Long debtorId, String alias
     ) {
@@ -226,8 +241,8 @@ public class CalendarTest {
                 .principalAmount(BigDecimal.valueOf(1_000_000))
                 .interestRate(BigDecimal.valueOf(5))
                 .repaymentType(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST)
-                .startDate(LocalDate.now().minusMonths(1))
-                .maturityDate(LocalDate.now().plusMonths(11))
+                .startDate(LocalDate.of(2026, 7, 14))
+                .maturityDate(LocalDate.of(2027, 6, 14))
                 .build();
     }
 

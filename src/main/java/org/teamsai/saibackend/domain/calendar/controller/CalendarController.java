@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,7 +40,7 @@ public class CalendarController {
     @GetMapping("/api/dashboard/calendar/{date}")
     public List<DashboardCalendarItemResponse> getCalendarDayDetail(
             @Parameter(description = "조회할 날짜 (yyyy-MM-dd)", example = "2026-08-14")
-            @PathVariable LocalDate date,
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
 
             @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
