@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.teamsai.saibackend.domain.link.dto.response.UserKeyResponse;
-import org.teamsai.saibackend.domain.user.service.AccountService;
+import org.teamsai.saibackend.domain.account.service.AccountService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 @Tag(
