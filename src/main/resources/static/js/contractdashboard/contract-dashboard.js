@@ -162,6 +162,11 @@ async function syncTransactions() {
 
         // 상환 금액과 납부 상태를 다시 조회한다.
         fetchDashboard();
+
+        await MatchingReviewModal.open({
+            reviewChannel: 'TRANSACTION_HISTORY',
+            targetType: 'LOAN'
+        });
     } catch (error) {
         console.error('거래내역 동기화 실패:', error);
 
@@ -206,3 +211,5 @@ function escapeHtml(str) {
 }
 
 fetchDashboard();
+
+document.addEventListener('matching-review:closed', fetchDashboard);

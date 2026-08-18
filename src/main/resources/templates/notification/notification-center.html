@@ -13,6 +13,7 @@
   <link
           rel="stylesheet"
           href="/css/notification/notification-center.css">
+  <link rel="stylesheet" href="/css/matching/matching-review-modal.css">
 
 </head>
 
@@ -92,9 +93,12 @@
         th:replace="~{fragments/app-shell :: appFooter}">
 </footer>
 
+<th:block th:replace="~{fragments/matching-review-modal :: matchingReviewModal}"></th:block>
+
 <th:block
         th:replace="~{fragments/app-shell :: commonScripts}">
 </th:block>
+<script src="/js/matching/matching-review-modal.js"></script>
 <script
         th:src="@{/js/notification/notification-center.js}"
         src="/js/notification/notification-center.js">

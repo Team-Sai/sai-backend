@@ -7,6 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/contract/riskcheck.css}">
     <link rel="stylesheet" th:href="@{/css/contractdashboard/contract-dashboard.css}">
     <link rel="stylesheet" href="/css/contractchange/site-common.css" />
+    <link rel="stylesheet" href="/css/matching/matching-review-modal.css">
 </head>
 <body class="app-shell-page">
 
@@ -151,7 +152,10 @@
 </div>
 
 <footer th:replace="~{fragments/app-shell :: appFooter}"></footer>
+<th:block th:replace="~{fragments/matching-review-modal :: matchingReviewModal}"></th:block>
 <th:block th:replace="~{fragments/app-shell :: commonScripts}"></th:block>
+<script src="/js/matching/matching-review-modal.js"></script>
+
 <script th:src="@{/js/contractdashboard/contract-dashboard.js}"></script>
 <script th:src="@{/js/contract/riskcheck.js}"></script>
 
