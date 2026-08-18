@@ -33,5 +33,8 @@ public interface SettlementMapper {
             @Param("settlementId") Long settlementId,
             @Param("userId") Long userId
     );
+    
+    int countInProgressSettlements();
 
+    List<SettlementDTO> findInProgressSettlements(@Param("offset") int offset, @Param("limit") int limit);
 }

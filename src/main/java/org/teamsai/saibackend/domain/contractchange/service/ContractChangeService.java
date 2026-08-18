@@ -7,11 +7,13 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
+import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.dto.request.ContractChangeRequest;
@@ -38,6 +40,7 @@ public class ContractChangeService {
     private final RepaymentScheduleService repaymentScheduleService;
     private final NotificationService notificationService;
     private final UserService userService;
+    private final LoanContractFileService fileService;
 
 
     public void checkAccess(Long contractId, Long userId) {
@@ -71,7 +74,11 @@ public class ContractChangeService {
 
 
     @Transactional
-    public LoanContractChangeDTO requestChange(Long contractId, ContractChangeRequest request, Long userId) {
+    public LoanContractChangeDTO requestChange(
+            Long contractId,
+            ContractChangeRequest request,
+            Long userId
+            ) {
 
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
@@ -144,17 +151,6 @@ public class ContractChangeService {
                 .build();
 
         loanContractService.insertChangedContract(newContractDTO);
-
-        UserResponse creditorInfo = userService.getMyInfo(userId);
-
-        notificationService.create(
-                contract.getDebtorId(),
-                NotificationType.CONTRACT_CHANGE,
-                "계약 변경 요청",
-                creditorInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
-                contractId,
-                changeDTO.getChangeRequestId()
-        );
 
         log.info("계약 변경 요청 생성 및 차용증 재저장 완료: contractId={}, userId={}",
                 contractId, userId);
@@ -250,5 +246,76 @@ public class ContractChangeService {
         List<LoanContractChangeDTO> existingRequests = contractChangeMapper.findByContractId(contractId);
         return existingRequests.stream()
                 .anyMatch(changeRequest -> ChangeRequestStatus.PENDING.equals(changeRequest.getStatus()));
+    }
+
+    @Transactional
+    public void cancelChangeRequest(Long contractId, Long changeRequestId, Long userId) {
+        LoanContractChangeDTO changeDTO = getChangeRequest(changeRequestId);
+
+        if (!changeDTO.getContractId().equals(contractId)) {
+            throw ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
+        }
+
+        if (!changeDTO.getUserId().equals(userId)) {
+            throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
+        }
+
+        if (changeDTO.getStatus() != ChangeRequestStatus.PENDING) {
+            throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
+        }
+
+        int updatedRows = contractChangeMapper.cancelPendingUnsignedRequest(changeRequestId);
+        if (updatedRows == 0) {
+            throw ContractChangeErrorCode.ALREADY_SIGNED.toException();
+        }
+
+        LoanContractResponse v2 = getPendingChangedContract(contractId);
+        loanContractService.rejectChangedContract(v2.getContractId());
+
+        log.info("계약 변경 요청 취소 처리 완료: contractId={}, changeRequestId={}, userId={}",
+                contractId, changeRequestId, userId);
+    }
+
+    @Transactional
+    public LoanContractChangeDTO submitRequesterSignature(
+            Long contractId,
+            Long changeRequestId,
+            Long userId,
+            MultipartFile signature
+    ) {
+        LoanContractChangeDTO changeDTO = getChangeRequest(changeRequestId);
+
+        if (!changeDTO.getContractId().equals(contractId)) {
+            throw ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
+        }
+
+        if (!changeDTO.getUserId().equals(userId)) {
+            throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
+        }
+
+        if (changeDTO.getStatus() != ChangeRequestStatus.PENDING) {
+            throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
+        }
+
+        String savedPath = fileService.saveSignatureFile(changeRequestId, signature);
+
+        int updatedRows = contractChangeMapper.updateRequesterSignature(changeRequestId, savedPath);
+        if (updatedRows == 0) {
+            throw ContractChangeErrorCode.ALREADY_SIGNED.toException();
+        }
+
+        LoanContractResponse contract = loanContractService.findContract(contractId, userId);
+        UserResponse requesterInfo = userService.getMyInfo(userId);
+
+        notificationService.create(
+                contract.getDebtorId(),
+                NotificationType.CONTRACT_CHANGE,
+                "계약 변경 요청",
+                requesterInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
+                contractId,
+                changeRequestId
+        );
+
+        return getChangeRequest(changeRequestId);
     }
 }

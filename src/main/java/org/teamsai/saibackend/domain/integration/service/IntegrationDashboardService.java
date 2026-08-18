@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.integration.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.teamsai.saibackend.domain.calendar.response.DashboardCalendarItemResponse;
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardContractRowResponse;
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardResponse;
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardSummaryResponse;
@@ -270,6 +271,62 @@ public class IntegrationDashboardService {
                         .hasInbound(entry.getValue().inbound)
                         .hasOutbound(entry.getValue().outbound)
                         .build())
+                .toList();
+    }
+
+    private List<DashboardCalendarItemResponse> getLoanCalendarItems(
+            List<DashboardService.LoanScheduleContext> loanSchedules,
+            LocalDate date,
+            Long userId
+    ) {
+        return loanSchedules.stream()
+                .filter(context -> context.schedule().getStatus() == RepaymentScheduleStatus.PENDING)
+                .filter(context -> date.equals(context.schedule().getDueDate()))
+                .map(context -> {
+                    boolean isCreditor = userId.equals(context.contract().getCreditorId());
+                    return DashboardCalendarItemResponse.builder()
+                            .targetId(context.contract().getContractId())
+                            .type(PaymentTargetType.LOAN)
+                            .title(context.contract().getContractAlias())
+                            .subLabel(isCreditor ? "수취예정" : "납부예정")
+                            .amount(context.schedule().getTotalPaymentDue())
+                            .detailUrl("/contracts/" + context.contract().getContractId() + "/schedule")
+                            .build();
+                })
+                .toList();
+    }
+
+    private List<DashboardCalendarItemResponse> getSettlementCalendarItems(
+            List<SettlementContext> settlements,
+            LocalDate date
+    ) {
+        return settlements.stream()
+                .filter(context -> !isClosed(context.settlement()))
+                .filter(context -> context.roleRemainingAmount().compareTo(BigDecimal.ZERO) > 0)
+                .filter(context -> context.settlement().dueDate() != null)
+                .filter(context -> context.settlement().dueDate().equals(date))
+                .map(context -> DashboardCalendarItemResponse.builder()
+                        .targetId(context.settlement().settlementId())
+                        .type(PaymentTargetType.SETTLEMENT)
+                        .title(context.settlement().title())
+                        .subLabel(context.isOwner() ? "받을 돈" : "낼 돈")
+                        .amount(context.roleRemainingAmount())
+                        .detailUrl("/settlements/" + context.settlement().settlementId())
+                        .build())
+                .toList();
+    }
+
+    public List<DashboardCalendarItemResponse> getCalendarDayDetail(Long userId, LocalDate date) {
+        DashboardService.IntegrationDashboardData loanData =
+                contractDashboardService.getIntegrationDashboardData(userId);
+        List<DashboardService.LoanScheduleContext> loanSchedules = loanData.loanSchedules();
+        List<SettlementContext> settlements = getSettlements(userId);
+
+        List<DashboardCalendarItemResponse> items = new ArrayList<>();
+        items.addAll(getLoanCalendarItems(loanSchedules, date, userId));
+        items.addAll(getSettlementCalendarItems(settlements, date));
+        return items.stream()
+                .sorted(Comparator.comparing(DashboardCalendarItemResponse::getTitle))
                 .toList();
     }
 
