@@ -9,7 +9,6 @@ import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardRes
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardSummaryResponse;
 import org.teamsai.saibackend.domain.contractdashboard.service.DashboardService;
 import org.teamsai.saibackend.domain.contractdashboard.type.DashboardContractStatus;
-import org.teamsai.saibackend.domain.contractdashboard.type.TransactionCategory;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.integration.dto.response.*;
 import org.teamsai.saibackend.domain.integration.type.DashboardAttentionType;
@@ -281,7 +280,6 @@ public class IntegrationDashboardService {
             LocalDate date,
             Long userId
     ) {
-
         Map<Long, Long> totalInstallmentsByContract = loanSchedules.stream()
                 .collect(Collectors.groupingBy(
                         context -> context.contract().getContractId(),
@@ -305,13 +303,13 @@ public class IntegrationDashboardService {
                             .amount(context.schedule().getTotalPaymentDue())
                             .detailUrl("/contracts/" + context.contract().getContractId() + "/schedule")
                             .counterpartyName(isCreditor
-                                        ? context.contract().getDebtorName()
-                                        : context.contract().getCreditorName())
-                            .categoryLabel(isCreditor
-                                        ? TransactionCategory.RECEIVE.getDescription()
-                                        : TransactionCategory.PAY.getDescription())
+                                    ? context.contract().getDebtorName()
+                                    : context.contract().getCreditorName())
                             .installmentInfo(context.schedule().getSequence() + "/" + totalInstallments + "회차")
                             .overdue(date.isBefore(today))
+                            .maturityDate(context.contract().getMaturityDate())
+                            .principalAmount(context.contract().getPrincipalAmount())
+                            .interestRate(context.contract().getInterestRate())
                             .build();
                 })
                 .toList();
@@ -321,7 +319,6 @@ public class IntegrationDashboardService {
             List<SettlementContext> settlements,
             LocalDate date
     ) {
-
         LocalDate today = LocalDate.now();
 
         return settlements.stream()
@@ -337,10 +334,21 @@ public class IntegrationDashboardService {
                         .amount(context.roleRemainingAmount())
                         .detailUrl("/settlements/" + context.settlement().settlementId())
                         .categoryLabel(context.settlement().settlementCategory())
-                        .installmentInfo(null)
                         .overdue(date.isBefore(today))
+                        .settlementTypeLabel(settlementTypeLabel(context.settlement().settlementType()))
+                        .splitTypeLabel(splitTypeLabel(context.settlement().splitType()))
+                        .periodStartDate(context.settlement().startDate())
+                        .periodEndDate(context.settlement().endDate())
                         .build())
                 .toList();
+    }
+
+    private String settlementTypeLabel(String settlementType) {
+        return "RECURRING".equals(settlementType) ? "정기정산" : "공동정산";
+    }
+
+    private String splitTypeLabel(String splitType) {
+        return "CUSTOM".equals(splitType) ? "직접입력" : "균등";
     }
 
     public List<DashboardCalendarItemResponse> getCalendarDayDetail(Long userId, LocalDate date) {

@@ -83,7 +83,7 @@ public class ContractChangeService {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
         boolean isCreditor = contract.getCreditorId().equals(userId);
-        boolean isDebtor = contract.getDebtorId().equals(userId);
+        boolean isDebtor = java.util.Objects.equals(contract.getDebtorId(), userId);
 
         if (!isCreditor && !isDebtor) {
             throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();

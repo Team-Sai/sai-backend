@@ -214,6 +214,10 @@
         renderDetailList();
     }
 
+    function formatDate(dateStr) {
+        return dateStr ? dateStr.replaceAll('-', '.') : '';
+    }
+
     function renderDetailList() {
         const items = currentFilter === 'ALL'
             ? currentItems
@@ -224,33 +228,82 @@
             return;
         }
 
-        detailList.innerHTML = items.map(item => {
+        detailList.innerHTML = items.map((item, index) => {
             const badgeClass = item.type === 'LOAN' ? 'badge-loan' : 'badge-settlement';
             const badgeLabel = item.type === 'LOAN' ? '대여' : '정산';
             const amount = Number(item.amount).toLocaleString(undefined, { maximumFractionDigits: 0 });
+            const isReceivable = item.subLabel === '수취예정' || item.subLabel === '받을 돈';
+            const directionClass = isReceivable ? 'is-receivable' : 'is-payable';
 
             const metaParts = [];
-            if (item.subLabel) metaParts.push(escapeHtml(item.subLabel));
+
             if (item.counterpartyName) metaParts.push(escapeHtml(item.counterpartyName));
             if (item.installmentInfo) metaParts.push(escapeHtml(item.installmentInfo));
-            if (item.categoryLabel) metaParts.push(escapeHtml(item.categoryLabel));
+            if (item.type === 'LOAN' && item.maturityDate) {
+                metaParts.push(`만기 ${formatDate(item.maturityDate)}`);
+            }
+            if (item.type === 'SETTLEMENT' && item.categoryLabel) {
+                metaParts.push(escapeHtml(item.categoryLabel));
+            }
             const metaText = metaParts.join(' · ');
 
+            const expandRows = [];
+            if (item.type === 'LOAN') {
+                if (item.principalAmount != null) {
+                    expandRows.push(['원금', `${Number(item.principalAmount).toLocaleString()}원`]);
+                }
+                if (item.interestRate != null) {
+                    expandRows.push(['이자율', `${item.interestRate}%`]);
+                }
+            } else {
+                if (item.settlementTypeLabel) expandRows.push(['유형', escapeHtml(item.settlementTypeLabel)]);
+                if (item.splitTypeLabel) expandRows.push(['정산방식', escapeHtml(item.splitTypeLabel)]);
+                if (item.periodStartDate && item.periodEndDate) {
+                    expandRows.push(['기간', `${formatDate(item.periodStartDate)} ~ ${formatDate(item.periodEndDate)}`]);
+                }
+            }
+
+            const expandHtml = expandRows.length > 0
+                ? expandRows.map(([label, value]) =>
+                    `<div class="detail-expand-row"><dt>${label}</dt><dd>${value}</dd></div>`
+                ).join('')
+                : '<p class="empty-state">추가 정보가 없어요.</p>';
+
             return `
-                <a class="detail-item${item.overdue ? ' is-overdue' : ''}" href="${escapeHtml(item.detailUrl)}">
-                    <div class="detail-item-main">
-                        <div class="detail-item-top">
-                            <span class="badge ${badgeClass}">${badgeLabel}</span>
-                            <span class="detail-title">${escapeHtml(item.title)}</span>
-                            ${item.overdue ? '<span class="badge badge-overdue">연체</span>' : ''}
+                <div class="detail-item ${directionClass}${item.overdue ? ' is-overdue' : ''}" data-index="${index}">
+                    <button type="button" class="detail-item-header" aria-expanded="false">
+                        <div class="detail-item-main">
+                             <div class="detail-item-top">
+                                 <span class="badge ${badgeClass}">${badgeLabel}</span>
+                                 <span class="detail-title">${escapeHtml(item.title)}</span>
+                                 ${item.overdue ? '<span class="badge badge-overdue">연체</span>' : ''}
+                             </div>
+                         <div class="detail-item-meta">
+                            <span class="direction-label">${escapeHtml(item.subLabel)}</span>${metaText ? ' · ' + metaText : ''}
+                         </div>
                         </div>
-                        <div class="detail-item-meta">${metaText}</div>
-                    </div>
-                    <span class="detail-amount">${amount}원</span>
-                </a>
-            `;
+                        <span class="detail-amount">${amount}원</span>
+                    </button>
+                <dl class="detail-item-expand" hidden>
+                    ${expandHtml}
+                    <a class="detail-view-link" href="${escapeHtml(item.detailUrl)}">상세보기 →</a>
+                </dl>
+            </div>
+        `;
         }).join('');
     }
+
+    detailList.addEventListener('click', (e) => {
+        const header = e.target.closest('.detail-item-header');
+        if (!header) return;
+
+        const item = header.closest('.detail-item');
+        const expand = item.querySelector('.detail-item-expand');
+        const isOpen = header.getAttribute('aria-expanded') === 'true';
+
+        header.setAttribute('aria-expanded', String(!isOpen));
+        expand.hidden = isOpen;
+    });
 
     prevMonthBtn.addEventListener('click', () => {
         viewMonth -= 1;

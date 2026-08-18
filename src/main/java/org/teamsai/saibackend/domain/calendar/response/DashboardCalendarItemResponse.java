@@ -5,6 +5,7 @@ import lombok.Getter;
 import org.teamsai.saibackend.domain.payment.type.PaymentTargetType;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter@Builder
 public class DashboardCalendarItemResponse {
@@ -17,6 +18,15 @@ public class DashboardCalendarItemResponse {
     private String detailUrl;
     private String counterpartyName;
     private String categoryLabel;
-    private String installmentInfo;
+    private String installmentInfo;    
     private boolean overdue;
+
+    private LocalDate maturityDate;
+    private BigDecimal principalAmount;
+    private BigDecimal interestRate;
+
+    private String settlementTypeLabel;
+    private String splitTypeLabel;
+    private LocalDate periodStartDate;
+    private LocalDate periodEndDate;
 }

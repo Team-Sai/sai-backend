@@ -344,7 +344,7 @@ public class CalendarTest {
     }
 
     @Test
-    void 대여_항목에는_상대방_이름과_구분_라벨이_채워진다() {
+    void 대여_항목에는_상대방_이름과_만기일_원금_이자율이_채워진다() {
         LoanContractResponse contract = buildContract(20L, USER_ID, 2L, "생활비 대출", "김채권", "이채무");
         RepaymentScheduleDTO schedule = buildSchedule(TARGET_DATE, RepaymentScheduleStatus.PENDING, 600_000);
 
@@ -358,11 +358,13 @@ public class CalendarTest {
         assertThat(result).hasSize(1);
         DashboardCalendarItemResponse item = result.get(0);
         assertThat(item.getCounterpartyName()).isEqualTo("이채무");
-        assertThat(item.getCategoryLabel()).isEqualTo("수취");
+        assertThat(item.getMaturityDate()).isEqualTo(LocalDate.of(2027, 6, 14));
+        assertThat(item.getPrincipalAmount()).isEqualByComparingTo("1000000");
+        assertThat(item.getInterestRate()).isEqualByComparingTo("5");
     }
 
     @Test
-    void 채무자_입장에서는_상대방이_채권자이고_구분은_납부다() {
+    void 채무자_입장에서는_상대방이_채권자이다() {
         LoanContractResponse contract = buildContract(21L, 2L, USER_ID, "차량구입 대출", "김채권", "이채무");
         RepaymentScheduleDTO schedule = buildSchedule(TARGET_DATE, RepaymentScheduleStatus.PENDING, 350_000);
 
@@ -374,9 +376,7 @@ public class CalendarTest {
                 integrationDashboardService.getCalendarDayDetail(USER_ID, TARGET_DATE);
 
         assertThat(result).hasSize(1);
-        DashboardCalendarItemResponse item = result.get(0);
-        assertThat(item.getCounterpartyName()).isEqualTo("김채권");
-        assertThat(item.getCategoryLabel()).isEqualTo("납부");
+        assertThat(result.get(0).getCounterpartyName()).isEqualTo("김채권");
     }
 
     @Test
@@ -451,5 +451,51 @@ public class CalendarTest {
         assertThat(item.getCategoryLabel()).isEqualTo("ETC");
         assertThat(item.getInstallmentInfo()).isNull();
         assertThat(item.getCounterpartyName()).isNull();
+    }
+
+    @Test
+    void 정산_항목에는_유형과_정산방식과_기간이_채워진다() {
+        when(contractDashboardService.getIntegrationDashboardData(USER_ID))
+                .thenReturn(loanData(null, List.of()));
+
+        SettlementListResponse settlement = new SettlementListResponse(
+                106L, "여행 정산", "OWNER", "TRAVEL", "RECURRING", "CUSTOM",
+                "OPEN", TARGET_DATE, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31),
+                LocalDateTime.now()
+        );
+        when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of(settlement));
+        when(settlementPaymentStatusService.getPaymentStatus(106L, USER_ID))
+                .thenReturn(paymentStatus(106L, BigDecimal.valueOf(10_000), BigDecimal.valueOf(10_000)));
+
+        List<DashboardCalendarItemResponse> result =
+                integrationDashboardService.getCalendarDayDetail(USER_ID, TARGET_DATE);
+
+        assertThat(result).hasSize(1);
+        DashboardCalendarItemResponse item = result.get(0);
+        assertThat(item.getSettlementTypeLabel()).isEqualTo("정기정산");
+        assertThat(item.getSplitTypeLabel()).isEqualTo("직접입력");
+        assertThat(item.getPeriodStartDate()).isEqualTo(LocalDate.of(2026, 8, 1));
+        assertThat(item.getPeriodEndDate()).isEqualTo(LocalDate.of(2026, 8, 31));
+    }
+
+    @Test
+    void 정산_항목의_유형과_정산방식_기본값은_공동정산과_균등이다() {
+        when(contractDashboardService.getIntegrationDashboardData(USER_ID))
+                .thenReturn(loanData(null, List.of()));
+
+        SettlementListResponse settlement = settlement(
+                107L, "회식비 정산", "OWNER", "OPEN", TARGET_DATE, LocalDateTime.now()
+        );
+        when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of(settlement));
+        when(settlementPaymentStatusService.getPaymentStatus(107L, USER_ID))
+                .thenReturn(paymentStatus(107L, BigDecimal.valueOf(10_000), BigDecimal.valueOf(10_000)));
+
+        List<DashboardCalendarItemResponse> result =
+                integrationDashboardService.getCalendarDayDetail(USER_ID, TARGET_DATE);
+
+        assertThat(result).hasSize(1);
+        DashboardCalendarItemResponse item = result.get(0);
+        assertThat(item.getSettlementTypeLabel()).isEqualTo("공동정산");
+        assertThat(item.getSplitTypeLabel()).isEqualTo("균등");
     }
 }
