@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.settlement.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
+import org.teamsai.saibackend.domain.settlement.dto.response.SettlementArchiveDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse;
 
@@ -33,7 +34,12 @@ public interface SettlementMapper {
             @Param("settlementId") Long settlementId,
             @Param("userId") Long userId
     );
-    
+
+    Optional<SettlementArchiveDetailResponse> findArchiveDetailById(
+            @Param("settlementId") Long settlementId,
+            @Param("userId") Long userId
+    );
+
     int countInProgressSettlements();
 
     List<SettlementDTO> findInProgressSettlements(@Param("offset") int offset, @Param("limit") int limit);

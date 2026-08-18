@@ -181,6 +181,34 @@
 
     </select>
 
+    <select id="findArchiveDetailById"
+            resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementArchiveDetailResponse">
+
+        SELECT
+        s.settlement_id AS settlementId,
+        s.title AS title,
+        s.settlement_type AS settlementType,
+        ou.name AS ownerName,
+
+        CASE
+        WHEN s.owner_id = #{userId} THEN 'OWNER'
+        WHEN sp.participant_id IS NOT NULL THEN 'MEMBER'
+        ELSE 'NONE'
+        END AS role
+
+        FROM settlement s
+
+        JOIN users ou ON ou.user_id = s.owner_id
+
+        LEFT JOIN settlement_participant sp
+        ON sp.settlement_id = s.settlement_id
+        AND sp.user_id = #{userId}
+        AND sp.participant_status = 'ACTIVE'
+
+        WHERE s.settlement_id = #{settlementId}
+
+    </select>
+
     <select id="countInProgressSettlements" resultType="int">
         SELECT COUNT(*)
         FROM settlement
