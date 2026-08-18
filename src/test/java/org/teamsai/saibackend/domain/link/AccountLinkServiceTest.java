@@ -4,13 +4,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
-import org.teamsai.saibackend.domain.link.event.PreviousUserKeyRevokedEvent;
 import org.teamsai.saibackend.domain.link.service.AccountLinkService;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
@@ -18,7 +15,6 @@ import org.teamsai.saibackend.global.exception.DomainException;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
@@ -34,8 +30,6 @@ class AccountLinkServiceTest {
     private UserMapper userMapper;
     @Mock
     private LinkedBankAccountService linkedBankAccountService;
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
     @InjectMocks
     private AccountLinkService accountLinkService;
 
@@ -48,42 +42,25 @@ class AccountLinkServiceTest {
     class CompleteLink {
 
         @Test
-        @DisplayName("기존 키가 있으면 갱신 후 이전 키 revoke 이벤트를 발행한다")
-        void publishesRevokeEventWhenPreviousKeyExists() {
-            given(userMapper.findUserKeyByUserId(USER_ID)).willReturn(OLD_KEY);
-            given(userMapper.updateUserKeyByUserId(USER_ID, NEW_KEY, OLD_KEY)).willReturn(1);
-
-            accountLinkService.completeLink(USER_ID, NEW_KEY, List.of(1L, 2L));
-
-            verify(linkedBankAccountService).linkAccountsByIds(USER_ID, NEW_KEY, List.of(1L, 2L));
-
-            ArgumentCaptor<PreviousUserKeyRevokedEvent> captor =
-                    ArgumentCaptor.forClass(PreviousUserKeyRevokedEvent.class);
-            verify(eventPublisher).publishEvent(captor.capture());
-            assertThat(captor.getValue().userId()).isEqualTo(USER_ID);
-            assertThat(captor.getValue().previousUserKey()).isEqualTo(OLD_KEY);
-        }
-
-        @Test
-        @DisplayName("기존 키가 없으면(최초 연동) revoke 이벤트를 발행하지 않는다")
-        void doesNotPublishEventWhenNoPreviousKey() {
+        @DisplayName("기존 키가 없으면(최초 연동) 정상적으로 갱신되고 계좌가 연동된다")
+        void linksSuccessfullyWhenNoPreviousKey() {
             given(userMapper.findUserKeyByUserId(USER_ID)).willReturn(null);
             given(userMapper.updateUserKeyByUserId(USER_ID, NEW_KEY, null)).willReturn(1);
 
             accountLinkService.completeLink(USER_ID, NEW_KEY, List.of(1L));
 
-            verify(eventPublisher, never()).publishEvent(anyEvent());
+            verify(linkedBankAccountService).linkAccountsByIds(USER_ID, NEW_KEY, List.of(1L));
         }
 
         @Test
-        @DisplayName("기존 키와 새 키가 같으면 revoke 이벤트를 발행하지 않는다")
-        void doesNotPublishEventWhenKeyUnchanged() {
+        @DisplayName("기존 키와 새 키가 같아도 정상적으로 갱신되고 계좌가 연동된다")
+        void linksSuccessfullyWhenKeyUnchanged() {
             given(userMapper.findUserKeyByUserId(USER_ID)).willReturn(NEW_KEY);
             given(userMapper.updateUserKeyByUserId(USER_ID, NEW_KEY, NEW_KEY)).willReturn(1);
 
             accountLinkService.completeLink(USER_ID, NEW_KEY, List.of(1L));
 
-            verify(eventPublisher, never()).publishEvent(anyEvent());
+            verify(linkedBankAccountService).linkAccountsByIds(USER_ID, NEW_KEY, List.of(1L));
         }
 
         @Test
@@ -100,12 +77,11 @@ class AccountLinkServiceTest {
             // 새로 발급된 키의 revoke는 AccountLinkFlowController가 DomainException catch 시
             // 일괄 처리하므로, 여기서는 서비스가 직접 revoke를 호출하지 않는다.
             verify(linkedBankAccountService, never()).linkAccountsByIds(anyLong(), anyString(), anyList());
-            verify(eventPublisher, never()).publishEvent(any(PreviousUserKeyRevokedEvent.class));
         }
 
         @Test
-        @DisplayName("계좌 연동이 실패하면 예외가 전파되고 revoke 이벤트는 발행되지 않는다")
-        void doesNotPublishEventWhenLinkAccountsFails() {
+        @DisplayName("계좌 연동이 실패하면 예외가 그대로 전파된다")
+        void propagatesExceptionWhenLinkAccountsFails() {
             given(userMapper.findUserKeyByUserId(USER_ID)).willReturn(OLD_KEY);
             given(userMapper.updateUserKeyByUserId(USER_ID, NEW_KEY, OLD_KEY)).willReturn(1);
             willThrow(new RuntimeException("mock-bank 조회 실패"))
@@ -113,12 +89,6 @@ class AccountLinkServiceTest {
 
             assertThatThrownBy(() -> accountLinkService.completeLink(USER_ID, NEW_KEY, List.of(1L)))
                     .isInstanceOf(RuntimeException.class);
-
-            verify(eventPublisher, never()).publishEvent(anyEvent());
         }
-    }
-
-    private static PreviousUserKeyRevokedEvent anyEvent() {
-        return any(PreviousUserKeyRevokedEvent.class);
     }
 }

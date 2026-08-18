@@ -2,13 +2,12 @@ package org.teamsai.saibackend.domain.link.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
-import org.teamsai.saibackend.domain.link.event.PreviousUserKeyRevokedEvent;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
+import org.teamsai.saibackend.global.client.UserKeyRevoker;
 
 import java.util.List;
 
@@ -19,7 +18,7 @@ public class AccountLinkService {
 
     private final UserMapper userMapper;
     private final LinkedBankAccountService linkedBankAccountService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final UserKeyRevoker userKeyRevoker;
 
     @Transactional
     public void completeLink(Long userId, String userKey, List<Long> accountIds) {
@@ -30,13 +29,10 @@ public class AccountLinkService {
                     "[AccountLinkService] userKey 갱신 실패(동시 요청 경합 가능) - userId: {}",
                     userId
             );
+            userKeyRevoker.revokeBestEffort("AccountLinkService", userId, userKey);
             throw UserErrorCode.LINK_KEY_UPDATE_CONFLICT.toException();
         }
 
         linkedBankAccountService.linkAccountsByIds(userId, userKey, accountIds);
-
-        if (previousUserKey != null && !previousUserKey.equals(userKey)) {
-            eventPublisher.publishEvent(new PreviousUserKeyRevokedEvent(userId, previousUserKey));
-        }
     }
 }
