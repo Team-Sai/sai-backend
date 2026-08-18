@@ -3,8 +3,9 @@ package org.teamsai.saibackend.domain.batch.repaymentschedule.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.batch.MyBatisCursorItemReader;
 import org.mybatis.spring.batch.MyBatisPagingItemReader;
-import org.mybatis.spring.batch.builder.MyBatisPagingItemReaderBuilder;
+import org.mybatis.spring.batch.builder.MyBatisCursorItemReaderBuilder;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -64,7 +65,7 @@ public class RepaymentDueReminderJobConfig {
 
     @Bean
     @StepScope
-    public MyBatisPagingItemReader<RepaymentScheduleDTO> repaymentDueReminderReader(
+    public MyBatisCursorItemReader<RepaymentScheduleDTO> repaymentDueReminderReader(
             @Value("#{jobParameters['baseDate']}") String baseDateParam) {
 
         LocalDate baseDate = LocalDate.parse(baseDateParam);
@@ -77,11 +78,10 @@ public class RepaymentDueReminderJobConfig {
         Map<String, Object> params = new HashMap<>();
         params.put("dueDates", targetDates);
 
-        return new MyBatisPagingItemReaderBuilder<RepaymentScheduleDTO>()
+        return new MyBatisCursorItemReaderBuilder<RepaymentScheduleDTO>()
                 .sqlSessionFactory(sqlSessionFactory)
                 .queryId("org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper.findDueOnDates")
                 .parameterValues(params)
-                .pageSize(100)
                 .build();
     }
 
