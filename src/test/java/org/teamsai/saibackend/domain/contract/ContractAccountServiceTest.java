@@ -214,6 +214,44 @@ class ContractAccountServiceTest {
         }
 
         @Test
+        @DisplayName("계약이 SUPERSEDED 상태면 예외가 발생하고 변경하지 않는다")
+        void changeContractAccountFailsWhenContractSuperseded() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.SUPERSEDED)));
+
+            assertThatThrownBy(() ->
+                    contractAccountService.changeContractAccount(CONTRACT_ID, CREDITOR_ID, OTHER_LINKED_ACCOUNT_ID)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(contractAccountMapper, never()).updateContractAccountStatus(any(), any());
+            verify(contractAccountMapper, never()).insertContractAccount(any());
+        }
+
+        @Test
+        @DisplayName("계약이 TERMINATED 상태면 예외가 발생하고 변경하지 않는다")
+        void changeContractAccountFailsWhenContractTerminated() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.TERMINATED)));
+
+            assertThatThrownBy(() ->
+                    contractAccountService.changeContractAccount(CONTRACT_ID, CREDITOR_ID, OTHER_LINKED_ACCOUNT_ID)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(contractAccountMapper, never()).updateContractAccountStatus(any(), any());
+            verify(contractAccountMapper, never()).insertContractAccount(any());
+        }
+
+        @Test
         @DisplayName("새로 선택한 계좌가 선택 불가능하면 예외가 발생하고 변경하지 않는다")
         void changeContractAccountFailsWhenNewAccountNotSelectable() {
             given(loanContractMapper.findContractById(CONTRACT_ID))
@@ -316,6 +354,42 @@ class ContractAccountServiceTest {
         void deactivateContractAccountFailsWhenContractCompleted() {
             given(loanContractMapper.findContractById(CONTRACT_ID))
                     .willReturn(Optional.of(createContract(ContractStatus.COMPLETED)));
+
+            assertThatThrownBy(() ->
+                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(contractAccountMapper, never()).updateContractAccountStatus(any(), any());
+        }
+
+        @Test
+        @DisplayName("계약이 SUPERSEDED 상태면 예외가 발생하고 비활성화하지 않는다")
+        void deactivateContractAccountFailsWhenContractSuperseded() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.SUPERSEDED)));
+
+            assertThatThrownBy(() ->
+                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(contractAccountMapper, never()).updateContractAccountStatus(any(), any());
+        }
+
+        @Test
+        @DisplayName("계약이 TERMINATED 상태면 예외가 발생하고 비활성화하지 않는다")
+        void deactivateContractAccountFailsWhenContractTerminated() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.TERMINATED)));
 
             assertThatThrownBy(() ->
                     contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)

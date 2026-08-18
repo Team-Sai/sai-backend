@@ -9,11 +9,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.multipart.MultipartFile;
-import org.teamsai.saibackend.domain.archive.service.ArchiveService;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractRelationType;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.event.ContractCompletedEvent;
 import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
@@ -38,6 +39,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.*;
@@ -74,9 +77,6 @@ class LoanContractServiceTest {
     @Mock
     private NotificationService notificationService;
 
-    @Mock
-    private ArchiveService archiveService;
-
     @InjectMocks
     private LoanContractService loanContractService;
 
@@ -96,6 +96,20 @@ class LoanContractServiceTest {
             );
             verify(userService).getMyInfo(CREDITOR_ID);
             verify(contractMapper).insertByContract(request, CREDITOR_ID);
+        }
+
+        @Test
+        @DisplayName("요청에 담긴 relationType을 그대로 매퍼에 전달한다")
+        void createContractPassesRelationTypeToMapper() {
+            LoanContractRequest request = createRequest();
+            request.setRelationType(ContractRelationType.ACQUAINTANCE);
+
+            loanContractService.createContract(request, CREDITOR_ID);
+
+            verify(contractMapper).insertByContract(
+                    argThat(r -> r.getRelationType() == ContractRelationType.ACQUAINTANCE),
+                    eq(CREDITOR_ID)
+            );
         }
 
         @Test
@@ -294,7 +308,6 @@ class LoanContractServiceTest {
                     .willReturn(UserResponse.builder().name("김채권").birthDate(LocalDate.of(1995, 5, 5)).build());
             given(userService.getMyInfo(DEBTOR_ID))
                     .willReturn(UserResponse.builder().name("이채무").birthDate(LocalDate.of(1996, 6, 6)).build());
-            given(archiveService.renderContractPdf(any())).willReturn(new byte[]{1, 2, 3});
 
             ContractStatus status = loanContractService.submitDebtorSignature(
                     CONTRACT_ID, DEBTOR_ID, debtorAddress, signature, IDENTITY_VERIFICATION_ID
@@ -306,9 +319,8 @@ class LoanContractServiceTest {
             verify(contractMapper).updateDebtorSignature(
                     CONTRACT_ID, debtorAddress, "uploads/signatures/1_signature.png", ContractStatus.COMPLETED
             );
-            verify(archiveService).saveFile(
-                    eq("CONTRACT"), eq(CONTRACT_ID), eq("차용증_" + CONTRACT_ID + ".pdf"), eq("application/pdf"), any(), eq(3L)
-            );
+            // PDF 아카이빙은 ContractArchiveEventListener가 ContractCompletedEvent를 구독해 비동기로 처리한다.
+            verify(eventPublisher).publishEvent(any(ContractCompletedEvent.class));
             assertThat(status).isEqualTo(ContractStatus.COMPLETED);
         }
 
@@ -489,6 +501,7 @@ class LoanContractServiceTest {
     private LoanContractRequest createRequest() {
         return LoanContractRequest.builder()
                 .identityVerificationId(IDENTITY_VERIFICATION_ID)
+                .relationType(ContractRelationType.FAMILY)
                 .principalAmount(BigDecimal.valueOf(1_000_000))
                 .interestRate(BigDecimal.valueOf(5.0))
                 .repaymentType(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST)
@@ -506,6 +519,7 @@ class LoanContractServiceTest {
                 .contractId(CONTRACT_ID)
                 .creditorId(CREDITOR_ID)
                 .debtorId(null)
+                .relationType(ContractRelationType.FAMILY)
                 .creditorName("김채권")
                 .creditorBirthDate("1995-05-05")
                 .creditorAddress("서울특별시 강남구 테헤란로 123")
@@ -525,6 +539,7 @@ class LoanContractServiceTest {
                 .contractId(CONTRACT_ID)
                 .creditorId(CREDITOR_ID)
                 .debtorId(DEBTOR_ID)
+                .relationType(ContractRelationType.FAMILY)
                 .creditorName("김채권")
                 .creditorBirthDate("1995-05-05")
                 .creditorAddress("서울특별시 강남구 테헤란로 123")

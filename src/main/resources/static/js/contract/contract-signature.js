@@ -146,6 +146,8 @@
     return response.json();
   }
 
+  let createdContractId = null;
+
   submitBtn?.addEventListener("click", async () => {
     if (!debtorUserTokenInput.value.trim()) {
       showStatus("차용증을 받을 채무자의 회원 토큰을 입력해 주세요.", true);
@@ -167,8 +169,12 @@
     showStatus("차용증을 전송하는 중입니다...", false);
 
     try {
-      const contractId = await createContract();
-      await submitSignature(contractId);
+      // 본인인증은 1회용이라 계약 생성 성공 후 서명 업로드에서 실패하면
+      // createContract를 재호출하지 않고 이미 생성된 contractId로 서명만 재시도한다.
+      if (createdContractId == null) {
+        createdContractId = await createContract();
+      }
+      await submitSignature(createdContractId);
 
       sessionStorage.removeItem(DRAFT_KEY);
       alert("차용증이 전송되었습니다.");
