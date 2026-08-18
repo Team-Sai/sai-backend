@@ -761,3 +761,173 @@ button { font-family: inherit; }
   margin-top: 20px;
   line-height: 1.5;
 }
+
+
+/* 세금 안심 가이드 모달 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 19, 23, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.notice {
+  width: 480px;
+  max-width: 100%;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.notice__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.notice__eyebrow {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.notice__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  padding: 4px;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(0, 110, 42, 0.08);
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.notice__close:hover {
+  background: rgba(0, 110, 42, 0.16);
+}
+
+.notice__body {
+  padding: 24px;
+}
+
+.notice__intro {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px dashed var(--line);
+}
+
+.notice__question {
+  margin: 0 0 8px;
+  font-size: 19px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.notice__desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.summary-box {
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.summary-box p {
+  margin: 0 0 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.summary-box p:last-child {
+  margin-bottom: 0;
+}
+
+.summary-title {
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 10px !important;
+  display: block !important;
+}
+
+.summary-total {
+  padding-top: 8px;
+  margin-top: 4px !important;
+  border-top: 1px dashed var(--line);
+  font-weight: 700;
+}
+
+.result-area {
+  margin-top: 16px;
+}
+
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.result-badge--safe {
+  background: rgba(0, 110, 42, 0.1);
+  color: var(--primary);
+}
+
+.result-badge--danger {
+  background: rgba(186, 26, 26, 0.1);
+  color: var(--error);
+}
+
+.result-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.result-safe-line {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.btn--primary:disabled {
+  background: var(--line);
+  color: #9AA1AC;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.notice__footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+}
+
+.btn--block {
+  width: 100%;
+}

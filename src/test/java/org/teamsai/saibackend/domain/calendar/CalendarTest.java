@@ -276,6 +276,7 @@ public class CalendarTest {
     private DashboardService.IntegrationDashboardData loanData(
             LoanContractResponse contract, List<RepaymentScheduleDTO> schedules
     ) {
+
         DashboardResponse dashboard = DashboardResponse.builder()
                 .summary(DashboardSummaryResponse.builder()
                         .totalLentAmount(BigDecimal.ZERO)
@@ -291,6 +292,7 @@ public class CalendarTest {
                 .toList();
 
         return new DashboardService.IntegrationDashboardData(dashboard, contexts);
+
     }
 
     private SettlementPaymentStatusResponse paymentStatus(
@@ -451,4 +453,3 @@ public class CalendarTest {
         assertThat(item.getCounterpartyName()).isNull();
     }
 }
-

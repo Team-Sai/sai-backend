@@ -3,6 +3,7 @@ package org.teamsai.saibackend.domain.payment.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
+import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO;
 import org.teamsai.saibackend.domain.payment.type.PaymentStatus;
 
@@ -21,9 +22,23 @@ public interface PaymentObligationMapper {
             @Param("paymentStatus") PaymentStatus paymentStatus
     );
 
-    List<MatchingCandidate> findMatchCandidatesByLinkedAccountId(
+    default List<MatchingCandidate> findMatchCandidatesByLinkedAccountId(
             @Param("linkedAccountId") Long linkedAccountId,
             @Param("transactionAt") LocalDateTime transactionAt
+    ) {
+        return findMatchCandidatesByLinkedAccountIdAndTarget(
+                linkedAccountId,
+                transactionAt,
+                null,
+                null
+        );
+    }
+
+    List<MatchingCandidate> findMatchCandidatesByLinkedAccountIdAndTarget(
+            @Param("linkedAccountId") Long linkedAccountId,
+            @Param("transactionAt") LocalDateTime transactionAt,
+            @Param("targetType") MatchingTargetType targetType,
+            @Param("aggregateId") Long aggregateId
     );
 
     int insert(PaymentObligationDTO paymentObligation);
@@ -35,4 +50,3 @@ public interface PaymentObligationMapper {
 
     int clearOverdueSince(@Param("paymentObligationId") Long paymentObligationId);
 }
-

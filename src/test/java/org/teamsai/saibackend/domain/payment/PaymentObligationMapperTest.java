@@ -114,6 +114,18 @@ class PaymentObligationMapperTest {
                                 new BigDecimal("15000").stripTrailingZeros()
                         )
                 );
+
+        List<MatchingCandidate> scopedResult =
+                paymentObligationMapper.findMatchCandidatesByLinkedAccountIdAndTarget(
+                        LINKED_ACCOUNT_ID,
+                        MATCHING_TRANSACTION_AT,
+                        MatchingTargetType.SETTLEMENT,
+                        9201L
+                );
+
+        assertThat(scopedResult)
+                .extracting(MatchingCandidate::targetId)
+                .containsExactly(9501L);
     }
 
     @Test

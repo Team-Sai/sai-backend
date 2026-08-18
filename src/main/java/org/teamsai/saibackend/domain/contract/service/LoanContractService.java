@@ -201,4 +201,9 @@ public class LoanContractService {
         contractMapper.updateChangeStatus(contractId, ContractStatus.CHANGE_REJECTED);
     }
 
+    @Transactional
+    public void supersedeContract(Long contractId) {
+        contractMapper.updateChangeStatus(contractId, ContractStatus.SUPERSEDED);
+    }
+
 }

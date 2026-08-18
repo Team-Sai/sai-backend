@@ -6,6 +6,7 @@ import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingTransactionResult;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingProcessStatus;
+import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO;
 import org.teamsai.saibackend.domain.transaction.service.BankTransactionService;
 
@@ -22,7 +23,17 @@ public class BankMatchingService {
             Long userId,
             Long linkedAccountId
     ) {
+        return execute(userId, linkedAccountId, null, null);
+    }
+
+    public AutoMatchingExecutionResult execute(
+            Long userId,
+            Long linkedAccountId,
+            MatchingTargetType targetType,
+            Long aggregateId
+    ) {
         validateLinkedAccountId(linkedAccountId);
+        validateMatchingScope(targetType, aggregateId);
 
         List<BankTransactionDTO> bankTransactions =
                 bankTransactionService.findPendingDepositsByLinkedAccountId(
@@ -37,13 +48,25 @@ public class BankMatchingService {
                 processTransactions(
                         userId,
                         linkedAccountId,
-                        bankTransactions
+                        bankTransactions,
+                        targetType,
+                        aggregateId
                 )
         );
     }
 
     private void validateLinkedAccountId(Long linkedAccountId) {
         if (linkedAccountId == null || linkedAccountId <= 0) {
+            throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
+        }
+    }
+
+    private void validateMatchingScope(
+            MatchingTargetType targetType,
+            Long aggregateId
+    ) {
+        if ((targetType == null) != (aggregateId == null)
+                || aggregateId != null && aggregateId <= 0) {
             throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
         }
     }
@@ -63,14 +86,25 @@ public class BankMatchingService {
     private List<AutoMatchingTransactionResult> processTransactions(
             Long userId,
             Long linkedAccountId,
-            List<BankTransactionDTO> bankTransactions
+            List<BankTransactionDTO> bankTransactions,
+            MatchingTargetType targetType,
+            Long aggregateId
     ) {
         return bankTransactions.stream()
-                .map(bankTransaction -> transactionService.process(
-                        userId,
-                        linkedAccountId,
-                        bankTransaction
-                ))
+                .map(bankTransaction -> targetType == null
+                        ? transactionService.process(
+                                userId,
+                                linkedAccountId,
+                                bankTransaction
+                        )
+                        : transactionService.process(
+                                userId,
+                                linkedAccountId,
+                                bankTransaction,
+                                targetType,
+                                aggregateId
+                        ))
+                .filter(java.util.Objects::nonNull)
                 .toList();
     }
 

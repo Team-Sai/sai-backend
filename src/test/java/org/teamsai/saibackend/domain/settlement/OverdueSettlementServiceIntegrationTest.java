@@ -43,8 +43,12 @@ class OverdueSettlementServiceIntegrationTest {
 
     @AfterEach
     void cleanUp() {
+        jdbcTemplate.update(
+                "DELETE FROM bank_transaction_match_candidate WHERE bank_transaction_id >= 90000"
+        );
         jdbcTemplate.update("DELETE FROM payment_record WHERE bank_transaction_id >= 90000");
         jdbcTemplate.update("DELETE FROM bank_transaction WHERE bank_transaction_id >= 90000");
+        jdbcTemplate.update("DELETE FROM settlement_account WHERE settlement_id >= 90000");
         jdbcTemplate.update("DELETE FROM linked_bank_account WHERE linked_account_id >= 90000");
         jdbcTemplate.update("DELETE FROM payment_obligation WHERE payment_obligation_id >= 90000");
         jdbcTemplate.update("DELETE FROM settlement_participant WHERE participant_id >= 90000");

@@ -126,6 +126,24 @@ function initNotificationCenter() {
                         `/settlements/${notification.referenceId}`
                 };
 
+            case "BANK_TRANSACTION_MATCHING_REVIEW":
+                return {
+                    category: "SYSTEM",
+                    iconClass: notification.resolved
+                        ? "icon-gray"
+                        : "icon-orange",
+                    accentClass: notification.resolved
+                        ? ""
+                        : "accent-orange",
+                    ctaLabel: notification.resolved
+                        ? "처리 완료"
+                        : "매칭 확인하기",
+                    ctaUrl: null,
+                    ctaAction: notification.resolved
+                        ? null
+                        : "MATCHING_REVIEW"
+                };
+
             default:
                 return {
                     category: "SYSTEM",
@@ -177,6 +195,18 @@ function initNotificationCenter() {
 
             ctaUrl:
                 view.ctaUrl,
+
+            ctaAction:
+                view.ctaAction || null,
+
+            referenceId:
+                notification.referenceId,
+
+            secondaryReferenceId:
+                notification.secondaryReferenceId,
+
+            resolved:
+                Boolean(notification.resolved),
 
             iconClass:
                 view.iconClass,
@@ -291,6 +321,7 @@ function initNotificationCenter() {
                                     <button
                                         type="button"
                                         class="notif-cta"
+                                        ${notification.resolved ? "disabled" : ""}
                                     >
                                         ${notification.ctaLabel}
                                     </button>
@@ -445,8 +476,31 @@ function initNotificationCenter() {
             ) {
                 window.location.href =
                     notification.ctaUrl;
+                return;
+            }
+
+            if (
+                notification?.ctaAction
+                === "MATCHING_REVIEW"
+            ) {
+                MatchingReviewModal.openTransaction({
+                    bankTransactionId:
+                        notification.referenceId,
+                    linkedAccountId:
+                        notification.secondaryReferenceId
+                }).catch((error) => {
+                    console.error(
+                        "매칭 검토 모달 조회 실패",
+                        error
+                    );
+                });
             }
         }
+    );
+
+    document.addEventListener(
+        "matching-review:processed",
+        fetchNotifications
     );
 
 
