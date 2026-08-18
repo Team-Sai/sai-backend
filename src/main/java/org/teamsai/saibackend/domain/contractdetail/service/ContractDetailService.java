@@ -17,7 +17,8 @@ public class ContractDetailService {
     public boolean canRequestChange(Long contractId, Long userId) {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
         boolean isCreditor = contract.getCreditorId().equals(userId);
-        return isCreditor && !contractChangeService.hasPendingChangeRequest(contractId);
+        boolean isDebtor = contract.getDebtorId().equals(userId);
+        return (isCreditor || isDebtor) && !contractChangeService.hasPendingChangeRequest(contractId);
     }
 
 
@@ -25,7 +26,8 @@ public class ContractDetailService {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
         boolean isCreditor = contract.getCreditorId().equals(userId);
-        boolean canRequestChange = isCreditor && !contractChangeService.hasPendingChangeRequest(contractId);
+        boolean isDebtor = contract.getDebtorId().equals(userId);
+        boolean canRequestChange = (isCreditor || isDebtor) && !contractChangeService.hasPendingChangeRequest(contractId);
 
         String address = isCreditor
                 ? contract.getCreditorAddress()

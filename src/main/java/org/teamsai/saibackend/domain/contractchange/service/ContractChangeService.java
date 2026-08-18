@@ -89,10 +89,6 @@ public class ContractChangeService {
             throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
         }
 
-        if (!isCreditor) {
-            throw ContractChangeErrorCode.NOT_CREDITOR.toException();
-        }
-
         if (contract.getStatus() != ContractStatus.COMPLETED) {
             throw ContractChangeErrorCode.CONTRACT_NOT_COMPLETED.toException();
         }
@@ -203,8 +199,11 @@ public class ContractChangeService {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
         LoanContractChangeDTO changeRequest = getChangeRequest(changeRequestId);
 
-        if(!contract.getDebtorId().equals(userId)) {
-            throw ContractChangeErrorCode.NOT_DEBTOR.toException();
+        boolean requesterIsCreditor = contract.getCreditorId().equals(changeRequest.getUserId());
+        Long approverId = requesterIsCreditor ? contract.getDebtorId() : contract.getCreditorId();
+
+        if(!approverId.equals(userId)) {
+            throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
         }
 
         if(!changeRequest.getContractId().equals(contractId)) {
@@ -220,11 +219,13 @@ public class ContractChangeService {
             throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
         }
         try {
+            UserResponse rejectorInfo = userService.getMyInfo(userId);
+
             notificationService.create(
-                    contract.getCreditorId(),
+                    changeRequest.getUserId(),
                     NotificationType.CONTRACT_CHANGE,
                     "계약 변경 요청 반려",
-                    contract.getDebtorName() + "님이 변경 요청을 반려했습니다.",
+                    rejectorInfo.getName() + "님이 변경 요청을 반려했습니다.",
                     contractId
             );
         } catch (Exception e) {
@@ -307,8 +308,11 @@ public class ContractChangeService {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
         UserResponse requesterInfo = userService.getMyInfo(userId);
 
+        boolean isCreditor = contract.getCreditorId().equals(userId);
+        Long recipientId = isCreditor ? contract.getDebtorId() : contract.getCreditorId();
+
         notificationService.create(
-                contract.getDebtorId(),
+                recipientId,
                 NotificationType.CONTRACT_CHANGE,
                 "계약 변경 요청",
                 requesterInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",

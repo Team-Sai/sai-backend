@@ -219,27 +219,24 @@ class ContractChangeServiceTest {
         }
 
         @Test
-        @DisplayName("채무자가 요청하면 예외가 발생하고 저장하지 않는다")
-        void requestChangeFailsWhenRequesterIsDebtor() {
+        @DisplayName("채무자가 요청해도 정상적으로 저장된다")
+        void requestChangeSucceedsWhenRequesterIsDebtor() {
             LoanContractResponse contract = LoanContractResponse.builder()
                     .contractId(CONTRACT_ID)
                     .status(ContractStatus.COMPLETED)
                     .creditorId(888L)
-                    .debtorId(USER_ID)   // ← 요청자가 채무자인 경우
+                    .debtorId(USER_ID)
                     .build();
 
             given(loanContractService.findContract(CONTRACT_ID, USER_ID))
                     .willReturn(contract);
+            given(contractChangeMapper.findByContractId(CONTRACT_ID))
+                    .willReturn(List.of());
 
-            assertThatThrownBy(() -> contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID))
-                    .isInstanceOfSatisfying(
-                            DomainException.class,
-                            exception -> assertThat(exception.getErrorCode())
-                                    .isEqualTo(ContractChangeErrorCode.NOT_CREDITOR)
-                    );
+            contractChangeService.requestChange(CONTRACT_ID, changeRequest(), USER_ID);
 
-            verify(contractChangeMapper, never()).insert(any());
-            verify(loanContractService, never()).insertChangedContract(any());
+            verify(contractChangeMapper).insert(any());
+            verify(loanContractService).insertChangedContract(any());
         }
     }
 
@@ -251,10 +248,11 @@ class ContractChangeServiceTest {
         private static final Long V2_CONTRACT_ID = 2L;
         private static final String RETURN_REASON = "이율이 너무 높습니다";
 
-        private LoanContractChangeDTO pendingChangeRequest() {
+        private LoanContractChangeDTO pendingChangeRequest(Long requesterId) {
             return LoanContractChangeDTO.builder()
                     .changeRequestId(CHANGE_REQUEST_ID)
                     .contractId(CONTRACT_ID)
+                    .userId(requesterId)
                     .status(ChangeRequestStatus.PENDING)
                     .build();
         }
@@ -268,16 +266,38 @@ class ContractChangeServiceTest {
         }
 
         @Test
-        @DisplayName("채무자가 PENDING 요청을 반려하면 사유를 저장하고 v2를 CHANGE_REJECTED로 바꾼다")
-        void rejectChangeSuccess() {
-            given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID))
+        @DisplayName("채무자가 요청한 건을 채권자가 반려할 수 있다")
+        void rejectChangeSuccessWhenRequesterIsDebtor() {
+            given(loanContractService.findContract(CONTRACT_ID, USER_ID))
                     .willReturn(createContract(ContractStatus.COMPLETED));
             given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
-                    .willReturn(Optional.of(pendingChangeRequest()));
+                    .willReturn(Optional.of(pendingChangeRequest(DEBTOR_ID)));
             given(contractChangeMapper.updateStatusWithReturnReason(CHANGE_REQUEST_ID, ChangeRequestStatus.REJECTED, RETURN_REASON))
                     .willReturn(1);
             given(loanContractService.findPendingContractByPreviousId(CONTRACT_ID))
                     .willReturn(Optional.of(pendingV2()));
+            given(userService.getMyInfo(USER_ID))
+                    .willReturn(UserResponse.builder().name("채권자").build());
+
+            contractChangeService.rejectChange(CONTRACT_ID, CHANGE_REQUEST_ID, RETURN_REASON, USER_ID);
+
+            verify(contractChangeMapper)
+                    .updateStatusWithReturnReason(CHANGE_REQUEST_ID, ChangeRequestStatus.REJECTED, RETURN_REASON);
+        }
+
+        @Test
+        @DisplayName("채권자가 요청한 건을 채무자가 반려하면 사유를 저장하고 v2를 REJECTED로 바꾼다")
+        void rejectChangeSuccess() {
+            given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(pendingChangeRequest(USER_ID)));
+            given(contractChangeMapper.updateStatusWithReturnReason(CHANGE_REQUEST_ID, ChangeRequestStatus.REJECTED, RETURN_REASON))
+                    .willReturn(1);
+            given(loanContractService.findPendingContractByPreviousId(CONTRACT_ID))
+                    .willReturn(Optional.of(pendingV2()));
+            given(userService.getMyInfo(DEBTOR_ID))
+                    .willReturn(UserResponse.builder().name("채무자").build());
 
             contractChangeService.rejectChange(CONTRACT_ID, CHANGE_REQUEST_ID, RETURN_REASON, DEBTOR_ID);
 
@@ -292,14 +312,14 @@ class ContractChangeServiceTest {
             given(loanContractService.findContract(CONTRACT_ID, USER_ID))
                     .willReturn(createContract(ContractStatus.COMPLETED));
             given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
-                    .willReturn(Optional.of(pendingChangeRequest()));
+                    .willReturn(Optional.of(pendingChangeRequest(USER_ID)));
 
             assertThatThrownBy(() ->
                     contractChangeService.rejectChange(CONTRACT_ID, CHANGE_REQUEST_ID, RETURN_REASON, USER_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
-                                    .isEqualTo(ContractChangeErrorCode.NOT_DEBTOR)
+                                    .isEqualTo(ContractChangeErrorCode.NOT_CONTRACT_PARTY)
                     );
 
             verify(contractChangeMapper, never()).updateStatusWithReturnReason(any(), any(), any());
@@ -312,6 +332,7 @@ class ContractChangeServiceTest {
             LoanContractChangeDTO otherContractRequest = LoanContractChangeDTO.builder()
                     .changeRequestId(CHANGE_REQUEST_ID)
                     .contractId(999L)
+                    .userId(USER_ID)
                     .status(ChangeRequestStatus.PENDING)
                     .build();
 
@@ -335,6 +356,7 @@ class ContractChangeServiceTest {
             LoanContractChangeDTO approvedRequest = LoanContractChangeDTO.builder()
                     .changeRequestId(CHANGE_REQUEST_ID)
                     .contractId(CONTRACT_ID)
+                    .userId(USER_ID)
                     .status(ChangeRequestStatus.APPROVED)
                     .build();
 
@@ -377,7 +399,7 @@ class ContractChangeServiceTest {
             given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID))
                     .willReturn(createContract(ContractStatus.COMPLETED));
             given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
-                    .willReturn(Optional.of(pendingChangeRequest()));
+                    .willReturn(Optional.of(pendingChangeRequest(USER_ID)));
             given(contractChangeMapper.updateStatusWithReturnReason(CHANGE_REQUEST_ID, ChangeRequestStatus.REJECTED, RETURN_REASON))
                     .willReturn(0);
 
@@ -413,8 +435,33 @@ class ContractChangeServiceTest {
         }
 
         @Test
-        @DisplayName("요청 등록 당사자가 대기 중인 요청에 서명하면 서명을 저장하고 상대방에게 알림을 보낸다")
-        void submitRequesterSignatureSuccess() {
+        @DisplayName("채무자가 요청자면 서명 후 채권자에게 알림이 간다")
+        void submitRequesterSignatureSuccessWhenRequesterIsDebtor() {
+            MultipartFile signature = mock(MultipartFile.class);
+
+            given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
+                    .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, DEBTOR_ID, CONTRACT_ID)));
+            given(fileService.saveSignatureFile(CHANGE_REQUEST_ID, signature))
+                    .willReturn(SAVED_PATH);
+            given(contractChangeMapper.updateRequesterSignature(CHANGE_REQUEST_ID, SAVED_PATH))
+                    .willReturn(1);
+            given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID))
+                    .willReturn(createContract(ContractStatus.COMPLETED));
+            given(userService.getMyInfo(DEBTOR_ID))
+                    .willReturn(UserResponse.builder().name("채무자").build());
+
+            contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, DEBTOR_ID, signature);
+
+            verify(notificationService).create(
+                    eq(USER_ID),
+                    eq(NotificationType.CONTRACT_CHANGE),
+                    any(), any(), eq(CONTRACT_ID), eq(CHANGE_REQUEST_ID)
+            );
+        }
+
+        @Test
+        @DisplayName("채권자가 요청자면 서명 후 채무자에게 알림이 간다")
+        void submitRequesterSignatureSuccessWhenRequesterIsCreditor() {
             MultipartFile signature = mock(MultipartFile.class);
 
             given(contractChangeMapper.findByChangeRequestId(CHANGE_REQUEST_ID))
@@ -430,15 +477,10 @@ class ContractChangeServiceTest {
 
             contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature);
 
-            verify(fileService).saveSignatureFile(CHANGE_REQUEST_ID, signature);
-            verify(contractChangeMapper).updateRequesterSignature(CHANGE_REQUEST_ID, SAVED_PATH);
             verify(notificationService).create(
                     eq(DEBTOR_ID),
                     eq(NotificationType.CONTRACT_CHANGE),
-                    any(),
-                    any(),
-                    eq(CONTRACT_ID),
-                    eq(CHANGE_REQUEST_ID)
+                    any(), any(), eq(CONTRACT_ID), eq(CHANGE_REQUEST_ID)
             );
         }
 

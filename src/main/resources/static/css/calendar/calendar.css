@@ -258,8 +258,34 @@
 
 .detail-item-main {
     display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+}
+
+.detail-item-top {
+    display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+}
+
+.detail-item-meta {
+    font-size: 13px;
+    color: #999;
+}
+
+.badge-overdue {
+    background: #fdeceb;
+    color: #c0392b;
+}
+
+.detail-item.is-overdue {
+    border-color: #f3c6c1;
+    background: #fffaf9;
+}
+
+.detail-item.is-overdue .detail-amount {
+    color: #c0392b;
 }
 
 .badge {
@@ -282,11 +308,6 @@
 .detail-title {
     font-size: 16px;
     font-weight: 500;
-}
-
-.detail-sub {
-    font-size: 14px;
-    color: #888;
 }
 
 .detail-amount {

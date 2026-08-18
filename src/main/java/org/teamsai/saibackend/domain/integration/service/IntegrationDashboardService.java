@@ -9,6 +9,7 @@ import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardRes
 import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardSummaryResponse;
 import org.teamsai.saibackend.domain.contractdashboard.service.DashboardService;
 import org.teamsai.saibackend.domain.contractdashboard.type.DashboardContractStatus;
+import org.teamsai.saibackend.domain.contractdashboard.type.TransactionCategory;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.integration.dto.response.*;
 import org.teamsai.saibackend.domain.integration.type.DashboardAttentionType;
@@ -26,6 +27,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -279,11 +281,22 @@ public class IntegrationDashboardService {
             LocalDate date,
             Long userId
     ) {
+
+        Map<Long, Long> totalInstallmentsByContract = loanSchedules.stream()
+                .collect(Collectors.groupingBy(
+                        context -> context.contract().getContractId(),
+                        Collectors.counting()
+                ));
+
+        LocalDate today = LocalDate.now();
+
         return loanSchedules.stream()
                 .filter(context -> context.schedule().getStatus() == RepaymentScheduleStatus.PENDING)
                 .filter(context -> date.equals(context.schedule().getDueDate()))
                 .map(context -> {
                     boolean isCreditor = userId.equals(context.contract().getCreditorId());
+                    Long totalInstallments = totalInstallmentsByContract.get(context.contract().getContractId());
+
                     return DashboardCalendarItemResponse.builder()
                             .targetId(context.contract().getContractId())
                             .type(PaymentTargetType.LOAN)
@@ -291,6 +304,14 @@ public class IntegrationDashboardService {
                             .subLabel(isCreditor ? "수취예정" : "납부예정")
                             .amount(context.schedule().getTotalPaymentDue())
                             .detailUrl("/contracts/" + context.contract().getContractId() + "/schedule")
+                            .counterpartyName(isCreditor
+                                        ? context.contract().getDebtorName()
+                                        : context.contract().getCreditorName())
+                            .categoryLabel(isCreditor
+                                        ? TransactionCategory.RECEIVE.getDescription()
+                                        : TransactionCategory.PAY.getDescription())
+                            .installmentInfo(context.schedule().getSequence() + "/" + totalInstallments + "회차")
+                            .overdue(date.isBefore(today))
                             .build();
                 })
                 .toList();
@@ -300,6 +321,9 @@ public class IntegrationDashboardService {
             List<SettlementContext> settlements,
             LocalDate date
     ) {
+
+        LocalDate today = LocalDate.now();
+
         return settlements.stream()
                 .filter(context -> !isClosed(context.settlement()))
                 .filter(context -> context.roleRemainingAmount().compareTo(BigDecimal.ZERO) > 0)
@@ -312,6 +336,9 @@ public class IntegrationDashboardService {
                         .subLabel(context.isOwner() ? "받을 돈" : "낼 돈")
                         .amount(context.roleRemainingAmount())
                         .detailUrl("/settlements/" + context.settlement().settlementId())
+                        .categoryLabel(context.settlement().settlementCategory())
+                        .installmentInfo(null)
+                        .overdue(date.isBefore(today))
                         .build())
                 .toList();
     }

@@ -15,4 +15,8 @@ public class DashboardCalendarItemResponse {
     private String subLabel;
     private BigDecimal amount;
     private String detailUrl;
+    private String counterpartyName;
+    private String categoryLabel;
+    private String installmentInfo;
+    private boolean overdue;
 }

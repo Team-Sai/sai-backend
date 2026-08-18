@@ -1,12 +1,4 @@
 (function () {
-    function authHeaders(extra) {
-        const token = sessionStorage.getItem("accessToken");
-        return Object.assign(
-            token ? { Authorization: `Bearer ${token}` } : {},
-            extra || {}
-        );
-    }
-
     function escapeHtml(value) {
         return String(value ?? "")
             .replace(/&/g, "&amp;")
@@ -77,9 +69,16 @@
         daysGrid.innerHTML = '<p class="empty-state">달력을 불러오는 중이에요...</p>';
 
         const yearMonth = toYearMonth(viewYear, viewMonth);
-        const res = await fetch(`/api/integration/dashboard?yearMonth=${yearMonth}`, {
-            headers: authHeaders()
-        });
+
+        let res;
+        try {
+            res = await authFetch(`/api/integration/dashboard?yearMonth=${yearMonth}`, {
+                method: "GET"
+            });
+        } catch (e) {
+            daysGrid.innerHTML = '<p class="empty-state">달력을 불러오지 못했어요.</p>';
+            return;
+        }
 
         if (!res.ok) {
             daysGrid.innerHTML = '<p class="empty-state">달력을 불러오지 못했어요.</p>';
@@ -190,9 +189,16 @@
         detailDate.textContent = dateStr.replaceAll('-', '. ') + '.';
         detailList.innerHTML = '<p class="empty-state">일정을 불러오는 중이에요...</p>';
 
-        const res = await fetch(`/api/dashboard/calendar/${dateStr}`, {
-            headers: authHeaders()
-        });
+        let res;
+        try {
+            res = await authFetch(`/api/dashboard/calendar/${dateStr}`, {
+                method: "GET"
+            });
+        } catch (e) {
+            currentItems = [];
+            detailList.innerHTML = '<p class="empty-state">일정을 불러오지 못했어요. 다시 로그인해보세요.</p>';
+            return;
+        }
 
         if (!res.ok) {
             currentItems = [];
@@ -223,12 +229,22 @@
             const badgeLabel = item.type === 'LOAN' ? '대여' : '정산';
             const amount = Number(item.amount).toLocaleString(undefined, { maximumFractionDigits: 0 });
 
+            const metaParts = [];
+            if (item.subLabel) metaParts.push(escapeHtml(item.subLabel));
+            if (item.counterpartyName) metaParts.push(escapeHtml(item.counterpartyName));
+            if (item.installmentInfo) metaParts.push(escapeHtml(item.installmentInfo));
+            if (item.categoryLabel) metaParts.push(escapeHtml(item.categoryLabel));
+            const metaText = metaParts.join(' · ');
+
             return `
-                <a class="detail-item" href="${escapeHtml(item.detailUrl)}">
+                <a class="detail-item${item.overdue ? ' is-overdue' : ''}" href="${escapeHtml(item.detailUrl)}">
                     <div class="detail-item-main">
-                        <span class="badge ${badgeClass}">${badgeLabel}</span>
-                        <span class="detail-title">${escapeHtml(item.title)}</span>
-                        <span class="detail-sub">${escapeHtml(item.subLabel)}</span>
+                        <div class="detail-item-top">
+                            <span class="badge ${badgeClass}">${badgeLabel}</span>
+                            <span class="detail-title">${escapeHtml(item.title)}</span>
+                            ${item.overdue ? '<span class="badge badge-overdue">연체</span>' : ''}
+                        </div>
+                        <div class="detail-item-meta">${metaText}</div>
                     </div>
                     <span class="detail-amount">${amount}원</span>
                 </a>
