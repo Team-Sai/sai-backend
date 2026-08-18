@@ -228,7 +228,8 @@ public class ContractChangeService {
                     NotificationType.CONTRACT_CHANGE,
                     "계약 변경 요청 반려",
                     contract.getDebtorName() + "님이 변경 요청을 반려했습니다.",
-                    contractId
+                    contractId,
+                    changeRequestId
             );
         } catch (Exception e) {
             log.error("계약 변경 반려 알림 발송 실패: contractId={}, changeRequestId={}, rror={}",

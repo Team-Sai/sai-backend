@@ -34,6 +34,10 @@ authFetch(
         document.getElementById('changeReason').textContent = detail.changeReason;
 
         document.getElementById('extendedMonths').textContent = formatExtendedMonths(detail.extendedMonths);
+        if(detail.returnReason) {
+            document.getElementById('returnReasonText').textContent = detail.returnReason;
+            document.getElementById('returnReasonBlock').hidden = false;
+        }
 
         newContractId = detail.newContractId;
     })
