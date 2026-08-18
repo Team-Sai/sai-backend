@@ -63,6 +63,16 @@
             principal_due         AS principalDue,
             interest_due          AS interestDue,
             total_payment_due     AS totalPaymentDue,
+            GREATEST(
+            total_payment_due - COALESCE((
+            SELECT SUM(pr.amount)
+            FROM payment_record pr
+            WHERE pr.payment_target_type = 'LOAN'
+            AND pr.target_id = repayment_schedule.schedule_id
+            AND pr.record_status = 'CONFIRMED'
+            ), 0),
+            0
+            ) AS remainingPaymentAmount,
             remaining_principal   AS remainingPrincipal,
             status,
             paid_at               AS paidAt,

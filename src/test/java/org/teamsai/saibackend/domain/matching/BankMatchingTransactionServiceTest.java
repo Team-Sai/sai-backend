@@ -93,6 +93,31 @@ class BankMatchingTransactionServiceTest {
     }
 
     @Test
+    @DisplayName("특정 대상 동기화 범위 밖 거래는 PENDING으로 유지한다")
+    void keepsOutOfScopeTransactionPending() {
+        BankTransactionDTO transaction = bankTransaction(101L, "Hong Gil Dong");
+        givenLockedTransaction(transaction);
+        given(paymentObligationMapper.findMatchCandidatesByLinkedAccountIdAndTarget(
+                LINKED_ACCOUNT_ID,
+                transaction.getTransactionAt(),
+                MatchingTargetType.SETTLEMENT,
+                999L
+        )).willReturn(List.of());
+
+        AutoMatchingTransactionResult result = transactionService.process(
+                USER_ID,
+                LINKED_ACCOUNT_ID,
+                transaction,
+                MatchingTargetType.SETTLEMENT,
+                999L
+        );
+
+        assertThat(result).isNull();
+        verify(bankTransactionService, never()).updateStatus(any(), any(), any());
+        verify(autoMatchingService, never()).execute(any(), any());
+    }
+
+    @Test
     @DisplayName("후보를 조회해 자동매칭하고 은행 거래 상태를 변경한다")
     void executesAutoMatchingAndUpdatesStatus() {
         BankTransactionDTO staleTransaction = bankTransaction(

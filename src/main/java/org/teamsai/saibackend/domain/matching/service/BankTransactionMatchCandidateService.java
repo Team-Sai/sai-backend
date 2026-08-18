@@ -10,6 +10,7 @@ import org.teamsai.saibackend.domain.matching.mapper.BankTransactionMatchCandida
 import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
 import org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason;
 import org.teamsai.saibackend.domain.matching.type.MatchingCandidateStatus;
+import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,6 +68,26 @@ public class BankTransactionMatchCandidateService {
 
         return candidateMapper.findAllForReviewByBankTransactionId(
                 bankTransactionId
+        );
+    }
+
+    public List<BankTransactionMatchCandidateQueryDTO>
+    findAllForReviewByBankTransactionIds(
+            List<Long> bankTransactionIds,
+            MatchingTargetType targetType,
+            Long aggregateId
+    ) {
+        if (bankTransactionIds == null
+                || bankTransactionIds.isEmpty()
+                || bankTransactionIds.stream()
+                .anyMatch(id -> id == null || id <= 0)) {
+            throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
+        }
+
+        return candidateMapper.findAllForReviewByBankTransactionIds(
+                bankTransactionIds,
+                targetType,
+                aggregateId
         );
     }
 

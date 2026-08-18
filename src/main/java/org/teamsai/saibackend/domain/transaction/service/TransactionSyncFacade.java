@@ -7,6 +7,7 @@ import org.teamsai.saibackend.domain.account.dto.response.LinkedBankAccountRespo
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
 import org.teamsai.saibackend.domain.matching.model.AutoMatchingExecutionResult;
 import org.teamsai.saibackend.domain.matching.service.BankMatchingService;
+import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.transaction.dto.response.TransactionSyncAllResponse;
 import org.teamsai.saibackend.domain.transaction.dto.response.AccountSyncFailureResponse;
 import org.teamsai.saibackend.global.exception.DomainException;
@@ -26,6 +27,21 @@ public class TransactionSyncFacade {
     public AutoMatchingExecutionResult syncAndMatch(Long userId, Long linkedAccountId) {
         transactionSyncService.syncTransactions(userId, linkedAccountId);
         return bankMatchingService.execute(userId, linkedAccountId);
+    }
+
+    public AutoMatchingExecutionResult syncAndMatch(
+            Long userId,
+            Long linkedAccountId,
+            MatchingTargetType targetType,
+            Long aggregateId
+    ) {
+        transactionSyncService.syncTransactions(userId, linkedAccountId);
+        return bankMatchingService.execute(
+                userId,
+                linkedAccountId,
+                targetType,
+                aggregateId
+        );
     }
 
     public TransactionSyncAllResponse syncAll(Long userId){

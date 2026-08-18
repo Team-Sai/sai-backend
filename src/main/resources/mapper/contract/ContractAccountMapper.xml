@@ -50,6 +50,9 @@
         FROM contract_account
         WHERE contract_id = #{contractId}
         AND account_status = 'ACTIVE'
+        ORDER BY selected_at DESC,
+                 contract_account_id DESC
+        LIMIT 1
     </select>
 
 </mapper>

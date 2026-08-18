@@ -135,9 +135,8 @@ async function syncTransactions() {
         syncButton.disabled = true;
         syncButton.textContent = '동기화 중...';
 
-        const response = await fetch('/api/transactions/sync', {
-            method: 'POST',
-            headers: authHeaders()
+        const response = await authFetch('/api/transactions/sync', {
+            method: 'POST'
         });
 
         const result = await readJsonSafely(response);
@@ -163,6 +162,11 @@ async function syncTransactions() {
 
         // 상환 금액과 납부 상태를 다시 조회한다.
         fetchDashboard();
+
+        await MatchingReviewModal.open({
+            reviewChannel: 'TRANSACTION_HISTORY',
+            targetType: 'LOAN'
+        });
     } catch (error) {
         console.error('거래내역 동기화 실패:', error);
 
@@ -190,7 +194,10 @@ async function readJsonSafely(response) {
 }
 
 document.getElementById('btnCreateContract').addEventListener('click', () => {
-    window.location.href = '/contracts/new';
+    const overlay = document.getElementById('relationModalOverlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+    }
 })
 
 function escapeHtml(str) {
@@ -204,3 +211,5 @@ function escapeHtml(str) {
 }
 
 fetchDashboard();
+
+document.addEventListener('matching-review:closed', fetchDashboard);

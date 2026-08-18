@@ -56,7 +56,6 @@ public class OverdueSettlementService {
             }
             offset += PAGE_SIZE;
         }
-
         log.info("연체 상태 갱신 배치 종료, 성공 {}건 / 실패 {}건 (총 {}건 중)",
                 processedCount, failedCount, totalCount);
 

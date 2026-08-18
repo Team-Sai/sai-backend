@@ -83,6 +83,33 @@ class DashboardServiceTest {
     }
 
     @Test
+    @DisplayName("부분 납부된 회차는 실제 잔여 납부금액으로 대시보드에 표시된다")
+    void getDashboard_usesRemainingPaymentAmountAfterPartialPayment() {
+        LoanContractResponse contract = buildContract(
+                21L, null, ContractStatus.COMPLETED, "부분납부계약", 3L, 1L
+        );
+        RepaymentScheduleDTO schedule = RepaymentScheduleDTO.builder()
+                .status(RepaymentScheduleStatus.PENDING)
+                .totalPaymentDue(BigDecimal.valueOf(50_000))
+                .remainingPrincipal(BigDecimal.valueOf(50_000))
+                .dueDate(LocalDate.now())
+                .remainingPaymentAmount(BigDecimal.valueOf(20_000))
+                .build();
+
+        when(loanContractService.findContractsByUser(USER_ID))
+                .thenReturn(List.of(contract));
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(21L)))
+                .thenReturn(Map.of(21L, List.of(schedule)));
+
+        DashboardResponse response = dashboardService.getDashboard(
+                USER_ID, null, "ALL", null, 1
+        );
+
+        assertThat(response.getContracts().get(0).getTotalRemainingAmount())
+                .isEqualByComparingTo("20000");
+    }
+
+    @Test
     @DisplayName("빌려준 돈, 빌린 돈, 이번달 상환예정금이 정확히 합산되고 defaultFilter가 결정된다")
     void getDashboard_buildsSummaryCorrectly() {
         LoanContractResponse lentContract = buildContract(30L, null, ContractStatus.COMPLETED, "빌려준계약", 1L, 2L);

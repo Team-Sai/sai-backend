@@ -51,7 +51,7 @@ public class DashboardService {
     private BigDecimal calculateTotalRemaining(List<RepaymentScheduleDTO> schedules) {
         return schedules.stream()
                 .filter(s -> s.getStatus().isUnresolved())
-                .map(RepaymentScheduleDTO::getTotalPaymentDue)
+                .map(this::getRemainingPaymentAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -60,7 +60,7 @@ public class DashboardService {
         return schedules.stream()
                 .filter(s -> s.getStatus().isUnresolved()
                         && YearMonth.from(s.getDueDate()).equals(thisMonth))
-                .map(RepaymentScheduleDTO::getTotalPaymentDue)
+                .map(this::getRemainingPaymentAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -68,8 +68,13 @@ public class DashboardService {
         return schedules.stream()
                 .filter(s -> s.getStatus().isUnresolved()
                         && YearMonth.from(s.getDueDate()).equals(targetMonth))
-                .map(RepaymentScheduleDTO::getTotalPaymentDue)
+                .map(this::getRemainingPaymentAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal getRemainingPaymentAmount(RepaymentScheduleDTO schedule) {
+        return Optional.ofNullable(schedule.getRemainingPaymentAmount())
+                .orElse(schedule.getTotalPaymentDue());
     }
 
     private DashboardPaymentStatus determinePaymentStatus(BigDecimal totalRemaining, BigDecimal thisMonthDue) {
@@ -117,8 +122,9 @@ public class DashboardService {
         DashboardPaymentStatus paymentStatus = determinePaymentStatus(totalRemaining, thisMonthDue);
         Optional<RepaymentScheduleDTO> nearestSchedule = findNearestSchedule(schedules);
         LocalDate nearestDueDate = nearestSchedule.map(RepaymentScheduleDTO::getDueDate).orElse(null);
-        BigDecimal nextDueAmount = nearestSchedule.map(RepaymentScheduleDTO::getTotalPaymentDue).orElse(null);
-
+        BigDecimal nextDueAmount = nearestSchedule
+                .map(this::getRemainingPaymentAmount)
+                .orElse(null);
         return DashboardContractRowResponse.builder()
                 .contractId(contract.getContractId())
                 .contractAlias(contract.getContractAlias())
@@ -334,7 +340,7 @@ public class DashboardService {
 
     private Optional<RepaymentScheduleDTO> findNearestSchedule(List<RepaymentScheduleDTO> schedules) {
         return schedules.stream()
-                .filter(s -> s.getStatus().isUnresolved())
+                .filter(s -> s.getStatus() == RepaymentScheduleStatus.PENDING)
                 .min(Comparator.comparing(RepaymentScheduleDTO::getDueDate));
     }
 

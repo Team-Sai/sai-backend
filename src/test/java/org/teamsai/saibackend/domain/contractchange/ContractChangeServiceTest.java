@@ -13,6 +13,7 @@ import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
+import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
@@ -22,6 +23,7 @@ import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErro
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
+import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
 import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
@@ -37,7 +39,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -63,6 +64,9 @@ class ContractChangeServiceTest {
 
     @Mock
     private LoanContractFileService fileService;
+
+    @Mock
+    private RepaymentScheduleService repaymentScheduleService;
 
     @InjectMocks
     private ContractChangeService contractChangeService;
@@ -135,8 +139,6 @@ class ContractChangeServiceTest {
                 .newRepaymentDate(15)
                 .build();
     }
-
-
 
     @Nested
     @DisplayName("변경 요청 저장")
@@ -240,6 +242,75 @@ class ContractChangeServiceTest {
 
             verify(contractChangeMapper, never()).insert(any());
             verify(loanContractService, never()).insertChangedContract(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("계약 변경 승인 이벤트 처리")
+    class OnContractChangeApproved {
+
+        private static final Long V1_CONTRACT_ID = 1L;
+        private static final Long V2_CONTRACT_ID = 2L;
+        private static final Long CHANGE_REQUEST_ID = 5L;
+
+        private LoanContractResponse v2Contract() {
+            return LoanContractResponse.builder()
+                    .contractId(V2_CONTRACT_ID)
+                    .previousContractId(V1_CONTRACT_ID)
+                    .status(ContractStatus.COMPLETED)
+                    .creditorId(USER_ID)
+                    .debtorId(DEBTOR_ID)
+                    .build();
+        }
+
+        private LoanContractChangeDTO pendingChangeRequest() {
+            return LoanContractChangeDTO.builder()
+                    .changeRequestId(CHANGE_REQUEST_ID)
+                    .contractId(V1_CONTRACT_ID)
+                    .userId(USER_ID)
+                    .status(ChangeRequestStatus.PENDING)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("승인 처리 시 변경 요청을 APPROVED로 바꾸고 v1 계약을 SUPERSEDED로 전환한다")
+        void supersedesV1Contract() {
+            given(loanContractService.getContractForInternalUse(V2_CONTRACT_ID))
+                    .willReturn(v2Contract());
+            given(contractChangeMapper.findByContractId(V1_CONTRACT_ID))
+                    .willReturn(List.of(pendingChangeRequest()));
+            given(contractChangeMapper.updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.APPROVED))
+                    .willReturn(1);
+            given(userService.getMyInfo(DEBTOR_ID))
+                    .willReturn(UserResponse.builder().name("채무자").build());
+
+            contractChangeService.onContractChangeApproved(new ContractChangeApprovedEvent(V2_CONTRACT_ID));
+
+            verify(contractChangeMapper).updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.APPROVED);
+            verify(loanContractService).supersedeContract(V1_CONTRACT_ID);
+            verify(repaymentScheduleService).generateChangedSchedule(V1_CONTRACT_ID, V2_CONTRACT_ID);
+        }
+
+        @Test
+        @DisplayName("변경 요청 상태 갱신이 경쟁 상태로 실패하면 v1을 SUPERSEDED로 바꾸지 않는다")
+        void doesNotSupersedeWhenChangeRequestUpdateRaceConditionFails() {
+            given(loanContractService.getContractForInternalUse(V2_CONTRACT_ID))
+                    .willReturn(v2Contract());
+            given(contractChangeMapper.findByContractId(V1_CONTRACT_ID))
+                    .willReturn(List.of(pendingChangeRequest()));
+            given(contractChangeMapper.updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.APPROVED))
+                    .willReturn(0);
+
+            assertThatThrownBy(() ->
+                    contractChangeService.onContractChangeApproved(new ContractChangeApprovedEvent(V2_CONTRACT_ID)))
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(ContractChangeErrorCode.ALREADY_BEING_REQUEST)
+                    );
+
+            verify(loanContractService, never()).supersedeContract(any());
+            verify(repaymentScheduleService, never()).generateChangedSchedule(any(), any());
         }
     }
 

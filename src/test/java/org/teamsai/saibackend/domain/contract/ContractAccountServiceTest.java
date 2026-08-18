@@ -214,6 +214,44 @@ class ContractAccountServiceTest {
         }
 
         @Test
+        @DisplayName("계약이 SUPERSEDED 상태면 예외가 발생하고 변경하지 않는다")
+        void changeContractAccountFailsWhenContractSuperseded() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.SUPERSEDED)));
+
+            assertThatThrownBy(() ->
+                    contractAccountService.changeContractAccount(CONTRACT_ID, CREDITOR_ID, OTHER_LINKED_ACCOUNT_ID)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(contractAccountMapper, never()).updateContractAccountStatus(any(), any());
+            verify(contractAccountMapper, never()).insertContractAccount(any());
+        }
+
+        @Test
+        @DisplayName("계약이 TERMINATED 상태면 예외가 발생하고 변경하지 않는다")
+        void changeContractAccountFailsWhenContractTerminated() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.TERMINATED)));
+
+            assertThatThrownBy(() ->
+                    contractAccountService.changeContractAccount(CONTRACT_ID, CREDITOR_ID, OTHER_LINKED_ACCOUNT_ID)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(contractAccountMapper, never()).updateContractAccountStatus(any(), any());
+            verify(contractAccountMapper, never()).insertContractAccount(any());
+        }
+
+        @Test
         @DisplayName("새로 선택한 계좌가 선택 불가능하면 예외가 발생하고 변경하지 않는다")
         void changeContractAccountFailsWhenNewAccountNotSelectable() {
             given(loanContractMapper.findContractById(CONTRACT_ID))
@@ -330,6 +368,42 @@ class ContractAccountServiceTest {
         }
 
         @Test
+        @DisplayName("계약이 SUPERSEDED 상태면 예외가 발생하고 비활성화하지 않는다")
+        void deactivateContractAccountFailsWhenContractSuperseded() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.SUPERSEDED)));
+
+            assertThatThrownBy(() ->
+                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(contractAccountMapper, never()).updateContractAccountStatus(any(), any());
+        }
+
+        @Test
+        @DisplayName("계약이 TERMINATED 상태면 예외가 발생하고 비활성화하지 않는다")
+        void deactivateContractAccountFailsWhenContractTerminated() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.TERMINATED)));
+
+            assertThatThrownBy(() ->
+                    contractAccountService.deactivateContractAccount(CONTRACT_ID, CREDITOR_ID)
+            )
+                    .isInstanceOfSatisfying(
+                            DomainException.class,
+                            exception -> assertThat(exception.getErrorCode())
+                                    .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+                    );
+
+            verify(contractAccountMapper, never()).updateContractAccountStatus(any(), any());
+        }
+
+        @Test
         @DisplayName("활성화된 계좌가 없으면 예외가 발생한다")
         void deactivateContractAccountFailsWhenNoActiveAccount() {
             given(loanContractMapper.findContractById(CONTRACT_ID))
@@ -345,6 +419,70 @@ class ContractAccountServiceTest {
                             exception -> assertThat(exception.getErrorCode())
                                     .isEqualTo(LoanContractErrorCode.CONTRACT_ACCOUNT_NOT_FOUND)
                     );
+        }
+    }
+
+    @Nested
+    class GetCurrentContractAccount {
+
+        @Test
+        void returnsActiveLinkedAccountForCreditor() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.COMPLETED)));
+            given(contractAccountMapper.findActiveAccountByContractId(CONTRACT_ID))
+                    .willReturn(List.of(ContractAccountDTO.builder()
+                            .contractId(CONTRACT_ID)
+                            .linkedAccountId(LINKED_ACCOUNT_ID)
+                            .accountStatus(ContractAccountStatus.ACTIVE)
+                            .build()));
+            given(linkedBankAccountService.getLinkedAccounts(CREDITOR_ID))
+                    .willReturn(List.of(createLinkedAccount(
+                            LINKED_ACCOUNT_ID,
+                            ConnectionStatus.AVAILABLE
+                    )));
+
+            LinkedBankAccountResponse result =
+                    contractAccountService.getCurrentAccount(
+                            CONTRACT_ID,
+                            CREDITOR_ID
+                    );
+
+            assertThat(result.linkedAccountId()).isEqualTo(LINKED_ACCOUNT_ID);
+        }
+
+        @Test
+        void rejectsNonCreditor() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.PENDING)));
+
+            assertThatThrownBy(() -> contractAccountService.getCurrentAccount(
+                    CONTRACT_ID,
+                    OTHER_USER_ID
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(LoanContractErrorCode.CONTRACT_ACCESS_DENIED)
+            );
+
+            verify(contractAccountMapper, never())
+                    .findActiveAccountByContractId(any());
+        }
+
+        @Test
+        void rejectsMissingActiveAccount() {
+            given(loanContractMapper.findContractById(CONTRACT_ID))
+                    .willReturn(Optional.of(createContract(ContractStatus.PENDING)));
+            given(contractAccountMapper.findActiveAccountByContractId(CONTRACT_ID))
+                    .willReturn(List.of());
+
+            assertThatThrownBy(() -> contractAccountService.getCurrentAccount(
+                    CONTRACT_ID,
+                    CREDITOR_ID
+            )).isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> assertThat(exception.getErrorCode())
+                            .isEqualTo(LoanContractErrorCode.CONTRACT_ACCOUNT_NOT_FOUND)
+            );
         }
     }
 

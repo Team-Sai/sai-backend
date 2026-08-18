@@ -49,6 +49,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             await loadSettlements();
 
+            await MatchingReviewModal.open({
+                reviewChannel: "TRANSACTION_HISTORY",
+                targetType: "SETTLEMENT"
+            });
+
         } catch (error) {
             console.error(error);
             showToast(error.message || "거래내역 동기화에 실패했습니다.", true);
@@ -165,6 +170,8 @@ document.addEventListener("DOMContentLoaded", () => {
             loadSummary()
         ]);
     }
+
+    document.addEventListener("matching-review:closed", loadSettlements);
 
     async function loadSettlementList() {
         try {

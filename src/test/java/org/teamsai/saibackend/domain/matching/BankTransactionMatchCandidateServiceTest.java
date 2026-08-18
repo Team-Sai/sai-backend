@@ -206,6 +206,55 @@ class BankTransactionMatchCandidateServiceTest {
     }
 
     @Test
+    void returnsCandidatesForTransactionPage() {
+        BankTransactionMatchCandidateQueryDTO candidate =
+                BankTransactionMatchCandidateQueryDTO.builder()
+                        .matchCandidateId(1L)
+                        .bankTransactionId(100L)
+                        .targetType(MatchingTargetType.SETTLEMENT)
+                        .targetId(10L)
+                        .aggregateId(20L)
+                        .build();
+
+        when(candidateMapper.findAllForReviewByBankTransactionIds(
+                List.of(100L, 101L),
+                MatchingTargetType.SETTLEMENT,
+                20L
+        )).thenReturn(List.of(candidate));
+
+        List<BankTransactionMatchCandidateQueryDTO> result =
+                candidateService.findAllForReviewByBankTransactionIds(
+                        List.of(100L, 101L),
+                        MatchingTargetType.SETTLEMENT,
+                        20L
+                );
+
+        assertThat(result).containsExactly(candidate);
+    }
+
+    @Test
+    void rejectsEmptyTransactionPage() {
+        assertThatThrownBy(() ->
+                candidateService.findAllForReviewByBankTransactionIds(
+                        List.of(),
+                        null,
+                        null
+                )
+        ).isInstanceOfSatisfying(
+                DomainException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(MatchingErrorCode.INVALID_MATCHING_REQUEST)
+        );
+
+        verify(candidateMapper, never())
+                .findAllForReviewByBankTransactionIds(
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any()
+                );
+    }
+
+    @Test
     void returnsCandidateBelongingToBankTransaction() {
         BankTransactionMatchCandidateDTO candidate = dto(1L, 100L);
 

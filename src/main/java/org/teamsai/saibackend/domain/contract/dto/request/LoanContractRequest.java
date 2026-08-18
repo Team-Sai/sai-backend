@@ -18,6 +18,9 @@ public class LoanContractRequest {
 
     private Long contractId;
 
+    @NotNull(message = "거래 상대방과의 관계를 선택해주세요.")
+    private ContractRelationType relationType;
+
     @NotNull(message = "대출원금을 입력해주세요.")
     @Positive(message = "대출원금은 0보다 커야 합니다.")
     private BigDecimal principalAmount;

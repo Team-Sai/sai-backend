@@ -23,5 +23,6 @@
         UPDATE users
         SET user_key = #{userKey}
         WHERE user_id = #{userId}
+        AND user_key IS NULL
     </update>
 </mapper>
