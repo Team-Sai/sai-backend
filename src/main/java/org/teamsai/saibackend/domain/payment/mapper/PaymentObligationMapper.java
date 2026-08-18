@@ -51,7 +51,5 @@ public interface PaymentObligationMapper {
                                @Param("overdueSince") LocalDateTime overdueSince);
 
     int clearOverdueSince(@Param("paymentObligationId") Long paymentObligationId);
-
-
 }
 

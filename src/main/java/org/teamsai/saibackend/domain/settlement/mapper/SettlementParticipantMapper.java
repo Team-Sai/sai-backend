@@ -17,5 +17,4 @@ public interface  SettlementParticipantMapper {
             @Param("settlementId") Long settlementId,
             @Param("userId") Long userId
     );
-    List<SettlementParticipantDTO> findBySettlementId(@Param("settlementId") Long settlementId);
 }
