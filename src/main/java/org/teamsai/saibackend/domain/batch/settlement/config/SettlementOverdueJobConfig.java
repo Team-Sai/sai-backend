@@ -11,6 +11,7 @@ import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.teamsai.saibackend.domain.batch.common.listener.LoggingJobExecutionListener;
 import org.teamsai.saibackend.domain.settlement.service.OverdueSettlementService;
 import org.teamsai.saibackend.domain.settlement.service.OverdueUpdateResult;
 
@@ -22,11 +23,13 @@ public class SettlementOverdueJobConfig {
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
+    private final LoggingJobExecutionListener loggingJobExecutionListener;
 
     @Bean
     public Job settlementOverdueJob(Step settlementOverdueStep) {
         return new JobBuilder("settlementOverdueJob", jobRepository)
                 .start(settlementOverdueStep)
+                .listener(loggingJobExecutionListener)
                 .build();
     }
 

@@ -12,6 +12,7 @@ import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.teamsai.saibackend.domain.batch.common.listener.LoggingJobExecutionListener;
 import org.teamsai.saibackend.domain.settlement.service.SettlementDueReminderService;
 import org.teamsai.saibackend.domain.settlement.service.SettlementReminderResult;
 
@@ -23,11 +24,13 @@ public class SettlementDueReminderJobConfig {
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
+    private final LoggingJobExecutionListener loggingJobExecutionListener;
 
     @Bean
     public Job settlementDueReminderJob(Step settlementDueReminderStep) {
         return new JobBuilder("settlementDueReminderJob", jobRepository)
                 .start(settlementDueReminderStep)
+                .listener(loggingJobExecutionListener)
                 .build();
     }
 

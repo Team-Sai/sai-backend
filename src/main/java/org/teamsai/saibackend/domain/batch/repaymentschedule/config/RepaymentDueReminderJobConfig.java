@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.teamsai.saibackend.domain.batch.common.listener.BaseSkipListener;
+import org.teamsai.saibackend.domain.batch.common.listener.LoggingJobExecutionListener;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
@@ -38,11 +39,13 @@ public class RepaymentDueReminderJobConfig {
     private final SqlSessionFactory sqlSessionFactory;
     private final NotificationService notificationService;
     private final RepaymentScheduleMapper repaymentScheduleMapper;
+    private final LoggingJobExecutionListener loggingJobExecutionListener;
 
     @Bean
     public Job repaymentDueReminderJob(Step repaymentDueReminderStep) {
         return new JobBuilder("repaymentDueReminderJob", jobRepository)
                 .start(repaymentDueReminderStep)
+                .listener(loggingJobExecutionListener)
                 .build();
     }
 

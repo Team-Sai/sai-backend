@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.teamsai.saibackend.domain.batch.common.listener.BaseSkipListener;
+import org.teamsai.saibackend.domain.batch.common.listener.LoggingJobExecutionListener;
 import org.teamsai.saibackend.domain.batch.repaymentschedule.dto.OverdueUpdateCommand;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
 
@@ -34,11 +35,13 @@ public class RepaymentScheduleOverdueJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final SqlSessionFactory sqlSessionFactory;
+    private final LoggingJobExecutionListener loggingJobExecutionListener;
 
     @Bean
     public Job repaymentScheduleOverdueJob(Step repaymentScheduleOverdueStep) {
         return new JobBuilder("repaymentScheduleOverdueJob", jobRepository)
                 .start(repaymentScheduleOverdueStep)
+                .listener(loggingJobExecutionListener)
                 .build();
     }
 
