@@ -10,7 +10,7 @@ import org.teamsai.saibackend.domain.batch.common.scheduler.AbstractDailyBatchSc
 @RequiredArgsConstructor
 public class SettlementBatchScheduler extends AbstractDailyBatchScheduler {
 
-    private final Job dailySettlementJob;
+    private final Job recurringSettlementGenerationJob;
 
     @Scheduled(cron = "0 0 0 * * *")
     public void runDailySettlement() throws Exception {
@@ -19,7 +19,7 @@ public class SettlementBatchScheduler extends AbstractDailyBatchScheduler {
 
     @Override
     protected Job targetJob() {
-        return dailySettlementJob;
+        return recurringSettlementGenerationJob;
     }
 
     @Override

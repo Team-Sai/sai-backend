@@ -12,7 +12,7 @@ public class SettlementDueReminderScheduler extends AbstractDailyBatchScheduler 
 
     private final Job settlementDueReminderJob;
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void runSettlementDueReminder() throws Exception {
         runDaily();
     }
