@@ -135,6 +135,7 @@ public class ContractChangeService {
                 .previousContractId(contractId)
                 .creditorId(contract.getCreditorId())
                 .debtorId(contract.getDebtorId())
+                .relationType(contract.getRelationType())
                 .principalAmount(contract.getPrincipalAmount())
                 .interestRate(request.getNewInterestRate() != null ? request.getNewInterestRate() : contract.getInterestRate())
                 .repaymentType(request.getNewRepaymentType() != null ? RepaymentMethod.valueOf(request.getNewRepaymentType()) : contract.getRepaymentType())
@@ -175,6 +176,8 @@ public class ContractChangeService {
         if(updatedRows == 0) {
             throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
         }
+
+        loanContractService.supersedeContract(v1ContractId);
 
         repaymentScheduleService.generateChangedSchedule(v1ContractId, v2ContractId);
 
