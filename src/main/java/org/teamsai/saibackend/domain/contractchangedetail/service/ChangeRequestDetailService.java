@@ -73,7 +73,9 @@ public class ChangeRequestDetailService {
         Period period = Period.between(contract.getMaturityDate(), effectiveMaturityDate);
         int extendedMonths = period.getMonths() + period.getYears() * 12;
 
-        Long newContractId = contractChangeService.getPendingChangedContractId(contractId);
+        Long newContractId = changeDTO.getStatus() == ChangeRequestStatus.PENDING
+                ? contractChangeService.getPendingChangedContractId(contractId)
+                : null;
 
         return ChangeRequestDetailDTO.builder()
                 .changeRequestId(changeDTO.getChangeRequestId())
@@ -81,6 +83,9 @@ public class ChangeRequestDetailService {
                 .requesterName(changeDTO.getUserId().equals(contract.getCreditorId())
                         ? contract.getCreditorName()
                         : contract.getDebtorName())
+                .rejectorName(changeDTO.getUserId().equals(contract.getCreditorId())
+                        ? contract.getDebtorName()
+                        : contract.getCreditorName())
                 .requestedAt(changeDTO.getCreatedAt())
                 .status(translateStatus(changeDTO.getStatus()))
                 .currentMaturityDate(contract.getMaturityDate())

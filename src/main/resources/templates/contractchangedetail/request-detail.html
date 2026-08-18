@@ -21,7 +21,9 @@
 
 <div class="page">
     <div class="banner">
-        <span id="requesterName">-</span>님이 계약 조건 변경을 요청했습니다.
+        <p class="banner-title" id="bannerTitle">
+            <span id="requesterName">-</span>님이 계약 조건 변경을 요청했습니다.
+        </p>
         <div class="banner-sub">
             요청일자: <span id="requestedAt">-</span> | 현재 상태: <span id="status">-</span>
         </div>
@@ -82,6 +84,9 @@
             <div class="reason-card">
                 <h3>변경 요청 사유</h3>
                 <p id="changeReason">-</p>
+                <p class="return-reason" id="returnReasonBlock" hidden>
+                    <strong>반려사유</strong> · <span id="returnReasonText">-</span>
+                </p>
 
             </div>
 
@@ -111,14 +116,14 @@
     </div>
 </div>
 
-<script th:src="@{/js/contractchangedetail/request-detail.js}"></script>
-
 <footer
         th:replace="~{fragments/app-shell :: appFooter}">
 </footer>
 <th:block
         th:replace="~{fragments/app-shell :: commonScripts}">
 </th:block>
+
+<script th:src="@{/js/contractchangedetail/request-detail.js}"></script>
 
 </body>
 </html>

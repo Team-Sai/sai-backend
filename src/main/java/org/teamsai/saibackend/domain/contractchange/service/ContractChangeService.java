@@ -21,6 +21,8 @@ import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErro
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
+import org.teamsai.saibackend.domain.identity.service.IdentityService;
+import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
 import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
@@ -41,6 +43,7 @@ public class ContractChangeService {
     private final NotificationService notificationService;
     private final UserService userService;
     private final LoanContractFileService fileService;
+    private final IdentityService identityService;
 
 
     public void checkAccess(Long contractId, Long userId) {
@@ -285,8 +288,14 @@ public class ContractChangeService {
             Long contractId,
             Long changeRequestId,
             Long userId,
-            MultipartFile signature
+            MultipartFile signature,
+            String identityVerificationId
+
     ) {
+
+
+        identityService.consume(userId, identityVerificationId, IdentityPurpose.LOAN_CONTRACT);
+
         LoanContractChangeDTO changeDTO = getChangeRequest(changeRequestId);
 
         if (!changeDTO.getContractId().equals(contractId)) {

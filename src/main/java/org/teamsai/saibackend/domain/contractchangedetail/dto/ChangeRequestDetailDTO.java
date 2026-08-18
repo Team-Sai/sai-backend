@@ -31,5 +31,6 @@ public class ChangeRequestDetailDTO {
     private String changeReason;
     private Integer extendedMonths;
     private String returnReason;
+    private String rejectorName;
 
 }

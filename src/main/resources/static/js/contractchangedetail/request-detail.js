@@ -1,6 +1,7 @@
 const contractId = document.getElementById('contractId').value;
 const changeRequestId = document.getElementById('changeRequestId').value;
 let newContractId = null;
+let isRejectedView = false;
 
 authFetch(
     `/api/contracts/${contractId}/change-requests/${changeRequestId}`
@@ -40,6 +41,20 @@ authFetch(
         }
 
         newContractId = detail.newContractId;
+
+        if (detail.returnReason) {
+            document.getElementById('bannerTitle').textContent =
+                `${detail.rejectorName}님이 조건 변경을 반려했습니다.`;
+
+            document.getElementById('returnReasonText').textContent = detail.returnReason;
+            document.getElementById('returnReasonBlock').hidden = false;
+
+            isRejectedView = true;
+
+            approveButton.textContent = '수정하기';
+            rejectButton.textContent = '취소';
+        }
+
     })
     .catch(() => {
         alert('변경 요청 정보를 불러오는 중 오류가 발생했습니다.');
@@ -60,6 +75,12 @@ function formatExtendedMonths(months) {
 }
 
 document.getElementById('approveButton').addEventListener('click', function () {
+
+    if (isRejectedView) {
+        window.location.href = `/contracts/${contractId}/change-request`;
+        return;
+    }
+
     if (!newContractId) {
         alert('변경된 계약 정보를 아직 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
         return;
@@ -75,6 +96,12 @@ const returnReasonInput = document.getElementById('returnReasonInput');
 const rejectError = document.getElementById('rejectError');
 
 rejectButton.addEventListener('click', function () {
+
+    if (isRejectedView) {
+        window.location.href = `/contracts/${contractId}/contract-detail`;
+        return;
+    }
+
     rejectModal.hidden = false;
 });
 
