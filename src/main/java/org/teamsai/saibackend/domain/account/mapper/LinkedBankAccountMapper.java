@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.account.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.teamsai.saibackend.domain.account.dto.LinkedAccountSyncTargetDTO;
 import org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO;
 
 import java.util.List;
@@ -12,7 +13,8 @@ public interface LinkedBankAccountMapper {
 
     void insertOne(LinkedBankAccountDTO dto);
 
-
+    List<LinkedAccountSyncTargetDTO> findAllAvailableForSync();
+    
     Optional<LinkedBankAccountDTO> findById(@Param("linkedAccountId") Long linkedAccountId);
 
     List<LinkedBankAccountDTO> selectLinkedAccountsByUserId(@Param("userId") Long userId);
