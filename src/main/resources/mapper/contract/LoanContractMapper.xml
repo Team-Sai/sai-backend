@@ -137,6 +137,7 @@
         lc.previous_contract_id AS previousContractId,
         lc.creditor_id        AS creditorId,
         lc.debtor_id          AS debtorId,
+        lc.relation_type      AS relationType,
         creditor.name         AS creditorName,
         debtor.name           AS debtorName,
         lc.creditor_address   AS creditorAddress,
