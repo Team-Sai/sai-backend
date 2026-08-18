@@ -12,7 +12,6 @@ import org.teamsai.saibackend.domain.archive.dto.ArchiveStatus;
 import org.teamsai.saibackend.domain.archive.dto.FileDTO;
 import org.teamsai.saibackend.domain.archive.mapper.ArchiveMapper;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementAccountResponse;
-import org.teamsai.saibackend.domain.settlement.dto.response.SettlementArchiveDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementArchivePreviewResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementPaymentHistoryResponse;
@@ -199,7 +198,7 @@ public class SettlementArchiveService {
     }
 
     private ArchiveData gatherArchiveData(Long settlementId, Long userId) {
-        SettlementArchiveDetailResponse archiveDetail = settlementQueryService.getSettlementArchiveDetail(settlementId, userId);
+        SettlementDetailResponse archiveDetail = settlementQueryService.getSettlementDetail(settlementId, userId);
         SettlementPaymentStatusResponse paymentStatus = settlementPaymentStatusService.getPaymentStatus(settlementId, userId);
         List<SettlementPaymentHistoryResponse> paymentHistory = settlementPaymentHistoryService.getPaymentHistory(settlementId, userId);
         Optional<SettlementAccountResponse> settlementAccount = findSettlementAccountIfExists(settlementId, userId);
@@ -214,7 +213,7 @@ public class SettlementArchiveService {
     }
 
     private record ArchiveData(
-            SettlementArchiveDetailResponse archiveDetail,
+            SettlementDetailResponse archiveDetail,
             SettlementPaymentStatusResponse paymentStatus,
             List<SettlementPaymentHistoryResponse> paymentHistory,
             Optional<SettlementAccountResponse> settlementAccount,

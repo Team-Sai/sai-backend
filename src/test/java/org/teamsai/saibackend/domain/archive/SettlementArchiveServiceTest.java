@@ -18,7 +18,6 @@ import org.teamsai.saibackend.domain.archive.dto.FileDTO;
 import org.teamsai.saibackend.domain.archive.mapper.ArchiveMapper;
 import org.teamsai.saibackend.domain.archive.service.SettlementArchiveService;
 import org.teamsai.saibackend.domain.payment.type.SourceType;
-import org.teamsai.saibackend.domain.settlement.dto.response.SettlementArchiveDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementPaymentHistoryResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementPaymentObligationResponse;
@@ -272,6 +271,7 @@ class SettlementArchiveServiceTest {
         return new SettlementDetailResponse(
                 SETTLEMENT_ID,
                 "여행 정산",
+                "홍길동",
                 "생활비",
                 "SHARED",
                 settlementStatus,
@@ -284,14 +284,8 @@ class SettlementArchiveServiceTest {
         );
     }
 
-    private SettlementArchiveDetailResponse archiveDetail() {
-        return new SettlementArchiveDetailResponse(
-                SETTLEMENT_ID,
-                "여행 정산",
-                "SHARED",
-                "홍길동",
-                "OWNER"
-        );
+    private SettlementDetailResponse archiveDetail() {
+        return detail("CLOSED");
     }
 
     private SettlementPaymentStatusResponse paymentStatus() {

@@ -3,7 +3,6 @@ package org.teamsai.saibackend.domain.settlement.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.teamsai.saibackend.domain.settlement.dto.response.SettlementArchiveDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse;
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
@@ -34,8 +33,8 @@ public class SettlementQueryService {
     }
 
     @Transactional(readOnly = true)
-    public SettlementArchiveDetailResponse getSettlementArchiveDetail(Long settlementId, Long userId){
-        SettlementArchiveDetailResponse response = settlementMapper.findArchiveDetailById(settlementId,userId)
+    public SettlementDetailResponse getSettlementArchiveDetail(Long settlementId, Long userId){
+        SettlementDetailResponse response = settlementMapper.findDetailById(settlementId,userId)
                 .orElseThrow(SettlementErrorCode.SETTLEMENT_NOT_FOUND::toException);
 
         if("NONE".equals(response.role())){
