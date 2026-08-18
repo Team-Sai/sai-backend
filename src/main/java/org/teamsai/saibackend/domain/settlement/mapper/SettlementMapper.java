@@ -30,16 +30,16 @@ public interface SettlementMapper {
 
     List<SettlementListResponse> findAllByUserId(@Param("userId") Long userId);
 
-    Optional<SettlementDetailResponse> findDetailById(
-            @Param("settlementId") Long settlementId,
-            @Param("userId") Long userId
-    );
-
     Optional<SettlementArchiveDetailResponse> findArchiveDetailById(
             @Param("settlementId") Long settlementId,
             @Param("userId") Long userId
     );
 
+    Optional<SettlementDetailResponse> findDetailById(
+            @Param("settlementId") Long settlementId,
+            @Param("userId") Long userId
+    );
+    
     int countInProgressSettlements();
 
     List<SettlementDTO> findInProgressSettlements(@Param("offset") int offset, @Param("limit") int limit);

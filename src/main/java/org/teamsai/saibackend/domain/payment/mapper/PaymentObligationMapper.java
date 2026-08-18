@@ -13,6 +13,9 @@ import java.util.Optional;
 
 @Mapper
 public interface PaymentObligationMapper {
+
+    List<PaymentObligationDTO> findByParticipantIds(@Param("participantIds") List<Long> participantIds);
+
     Optional<PaymentObligationDTO> findByIdForUpdate(
             @Param("paymentObligationId") Long paymentObligationId
     );

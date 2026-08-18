@@ -181,34 +181,6 @@
 
     </select>
 
-    <select id="findArchiveDetailById"
-            resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementArchiveDetailResponse">
-
-        SELECT
-        s.settlement_id AS settlementId,
-        s.title AS title,
-        s.settlement_type AS settlementType,
-        ou.name AS ownerName,
-
-        CASE
-        WHEN s.owner_id = #{userId} THEN 'OWNER'
-        WHEN sp.participant_id IS NOT NULL THEN 'MEMBER'
-        ELSE 'NONE'
-        END AS role
-
-        FROM settlement s
-
-        JOIN users ou ON ou.user_id = s.owner_id
-
-        LEFT JOIN settlement_participant sp
-        ON sp.settlement_id = s.settlement_id
-        AND sp.user_id = #{userId}
-        AND sp.participant_status = 'ACTIVE'
-
-        WHERE s.settlement_id = #{settlementId}
-
-    </select>
-
     <select id="countInProgressSettlements" resultType="int">
         SELECT COUNT(*)
         FROM settlement
@@ -222,6 +194,45 @@
         WHERE settlement_status = 'IN_PROGRESS'
         ORDER BY settlement_id
         LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findDetailById"
+            resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse">
+
+        SELECT
+        s.settlement_id AS settlementId,
+        s.title AS title,
+        s.settlement_category AS settlementCategory,
+        s.settlement_type AS settlementType,
+        s.settlement_status AS settlementStatus,
+        s.split_type AS splitType,
+        s.due_date AS dueDate,
+        rs.start_date AS startDate,
+        rs.end_date AS endDate,
+        s.created_at AS createdAt,
+
+        CASE
+        WHEN s.owner_id = #{userId}
+        THEN 'OWNER'
+
+        WHEN sp.participant_id IS NOT NULL
+        THEN 'MEMBER'
+
+        ELSE 'NONE'
+        END AS role
+
+        FROM settlement s
+
+        LEFT JOIN settlement_participant sp
+        ON sp.settlement_id = s.settlement_id
+        AND sp.user_id = #{userId}
+        AND sp.participant_status = 'ACTIVE'
+
+        LEFT JOIN recurring_settlement rs
+        ON rs.recurring_settlement_id = s.recurring_settlement_id
+
+        WHERE s.settlement_id = #{settlementId}
+
     </select>
 
 </mapper>

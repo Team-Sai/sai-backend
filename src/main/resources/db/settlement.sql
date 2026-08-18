@@ -38,3 +38,21 @@ CREATE TABLE IF NOT EXISTS settlement (
 ENGINE = InnoDB
 DEFAULT CHARSET = utf8mb4
 COLLATE = utf8mb4_unicode_ci;
+
+SET @col_exists = (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'settlement' AND COLUMN_NAME = 'recurring_settlement_id'
+);
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE settlement ADD COLUMN recurring_settlement_id BIGINT NULL',
+    'SELECT ''recurring_settlement_id already exists'' AS message');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'settlement' AND COLUMN_NAME = 'cycle_date'
+);
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE settlement ADD COLUMN cycle_date DATE NULL',
+    'SELECT ''cycle_date already exists'' AS message');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
