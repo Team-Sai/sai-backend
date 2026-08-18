@@ -204,7 +204,7 @@
     const standardInterest = totalAmount * (STANDARD_INTEREST_RATE / 100);
     const actualInterest = totalAmount * (interestRate / 100);
     const savedInterestRaw = standardInterest - actualInterest;
-    const savedInterest = Math.max(0, Math.round(savedInterestRaw)); // 음수 표시 방지
+    const savedInterest = Math.max(0, Math.round(savedInterestRaw));
 
     txtPrevAmount.textContent = formatWon(previousAmount);
     txtCurrentAmount.textContent = formatWon(currentAmount);
@@ -243,6 +243,11 @@
 
     const currentAmount = Number(document.getElementById("principalAmount").value.replace(/,/g, "")) || 0;
     const interestRate = Number(document.getElementById("interestRate").value) || 0;
+
+    if (relationTypeInput?.value !== "FAMILY") {
+      proceedToNextStep();
+      return;
+    }
 
     nextBtn.disabled = true;
     showStatus("이전 차용금 내역을 확인하는 중입니다...", false);
