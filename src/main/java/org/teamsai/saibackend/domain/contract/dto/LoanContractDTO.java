@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.teamsai.saibackend.domain.contract.dto.request.ContractRelationType;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ public class LoanContractDTO {
     private Long contractId;          // (PK)
     private Long previousContractId;
 
+    private ContractRelationType relationType;
     private BigDecimal principalAmount;
     private BigDecimal interestRate;
     private String repaymentType;

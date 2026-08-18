@@ -38,6 +38,17 @@ public class BankMatchingTransactionService {
             Long linkedAccountId,
             BankTransactionDTO bankTransaction
     ) {
+        return process(userId, linkedAccountId, bankTransaction, null, null);
+    }
+
+    @Transactional
+    public AutoMatchingTransactionResult process(
+            Long userId,
+            Long linkedAccountId,
+            BankTransactionDTO bankTransaction,
+            MatchingTargetType targetType,
+            Long aggregateId
+    ) {
         BankTransactionDTO lockedTransaction =
                 bankTransactionService
                         .findByIdAndLinkedAccountIdForUpdate(
@@ -54,7 +65,16 @@ public class BankMatchingTransactionService {
         }
 
         AutoMatchingTransactionResult result =
-                processMatching(linkedAccountId, lockedTransaction);
+                processMatching(
+                        linkedAccountId,
+                        lockedTransaction,
+                        targetType,
+                        aggregateId
+                );
+
+        if (result == null) {
+            return null;
+        }
 
         createMatchingReviewNotificationIfRequired(
                 userId,
@@ -126,9 +146,14 @@ public class BankMatchingTransactionService {
 
     private AutoMatchingTransactionResult processMatching(
             Long linkedAccountId,
-            BankTransactionDTO bankTransaction
+            BankTransactionDTO bankTransaction,
+            MatchingTargetType targetType,
+            Long aggregateId
     ) {
         if (!hasMatchableCounterpartyName(bankTransaction)) {
+            if (targetType != null) {
+                return null;
+            }
             return new AutoMatchingTransactionResult(
                     bankTransaction.getBankTransactionId(),
                     AutoMatchingProcessStatus.UNMATCHED
@@ -138,11 +163,16 @@ public class BankMatchingTransactionService {
         MatchingTransaction matchingTransaction =
                 toMatchingTransaction(bankTransaction);
 
-        List<MatchingCandidate> candidates =
-                paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
-                        linkedAccountId,
-                        matchingTransaction.transactionAt()
-                );
+        List<MatchingCandidate> candidates = findCandidates(
+                linkedAccountId,
+                matchingTransaction,
+                targetType,
+                aggregateId
+        );
+
+        if (targetType != null && candidates.isEmpty()) {
+            return null;
+        }
 
         AutoMatchingExecutionResult matchingResult =
                 autoMatchingService.execute(
@@ -155,6 +185,27 @@ public class BankMatchingTransactionService {
         }
 
         return matchingResult.transactionResults().get(0);
+    }
+
+    private List<MatchingCandidate> findCandidates(
+            Long linkedAccountId,
+            MatchingTransaction transaction,
+            MatchingTargetType targetType,
+            Long aggregateId
+    ) {
+        if (targetType == null) {
+            return paymentObligationMapper.findMatchCandidatesByLinkedAccountId(
+                    linkedAccountId,
+                    transaction.transactionAt()
+            );
+        }
+
+        return paymentObligationMapper.findMatchCandidatesByLinkedAccountIdAndTarget(
+                linkedAccountId,
+                transaction.transactionAt(),
+                targetType,
+                aggregateId
+        );
     }
 
     private boolean hasMatchableCounterpartyName(

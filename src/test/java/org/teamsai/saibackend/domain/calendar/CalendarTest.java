@@ -35,10 +35,13 @@ public class CalendarTest {
 
     @Mock
     private DashboardService contractDashboardService;
+
     @Mock
     private SettlementQueryService settlementQueryService;
+
     @Mock
     private SettlementPaymentStatusService settlementPaymentStatusService;
+
     @InjectMocks
     private IntegrationDashboardService integrationDashboardService;
 
@@ -49,6 +52,7 @@ public class CalendarTest {
     void 채권자인_대여_스케줄은_수취예정으로_표시된다() {
         LoanContractResponse contract = buildContract(10L, USER_ID, 2L, "생활비 대출");
         RepaymentScheduleDTO schedule = buildSchedule(TARGET_DATE, RepaymentScheduleStatus.PENDING, 600_000);
+
         when(contractDashboardService.getIntegrationDashboardData(USER_ID))
                 .thenReturn(loanData(contract, schedule));
         when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of());
@@ -69,6 +73,7 @@ public class CalendarTest {
     void 채무자인_대여_스케줄은_납부예정으로_표시된다() {
         LoanContractResponse contract = buildContract(11L, 2L, USER_ID, "차량구입 대출");
         RepaymentScheduleDTO schedule = buildSchedule(TARGET_DATE, RepaymentScheduleStatus.PENDING, 350_000);
+
         when(contractDashboardService.getIntegrationDashboardData(USER_ID))
                 .thenReturn(loanData(contract, schedule));
         when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of());
@@ -86,6 +91,7 @@ public class CalendarTest {
         RepaymentScheduleDTO schedule = buildSchedule(
                 TARGET_DATE.plusDays(1), RepaymentScheduleStatus.PENDING, 600_000
         );
+
         when(contractDashboardService.getIntegrationDashboardData(USER_ID))
                 .thenReturn(loanData(contract, schedule));
         when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of());
@@ -100,6 +106,7 @@ public class CalendarTest {
     void 이미_납부완료된_스케줄은_결과에서_제외된다() {
         LoanContractResponse contract = buildContract(13L, USER_ID, 2L, "생활비 대출");
         RepaymentScheduleDTO schedule = buildSchedule(TARGET_DATE, RepaymentScheduleStatus.PAID, 600_000);
+
         when(contractDashboardService.getIntegrationDashboardData(USER_ID))
                 .thenReturn(loanData(contract, schedule));
         when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of());
@@ -114,8 +121,9 @@ public class CalendarTest {
     void 정산_참여자는_낼_돈으로_표시된다() {
         when(contractDashboardService.getIntegrationDashboardData(USER_ID))
                 .thenReturn(loanData(null, null));
+
         SettlementListResponse settlement = settlement(
-                100L, "회식비 정산", "MEMBER", "OPEN", TARGET_DATE, TARGET_DATE, TARGET_DATE.plusDays(30), LocalDateTime.now()
+                100L, "회식비 정산", "MEMBER", "OPEN", TARGET_DATE, LocalDateTime.now()
         );
         when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of(settlement));
         when(settlementPaymentStatusService.getPaymentStatus(100L, USER_ID))
@@ -141,8 +149,9 @@ public class CalendarTest {
     void 마감된_정산은_결과에서_제외된다() {
         when(contractDashboardService.getIntegrationDashboardData(USER_ID))
                 .thenReturn(loanData(null, null));
+
         SettlementListResponse settlement = settlement(
-                101L, "종료된 정산", "OWNER", "CLOSED", TARGET_DATE, TARGET_DATE, TARGET_DATE.plusDays(30), LocalDateTime.now()
+                101L, "종료된 정산", "OWNER", "CLOSED", TARGET_DATE, LocalDateTime.now()
         );
         when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of(settlement));
         when(settlementPaymentStatusService.getPaymentStatus(101L, USER_ID))
@@ -160,8 +169,9 @@ public class CalendarTest {
         RepaymentScheduleDTO schedule = buildSchedule(TARGET_DATE, RepaymentScheduleStatus.PENDING, 600_000);
         when(contractDashboardService.getIntegrationDashboardData(USER_ID))
                 .thenReturn(loanData(contract, schedule));
+
         SettlementListResponse settlement = settlement(
-                102L, "회식비 정산", "OWNER", "OPEN", TARGET_DATE, TARGET_DATE, TARGET_DATE.plusDays(30), LocalDateTime.now()
+                102L, "회식비 정산", "OWNER", "OPEN", TARGET_DATE, LocalDateTime.now()
         );
         when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of(settlement));
         when(settlementPaymentStatusService.getPaymentStatus(102L, USER_ID))
@@ -189,8 +199,9 @@ public class CalendarTest {
         RepaymentScheduleDTO schedule = buildSchedule(TARGET_DATE, RepaymentScheduleStatus.PENDING, 100_000);
         when(contractDashboardService.getIntegrationDashboardData(USER_ID))
                 .thenReturn(loanData(contract, schedule));
+
         SettlementListResponse settlement = settlement(
-                103L, "가나다 정산", "OWNER", "OPEN", TARGET_DATE, TARGET_DATE, TARGET_DATE.plusDays(30), LocalDateTime.now()
+                103L, "가나다 정산", "OWNER", "OPEN", TARGET_DATE, LocalDateTime.now()
         );
         when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of(settlement));
         when(settlementPaymentStatusService.getPaymentStatus(103L, USER_ID))
@@ -207,6 +218,7 @@ public class CalendarTest {
     void 상환예정일이_없는_스케줄은_예외없이_결과에서_제외된다() {
         LoanContractResponse contract = buildContract(16L, USER_ID, 2L, "생활비 대출");
         RepaymentScheduleDTO schedule = buildSchedule(null, RepaymentScheduleStatus.PENDING, 600_000);
+
         when(contractDashboardService.getIntegrationDashboardData(USER_ID))
                 .thenReturn(loanData(contract, schedule));
         when(settlementQueryService.getSettlementList(USER_ID)).thenReturn(List.of());
@@ -246,11 +258,10 @@ public class CalendarTest {
     }
 
     private SettlementListResponse settlement(
-            Long id, String title, String role, String status,
-            LocalDate dueDate, LocalDate startDate, LocalDate endDate, LocalDateTime createdAt
+            Long id, String title, String role, String status, LocalDate dueDate, LocalDateTime createdAt
     ) {
         return new SettlementListResponse(
-                id, title, role, "ETC", "ONE_TIME", "EQUAL", status, dueDate, startDate, endDate, createdAt
+                id, title, role, "ETC", "ONE_TIME", "EQUAL", status, dueDate, null, null, createdAt
         );
     }
 
@@ -288,9 +299,12 @@ public class CalendarTest {
                         .build())
                 .contracts(List.of())
                 .build();
+
         List<DashboardService.LoanScheduleContext> contexts = contract == null
                 ? List.of()
                 : List.of(new DashboardService.LoanScheduleContext(contract, schedule));
+
         return new DashboardService.IntegrationDashboardData(dashboard, contexts);
     }
 }
+

@@ -4,7 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeButton = document.getElementById("close-button");
     const syncButton = document.getElementById("sync-button");
     const refreshButton = document.getElementById("refresh-button");
-    const changeAccountButton = document.getElementById("change-account-button");
+    const changeAccountButton =
+        document.getElementById("change-account-button");
+    let currentLinkedAccountId = null;
 
     if (!settlementId) {
         showToast("정산 ID를 확인할 수 없습니다.", true);
@@ -20,9 +22,32 @@ document.addEventListener("DOMContentLoaded", () => {
     async function syncTransactions() {
         try {
             syncButton.disabled = true;
-            const result = await requestJson("/api/transactions/sync", { method: "POST" });
-            showToast(`동기화 완료: 자동반영 ${result.appliedCount}건, 확인필요 ${result.needsCheckCount}건, 미매칭 ${result.unmatchedCount}건`);
+            if (!currentLinkedAccountId) {
+                throw new Error(
+                    "동기화할 수취 계좌를 확인할 수 없습니다."
+                );
+            }
+
+            const result = await requestJson(
+                `/api/linked-accounts/${currentLinkedAccountId}/sync`,
+                {
+                    method: "POST"
+                }
+            );
+
+            showToast(
+                `동기화 완료: 자동반영 ${result.appliedCount}건, 확인필요
+              ${result.needsCheckCount}건, 미매칭 ${result.unmatchedCount}건`
+            );
+
             await loadPage();
+
+            await MatchingReviewModal.open({
+                reviewChannel: "TRANSACTION_HISTORY",
+                targetType: "SETTLEMENT",
+                aggregateId: settlementId
+            });
+
         } catch (error) {
             console.error("거래내역 동기화 실패:", error);
             showToast(error.message || "거래내역 동기화에 실패했습니다.", true);
@@ -53,13 +78,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    document.addEventListener("matching-review:closed", loadPage);
     async function loadSettlementAccount() {
         try {
-            const account = await requestSettlementAccount();
-            renderSettlementAccount(account);
+            const account =
+                await requestSettlementAccount();
+
+            currentLinkedAccountId =
+                account?.linkedAccountId || null;
+
+            renderSettlementAccount(
+                account
+            );
+
         } catch (error) {
             console.error("수취 계좌 조회 실패:", error);
             renderSettlementAccount(null);
+            currentLinkedAccountId = null;
         }
     }
 
