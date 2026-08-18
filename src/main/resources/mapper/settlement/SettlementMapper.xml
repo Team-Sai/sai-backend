@@ -135,6 +135,8 @@
         s.split_type AS splitType,
         s.settlement_status AS settlementStatus,
         s.due_date AS dueDate,
+        rs.start_date AS startDate,
+        rs.end_date AS endDate,
         s.created_at AS createdAt
 
         FROM settlement s
@@ -143,6 +145,9 @@
         ON sp.settlement_id = s.settlement_id
         AND sp.user_id = #{userId}
         AND sp.participant_status = 'ACTIVE'
+
+        LEFT JOIN recurring_settlement rs
+        ON rs.recurring_settlement_id = s.recurring_settlement_id
 
         WHERE
         s.owner_id = #{userId}
@@ -162,6 +167,8 @@
         s.settlement_status AS settlementStatus,
         s.split_type AS splitType,
         s.due_date AS dueDate,
+        rs.start_date AS startDate,
+        rs.end_date AS endDate,
         s.created_at AS createdAt,
 
         CASE
@@ -181,8 +188,25 @@
         AND sp.user_id = #{userId}
         AND sp.participant_status = 'ACTIVE'
 
+        LEFT JOIN recurring_settlement rs
+        ON rs.recurring_settlement_id = s.recurring_settlement_id
+
         WHERE s.settlement_id = #{settlementId}
 
+    </select>
+    <select id="countInProgressSettlements" resultType="int">
+        SELECT COUNT(*)
+        FROM settlement
+        WHERE settlement_status = 'IN_PROGRESS'
+    </select>
+
+    <select id="findInProgressSettlements" resultMap="settlementResultMap">
+        SELECT settlement_id, recurring_settlement_id, owner_id, settlement_type, settlement_status,
+        settlement_category, title, split_type, total_amount, due_date, cycle_date, created_at, closed_at
+        FROM settlement
+        WHERE settlement_status = 'IN_PROGRESS'
+        ORDER BY settlement_id
+        LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="countByRecurringId" resultType="int">
@@ -200,5 +224,4 @@
         LIMIT 1
         FOR UPDATE
     </select>
-
 </mapper>

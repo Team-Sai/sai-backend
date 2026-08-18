@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.settlement.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
 
 import java.util.List;
@@ -16,4 +17,5 @@ public interface  SettlementParticipantMapper {
             @Param("settlementId") Long settlementId,
             @Param("userId") Long userId
     );
+    List<SettlementParticipantDTO> findBySettlementId(@Param("settlementId") Long settlementId);
 }

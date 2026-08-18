@@ -55,5 +55,10 @@
 
     </select>
 
+    <select id="findBySettlementId" resultMap="SettlementParticipantResultMap">
+        SELECT participant_id, user_id, settlement_id, participant_role, participant_status, joined_at
+        FROM settlement_participant
+        WHERE settlement_id = #{settlementId}
+    </select>
 
 </mapper>

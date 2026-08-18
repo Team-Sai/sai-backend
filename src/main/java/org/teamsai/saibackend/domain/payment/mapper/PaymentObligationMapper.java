@@ -30,5 +30,12 @@ public interface PaymentObligationMapper {
     );
 
     int insert(PaymentObligationDTO paymentObligation);
+
+    List<PaymentObligationDTO> findUnpaidByParticipantIds(@Param("participantIds") List<Long> participantIds);
+
+    int updateOverdueSinceBulk(@Param("paymentObligationIds") List<Long> paymentObligationIds,
+                               @Param("overdueSince") LocalDateTime overdueSince);
+
+    int clearOverdueSince(@Param("paymentObligationId") Long paymentObligationId);
 }
 
