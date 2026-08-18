@@ -359,4 +359,22 @@ class DashboardServiceTest {
         DashboardResponse deadlineSorted = dashboardService.getDashboard(USER_ID, null, "ALL", "DEADLINE", 1);
         assertThat(deadlineSorted.getContracts()).hasSize(2);
     }
+
+    @Test
+    @DisplayName("잔액이 0이면 납부상태는 PAID다")
+    void getDashboard_paymentStatusIsPaidWhenNoRemaining() {
+        LoanContractResponse contract = buildContract(120L, null, ContractStatus.COMPLETED, "완납계약", 1L, 2L);
+
+        when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(contract));
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(120L)))
+                .thenReturn(Map.of(120L, List.of(
+                        buildSchedule(RepaymentScheduleStatus.PAID, 500_000, LocalDate.now().minusMonths(1))
+                )));
+
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+        DashboardContractRowResponse row = response.getContracts().get(0);
+
+        assertThat(row.getTotalRemainingAmount()).isEqualByComparingTo("0");
+        assertThat(row.getPaymentStatus().name()).isEqualTo("PAID");
+    }
 }

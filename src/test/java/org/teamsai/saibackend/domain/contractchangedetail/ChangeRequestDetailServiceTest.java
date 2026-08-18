@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChangeRequestDetailService 단위 테스트")
@@ -144,5 +145,47 @@ class ChangeRequestDetailServiceTest {
 
     }
 
+    @Test
+    @DisplayName("채무자가 요청자면 requesterName이 채무자 이름으로 결정된다")
+    void getDetail_requesterIsDebtor() {
+        LoanContractResponse contract = createContract();
+        LoanContractChangeDTO changeDTO = LoanContractChangeDTO.builder()
+                .changeRequestId(CHANGE_REQUEST_ID)
+                .contractId(CONTRACT_ID)
+                .userId(contract.getDebtorId())
+                .status(ChangeRequestStatus.PENDING)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(contractChangeService.getContract(CONTRACT_ID, USER_ID)).thenReturn(contract);
+        when(contractChangeService.getChangeRequest(CHANGE_REQUEST_ID)).thenReturn(changeDTO);
+        when(contractChangeService.getPendingChangedContractId(CONTRACT_ID)).thenReturn(null);
+
+        ChangeRequestDetailDTO result = changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID);
+
+        assertThat(result.getRequesterName()).isEqualTo(contract.getDebtorName());
+    }
+
+    @Test
+    @DisplayName("반려 사유(returnReason)가 응답에 그대로 채워진다")
+    void getDetail_includesReturnReason() {
+        LoanContractResponse contract = createContract();
+        LoanContractChangeDTO changeDTO = LoanContractChangeDTO.builder()
+                .changeRequestId(CHANGE_REQUEST_ID)
+                .contractId(CONTRACT_ID)
+                .userId(contract.getCreditorId())
+                .status(ChangeRequestStatus.REJECTED)
+                .returnReason("이율이 너무 높습니다")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(contractChangeService.getContract(CONTRACT_ID, USER_ID)).thenReturn(contract);
+        when(contractChangeService.getChangeRequest(CHANGE_REQUEST_ID)).thenReturn(changeDTO);
+        when(contractChangeService.getPendingChangedContractId(CONTRACT_ID)).thenReturn(null);
+
+        ChangeRequestDetailDTO result = changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID);
+
+        assertThat(result.getReturnReason()).isEqualTo("이율이 너무 높습니다");
+    }
 
 }
