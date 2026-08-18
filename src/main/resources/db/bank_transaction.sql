@@ -44,5 +44,4 @@ CREATE TABLE IF NOT EXISTS bank_transaction (
     COLLATE=utf8mb4_unicode_ci;
 
 ALTER TABLE bank_transaction
-    ADD COLUMN IF NOT EXISTS retry_count INT NOT NULL DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS failure_reason VARCHAR(30) NULL;
+    ADD COLUMN IF NOT EXISTS retry_count INT NOT NULL DEFAULT 0;

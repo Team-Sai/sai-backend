@@ -95,7 +95,6 @@
             AND s.settlement_id = #{aggregateId}
         </if>
         GROUP BY
-        GROUP BY
         po.payment_obligation_id,
         po.participant_id,
         u.name,

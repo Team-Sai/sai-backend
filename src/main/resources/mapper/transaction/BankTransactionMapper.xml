@@ -17,6 +17,7 @@
         <result property="counterpartyName" column="counterparty_name"/>
         <result property="memo" column="memo"/>
         <result property="syncedAt" column="synced_at"/>
+        <result property="retryCount" column="retry_count"/>
     </resultMap>
 
     <sql id="BankTransactionColumns">
@@ -29,7 +30,8 @@
         transaction_at,
         counterparty_name,
         memo,
-        synced_at
+        synced_at,
+        retry_count
     </sql>
 
     <insert id="insertOrGetId"
@@ -188,5 +190,48 @@
         AND linked_account_id = #{linkedAccountId}
         FOR UPDATE
     </select>
+
+    <!-- 재시도 대상 조회: NEEDS_CHECK/UNMATCHED/FAILED 중, 재시도 횟수 남아있고,
+     NEEDS_CHECK인 경우 정산+차용증 혼재(=이미 사용자 알림 간 것)는 제외 -->
+    <select id="findRetryCandidates" resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction bt
+        WHERE bt.linked_account_id = #{linkedAccountId}
+        AND bt.processing_status IN ('NEEDS_CHECK', 'UNMATCHED', 'FAILED')
+        AND (
+        (bt.processing_status = 'FAILED' AND bt.retry_count &lt; 5)
+        OR (bt.processing_status IN ('UNMATCHED') AND bt.retry_count &lt; 14)
+        OR (
+        bt.processing_status = 'NEEDS_CHECK'
+        AND bt.retry_count &lt; 14
+        AND NOT EXISTS (
+        SELECT 1
+        FROM bank_transaction_match_candidate c1
+        JOIN bank_transaction_match_candidate c2
+        ON c1.bank_transaction_id = c2.bank_transaction_id
+        WHERE c1.bank_transaction_id = bt.bank_transaction_id
+        AND c1.target_type = 'SETTLEMENT'
+        AND c2.target_type = 'LOAN'
+        )
+        )
+        )
+        ORDER BY bt.transaction_at ASC, bt.bank_transaction_id ASC
+    </select>
+
+    <update id="resetToPendingForRetry">
+        UPDATE bank_transaction
+        SET processing_status = 'PENDING',
+        retry_count = retry_count + 1
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND processing_status = #{currentStatus}
+    </update>
+
+    <update id="recordFailure">
+        UPDATE bank_transaction
+        SET processing_status = #{nextStatus},
+        failure_reason = #{failureReason}
+        WHERE bank_transaction_id = #{bankTransactionId}
+    </update>
 </mapper>
 
