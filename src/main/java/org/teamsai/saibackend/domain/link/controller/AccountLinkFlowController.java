@@ -40,7 +40,6 @@ public class AccountLinkFlowController {
 
     @Value("${sai.mock-bank.base-url}")
     private String mockBankBaseUrl;
-
     @Value("${sai.backend.base-url}")
     private String backendBaseUrl;
 
@@ -62,25 +61,21 @@ public class AccountLinkFlowController {
     ) {
         Long userId = userDetails.getUserId();
         UserDTO myInfo = userService.getUser(userId);
-
         identityValidator.validateUserInformation(myInfo);
-
         String state = jwtTokenProvider.createLinkStateToken(userId, myInfo.getName(), myInfo.getBirthDate());
-
         List<Long> alreadyLinkedAccountIds = linkedBankAccountService.getLinkedAccountIds(userId);
         String linkedIdsParam = alreadyLinkedAccountIds.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
-
         String redirectUrl = UriComponentsBuilder
                 .fromUriString(mockBankBaseUrl + "/link/start")
                 .queryParam("returnUrl", backendBaseUrl + "/accounts/link/callback")
                 .queryParam("state", state)
                 .queryParam("excludeAccountIds", linkedIdsParam)
                 .toUriString();
-
         return ResponseEntity.ok(Map.of("redirectUrl", redirectUrl));
     }
+
     @Operation(
             summary = "계좌 연동 콜백",
             description = "사이은행에서 계좌 선택을 마친 사용자가 리다이렉트되어 도달"
@@ -118,10 +113,15 @@ public class AccountLinkFlowController {
             log.warn("[AccountLinkFlowController] accountIds 파싱 실패 - userId: {}, accountIds: {}", userId, accountIds);
             return errorView(model, "계좌 연동에 실패했습니다.");
         }
-
         if (ids.isEmpty()) {
             return errorView(model, "선택된 계좌가 없습니다.");
         }
+
+        // completeLink 실패 시 최초 연동/재연동을 구분해 올바른 보상을 하기 위해
+        // confirm 이전에 미리 조회해둔다 (completeLink 내부에서도 다시 조회하지만,
+        // 실패 시 컨트롤러가 그 값을 알 방법이 없어 별도로 필요하다).
+        String previousUserKey = userService.getUserKeyByUserId(userId);
+
         try {
             mockBankClient.confirmUserKey(userKey);
         } catch (Exception e) {
@@ -133,9 +133,7 @@ public class AccountLinkFlowController {
         try {
             accountLinkService.completeLink(userId, userKey, ids);
         } catch (Exception e) {
-            // 실패 사유(도메인 예외/예상치 못한 예외)와 무관하게 confirm된 userKey는 항상 한 번만 revoke한다.
-            userKeyRevoker.revokeBestEffort(CALLER, userId, userKey);
-
+            compensateAfterCompleteLinkFailure(userId, userKey, previousUserKey);
             if (e instanceof DomainException domainException) {
                 log.warn(
                         "[AccountLinkFlowController] 계좌 연동 실패 - userId: {}, accountIds: {}, errorCode: {}",
@@ -143,7 +141,6 @@ public class AccountLinkFlowController {
                 );
                 return errorView(model, "계좌 연동에 실패했습니다.");
             }
-
             // 스택트레이스가 필요한 ERROR 로그는 GlobalExceptionHandler가 남기므로 여기서는 중복 로깅하지 않는다.
             log.warn(
                     "[AccountLinkFlowController] 계좌 연동 처리 중 예상치 못한 오류 발생 - userId: {}, accountIds: {}, message: {}",
@@ -154,6 +151,28 @@ public class AccountLinkFlowController {
 
         model.addAttribute("success", true);
         return "link/link-complete";
+    }
+
+    /**
+     * confirm(K2) 성공 후 completeLink가 실패했을 때 mock-bank 상태를 정리한다.
+     * 최초 연동(previousUserKey == null)이었다면 K2를 revoke하고,
+     * 재연동이었다면 mock-bank의 활성 키를 K1으로 복원한다.
+     */
+    private void compensateAfterCompleteLinkFailure(Long userId, String newUserKey, String previousUserKey) {
+        if (previousUserKey == null) {
+            userKeyRevoker.revokeBestEffort(CALLER, userId, newUserKey);
+            return;
+        }
+        try {
+            mockBankClient.restoreUserKey(newUserKey, previousUserKey);
+            log.info("[AccountLinkFlowController] 재연동 실패로 mock-bank 활성 키를 이전 키로 복원 완료 - userId: {}", userId);
+        } catch (Exception e) {
+            log.error(
+                    "[AccountLinkFlowController] mock-bank 이전 키 복원 실패 - userId: {}. "
+                            + "mock-bank에 새 키가 ACTIVE 상태로 남아있을 수 있어 수동 확인이 필요합니다.",
+                    userId, e
+            );
+        }
     }
 
     private String errorView(Model model, String message) {

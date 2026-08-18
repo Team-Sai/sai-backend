@@ -65,11 +65,13 @@ class AccountLinkFlowControllerTest {
     private static final Long USER_ID = 1L;
     private static final String STATE = "valid-state-token";
     private static final String USER_KEY = "mb_rawkey12345678";
+    private static final String PREVIOUS_USER_KEY = "mb_oldkey87654321";
 
     @Test
     @DisplayName("정상 흐름 - confirm 성공 후 연동까지 성공하면 success 뷰를 반환한다")
     void linkCallback_정상흐름() throws Exception {
         given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
+        given(userService.getUserKeyByUserId(USER_ID)).willReturn(null);
 
         mockMvc.perform(get("/accounts/link/callback")
                         .param("state", STATE)
@@ -89,6 +91,7 @@ class AccountLinkFlowControllerTest {
     @DisplayName("confirm이 실패하면 completeLink를 호출하지 않고 에러 뷰를 반환한다")
     void linkCallback_confirm실패시_에러뷰() throws Exception {
         given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
+        given(userService.getUserKeyByUserId(USER_ID)).willReturn(null);
         willThrow(new RuntimeException("mock-bank 다운"))
                 .given(mockBankClient).confirmUserKey(USER_KEY);
 
@@ -118,6 +121,7 @@ class AccountLinkFlowControllerTest {
 
         verify(mockBankClient, never()).confirmUserKey(anyString());
         verify(accountLinkService, never()).completeLink(anyLong(), anyString(), anyList());
+        verify(userService, never()).getUserKeyByUserId(anyLong());
     }
 
     @Test
@@ -133,6 +137,7 @@ class AccountLinkFlowControllerTest {
 
         verify(mockBankClient, never()).confirmUserKey(anyString());
         verify(accountLinkService, never()).completeLink(anyLong(), anyString(), anyList());
+        verify(userService, never()).getUserKeyByUserId(anyLong());
     }
 
     @Test
@@ -149,12 +154,14 @@ class AccountLinkFlowControllerTest {
 
         verify(mockBankClient, never()).confirmUserKey(anyString());
         verify(accountLinkService, never()).completeLink(anyLong(), anyString(), anyList());
+        verify(userService, never()).getUserKeyByUserId(anyLong());
     }
 
     @Test
-    @DisplayName("confirm은 성공했지만 계좌 연동이 실패하면 mock-bank에 revoke를 요청하고 에러 뷰를 반환한다")
-    void linkCallback_연동실패시_revoke요청후_에러뷰() throws Exception {
+    @DisplayName("최초 연동 중 계좌 연동이 실패하면 mock-bank에 revoke를 요청하고 에러 뷰를 반환한다")
+    void linkCallback_최초연동실패시_revoke요청후_에러뷰() throws Exception {
         given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
+        given(userService.getUserKeyByUserId(USER_ID)).willReturn(null);
         willThrow(UserErrorCode.LINK_KEY_UPDATE_CONFLICT.toException())
                 .given(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
 
@@ -169,12 +176,56 @@ class AccountLinkFlowControllerTest {
         inOrder.verify(mockBankClient).confirmUserKey(USER_KEY);
         inOrder.verify(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
         inOrder.verify(userKeyRevoker).revokeBestEffort("AccountLinkFlowController", USER_ID, USER_KEY);
+        verify(mockBankClient, never()).restoreUserKey(anyString(), anyString());
     }
 
     @Test
-    @DisplayName("completeLink에서 예상치 못한 예외가 발생하면 revoke 요청 후 예외가 전파되어 500이 반환된다")
+    @DisplayName("재연동 중 계좌 연동이 실패하면 mock-bank에 이전 키로 복원을 요청하고 에러 뷰를 반환한다")
+    void linkCallback_재연동실패시_restore요청후_에러뷰() throws Exception {
+        given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
+        given(userService.getUserKeyByUserId(USER_ID)).willReturn(PREVIOUS_USER_KEY);
+        willThrow(UserErrorCode.LINK_KEY_UPDATE_CONFLICT.toException())
+                .given(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
+
+        mockMvc.perform(get("/accounts/link/callback")
+                        .param("state", STATE)
+                        .param("userKey", USER_KEY)
+                        .param("accountIds", "1"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("success", false));
+
+        var inOrder = org.mockito.Mockito.inOrder(mockBankClient, accountLinkService);
+        inOrder.verify(mockBankClient).confirmUserKey(USER_KEY);
+        inOrder.verify(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
+        inOrder.verify(mockBankClient).restoreUserKey(USER_KEY, PREVIOUS_USER_KEY);
+        verify(userKeyRevoker, never()).revokeBestEffort(anyString(), anyLong(), anyString());
+    }
+
+    @Test
+    @DisplayName("재연동 실패 후 복원 요청마저 실패해도 예외를 전파하지 않고 에러 뷰를 정상 반환한다")
+    void linkCallback_재연동복원마저실패해도_에러뷰는정상반환() throws Exception {
+        given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
+        given(userService.getUserKeyByUserId(USER_ID)).willReturn(PREVIOUS_USER_KEY);
+        willThrow(UserErrorCode.LINK_KEY_UPDATE_CONFLICT.toException())
+                .given(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
+        willThrow(new RuntimeException("mock-bank 다운"))
+                .given(mockBankClient).restoreUserKey(USER_KEY, PREVIOUS_USER_KEY);
+
+        mockMvc.perform(get("/accounts/link/callback")
+                        .param("state", STATE)
+                        .param("userKey", USER_KEY)
+                        .param("accountIds", "1"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("success", false));
+
+        verify(mockBankClient).restoreUserKey(USER_KEY, PREVIOUS_USER_KEY);
+    }
+
+    @Test
+    @DisplayName("completeLink에서 예상치 못한 예외가 발생하면 최초 연동 기준 revoke 요청 후 예외가 전파되어 500이 반환된다")
     void linkCallback_예상치못한예외_revoke후_전파() throws Exception {
         given(jwtTokenProvider.getUserIdFromLinkState(STATE)).willReturn(Optional.of(USER_ID));
+        given(userService.getUserKeyByUserId(USER_ID)).willReturn(null);
         willThrow(new RuntimeException("예상치 못한 DB 오류"))
                 .given(accountLinkService).completeLink(USER_ID, USER_KEY, List.of(1L));
 

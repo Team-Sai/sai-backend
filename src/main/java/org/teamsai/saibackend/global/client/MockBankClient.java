@@ -75,7 +75,19 @@ public class MockBankClient {
                 .toBodilessEntity();
     }
 
+    public void restoreUserKey(String currentUserKey, String previousUserKey){
+        restClient.post()
+                .uri("/api/link/restore-key")
+                .header("X-Internal-Api-Key", internalApiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new RestoreKeyRequest(currentUserKey, previousUserKey))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
     private record UserKeyRequest(String userKey) {}
+
+    private record RestoreKeyRequest(String currentUserKey, String previousUserKey) {}
 
     public List<LinkableAccountResponse> getAccountsByUserKey(String userKey) {
         return requireBody(

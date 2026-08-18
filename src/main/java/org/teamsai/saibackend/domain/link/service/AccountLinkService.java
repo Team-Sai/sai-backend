@@ -29,7 +29,6 @@ public class AccountLinkService {
                     "[AccountLinkService] userKey 갱신 실패(동시 요청 경합 가능) - userId: {}",
                     userId
             );
-            userKeyRevoker.revokeBestEffort("AccountLinkService", userId, userKey);
             throw UserErrorCode.LINK_KEY_UPDATE_CONFLICT.toException();
         }
 
