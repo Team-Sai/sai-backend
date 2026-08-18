@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>사이원장</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+  <th:block th:replace="~{fragments/app-shell :: commonStyles}"></th:block>
+  <link rel="stylesheet" th:href="@{/css/guest/intro.css}" />
+</head>
+<body class="app-shell-page">
+  <header th:replace="~{fragments/app-shell :: guestHeader('intro')}"></header>
+    <main>
+      <section id="intro" class="hero">
+        <div class="hero-copy">
+          <h1>당신의 거래는 어떤<br><em>이야기</em>를 담고 있나요?</h1>
+          <p>단순한 숫자 뒤에 숨겨진 신뢰와 약속의 흐름<br>사이원장이 그 복잡한 과정을 명료한 서사로 풀어냅니다</p>
+        </div>
+        <div class="blob blob-a"></div>
+        <div class="blob blob-b"></div>
+        <div class="blob blob-c"></div>
+        <div class="blob blob-d"></div>
+        <div class="blob blob-e"></div>
+        <div class="blob blob-f"></div>
+        <div class="hero-card card-settlement">
+          <img th:src="@{/images/guest/settlement.png}" alt="공동정산" />
+          <span>정산</span>
+        </div>
+        <div class="hero-card card-iou">
+          <img th:src="@{/images/guest/loan-agreement.png}" alt="금전소비대차" />
+          <span>금전소비대차</span>
+        </div>
+        <div class="hero-card card-diagnosis">
+          <img th:src="@{/images/guest/safety-diagnosis.png}" alt="안심거래진단" />
+          <span>안심거래진단</span>
+        </div>
+        <div class="hero-card card-calendar">
+          <img th:src="@{/images/guest/schedule.png}" alt="거래일정" />
+          <span>거래일정</span>
+        </div>
+      </section>
+
+      <section id="settlement" class="split-section white one-place">
+        <div class="section-copy">
+          <p class="eyebrow green">돈 관계를 한눈에</p>
+          <h2>정산부터 차용증까지<br>한곳에서 관리하세요</h2>
+          <p class="description">누가 얼마를 냈는지, 다음 상환일은 언제인지<br>복잡한 돈의 흐름을 사이원장이 또렷하게 정리해드려요.</p>
+        </div>
+        <div class="summary-card">
+          <h3>오늘의 사이원장</h3>
+          <p class="muted">함께 관리 중인 금액</p>
+          <strong>6,340,000원</strong>
+          <div class="summary-row"><span>공동정산</span><b class="green-text">840,000원</b></div>
+          <div class="summary-row"><span>차용증</span><b class="blue-text">5,000,000원</b></div>
+          <div class="summary-row"><span>이번 달 예정</span><b class="red-text">500,000원</b></div>
+        </div>
+        <img class="person-img person-one" th:src="@{/images/guest/character-settlement.png}" alt="정산 캐릭터" />
+      </section>
+
+      <section id="iou" class="split-section pale">
+        <div class="iou-card">
+          <p class="eyebrow green">전자 차용증</p>
+          <strong>5,000,000원</strong>
+          <p class="muted">한민엽님이 박채연님에게 빌려준 금액</p>
+          <hr>
+          <div class="detail"><span>이자율</span><b>연 5.0%</b></div>
+          <div class="detail"><span>상환일</span><b>2028. 05. 20</b></div>
+          <div class="detail"><span>서명 상태</span><b class="green-text">양자 서명 완료</b></div>
+          <div class="safe-box">✓&nbsp; 안전하게 보관된 전자계약이에요</div>
+        </div>
+        </div>
+        <div class="section-copy">
+          <p class="eyebrow green">가까운 사이일수록</p>
+          <h2>약속은 더 분명하게<br>남겨두세요</h2>
+          <p class="description">원금과 이자, 상환일을 간편하게 정하고<br>두 사람이 서명한 계약을 안전하게 보관해요.</p>
+        </div>
+      </section>
+
+      <section class="split-section pale diagnosis-section">
+        <div class="diagnosis-card">
+          <h3>안심거래진단</h3>
+          <p class="muted">계약 조건을 확인하고 있어요</p>
+          <div class="diagnosis-result-title">거래 진단 결과</div>
+          <div class="diagnosis-summary">4개 항목 중 2개 확인 필요</div>
+          <div class="check-row"><b>이자율 확인</b><span>안전</span><small>연 5.0% · 적정 범위</small></div>
+          <div class="check-row warning"><b>가족간 증여세 진단</b><span>확인 필요</span><small>증여로 판단될 가능성 확인</small></div>
+          <div class="check-row"><b>상환 계획</b><span>안전</span><small>매월 20일 자동 안내</small></div>
+          <div class="check-row warning"><b>증빙 자료</b><span>확인 필요</span><small>송금 내역·차용증 보관</small></div>
+        </div>
+        <div class="section-copy">
+          <p class="eyebrow green">차용증 작성 전</p>
+          <h2>안심거래진단으로<br>한 번 더 확인하세요</h2>
+          <p class="description">입력한 금액과 이자율, 상환 계획을 바탕으로<br>확인할 항목을 미리 알려드려요.</p>
+        </div>
+        <img class="person-img person-two" th:src="@{/images/guest/character-diagnosis.png}" alt="거래 진단 캐릭터" />
+      </section>
+
+      <section class="split-section pale auto-match">
+        <div class="section-copy">
+          <p class="eyebrow blue">입금 내역 자동 확인</p>
+          <h2>통장을 열어보지 않아도<br>동기화 한번에<br>정산이 알아서 맞춰져요</h2>
+          <p class="description">연동한 계좌의 입금 내역을 확인해<br>정산 대상과 자동으로 연결하고 상태를 업데이트해요.</p>
+        </div>
+        <div class="activity-card">
+          <h3>입금 내역</h3>
+          <p class="muted">최근 거래가 자동으로 반영됐어요</p>
+          <div class="activity-list">
+            <div><b>한민엽</b><strong>+210,000원</strong><small>오늘 14:20</small><i>매칭 완료</i></div>
+            <div><b>박채연</b><strong>+170,000원</strong><small>어제 19:45</small><i>매칭 완료</i></div>
+            <div><b>양예은</b><strong>+80,000원</strong><small>오늘 11:10</small><i class="needs">확인 필요</i></div>
+            <div><b>지인진</b><strong>+210,000원</strong><small>어제 10:15</small><i class="needs">확인 필요</i></div>
+            <div><b>박채빈</b><strong>+140,000원</strong><small>어제 10:15</small><i class="needs">확인 필요</i></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="calendar" class="calendar-section white">
+        <p class="eyebrow green centered">정산과 상환 일정을 한눈에</p>
+        <h2 class="centered">한 달의 돈 약속을<br>달력 하나로 확인하세요</h2>
+        <div class="calendar-layout">
+          <div class="calendar-card">
+            <div class="calendar-head"><strong id="monthLabel">2026년 8월</strong><button type="button" id="todayBtn">오늘</button><button type="button" id="prevBtn">‹</button><button type="button" id="nextBtn">›</button></div>
+            <div class="weekdays"><b>일</b><b>월</b><b>화</b><b>수</b><b>목</b><b>금</b><b>토</b></div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+          </div>
+          <aside class="upcoming">
+            <h3>다가오는 일정</h3>
+            <div class="upcoming-item red"><b>3</b><span>월세 납부일</span></div>
+            <div class="upcoming-item blue"><b>9</b><span>가족 회비 정산</span></div>
+            <div class="upcoming-item red"><b>17</b><span>보증금 상환일</span></div>
+            <div class="upcoming-item orange"><b>19</b><span>부모님 간병비 정산</span></div>
+            <div class="upcoming-item blue"><b>25</b><span>여행 회비 정산</span></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="cta">
+        <div class="cta-panel">
+          <p class="eyebrow green centered">복잡했던 돈 관계</p>
+          <h2>이제 사이원장에서<br>가볍게 시작하세요</h2>
+          <p>번거로운 정산부터 차용증, 입금 확인까지 모두 한곳에서 관리하세요.</p>
+          <a class="cta-button" th:href="@{/login}">사이원장 시작하기</a>
+        </div>
+      </section>
+    </main>
+
+  <footer th:replace="~{fragments/app-shell :: appFooter}"></footer>
+  <script th:src="@{/js/guest/intro.js}"></script>
+</body>
+</html>
