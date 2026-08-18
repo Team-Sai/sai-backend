@@ -9,6 +9,7 @@
     </th:block>
     <link rel="stylesheet" href="/css/settlement/settlement-common.css">
     <link rel="stylesheet" href="/css/settlement/settlement-list.css">
+    <link rel="stylesheet" href="/css/matching/matching-review-modal.css">
 </head>
 <body class="app-shell-page">
 <header th:replace="~{fragments/app-shell :: appHeader('settlement')}"></header>
@@ -113,7 +114,10 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+<th:block th:replace="~{fragments/matching-review-modal :: matchingReviewModal}"></th:block>
+
 <th:block th:replace="~{fragments/app-shell :: commonScripts}"></th:block>
+<script src="/js/matching/matching-review-modal.js"></script>
 <script th:src="@{/js/settlement/settlement-list.js}" src="/js/settlement/settlement-list.js"></script>
 </body>
 </html>

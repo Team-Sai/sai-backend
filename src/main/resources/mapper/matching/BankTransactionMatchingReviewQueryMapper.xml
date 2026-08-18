@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.matching.mapper.BankTransactionMatchingReviewQueryMapper">
+
+    <resultMap id="BankTransactionResultMap"
+               type="org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO">
+        <id property="bankTransactionId" column="bank_transaction_id"/>
+        <result property="linkedAccountId" column="linked_account_id"/>
+        <result property="externalTransactionId" column="external_transaction_id"/>
+        <result property="amount" column="amount"/>
+        <result property="transactionType" column="transaction_type"/>
+        <result property="processingStatus" column="processing_status"/>
+        <result property="transactionAt" column="transaction_at"/>
+        <result property="counterpartyName" column="counterparty_name"/>
+        <result property="memo" column="memo"/>
+        <result property="syncedAt" column="synced_at"/>
+    </resultMap>
+
+    <sql id="ReviewCandidateValidity">
+        AND (
+            (
+                available_candidate.target_type = 'SETTLEMENT'
+                AND EXISTS (
+                    SELECT 1
+                    FROM payment_obligation review_obligation
+                    JOIN settlement_participant review_participant
+                        ON review_participant.participant_id = review_obligation.participant_id
+                    JOIN settlement review_settlement
+                        ON review_settlement.settlement_id = review_participant.settlement_id
+                    WHERE review_obligation.payment_obligation_id = available_candidate.target_id
+                    AND review_obligation.obligation_status = 'ACTIVE'
+                    AND review_participant.participant_status = 'ACTIVE'
+                    AND review_settlement.settlement_status = 'IN_PROGRESS'
+                    AND review_obligation.expected_amount > COALESCE((
+                        SELECT SUM(pr.amount)
+                        FROM payment_record pr
+                        WHERE pr.payment_target_type = 'SETTLEMENT'
+                        AND pr.target_id = review_obligation.payment_obligation_id
+                        AND pr.record_status = 'CONFIRMED'
+                    ), 0)
+                    AND bt.amount &gt;= (
+                        review_obligation.expected_amount - COALESCE((
+                            SELECT SUM(pr.amount)
+                            FROM payment_record pr
+                            WHERE pr.payment_target_type = 'SETTLEMENT'
+                            AND pr.target_id = review_obligation.payment_obligation_id
+                            AND pr.record_status = 'CONFIRMED'
+                        ), 0)
+                    ) * 0.10
+                    AND bt.amount &lt;= (
+                        review_obligation.expected_amount - COALESCE((
+                            SELECT SUM(pr.amount)
+                            FROM payment_record pr
+                            WHERE pr.payment_target_type = 'SETTLEMENT'
+                            AND pr.target_id = review_obligation.payment_obligation_id
+                            AND pr.record_status = 'CONFIRMED'
+                        ), 0)
+                    ) * 1.10
+                )
+            )
+            OR (
+                available_candidate.target_type = 'LOAN'
+                AND EXISTS (
+                    SELECT 1
+                    FROM repayment_schedule review_schedule
+                    WHERE review_schedule.schedule_id = available_candidate.target_id
+                    AND review_schedule.status = 'PENDING'
+                    AND review_schedule.total_payment_due > COALESCE((
+                        SELECT SUM(pr.amount)
+                        FROM payment_record pr
+                        WHERE pr.payment_target_type = 'LOAN'
+                        AND pr.target_id = review_schedule.schedule_id
+                        AND pr.record_status = 'CONFIRMED'
+                    ), 0)
+                    AND bt.amount &gt;= (
+                        review_schedule.total_payment_due - COALESCE((
+                            SELECT SUM(pr.amount)
+                            FROM payment_record pr
+                            WHERE pr.payment_target_type = 'LOAN'
+                            AND pr.target_id = review_schedule.schedule_id
+                            AND pr.record_status = 'CONFIRMED'
+                        ), 0)
+                    ) * 0.10
+                    AND bt.amount &lt;= (
+                        review_schedule.total_payment_due - COALESCE((
+                            SELECT SUM(pr.amount)
+                            FROM payment_record pr
+                            WHERE pr.payment_target_type = 'LOAN'
+                            AND pr.target_id = review_schedule.schedule_id
+                            AND pr.record_status = 'CONFIRMED'
+                        ), 0)
+                    ) * 1.10
+                )
+            )
+        )
+    </sql>
+
+    <sql id="ReviewSearchCondition">
+        FROM bank_transaction bt
+        INNER JOIN linked_bank_account account
+            ON account.linked_account_id = bt.linked_account_id
+        WHERE account.user_id = #{userId}
+        AND account.connection_status = 'AVAILABLE'
+        AND bt.processing_status = 'NEEDS_CHECK'
+        AND bt.transaction_type = 'DEPOSIT'
+        AND EXISTS (
+            SELECT 1
+            FROM bank_transaction_match_candidate available_candidate
+            WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
+            AND available_candidate.candidate_status = 'AVAILABLE'
+            <include refid="ReviewCandidateValidity"/>
+        )
+        <choose>
+            <when test="condition.notificationChannel">
+                AND EXISTS (
+                    SELECT 1
+                    FROM bank_transaction_match_candidate available_candidate
+                    WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
+                    AND available_candidate.candidate_status = 'AVAILABLE'
+                    AND available_candidate.target_type = 'SETTLEMENT'
+                    <include refid="ReviewCandidateValidity"/>
+                )
+                AND EXISTS (
+                    SELECT 1
+                    FROM bank_transaction_match_candidate available_candidate
+                    WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
+                    AND available_candidate.candidate_status = 'AVAILABLE'
+                    AND available_candidate.target_type = 'LOAN'
+                    <include refid="ReviewCandidateValidity"/>
+                )
+            </when>
+            <otherwise>
+                AND NOT (
+                    EXISTS (
+                        SELECT 1
+                        FROM bank_transaction_match_candidate available_candidate
+                        WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
+                        AND available_candidate.candidate_status = 'AVAILABLE'
+                        AND available_candidate.target_type = 'SETTLEMENT'
+                        <include refid="ReviewCandidateValidity"/>
+                    )
+                    AND EXISTS (
+                        SELECT 1
+                        FROM bank_transaction_match_candidate available_candidate
+                        WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
+                        AND available_candidate.candidate_status = 'AVAILABLE'
+                        AND available_candidate.target_type = 'LOAN'
+                        <include refid="ReviewCandidateValidity"/>
+                    )
+                )
+                <if test="condition.targetType != null">
+                    AND EXISTS (
+                        SELECT 1
+                        FROM bank_transaction_match_candidate available_candidate
+                        WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
+                        AND available_candidate.candidate_status = 'AVAILABLE'
+                        AND available_candidate.target_type = #{condition.targetType}
+                        <include refid="ReviewCandidateValidity"/>
+                    )
+                </if>
+                <if test="condition.aggregateId != null">
+                    AND EXISTS (
+                        SELECT 1
+                        FROM bank_transaction_match_candidate available_candidate
+                        LEFT JOIN payment_obligation obligation
+                            ON available_candidate.target_type = 'SETTLEMENT'
+                            AND obligation.payment_obligation_id = available_candidate.target_id
+                        LEFT JOIN settlement_participant participant
+                            ON participant.participant_id = obligation.participant_id
+                        LEFT JOIN repayment_schedule schedule
+                            ON available_candidate.target_type = 'LOAN'
+                            AND schedule.schedule_id = available_candidate.target_id
+                        WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
+                        AND available_candidate.candidate_status = 'AVAILABLE'
+                        AND available_candidate.target_type = #{condition.targetType}
+                        <include refid="ReviewCandidateValidity"/>
+                        AND CASE
+                            WHEN available_candidate.target_type = 'SETTLEMENT'
+                                THEN participant.settlement_id
+                            WHEN available_candidate.target_type = 'LOAN'
+                                THEN schedule.contract_id
+                            END = #{condition.aggregateId}
+                    )
+                </if>
+            </otherwise>
+        </choose>
+    </sql>
+
+    <select id="search" resultMap="BankTransactionResultMap">
+        SELECT
+            bt.bank_transaction_id,
+            bt.linked_account_id,
+            bt.external_transaction_id,
+            bt.amount,
+            bt.transaction_type,
+            bt.processing_status,
+            bt.transaction_at,
+            bt.counterparty_name,
+            bt.memo,
+            bt.synced_at
+        <include refid="ReviewSearchCondition"/>
+        ORDER BY bt.transaction_at DESC,
+                 bt.bank_transaction_id DESC
+        LIMIT #{condition.size}
+        OFFSET #{condition.offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        <include refid="ReviewSearchCondition"/>
+    </select>
+
+</mapper>

@@ -36,6 +36,8 @@
                 column="target_type"
                 javaType="org.teamsai.saibackend.domain.matching.type.MatchingTargetType"/>
         <result property="targetId" column="target_id"/>
+        <result property="aggregateId" column="aggregate_id"/>
+        <result property="targetName" column="target_name"/>
         <result property="participantName" column="participant_name"/>
         <result property="expectedRemainingAmount"
                 column="expected_remaining_amount"/>
@@ -56,6 +58,33 @@
         invalidated_at,
         invalidation_reason,
         created_at
+    </sql>
+
+    <sql id="CurrentRemainingAmount">
+        CASE
+            WHEN mc.target_type = 'SETTLEMENT'
+                THEN GREATEST(
+                    obligation.expected_amount - COALESCE((
+                        SELECT SUM(pr.amount)
+                        FROM payment_record pr
+                        WHERE pr.payment_target_type = 'SETTLEMENT'
+                        AND pr.target_id = obligation.payment_obligation_id
+                        AND pr.record_status = 'CONFIRMED'
+                    ), 0),
+                    0
+                )
+            WHEN mc.target_type = 'LOAN'
+                THEN GREATEST(
+                    schedule.total_payment_due - COALESCE((
+                        SELECT SUM(pr.amount)
+                        FROM payment_record pr
+                        WHERE pr.payment_target_type = 'LOAN'
+                        AND pr.target_id = schedule.schedule_id
+                        AND pr.record_status = 'CONFIRMED'
+                    ), 0),
+                    0
+                )
+        END
     </sql>
 
     <insert id="insertAll">
@@ -100,17 +129,29 @@
             mc.bank_transaction_id,
             mc.target_type,
             mc.target_id,
+            CASE
+                WHEN mc.target_type = 'SETTLEMENT'
+                    THEN participant.settlement_id
+                WHEN mc.target_type = 'LOAN'
+                    THEN schedule.contract_id
+            END AS aggregate_id,
+            COALESCE(settlement.title, contract.contract_alias)
+                AS target_name,
             COALESCE(settlement_user.name, debtor.name)
                 AS participant_name,
             mc.expected_remaining_amount,
             mc.amount_match_type,
             mc.created_at
         FROM bank_transaction_match_candidate mc
+        JOIN bank_transaction bt
+            ON bt.bank_transaction_id = mc.bank_transaction_id
         LEFT JOIN payment_obligation obligation
             ON mc.target_type = 'SETTLEMENT'
             AND obligation.payment_obligation_id = mc.target_id
         LEFT JOIN settlement_participant participant
             ON participant.participant_id = obligation.participant_id
+        LEFT JOIN settlement settlement
+            ON settlement.settlement_id = participant.settlement_id
         LEFT JOIN users settlement_user
             ON settlement_user.user_id = participant.user_id
         LEFT JOIN repayment_schedule schedule
@@ -122,17 +163,195 @@
             ON debtor.user_id = contract.debtor_id
         WHERE mc.bank_transaction_id = #{bankTransactionId}
         AND mc.candidate_status = 'AVAILABLE'
+        AND (
+            (
+                mc.target_type = 'SETTLEMENT'
+                AND obligation.obligation_status = 'ACTIVE'
+                AND participant.participant_status = 'ACTIVE'
+                AND settlement.settlement_status = 'IN_PROGRESS'
+                AND obligation.expected_amount > COALESCE((
+                    SELECT SUM(pr.amount)
+                    FROM payment_record pr
+                    WHERE pr.payment_target_type = 'SETTLEMENT'
+                    AND pr.target_id = obligation.payment_obligation_id
+                    AND pr.record_status = 'CONFIRMED'
+                ), 0)
+            )
+            OR (
+                mc.target_type = 'LOAN'
+                AND schedule.status = 'PENDING'
+                AND schedule.total_payment_due > COALESCE((
+                    SELECT SUM(pr.amount)
+                    FROM payment_record pr
+                    WHERE pr.payment_target_type = 'LOAN'
+                    AND pr.target_id = schedule.schedule_id
+                    AND pr.record_status = 'CONFIRMED'
+                ), 0)
+            )
+        )
+        AND bt.amount &gt;= (
+            <include refid="CurrentRemainingAmount"/>
+        ) * 0.10
+        AND bt.amount &lt;= (
+            <include refid="CurrentRemainingAmount"/>
+        ) * 1.10
         ORDER BY mc.match_candidate_id ASC
     </select>
 
     <select id="findByIdAndBankTransactionId"
             resultMap="BankTransactionMatchCandidateResultMap">
         SELECT
-        <include refid="BankTransactionMatchCandidateColumns"/>
-        FROM bank_transaction_match_candidate
-        WHERE match_candidate_id = #{matchCandidateId}
-        AND bank_transaction_id = #{bankTransactionId}
-        AND candidate_status = 'AVAILABLE'
+        mc.match_candidate_id,
+        mc.bank_transaction_id,
+        mc.target_type,
+        mc.target_id,
+        mc.expected_remaining_amount,
+        mc.amount_match_type,
+        mc.candidate_status,
+        mc.invalidated_at,
+        mc.invalidation_reason,
+        mc.created_at
+        FROM bank_transaction_match_candidate mc
+        JOIN bank_transaction bt
+            ON bt.bank_transaction_id = mc.bank_transaction_id
+        WHERE mc.match_candidate_id = #{matchCandidateId}
+        AND mc.bank_transaction_id = #{bankTransactionId}
+        AND mc.candidate_status = 'AVAILABLE'
+        AND (
+            (
+                mc.target_type = 'SETTLEMENT'
+                AND EXISTS (
+                    SELECT 1
+                    FROM payment_obligation po
+                    JOIN settlement_participant sp
+                        ON sp.participant_id = po.participant_id
+                    JOIN settlement s
+                        ON s.settlement_id = sp.settlement_id
+                    WHERE po.payment_obligation_id = mc.target_id
+                    AND po.obligation_status = 'ACTIVE'
+                    AND sp.participant_status = 'ACTIVE'
+                    AND s.settlement_status = 'IN_PROGRESS'
+                    AND po.expected_amount > COALESCE((
+                        SELECT SUM(pr.amount)
+                        FROM payment_record pr
+                        WHERE pr.payment_target_type = 'SETTLEMENT'
+                        AND pr.target_id = po.payment_obligation_id
+                        AND pr.record_status = 'CONFIRMED'
+                    ), 0)
+                )
+            )
+            OR (
+                mc.target_type = 'LOAN'
+                AND EXISTS (
+                    SELECT 1
+                    FROM repayment_schedule rs
+                    WHERE rs.schedule_id = mc.target_id
+                    AND rs.status = 'PENDING'
+                    AND rs.total_payment_due > COALESCE((
+                        SELECT SUM(pr.amount)
+                        FROM payment_record pr
+                        WHERE pr.payment_target_type = 'LOAN'
+                        AND pr.target_id = rs.schedule_id
+                        AND pr.record_status = 'CONFIRMED'
+                    ), 0)
+                )
+            )
+        )
+    </select>
+
+    <select id="findAllForReviewByBankTransactionIds"
+            resultMap="BankTransactionMatchCandidateQueryResultMap">
+        SELECT
+            mc.match_candidate_id,
+            mc.bank_transaction_id,
+            mc.target_type,
+            mc.target_id,
+            CASE
+                WHEN mc.target_type = 'SETTLEMENT'
+                    THEN participant.settlement_id
+                WHEN mc.target_type = 'LOAN'
+                    THEN schedule.contract_id
+            END AS aggregate_id,
+            COALESCE(settlement.title, contract.contract_alias)
+                AS target_name,
+            COALESCE(settlement_user.name, debtor.name)
+                AS participant_name,
+            mc.expected_remaining_amount,
+            mc.amount_match_type,
+            mc.created_at
+        FROM bank_transaction_match_candidate mc
+        JOIN bank_transaction bt
+            ON bt.bank_transaction_id = mc.bank_transaction_id
+        LEFT JOIN payment_obligation obligation
+            ON mc.target_type = 'SETTLEMENT'
+            AND obligation.payment_obligation_id = mc.target_id
+        LEFT JOIN settlement_participant participant
+            ON participant.participant_id = obligation.participant_id
+        LEFT JOIN settlement settlement
+            ON settlement.settlement_id = participant.settlement_id
+        LEFT JOIN users settlement_user
+            ON settlement_user.user_id = participant.user_id
+        LEFT JOIN repayment_schedule schedule
+            ON mc.target_type = 'LOAN'
+            AND schedule.schedule_id = mc.target_id
+        LEFT JOIN loan_contract contract
+            ON contract.contract_id = schedule.contract_id
+        LEFT JOIN users debtor
+            ON debtor.user_id = contract.debtor_id
+        WHERE mc.bank_transaction_id IN
+        <foreach collection="bankTransactionIds"
+                 item="bankTransactionId"
+                 open="("
+                 separator=","
+                 close=")">
+            #{bankTransactionId}
+        </foreach>
+        AND mc.candidate_status = 'AVAILABLE'
+        AND (
+            (
+                mc.target_type = 'SETTLEMENT'
+                AND obligation.obligation_status = 'ACTIVE'
+                AND participant.participant_status = 'ACTIVE'
+                AND settlement.settlement_status = 'IN_PROGRESS'
+                AND obligation.expected_amount > COALESCE((
+                    SELECT SUM(pr.amount)
+                    FROM payment_record pr
+                    WHERE pr.payment_target_type = 'SETTLEMENT'
+                    AND pr.target_id = obligation.payment_obligation_id
+                    AND pr.record_status = 'CONFIRMED'
+                ), 0)
+            )
+            OR (
+                mc.target_type = 'LOAN'
+                AND schedule.status = 'PENDING'
+                AND schedule.total_payment_due > COALESCE((
+                    SELECT SUM(pr.amount)
+                    FROM payment_record pr
+                    WHERE pr.payment_target_type = 'LOAN'
+                    AND pr.target_id = schedule.schedule_id
+                    AND pr.record_status = 'CONFIRMED'
+                ), 0)
+            )
+        )
+        AND bt.amount &gt;= (
+            <include refid="CurrentRemainingAmount"/>
+        ) * 0.10
+        AND bt.amount &lt;= (
+            <include refid="CurrentRemainingAmount"/>
+        ) * 1.10
+        <if test="targetType != null">
+            AND mc.target_type = #{targetType}
+        </if>
+        <if test="aggregateId != null">
+            AND CASE
+                WHEN mc.target_type = 'SETTLEMENT'
+                    THEN participant.settlement_id
+                WHEN mc.target_type = 'LOAN'
+                    THEN schedule.contract_id
+                END = #{aggregateId}
+        </if>
+        ORDER BY mc.bank_transaction_id ASC,
+                 mc.match_candidate_id ASC
     </select>
 
     <update id="invalidate">

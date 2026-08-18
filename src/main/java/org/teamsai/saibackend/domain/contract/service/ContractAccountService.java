@@ -16,6 +16,7 @@ import org.teamsai.saibackend.domain.contract.mapper.LoanContractMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,35 @@ public class ContractAccountService {
         return linkedBankAccountService.getLinkedAccounts(userId).stream()
                 .filter(account -> ConnectionStatus.AVAILABLE.name().equals(account.connectionStatus()))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public LinkedBankAccountResponse getCurrentAccount(
+            Long contractId,
+            Long userId
+    ) {
+        LoanContractResponse contract = findContract(contractId);
+        validateCreditor(contract, userId);
+
+        ContractAccountDTO contractAccount = contractAccountMapper
+                .findActiveAccountByContractId(contractId)
+                .stream()
+                .findFirst()
+                .orElseThrow(
+                        LoanContractErrorCode.CONTRACT_ACCOUNT_NOT_FOUND
+                                ::toException
+                );
+
+        return linkedBankAccountService.getLinkedAccounts(userId).stream()
+                .filter(account -> Objects.equals(
+                        account.linkedAccountId(),
+                        contractAccount.getLinkedAccountId()
+                ))
+                .findFirst()
+                .orElseThrow(
+                        LoanContractErrorCode.INVALID_LINKED_ACCOUNT
+                                ::toException
+                );
     }
 
     @Transactional
@@ -76,15 +106,27 @@ public class ContractAccountService {
     }
 
     private void validateContractOwner(Long contractId, Long userId) {
-        LoanContractResponse contract = loanContractMapper.findContractById(contractId)
-                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
-
-        if (!contract.getCreditorId().equals(userId)) {
-            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
-        }
+        LoanContractResponse contract = findContract(contractId);
+        validateCreditor(contract, userId);
 
 
         if (contract.getStatus() != ContractStatus.DRAFT && contract.getStatus() != ContractStatus.PENDING) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+        }
+    }
+
+    private LoanContractResponse findContract(Long contractId) {
+        return loanContractMapper.findContractById(contractId)
+                .orElseThrow(
+                        LoanContractErrorCode.CONTRACT_NOT_FOUND::toException
+                );
+    }
+
+    private void validateCreditor(
+            LoanContractResponse contract,
+            Long userId
+    ) {
+        if (!Objects.equals(contract.getCreditorId(), userId)) {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
         }
     }
