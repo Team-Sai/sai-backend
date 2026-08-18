@@ -110,9 +110,8 @@ public class ContractAccountService {
         validateCreditor(contract, userId);
 
 
-        if (contract.getStatus() == ContractStatus.COMPLETED) {
+        if (contract.getStatus() != ContractStatus.DRAFT && contract.getStatus() != ContractStatus.PENDING) {
             throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
-
         }
     }
 

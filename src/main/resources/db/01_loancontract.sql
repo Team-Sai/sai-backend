@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS loan_contract (
 
     creditor_id          BIGINT NOT NULL,
     debtor_id            BIGINT NULL,
+    relation_type        VARCHAR(20) NOT NULL DEFAULT 'ACQUAINTANCE',
 
     principal_amount     DECIMAL(15,2) NOT NULL,
     interest_rate        DECIMAL(5,2) NOT NULL,

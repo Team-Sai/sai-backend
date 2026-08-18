@@ -43,6 +43,7 @@
     <insert id="insertByContract" useGeneratedKeys="true" keyProperty="request.contractId">
         INSERT INTO loan_contract (
         creditor_id,
+        relation_type,
         creditor_address,
         principal_amount,
         interest_rate,
@@ -57,6 +58,7 @@
         updated_at
         ) VALUES (
         #{creditorId},
+        #{request.relationType},
         #{request.creditorAddress},
         #{request.principalAmount},
         #{request.interestRate},
@@ -106,6 +108,7 @@
         lc.previous_contract_id AS previousContractId,
         lc.creditor_id        AS creditorId,
         lc.debtor_id          AS debtorId,
+        lc.relation_type      AS relationType,
         creditor.name         AS creditorName,
         lc.creditor_address   AS creditorAddress,
         lc.creditor_signature AS creditorSignature,
@@ -134,6 +137,7 @@
         lc.previous_contract_id AS previousContractId,
         lc.creditor_id        AS creditorId,
         lc.debtor_id          AS debtorId,
+        lc.relation_type      AS relationType,
         lc.creditor_address   AS creditorAddress,
         lc.creditor_signature AS creditorSignature,
         lc.debtor_address     AS debtorAddress,
@@ -166,6 +170,7 @@
         previous_contract_id,
         creditor_id,
         debtor_id,
+        relation_type,
         principal_amount,
         interest_rate,
         repayment_type,
@@ -183,6 +188,7 @@
         #{previousContractId},
         #{creditorId},
         #{debtorId},
+        #{relationType},
         #{principalAmount},
         #{interestRate},
         #{repaymentType},
@@ -205,6 +211,7 @@
         lc.previous_contract_id AS previousContractId,
         lc.creditor_id        AS creditorId,
         lc.debtor_id          AS debtorId,
+        lc.relation_type      AS relationType,
         creditor.name         AS creditorName,
         lc.creditor_address   AS creditorAddress,
         lc.creditor_signature AS creditorSignature,
