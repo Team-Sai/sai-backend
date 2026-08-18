@@ -12,7 +12,7 @@ public class TransactionSyncScheduler extends AbstractDailyBatchScheduler {
 
     private final Job transactionSyncJob;
 
-    @Scheduled(cron = "0 * * * * *")  // 23:50 — 연체 배치들(자정)보다 먼저
+    @Scheduled(cron = "0 50 23 * * *")  // 23:50 — 연체 배치들(자정)보다 먼저
     public void runTransactionSync() throws Exception {
         runDaily();
     }

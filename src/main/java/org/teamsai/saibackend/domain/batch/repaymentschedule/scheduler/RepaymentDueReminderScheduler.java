@@ -8,22 +8,18 @@ import org.teamsai.saibackend.domain.batch.common.scheduler.AbstractDailyBatchSc
 
 @Component
 @RequiredArgsConstructor
-public class RepaymentScheduleOverdueScheduler extends AbstractDailyBatchScheduler {
+public class RepaymentDueReminderScheduler extends AbstractDailyBatchScheduler {
 
-    private final Job repaymentScheduleOverdueJob;
+    private final Job repaymentDueReminderJob;
 
-    @Scheduled(cron = "0 0 0 * * *")
-    public void runOverdueCheck() throws Exception {
+    @Scheduled(cron = "0 * * * * *")
+    public void runReminder() throws Exception {
         runDaily();
     }
 
     @Override
-    protected Job targetJob() {
-        return repaymentScheduleOverdueJob;
-    }
+    protected Job targetJob() { return repaymentDueReminderJob; }
 
     @Override
-    protected String jobLabel() {
-        return "repaymentSchedule.overdue";
-    }
+    protected String jobLabel() { return "repaymentSchedule.dueReminder"; }
 }

@@ -117,4 +117,23 @@
         WHERE schedule_id = #{scheduleId}
         FOR UPDATE
     </select>
+
+    <select id="findDueOnDates" resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
+        SELECT
+        schedule_id AS scheduleId, contract_id AS contractId, sequence,
+        due_date AS dueDate, principal_due AS principalDue, interest_due AS interestDue,
+        total_payment_due AS totalPaymentDue, remaining_principal AS remainingPrincipal,
+        status, paid_at AS paidAt, created_at AS createdAt
+        FROM repayment_schedule
+        WHERE due_date IN
+        <foreach item="date" collection="dueDates" open="(" separator="," close=")">
+            #{date}
+        </foreach>
+        AND status = 'PENDING'
+        ORDER BY schedule_id
+    </select>
+
+    <select id="findDebtorUserIdByContractId" resultType="java.lang.Long">
+        SELECT debtor_id FROM loan_contract WHERE contract_id = #{contractId}
+    </select>
 </mapper>

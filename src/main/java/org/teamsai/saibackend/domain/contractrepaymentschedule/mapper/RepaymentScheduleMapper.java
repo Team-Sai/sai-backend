@@ -12,9 +12,9 @@ import java.util.Optional;
 @Mapper
 public interface RepaymentScheduleMapper {
 
-    List<RepaymentScheduleDTO> findOverdueCandidates(@Param("baseDate")LocalDate baseDate);
+    List<RepaymentScheduleDTO> findDueOnDates(@Param("dueDates") List<LocalDate> dueDates);
 
-    void updateStatusToOverdue(@Param("scheduleId") Long scheduleId);
+    Long findDebtorUserIdByContractId(@Param("contractId") Long contractId);
 
     int deletePendingByContractId(@Param("contractId") Long contractId);
 

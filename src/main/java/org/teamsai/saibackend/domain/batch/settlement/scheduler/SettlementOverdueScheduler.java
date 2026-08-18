@@ -12,7 +12,7 @@ public class SettlementOverdueScheduler extends AbstractDailyBatchScheduler {
 
     private final Job settlementOverdueJob;
 
-    @Scheduled(cron = "0 * * * * *")  // 테스트용
+    @Scheduled(cron = "0 0 0 * * *")  // 테스트용
     public void runSettlementOverdue() throws Exception {
         runDaily();
     }
