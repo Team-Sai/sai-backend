@@ -383,13 +383,14 @@
                 return;
             }
 
-            state.transactions = state.transactions.filter(
-                item => item.transaction.bankTransactionId !== transactionId
-            );
-            state.selectedCandidateIds.delete(transactionId);
-            state.resultStates.delete(transactionId);
-            state.totalCount = Math.max(state.totalCount - 1, 0);
-            render();
+            if (state.options.transaction) {
+                state.transactions = [];
+                state.totalCount = 0;
+                state.hasLoaded = true;
+                render();
+            } else {
+                await reloadCurrentView();
+            }
             notifyProcessed(transactionId, body);
         } catch (error) {
             console.error("매칭 후보 반영 실패", error);

@@ -87,17 +87,6 @@
         END
     </sql>
 
-    <sql id="CurrentAmountMatchType">
-        CASE
-            WHEN bt.amount = (<include refid="CurrentRemainingAmount"/>)
-                THEN 'EXACT'
-            WHEN bt.amount &lt; (<include refid="CurrentRemainingAmount"/>)
-                THEN 'PARTIAL'
-            WHEN bt.amount &gt; (<include refid="CurrentRemainingAmount"/>)
-                THEN 'EXCESS'
-        END
-    </sql>
-
     <insert id="insertAll">
         INSERT INTO bank_transaction_match_candidate (
             bank_transaction_id,
@@ -150,10 +139,8 @@
                 AS target_name,
             COALESCE(settlement_user.name, debtor.name)
                 AS participant_name,
-            <include refid="CurrentRemainingAmount"/>
-                AS expected_remaining_amount,
-            <include refid="CurrentAmountMatchType"/>
-                AS amount_match_type,
+            mc.expected_remaining_amount,
+            mc.amount_match_type,
             mc.created_at
         FROM bank_transaction_match_candidate mc
         JOIN bank_transaction bt
@@ -180,6 +167,7 @@
             (
                 mc.target_type = 'SETTLEMENT'
                 AND obligation.obligation_status = 'ACTIVE'
+                AND participant.participant_status = 'ACTIVE'
                 AND settlement.settlement_status = 'IN_PROGRESS'
                 AND obligation.expected_amount > COALESCE((
                     SELECT SUM(pr.amount)
@@ -288,10 +276,8 @@
                 AS target_name,
             COALESCE(settlement_user.name, debtor.name)
                 AS participant_name,
-            <include refid="CurrentRemainingAmount"/>
-                AS expected_remaining_amount,
-            <include refid="CurrentAmountMatchType"/>
-                AS amount_match_type,
+            mc.expected_remaining_amount,
+            mc.amount_match_type,
             mc.created_at
         FROM bank_transaction_match_candidate mc
         JOIN bank_transaction bt
@@ -325,6 +311,7 @@
             (
                 mc.target_type = 'SETTLEMENT'
                 AND obligation.obligation_status = 'ACTIVE'
+                AND participant.participant_status = 'ACTIVE'
                 AND settlement.settlement_status = 'IN_PROGRESS'
                 AND obligation.expected_amount > COALESCE((
                     SELECT SUM(pr.amount)
