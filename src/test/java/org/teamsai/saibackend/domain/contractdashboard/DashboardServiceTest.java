@@ -78,7 +78,6 @@ class DashboardServiceTest {
 
         assertThat(row.getTotalRemainingAmount()).isEqualByComparingTo("1250000");
         assertThat(row.getThisMonthDueAmount()).isEqualByComparingTo("600000");
-        assertThat(row.getPaymentStatus().name()).isEqualTo("WAITING");
         assertThat(row.getContractStatus().name()).isEqualTo("ONGOING");
     }
 

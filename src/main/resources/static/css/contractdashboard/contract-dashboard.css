@@ -219,9 +219,8 @@ html, body {
     border-radius: 999px;
 }
 
-.payment-pill.waiting { background: #FFF4E5; color: #B36A00; }
+.payment-pill.ongoing {background: #FFF4E5; color: #B36A00;}
 .payment-pill.paid { background: var(--primary-soft); color: var(--primary); }
-.payment-pill.none { background: #F0F1F3; color: var(--muted); }
 
 .detail-link {
     color: var(--primary);

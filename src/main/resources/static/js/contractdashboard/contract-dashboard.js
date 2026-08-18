@@ -7,7 +7,7 @@ let isFirstLoad = true;
 const ROLE_LABELS = { CREDITOR: '채권자', DEBTOR: '채무자' };
 const CATEGORY_LABELS = { RECEIVE: '수취', PAY: '납부' };
 const CONTRACT_STATUS_LABELS = { ONGOING: '진행중', COMPLETED: '완료' };
-const PAYMENT_STATUS_LABELS = { WAITING: '대기', NO_DUE_THIS_MONTH: '이번달 없음', PAID: '납부', NONE: '-' };
+const PAYMENT_STATUS_LABELS = {ONGOING: '납부중', PAID: '납부완료'};
 
 function fetchDashboard() {
     const url = `/api/dashboard?keyword=${encodeURIComponent(currentKeyword)}`
@@ -57,7 +57,7 @@ function renderTable(contracts) {
     tbody.innerHTML = '';
 
     if (contracts.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="empty-state">표시할 계약이 없습니다.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="empty-state">표시할 계약이 없습니다.</td></tr>`;
         return;
     }
 
@@ -75,7 +75,6 @@ function renderTable(contracts) {
                 <td>${CATEGORY_LABELS[c.category]}</td>
                 <td>${c.principalAmount.toLocaleString(undefined, {maximumFractionDigits: 0})} / ${c.totalRemainingAmount.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
                 <td>${nextDueAmount}원</td>
-                <td>${escapeHtml(c.maskedAccount) || '-'}</td>
                 <td>${nearestDue}</td>
                 <td><span class="status-pill ${statusClass}">${CONTRACT_STATUS_LABELS[c.contractStatus]}</span></td>
                 <td><span class="payment-pill ${paymentClass}">${PAYMENT_STATUS_LABELS[c.paymentStatus]}</span></td>
