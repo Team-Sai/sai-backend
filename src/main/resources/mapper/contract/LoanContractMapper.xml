@@ -138,6 +138,8 @@
         lc.creditor_id        AS creditorId,
         lc.debtor_id          AS debtorId,
         lc.relation_type      AS relationType,
+        creditor.name         AS creditorName,
+        debtor.name           AS debtorName,
         lc.creditor_address   AS creditorAddress,
         lc.creditor_signature AS creditorSignature,
         lc.debtor_address     AS debtorAddress,
@@ -153,6 +155,8 @@
         lc.status             AS status,
         lc.created_at         AS createdAt
         FROM loan_contract lc
+        LEFT JOIN users creditor ON lc.creditor_id = creditor.user_id
+        LEFT JOIN users debtor ON lc.debtor_id = debtor.user_id
         WHERE lc.creditor_id = #{userId} OR lc.debtor_id = #{userId}
         ORDER BY lc.created_at DESC
     </select>

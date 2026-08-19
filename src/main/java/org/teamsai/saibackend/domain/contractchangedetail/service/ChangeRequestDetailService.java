@@ -13,6 +13,7 @@ import org.teamsai.saibackend.domain.contractchangedetail.util.RepaymentCalculat
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +39,9 @@ public class ChangeRequestDetailService {
             throw ChangeRequestDetailErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
         }
 
-        if (!changeDTO.getUserId().equals(contract.getCreditorId())) {
+        boolean requesterIsParty = changeDTO.getUserId().equals(contract.getCreditorId())
+                || Objects.equals(changeDTO.getUserId(), contract.getDebtorId());
+        if (!requesterIsParty) {
             throw ChangeRequestDetailErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
         }
 
@@ -70,12 +73,19 @@ public class ChangeRequestDetailService {
         Period period = Period.between(contract.getMaturityDate(), effectiveMaturityDate);
         int extendedMonths = period.getMonths() + period.getYears() * 12;
 
-        Long newContractId = contractChangeService.getPendingChangedContractId(contractId);
+        Long newContractId = changeDTO.getStatus() == ChangeRequestStatus.PENDING
+                ? contractChangeService.getPendingChangedContractId(contractId)
+                : null;
 
         return ChangeRequestDetailDTO.builder()
                 .changeRequestId(changeDTO.getChangeRequestId())
                 .newContractId(newContractId)
-                .requesterName(contract.getCreditorName())
+                .requesterName(changeDTO.getUserId().equals(contract.getCreditorId())
+                        ? contract.getCreditorName()
+                        : contract.getDebtorName())
+                .rejectorName(changeDTO.getUserId().equals(contract.getCreditorId())
+                        ? contract.getDebtorName()
+                        : contract.getCreditorName())
                 .requestedAt(changeDTO.getCreatedAt())
                 .status(translateStatus(changeDTO.getStatus()))
                 .currentMaturityDate(contract.getMaturityDate())
@@ -88,6 +98,7 @@ public class ChangeRequestDetailService {
                 .newTerms(effectiveTerms)
                 .changeReason(changeDTO.getChangeReason())
                 .extendedMonths(extendedMonths)
+                .returnReason(changeDTO.getReturnReason())
                 .currentMonthlyPayment(currentMonthlyPayment)
                 .newMonthlyPayment(newMonthlyPayment)
                 .build();

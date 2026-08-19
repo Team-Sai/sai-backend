@@ -122,12 +122,13 @@ public class ContractChangeController {
             @PathVariable Long contractId,
             @PathVariable Long changeRequestId,
             @RequestParam("signature") MultipartFile signature,
+            @RequestParam String identityVerificationId,
             @AuthenticationPrincipal(expression = "userId") Long userId
     ) {
         if (signature == null || signature.isEmpty()) {
             throw ContractChangeErrorCode.SIGNATURE_REQUIRED.toException();
         }
-        return contractChangeService.submitRequesterSignature(contractId, changeRequestId, userId, signature);
+        return contractChangeService.submitRequesterSignature(contractId, changeRequestId, userId, signature, identityVerificationId);
     }
 
     @Operation(

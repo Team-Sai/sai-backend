@@ -10,7 +10,7 @@
             name="viewport"
             content="width=device-width, initial-scale=1.0">
 
-    <title>차용증 보관함 | 사이원장</title>
+    <title>보관함 | 사이원장</title>
     <th:block
             th:replace="~{fragments/app-shell :: commonStyles}">
     </th:block>
@@ -27,11 +27,16 @@
 <main class="archive-container">
 
     <div class="archive-heading">
-        <h1>차용증 보관함</h1>
+        <h1>보관함</h1>
 
         <p class="subtitle">
-            저장된 차용증을 눌러 상세 화면을 확인하세요.
+            저장된 차용증과 정산 기록을 눌러 상세 화면을 확인하세요.
         </p>
+    </div>
+
+    <div class="archive-tabs" id="archiveTabs">
+        <button type="button" class="tab-btn active" data-type="contract">차용증</button>
+        <button type="button" class="tab-btn" data-type="settlement">정산</button>
     </div>
 
 
