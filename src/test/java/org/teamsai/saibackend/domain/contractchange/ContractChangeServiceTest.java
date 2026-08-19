@@ -24,6 +24,7 @@ import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
+import org.teamsai.saibackend.domain.identity.service.IdentityService;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
 import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
@@ -68,6 +69,9 @@ class ContractChangeServiceTest {
 
     @Mock
     private RepaymentScheduleService repaymentScheduleService;
+
+    @Mock
+    private IdentityService identityService;
 
     @InjectMocks
     private ContractChangeService contractChangeService;
@@ -495,6 +499,7 @@ class ContractChangeServiceTest {
 
         private static final Long CHANGE_REQUEST_ID = 200L;
         private static final String SAVED_PATH = "uploads/signatures/change_200_signature.png";
+        private static final String IDENTITY_VERIFICATION_ID = "identity-verification-id";
 
         private LoanContractChangeDTO changeRequestDTO(ChangeRequestStatus status, Long ownerUserId, Long contractId) {
             return LoanContractChangeDTO.builder()
@@ -524,7 +529,8 @@ class ContractChangeServiceTest {
             given(userService.getMyInfo(DEBTOR_ID))
                     .willReturn(UserResponse.builder().name("채무자").build());
 
-            contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, DEBTOR_ID, signature);
+            contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, DEBTOR_ID, signature, IDENTITY_VERIFICATION_ID);
+
 
             verify(notificationService).create(
                     eq(USER_ID),
@@ -549,7 +555,8 @@ class ContractChangeServiceTest {
             given(userService.getMyInfo(USER_ID))
                     .willReturn(UserResponse.builder().name("채권자").build());
 
-            contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature);
+            contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature, IDENTITY_VERIFICATION_ID);
+
 
             verify(notificationService).create(
                     eq(DEBTOR_ID),
@@ -567,7 +574,7 @@ class ContractChangeServiceTest {
                     .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, CONTRACT_ID)));
 
             assertThatThrownBy(() ->
-                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, DEBTOR_ID, signature))
+                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, DEBTOR_ID, signature, IDENTITY_VERIFICATION_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
@@ -587,7 +594,7 @@ class ContractChangeServiceTest {
                     .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.APPROVED, USER_ID, CONTRACT_ID)));
 
             assertThatThrownBy(() ->
-                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature))
+                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature, IDENTITY_VERIFICATION_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
@@ -608,7 +615,7 @@ class ContractChangeServiceTest {
                     .willReturn(Optional.of(changeRequestDTO(ChangeRequestStatus.PENDING, USER_ID, otherContractId)));
 
             assertThatThrownBy(() ->
-                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature))
+                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature, IDENTITY_VERIFICATION_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
@@ -628,7 +635,7 @@ class ContractChangeServiceTest {
                     .willReturn(Optional.empty());
 
             assertThatThrownBy(() ->
-                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature))
+                    contractChangeService.submitRequesterSignature(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID, signature, IDENTITY_VERIFICATION_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())
