@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public record SettlementDetailResponse(
         Long settlementId,
         String title,
+        String ownerName,
         String settlementCategory,
         String settlementType,
         String settlementStatus,

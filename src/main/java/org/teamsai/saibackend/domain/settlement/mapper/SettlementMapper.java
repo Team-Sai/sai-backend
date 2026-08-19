@@ -33,7 +33,6 @@ public interface SettlementMapper {
             @Param("settlementId") Long settlementId,
             @Param("userId") Long userId
     );
-    SettlementDTO findLatestByRecurringId(@Param("recurringSettlementId") Long recurringSettlementId);
 
     SettlementDTO findLatestByRecurringIdForUpdate(@Param("recurringSettlementId") Long recurringSettlementId);
 
