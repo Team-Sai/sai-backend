@@ -11,6 +11,12 @@
   const submitBtn = document.getElementById("btnSubmit");
   const cancelBtn = document.getElementById("btnCancel");
   const statusEl = document.getElementById("formStatus");
+  const returnUrl = `/contracts/${contractId}/change-requests/${changeRequestId}/signature`;
+  const identityVerificationId = new URLSearchParams(window.location.search).get("identityVerificationId");
+  if (!identityVerificationId) {
+    window.location.href = `/identity-test?returnTo=${encodeURIComponent(returnUrl)}`;
+    return;
+  }
 
   if (!canvas) return;
 
@@ -121,6 +127,7 @@
     const blob = await canvasToBlob();
     const formData = new FormData();
     formData.append("signature", blob, "signature.png");
+    formData.append("identityVerificationId", identityVerificationId);
 
     const response = await fetch(
         `/api/contracts/${contractId}/change-requests/${changeRequestId}/signature`,

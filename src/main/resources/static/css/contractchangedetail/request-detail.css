@@ -221,3 +221,13 @@ body {
     font-weight: 600;
     cursor: pointer;
 }
+
+.banner-title {
+    margin: 0;
+}
+
+.return-reason {
+    margin: 10px 0 0;
+    font-size: 14px;
+    color: #d7e5dd;
+}
