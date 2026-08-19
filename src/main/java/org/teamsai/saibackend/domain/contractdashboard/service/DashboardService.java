@@ -77,13 +77,10 @@ public class DashboardService {
                 .orElse(schedule.getTotalPaymentDue());
     }
 
-    private DashboardPaymentStatus determinePaymentStatus(BigDecimal totalRemaining, BigDecimal thisMonthDue) {
-        if (totalRemaining.compareTo(BigDecimal.ZERO) == 0) {
-            return DashboardPaymentStatus.NONE;
-        } else if (thisMonthDue.compareTo(BigDecimal.ZERO) > 0) {
-            return DashboardPaymentStatus.WAITING;
-        }
-        return DashboardPaymentStatus.NO_DUE_THIS_MONTH;
+    private DashboardPaymentStatus determinePaymentStatus(BigDecimal totalRemaining) {
+        return totalRemaining.compareTo(BigDecimal.ZERO) == 0
+                ? DashboardPaymentStatus.PAID
+                : DashboardPaymentStatus.ONGOING;
     }
 
     private DashboardContractStatus determineContractStatus(BigDecimal totalRemaining) {
@@ -119,7 +116,7 @@ public class DashboardService {
         ContractRole role = determineRole(contract, userId);
         TransactionCategory category = determineCategory(role);
         DashboardContractStatus contractStatus = determineContractStatus(totalRemaining);
-        DashboardPaymentStatus paymentStatus = determinePaymentStatus(totalRemaining, thisMonthDue);
+        DashboardPaymentStatus paymentStatus = determinePaymentStatus(totalRemaining);
         Optional<RepaymentScheduleDTO> nearestSchedule = findNearestSchedule(schedules);
         LocalDate nearestDueDate = nearestSchedule.map(RepaymentScheduleDTO::getDueDate).orElse(null);
         BigDecimal nextDueAmount = nearestSchedule
@@ -134,7 +131,6 @@ public class DashboardService {
                 .principalAmount(contract.getPrincipalAmount())
                 .totalRemainingAmount(totalRemaining)
                 .thisMonthDueAmount(thisMonthDue)
-                .maskedAccount(null)
                 .contractStatus(contractStatus)
                 .paymentStatus(paymentStatus)
                 .maturityDate(contract.getMaturityDate())
