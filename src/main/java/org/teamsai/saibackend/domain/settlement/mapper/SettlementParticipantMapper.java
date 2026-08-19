@@ -11,9 +11,10 @@ import java.util.List;
 public interface  SettlementParticipantMapper {
     int insert(SettlementParticipantDTO participant);
 
+    List<SettlementParticipantDTO> findBySettlementId(@Param("settlementId") Long settlementId);
+
     boolean existsActiveParticipant(
             @Param("settlementId") Long settlementId,
             @Param("userId") Long userId
     );
-    List<SettlementParticipantDTO> findBySettlementId(@Param("settlementId") Long settlementId);
 }

@@ -60,7 +60,7 @@ body.app-shell-page > .app-footer {
 
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
 
     gap: 24px;
 
@@ -73,6 +73,8 @@ body.app-shell-page > .app-footer {
 
 .app-brand {
     min-width: 160px;
+
+    margin-left: 202px;
 
     display: flex;
     align-items: center;
@@ -104,16 +106,27 @@ body.app-shell-page > .app-footer {
     line-height: 1;
 }
 
+.app-brand__logo {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
 .app-brand__name {
     color: #151922;
 
-    font-size: 18px;
+    font-size: 28px;
     font-weight: 800;
     line-height: 1;
 
     white-space: nowrap;
 }
 .app-nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+
     display: flex;
     align-items: center;
 
@@ -121,8 +134,10 @@ body.app-shell-page > .app-footer {
 
     color: #667085;
 
-    font-size: 14px;
+    font-size: 24px;
     font-weight: 700;
+
+    margin-left: 0;
 }
 
 .app-nav__link {
@@ -161,12 +176,15 @@ body.app-shell-page > .app-footer {
     align-items: center;
 
     gap: 10px;
+
+    margin-right: 202px;
+    margin-left: auto;
 }
 
 
 .app-icon-button {
-    width: 34px;
-    height: 34px;
+    width: 54px;
+    height: 54px;
 
     display: inline-flex;
     align-items: center;
@@ -177,10 +195,10 @@ body.app-shell-page > .app-footer {
     border: 0;
     border-radius: 8px;
 
-    background: #fff4df;
-    color: #b46a00;
+    background: transparent;
+    color: inherit;
 
-    font-size: 14px;
+    font-size: 24px;
     font-weight: 900;
     line-height: 1;
 
@@ -191,56 +209,33 @@ body.app-shell-page > .app-footer {
             transform 0.18s ease;
 }
 
-.app-icon-button:hover {
-    background: #ffecc9;
+.app-icon-button img {
+    width: 34px;
+    height: 34px;
+    display: block;
+}
+
+.app-icon-button:hover,
+.app-header-profile:hover {
+    background: #f2f2f2;
 }
 
 .app-icon-button:active {
     transform: translateY(1px);
 }
 
-.app-icon-button.is-active {
-    outline: 2px solid #0f8a5f;
-    outline-offset: 2px;
-}
-
-.app-profile-button {
-    height: 34px;
+.app-header-profile {
+    width: 54px;
+    height: 54px;
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    padding: 0 14px;
-
-    border: 1px solid #d9dee8;
+    padding: 0;
+    border: 0;
     border-radius: 8px;
-
-    background: #ffffff;
-    color: #151922;
-
-    font-size: 13px;
-    font-weight: 800;
-
-    white-space: nowrap;
-
-    transition:
-            border-color 0.18s ease,
-            background-color 0.18s ease,
-            color 0.18s ease;
-}
-
-.app-profile-button:hover {
-    border-color: #b9c1ce;
-
-    background: #f8fafc;
-}
-
-.app-profile-button.is-active {
-    border-color: #0f8a5f;
-
-    background: #f0f8f5;
-    color: #0f8a5f;
+    background: transparent;
 }
 .app-footer {
     width: 100%;
@@ -316,6 +311,19 @@ body.app-shell-page > .app-footer {
 }
 
 @media (max-width: 760px) {
+    .app-brand {
+        margin-left: 0;
+    }
+
+    .app-nav {
+        position: static;
+        width: 100%;
+        transform: none;
+    }
+
+    .app-header-actions {
+        margin-right: 0;
+    }
 
     .app-header {
         height: auto;
@@ -361,8 +369,10 @@ body.app-shell-page > .app-footer {
 
         padding: 12px 0;
 
-        white-space: nowrap;
-    }
+    white-space: nowrap;
+
+    gap: 8px;
+}
 
     .app-footer {
         min-height: 0;
@@ -391,10 +401,6 @@ body.app-shell-page > .app-footer {
         font-size: 17px;
     }
 
-    .app-profile-button {
-        padding: 0 10px;
-    }
-
     .app-nav {
         gap: 18px;
 
@@ -406,4 +412,30 @@ body.app-shell-page > .app-footer {
 
         font-size: 12px;
     }
+}
+
+.app-header-profile img {
+    width: 34px;
+    height: 34px;
+    display: block;
+}
+
+.guest-header-login {
+    flex: 0 0 100px;
+    width: 100px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #006c49;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
 }
