@@ -39,7 +39,7 @@ public class ChangeRequestDetailService {
             throw ChangeRequestDetailErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
         }
 
-        boolean requesterIsParty = changeDTO.getUserId().equals(contract.getCreditorId())
+        boolean requesterIsParty = Objects.equals(changeDTO.getUserId(), contract.getCreditorId())
                 || Objects.equals(changeDTO.getUserId(), contract.getDebtorId());
         if (!requesterIsParty) {
             throw ChangeRequestDetailErrorCode.CHANGE_REQUEST_NOT_FOUND.toException();
@@ -80,10 +80,10 @@ public class ChangeRequestDetailService {
         return ChangeRequestDetailDTO.builder()
                 .changeRequestId(changeDTO.getChangeRequestId())
                 .newContractId(newContractId)
-                .requesterName(changeDTO.getUserId().equals(contract.getCreditorId())
+                .requesterName(Objects.equals(changeDTO.getUserId(), contract.getCreditorId())
                         ? contract.getCreditorName()
                         : contract.getDebtorName())
-                .rejectorName(changeDTO.getUserId().equals(contract.getCreditorId())
+                .rejectorName(Objects.equals(changeDTO.getUserId(), contract.getCreditorId())
                         ? contract.getDebtorName()
                         : contract.getCreditorName())
                 .requestedAt(changeDTO.getCreatedAt())

@@ -6,12 +6,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
-import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
+import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
+import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchangedetail.dto.ChangeRequestDetailDTO;
 import org.teamsai.saibackend.domain.contractchangedetail.exception.ChangeRequestDetailErrorCode;
 import org.teamsai.saibackend.domain.contractchangedetail.service.ChangeRequestDetailService;
@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChangeRequestDetailService 단위 테스트")
@@ -32,6 +33,7 @@ class ChangeRequestDetailServiceTest {
     private static final Long CONTRACT_ID = 1L;
     private static final Long CHANGE_REQUEST_ID = 5L;
     private static final Long USER_ID = 10L;
+    private static final Long DEBTOR_ID = 20L;
 
     @Mock
     private ContractChangeService contractChangeService;
@@ -83,6 +85,8 @@ class ChangeRequestDetailServiceTest {
         return LoanContractResponse.builder()
                 .contractId(CONTRACT_ID)
                 .creditorName("김민수")
+                .debtorId(DEBTOR_ID)
+                .debtorName("이영희")
                 .principalAmount(BigDecimal.valueOf(100_000_000))
                 .interestRate(BigDecimal.valueOf(4.5))
                 .repaymentType(RepaymentMethod.BULLET_REPAYMENT)
@@ -144,5 +148,45 @@ class ChangeRequestDetailServiceTest {
 
     }
 
+    @Test
+    @DisplayName("채무자가 요청자면 requesterName이 채무자 이름으로 결정된다")
+    void getDetail_requesterIsDebtor() {
+        LoanContractResponse contract = createContract();
+        LoanContractChangeDTO changeDTO = LoanContractChangeDTO.builder()
+                .changeRequestId(CHANGE_REQUEST_ID)
+                .contractId(CONTRACT_ID)
+                .userId(contract.getDebtorId())
+                .status(ChangeRequestStatus.PENDING)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(contractChangeService.getContract(CONTRACT_ID, USER_ID)).thenReturn(contract);
+        when(contractChangeService.getChangeRequest(CHANGE_REQUEST_ID)).thenReturn(changeDTO);
+
+        ChangeRequestDetailDTO result = changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID);
+
+        assertThat(result.getRequesterName()).isEqualTo(contract.getDebtorName());
+    }
+
+    @Test
+    @DisplayName("반려 사유(returnReason)가 응답에 그대로 채워진다")
+    void getDetail_includesReturnReason() {
+        LoanContractResponse contract = createContract();
+        LoanContractChangeDTO changeDTO = LoanContractChangeDTO.builder()
+                .changeRequestId(CHANGE_REQUEST_ID)
+                .contractId(CONTRACT_ID)
+                .userId(contract.getCreditorId())
+                .status(ChangeRequestStatus.REJECTED)
+                .returnReason("이율이 너무 높습니다")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(contractChangeService.getContract(CONTRACT_ID, USER_ID)).thenReturn(contract);
+        when(contractChangeService.getChangeRequest(CHANGE_REQUEST_ID)).thenReturn(changeDTO);
+
+        ChangeRequestDetailDTO result = changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID);
+
+        assertThat(result.getReturnReason()).isEqualTo("이율이 너무 높습니다");
+    }
 
 }
