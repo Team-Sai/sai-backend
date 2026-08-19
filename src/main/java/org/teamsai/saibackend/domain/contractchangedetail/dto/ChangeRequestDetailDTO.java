@@ -30,5 +30,7 @@ public class ChangeRequestDetailDTO {
     private BigDecimal newMonthlyPayment;
     private String changeReason;
     private Integer extendedMonths;
+    private String returnReason;
+    private String rejectorName;
 
 }
