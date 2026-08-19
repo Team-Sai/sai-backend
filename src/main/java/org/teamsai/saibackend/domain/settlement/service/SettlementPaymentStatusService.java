@@ -119,7 +119,7 @@ public class SettlementPaymentStatusService {
         return !obligations.isEmpty()
                 && obligations.stream().allMatch(o ->
                 isResolved(o.obligationStatus())
-                        || o.paidAmount().compareTo(o.expectedAmount()) == 0
+                        || o.paidAmount().compareTo(o.expectedAmount()) >= 0
         );
     }
 

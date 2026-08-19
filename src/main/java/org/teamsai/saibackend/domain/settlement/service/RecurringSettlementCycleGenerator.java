@@ -104,10 +104,11 @@ public class RecurringSettlementCycleGenerator {
                 .map(SettlementParticipantDTO::getParticipantId)
                 .toList();
 
-        Map<Long, BigDecimal> latestObligationByParticipant = paymentObligationMapper.findByParticipantIds(participantIds)
+        Map<Long, BigDecimal> latestObligationByParticipant = paymentObligationMapper
+                .findLatestByParticipantIdsIncludingWrittenOff(participantIds)
                 .stream()
                 .collect(Collectors.toMap(PaymentObligationDTO::getParticipantId, PaymentObligationDTO::getExpectedAmount));
-
+        
         for (SettlementParticipantDTO oldParticipant : activeParticipants) {
             BigDecimal expectedAmount = latestObligationByParticipant.get(oldParticipant.getParticipantId());
             if (expectedAmount == null) {

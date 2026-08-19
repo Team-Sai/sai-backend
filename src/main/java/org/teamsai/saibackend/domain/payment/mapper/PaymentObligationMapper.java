@@ -14,6 +14,10 @@ import java.util.Optional;
 @Mapper
 public interface PaymentObligationMapper {
 
+    List<PaymentObligationDTO> findLatestByParticipantIdsIncludingWrittenOff(
+            @Param("participantIds") List<Long> participantIds
+    );
+
     List<Long> findWriteOffCandidateIds(@Param("cutoffDateTime") LocalDateTime cutoffDateTime);
 
     int writeOffBulk(@Param("paymentObligationIds") List<Long> paymentObligationIds);

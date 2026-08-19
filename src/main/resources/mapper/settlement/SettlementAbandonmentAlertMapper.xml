@@ -4,13 +4,6 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementAbandonmentAlertMapper">
 
-    <select id="existsBySettlementIdAndReferenceDate" resultType="boolean">
-        SELECT EXISTS (
-        SELECT 1 FROM settlement_abandonment_alert
-        WHERE settlement_id = #{settlementId} AND reference_date = #{referenceDate}
-        )
-    </select>
-
     <insert id="insertIfAbsent">
         INSERT IGNORE INTO settlement_abandonment_alert (settlement_id, reference_date)
         VALUES (#{settlementId}, #{referenceDate})

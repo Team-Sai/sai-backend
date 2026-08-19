@@ -145,7 +145,7 @@ class RecurringSettlementCycleGeneratorTest {
             assertThat(outcome.settlement()).isNotNull();
             verify(settlementAmountCalculator).distributeEqualAmounts(BigDecimal.valueOf(300000), 1);
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(300000)));
-            verify(paymentObligationMapper, never()).findByParticipantIds(any());
+            verify(paymentObligationMapper, never()).findLatestByParticipantIdsIncludingWrittenOff(any());
         }
         @Test
         @DisplayName("나머지가 발생하면 분배 리스트가 순서대로 참여자에게 배정된다 (3명, 10000원 -> 3333/3333/3334)")
@@ -182,13 +182,13 @@ class RecurringSettlementCycleGeneratorTest {
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
-            when(paymentObligationMapper.findByParticipantIds(List.of(1L)))
+            when(paymentObligationMapper.findLatestByParticipantIdsIncludingWrittenOff(List.of(1L)))
                     .thenReturn(List.of(obligation(500L, 1L, BigDecimal.valueOf(150000))));
             CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
             assertThat(outcome.result()).isEqualTo(CycleGenerationResult.CREATED);
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(150000)));
             verify(settlementAmountCalculator, never()).distributeEqualAmounts(any(), anyInt());
-            verify(paymentObligationMapper, times(1)).findByParticipantIds(any());
+            verify(paymentObligationMapper, times(1)).findLatestByParticipantIdsIncludingWrittenOff(any());
         }
         @Test
         @DisplayName("CUSTOM인데 직전 회차 납부의무가 없으면 PAYMENT_OBLIGATION_NOT_FOUND 예외를 던진다")
@@ -200,7 +200,7 @@ class RecurringSettlementCycleGeneratorTest {
                     activeParticipant(1L, 100L)
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
-            when(paymentObligationMapper.findByParticipantIds(List.of(1L))).thenReturn(List.of());
+            when(paymentObligationMapper.findLatestByParticipantIdsIncludingWrittenOff(List.of(1L))).thenReturn(List.of());
             assertThatThrownBy(() -> sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28)))
                     .isInstanceOf(DomainException.class)
                     .extracting(e -> ((DomainException) e).getErrorCode())
@@ -244,7 +244,7 @@ class RecurringSettlementCycleGeneratorTest {
             ));
             when(settlementMapper.insertSettlement(any())).thenReturn(1);
             when(participantMapper.insert(any())).thenReturn(1);
-            when(paymentObligationMapper.findByParticipantIds(List.of(1L, 2L, 3L)))
+            when(paymentObligationMapper.findLatestByParticipantIdsIncludingWrittenOff(List.of(1L, 2L, 3L)))
                     .thenReturn(List.of(
                             obligation(500L, 1L, BigDecimal.valueOf(100000)),
                             obligation(501L, 2L, BigDecimal.valueOf(120000)),
@@ -253,7 +253,7 @@ class RecurringSettlementCycleGeneratorTest {
             CycleGenerationOutcome outcome = sut.generateOneCycle(recurring, previous, LocalDate.of(2026, 2, 28));
             assertThat(outcome.result()).isEqualTo(CycleGenerationResult.CREATED);
             verify(participantMapper, times(3)).insert(any());
-            verify(paymentObligationMapper, times(1)).findByParticipantIds(any());
+            verify(paymentObligationMapper, times(1)).findLatestByParticipantIdsIncludingWrittenOff(any());
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(100000)));
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(120000)));
             verify(settlementPaymentService).createObligation(any(), eq(BigDecimal.valueOf(80000)));

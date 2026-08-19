@@ -8,9 +8,6 @@ import java.time.LocalDate;
 @Mapper
 public interface SettlementAbandonmentAlertMapper {
 
-    boolean existsBySettlementIdAndReferenceDate(@Param("settlementId") Long settlementId,
-                                 @Param("referenceDate") LocalDate referenceDate);
-
     int insertIfAbsent(
             @Param("settlementId") Long settlementId,
             @Param("referenceDate") LocalDate referenceDate
