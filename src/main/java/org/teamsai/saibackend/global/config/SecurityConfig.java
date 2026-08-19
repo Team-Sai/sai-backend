@@ -61,6 +61,7 @@ public class SecurityConfig {
 
                                 .requestMatchers(
                                         "/",
+                                        "/intro",
                                         "/login",
                                         "/signup",
                                         "/mypage",
@@ -78,6 +79,7 @@ public class SecurityConfig {
                                         "/contracts/**",
                                         "/notifications",
                                         "/archive",
+                                        "/archive/**",
                                         "/calendar",
 
                                         "/integration/dashboard"

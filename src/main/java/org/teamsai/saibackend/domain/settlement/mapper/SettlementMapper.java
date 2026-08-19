@@ -33,7 +33,11 @@ public interface SettlementMapper {
             @Param("settlementId") Long settlementId,
             @Param("userId") Long userId
     );
-    
+
+    SettlementDTO findLatestByRecurringIdForUpdate(@Param("recurringSettlementId") Long recurringSettlementId);
+
+    int countByRecurringId(@Param("recurringSettlementId") Long recurringSettlementId);
+
     int countInProgressSettlements();
 
     List<SettlementDTO> findInProgressSettlements(@Param("offset") int offset, @Param("limit") int limit);

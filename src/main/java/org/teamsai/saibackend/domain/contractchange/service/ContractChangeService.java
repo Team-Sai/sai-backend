@@ -21,6 +21,8 @@ import org.teamsai.saibackend.domain.contractchange.exception.ContractChangeErro
 import org.teamsai.saibackend.domain.contractchange.mapper.ContractChangeMapper;
 import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractrepaymentschedule.service.RepaymentScheduleService;
+import org.teamsai.saibackend.domain.identity.service.IdentityService;
+import org.teamsai.saibackend.domain.identity.type.IdentityPurpose;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
 import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
@@ -28,6 +30,7 @@ import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -41,6 +44,7 @@ public class ContractChangeService {
     private final NotificationService notificationService;
     private final UserService userService;
     private final LoanContractFileService fileService;
+    private final IdentityService identityService;
 
 
     public void checkAccess(Long contractId, Long userId) {
@@ -82,15 +86,11 @@ public class ContractChangeService {
 
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
-        boolean isCreditor = contract.getCreditorId().equals(userId);
-        boolean isDebtor = contract.getDebtorId().equals(userId);
+        boolean isCreditor = Objects.equals(contract.getCreditorId(), userId);
+        boolean isDebtor = Objects.equals(contract.getDebtorId(), userId);
 
         if (!isCreditor && !isDebtor) {
             throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
-        }
-
-        if (!isCreditor) {
-            throw ContractChangeErrorCode.NOT_CREDITOR.toException();
         }
 
         if (contract.getStatus() != ContractStatus.COMPLETED) {
@@ -206,8 +206,11 @@ public class ContractChangeService {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
         LoanContractChangeDTO changeRequest = getChangeRequest(changeRequestId);
 
-        if(!contract.getDebtorId().equals(userId)) {
-            throw ContractChangeErrorCode.NOT_DEBTOR.toException();
+        boolean requesterIsCreditor = Objects.equals(contract.getCreditorId(), changeRequest.getUserId());
+        Long approverId = requesterIsCreditor ? contract.getDebtorId() : contract.getCreditorId();
+
+        if(!Objects.equals(approverId, userId)) {
+            throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
         }
 
         if(!changeRequest.getContractId().equals(contractId)) {
@@ -223,12 +226,15 @@ public class ContractChangeService {
             throw ContractChangeErrorCode.ALREADY_BEING_REQUEST.toException();
         }
         try {
+            UserResponse rejectorInfo = userService.getMyInfo(userId);
+
             notificationService.create(
-                    contract.getCreditorId(),
+                    changeRequest.getUserId(),
                     NotificationType.CONTRACT_CHANGE,
                     "계약 변경 요청 반려",
-                    contract.getDebtorName() + "님이 변경 요청을 반려했습니다.",
-                    contractId
+                    rejectorInfo.getName() + "님이 변경 요청을 반려했습니다.",
+                    contractId,
+                    changeRequestId
             );
         } catch (Exception e) {
             log.error("계약 변경 반려 알림 발송 실패: contractId={}, changeRequestId={}, rror={}",
@@ -284,8 +290,14 @@ public class ContractChangeService {
             Long contractId,
             Long changeRequestId,
             Long userId,
-            MultipartFile signature
+            MultipartFile signature,
+            String identityVerificationId
+
     ) {
+
+
+        identityService.consume(userId, identityVerificationId, IdentityPurpose.LOAN_CONTRACT);
+
         LoanContractChangeDTO changeDTO = getChangeRequest(changeRequestId);
 
         if (!changeDTO.getContractId().equals(contractId)) {
@@ -310,14 +322,22 @@ public class ContractChangeService {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
         UserResponse requesterInfo = userService.getMyInfo(userId);
 
-        notificationService.create(
-                contract.getDebtorId(),
-                NotificationType.CONTRACT_CHANGE,
-                "계약 변경 요청",
-                requesterInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
-                contractId,
-                changeRequestId
-        );
+        boolean isCreditor = Objects.equals(contract.getCreditorId(), userId);
+        Long recipientId = isCreditor ? contract.getDebtorId() : contract.getCreditorId();
+
+        if(recipientId != null) {
+            notificationService.create(
+                    recipientId,
+                    NotificationType.CONTRACT_CHANGE,
+                    "계약 변경 요청",
+                    requesterInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
+                    contractId,
+                    changeRequestId
+            );
+        }else{
+            log.warn("계약 변경 요청 알림 발송 실패 - recipientId가 null입니다. contractId={}, changeRequestId={}",
+            contractId, changeRequestId);
+        }
 
         return getChangeRequest(changeRequestId);
     }

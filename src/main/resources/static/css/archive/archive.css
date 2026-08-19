@@ -43,6 +43,44 @@ h1 {
     font-size: 13px;
 }
 
+.archive-tabs {
+    display: flex;
+
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+
+    border: 1px solid #ddd;
+    border-radius: 999px;
+
+    background: #ffffff;
+    color: #666;
+
+    font-family:
+            "Pretendard",
+            sans-serif;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+            background-color 0.15s ease,
+            color 0.15s ease,
+            border-color 0.15s ease;
+}
+
+.tab-btn.active {
+    border-color: #0b3d2e;
+
+    background: #0b3d2e;
+    color: #ffffff;
+}
+
 .archive-list {
     display: flex;
     flex-direction: column;
@@ -128,6 +166,16 @@ h1 {
 .role-badge.debtor {
     background: #fdeee6;
     color: #a63d1a;
+}
+
+.role-badge.shared {
+    background: #eef4ff;
+    color: #1d4ed8;
+}
+
+.role-badge.recurring {
+    background: #f3eefd;
+    color: #6b21a8;
 }
 
 

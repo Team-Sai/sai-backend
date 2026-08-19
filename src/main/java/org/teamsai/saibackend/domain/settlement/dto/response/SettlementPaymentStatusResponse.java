@@ -22,6 +22,10 @@ public class SettlementPaymentStatusResponse {
     private BigDecimal totalPaidAmount;
     private BigDecimal totalRemainingAmount;
 
+    private long paidCount;
+    private long partiallyPaidCount;
+    private long unpaidCount;
+
     private BigDecimal progressRate;
     private boolean closable;
 }

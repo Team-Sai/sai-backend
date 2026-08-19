@@ -1,57 +1,41 @@
 CREATE TABLE IF NOT EXISTS payment_obligation (
-    payment_obligation_id BIGINT NOT NULL AUTO_INCREMENT,
-    participant_id BIGINT NOT NULL,
-    expected_amount DECIMAL(19, 2) NOT NULL CHECK (expected_amount > 0),
-    payment_status VARCHAR(30) NOT NULL CHECK (
-        payment_status IN ('UNPAID', 'PARTIALLY_PAID', 'PAID')
-    ),
-    review_status VARCHAR(30) NOT NULL CHECK (
-        review_status IN ('NORMAL', 'NEEDS_CHECK')
-    ),
-    obligation_status VARCHAR(30) NOT NULL CHECK (
-        obligation_status IN ('ACTIVE', 'EXCLUDED', 'CANCELLED')
-    ),
+                                                  payment_obligation_id  BIGINT          NOT NULL AUTO_INCREMENT,
+                                                  participant_id         BIGINT          NOT NULL,
+                                                  expected_amount        DECIMAL(19, 2)  NOT NULL,
+    payment_status         ENUM('UNPAID', 'PARTIALLY_PAID', 'PAID') NOT NULL,
+    review_status          ENUM('NORMAL', 'NEEDS_CHECK') NOT NULL,
+    obligation_status      ENUM('ACTIVE', 'EXCLUDED', 'CANCELLED') NOT NULL,
+    overdue_since          DATETIME        NULL,
 
-    PRIMARY KEY (payment_obligation_id)
-) ENGINE=InnoDB
-DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_unicode_ci;
+    PRIMARY KEY (payment_obligation_id),
 
-SET @index_exists = (
-    SELECT COUNT(*)
-    FROM information_schema.STATISTICS
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = 'payment_obligation'
-      AND INDEX_NAME = 'idx_payment_obligation_participant_status'
-);
+    INDEX idx_payment_obligation_participant_status (
+                                                        participant_id,
+                                                        obligation_status,
+                                                        payment_status
+                                                    ),
 
-SET @sql = IF(@index_exists = 0,
-              'CREATE INDEX idx_payment_obligation_participant_status
-                  ON payment_obligation (participant_id, obligation_status, payment_status)',
-              'SELECT ''idx_payment_obligation_participant_status already exists'' AS message'
-           );
+    CONSTRAINT chk_payment_obligation_amount CHECK (expected_amount > 0)
+    ) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_unicode_ci;
 
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
 
-ALTER TABLE payment_obligation ADD COLUMN IF NOT EXISTS overdue_since DATETIME NULL;
+CREATE TABLE IF NOT EXISTS payment_record (
+                                              payment_record_id BIGINT NOT NULL AUTO_INCREMENT,
+                                              bank_transaction_id BIGINT NOT NULL,
 
-    CREATE TABLE IF NOT EXISTS payment_record (
-    payment_record_id BIGINT NOT NULL AUTO_INCREMENT,
-    bank_transaction_id BIGINT NOT NULL,
-
-    payment_target_type VARCHAR(30) NOT NULL CHECK (
-        payment_target_type IN ('SETTLEMENT', 'LOAN')
+                                              payment_target_type VARCHAR(30) NOT NULL CHECK (
+                                                                                                 payment_target_type IN ('SETTLEMENT', 'LOAN')
     ),
     target_id BIGINT NOT NULL,
 
     amount DECIMAL(19, 2) NOT NULL CHECK (amount > 0),
     source_type VARCHAR(30) NOT NULL CHECK (
-        source_type IN ('AUTO_MATCH', 'MANUAL')
+                                               source_type IN ('AUTO_MATCH', 'MANUAL')
     ),
     record_status VARCHAR(30) NOT NULL CHECK (
-        record_status IN ('CONFIRMED', 'CANCELLED')
+                                                 record_status IN ('CONFIRMED', 'CANCELLED')
     ),
     recorded_at DATETIME NOT NULL,
     cancelled_by_id BIGINT NULL,
@@ -60,13 +44,34 @@ ALTER TABLE payment_obligation ADD COLUMN IF NOT EXISTS overdue_since DATETIME N
 
     PRIMARY KEY (payment_record_id),
     CONSTRAINT uk_payment_record_bank_transaction
-        UNIQUE (bank_transaction_id),
+    UNIQUE (bank_transaction_id),
 
     INDEX idx_payment_target_target(
-        payment_target_type,
-        target_id,
-        record_status
-        )
-) ENGINE=InnoDB
-DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_unicode_ci;
+                                       payment_target_type,
+                                       target_id,
+                                       record_status
+                                   )
+    ) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_unicode_ci;
+
+SET @constraint_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.TABLE_CONSTRAINTS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'settlement'
+      AND CONSTRAINT_NAME = 'chk_recurring_fields'
+);
+
+SET @sql = IF(@constraint_exists = 0,
+              'ALTER TABLE settlement ADD CONSTRAINT chk_recurring_fields
+                  CHECK (
+                      settlement_type != ''RECURRING''
+                      OR (recurring_settlement_id IS NOT NULL AND cycle_date IS NOT NULL)
+                  )',
+              'SELECT ''chk_recurring_fields already exists'' AS message'
+           );
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

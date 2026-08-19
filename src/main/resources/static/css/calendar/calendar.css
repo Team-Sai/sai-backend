@@ -242,14 +242,73 @@
 }
 
 .detail-item {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.detail-item-header {
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
     padding: 16px 18px;
-    border: 1px solid #eee;
-    border-radius: 10px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+}
+
+.detail-item-header:hover {
+    background: #f7f9fc;
+}
+
+.detail-item-header[aria-expanded="true"] {
+    background: #f7f9fc;
+}
+
+.detail-item-expand {
+    margin: 0;
+    padding: 0 18px 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-item-expand[hidden] {
+    display: none;
+}
+
+.detail-expand-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    padding-top: 12px;
+}
+
+.detail-expand-row dt {
+    color: #999;
+}
+
+.detail-expand-row dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+.detail-view-link {
+    align-self: flex-end;
+    margin-top: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3b6de0;
     text-decoration: none;
-    color: inherit;
+}
+
+.detail-view-link:hover {
+    text-decoration: underline;
 }
 
 .detail-item:hover {
@@ -258,8 +317,41 @@
 
 .detail-item-main {
     display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.detail-item-top {
+    display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.detail-item-meta {
+    font-size: 13px;
+    color: #999;
+    white-space: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    padding-bottom: 2px;
+}
+
+.badge-overdue {
+    background: #fdeceb;
+    color: #c0392b;
+}
+
+.detail-item.is-overdue {
+    border-color: #f3c6c1;
+    background: #fffaf9;
+}
+
+.detail-item.is-overdue .detail-amount {
+    color: #c0392b;
 }
 
 .badge {
@@ -284,14 +376,9 @@
     font-weight: 500;
 }
 
-.detail-sub {
-    font-size: 14px;
-    color: #888;
-}
-
 .detail-amount {
-    font-size: 17px;
-    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .empty-state {
@@ -299,4 +386,22 @@
     font-size: 15px;
     padding: 20px 0;
     text-align: center;
+}
+
+.detail-item-meta::-webkit-scrollbar {
+    height: 4px;
+}
+
+.direction-label {
+    font-weight: 600;
+}
+
+.detail-item.is-receivable .direction-label,
+.detail-item.is-receivable .detail-amount {
+    color: #2f9e6b;
+}
+
+.detail-item.is-payable .direction-label,
+.detail-item.is-payable .detail-amount {
+    color: #d8583a;
 }

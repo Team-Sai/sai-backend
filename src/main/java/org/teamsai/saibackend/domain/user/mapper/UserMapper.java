@@ -36,5 +36,9 @@ public interface UserMapper {
     String findUserKeyByUserId(
             @Param("userId") Long userId
     );
-    int updateUserKeyByUserId(@Param("userId") Long userId, @Param("userKey") String userKey);
+    int updateUserKeyByUserId(
+            @Param("userId") Long userId,
+            @Param("userKey") String userKey,
+            @Param("expectedPreviousKey") String expectedPreviousKey
+    );
 }

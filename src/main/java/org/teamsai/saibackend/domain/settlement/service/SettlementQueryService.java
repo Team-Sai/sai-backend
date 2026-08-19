@@ -31,4 +31,15 @@ public class SettlementQueryService {
         }
         return response;
     }
+
+    @Transactional(readOnly = true)
+    public SettlementDetailResponse getSettlementArchiveDetail(Long settlementId, Long userId){
+        SettlementDetailResponse response = settlementMapper.findDetailById(settlementId,userId)
+                .orElseThrow(SettlementErrorCode.SETTLEMENT_NOT_FOUND::toException);
+
+        if("NONE".equals(response.role())){
+            throw SettlementErrorCode.SETTLEMENT_ACCESS_DENIED.toException();
+        }
+        return response;
+    }
 }
