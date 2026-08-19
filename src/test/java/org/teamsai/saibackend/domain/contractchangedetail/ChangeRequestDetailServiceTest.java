@@ -6,12 +6,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
-import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
+import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
+import org.teamsai.saibackend.domain.contractchange.type.ChangeRequestStatus;
 import org.teamsai.saibackend.domain.contractchangedetail.dto.ChangeRequestDetailDTO;
 import org.teamsai.saibackend.domain.contractchangedetail.exception.ChangeRequestDetailErrorCode;
 import org.teamsai.saibackend.domain.contractchangedetail.service.ChangeRequestDetailService;
@@ -33,6 +33,7 @@ class ChangeRequestDetailServiceTest {
     private static final Long CONTRACT_ID = 1L;
     private static final Long CHANGE_REQUEST_ID = 5L;
     private static final Long USER_ID = 10L;
+    private static final Long DEBTOR_ID = 20L;
 
     @Mock
     private ContractChangeService contractChangeService;
@@ -84,6 +85,8 @@ class ChangeRequestDetailServiceTest {
         return LoanContractResponse.builder()
                 .contractId(CONTRACT_ID)
                 .creditorName("김민수")
+                .debtorId(DEBTOR_ID)
+                .debtorName("이영희")
                 .principalAmount(BigDecimal.valueOf(100_000_000))
                 .interestRate(BigDecimal.valueOf(4.5))
                 .repaymentType(RepaymentMethod.BULLET_REPAYMENT)
@@ -159,7 +162,6 @@ class ChangeRequestDetailServiceTest {
 
         when(contractChangeService.getContract(CONTRACT_ID, USER_ID)).thenReturn(contract);
         when(contractChangeService.getChangeRequest(CHANGE_REQUEST_ID)).thenReturn(changeDTO);
-        when(contractChangeService.getPendingChangedContractId(CONTRACT_ID)).thenReturn(null);
 
         ChangeRequestDetailDTO result = changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID);
 
@@ -181,7 +183,6 @@ class ChangeRequestDetailServiceTest {
 
         when(contractChangeService.getContract(CONTRACT_ID, USER_ID)).thenReturn(contract);
         when(contractChangeService.getChangeRequest(CHANGE_REQUEST_ID)).thenReturn(changeDTO);
-        when(contractChangeService.getPendingChangedContractId(CONTRACT_ID)).thenReturn(null);
 
         ChangeRequestDetailDTO result = changeRequestDetailService.getDetail(CONTRACT_ID, CHANGE_REQUEST_ID, USER_ID);
 
