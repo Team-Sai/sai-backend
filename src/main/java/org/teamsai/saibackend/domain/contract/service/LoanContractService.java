@@ -167,13 +167,13 @@ public class LoanContractService {
 
         LoanContractResponse.LoanContractResponseBuilder enriched = contract.toBuilder()
                 .creditorName(creditor.getName())
-                .creditorBirthDate(creditor.getBirthDate().toString());
+                .creditorBirthDate(creditor.getBirthDate() != null ? creditor.getBirthDate().toString() : null);
 
         if (contract.getDebtorId() != null) {
             var debtor = userService.getMyInfo(contract.getDebtorId());
 
             enriched.debtorName(debtor.getName())
-                    .debtorBirthDate(debtor.getBirthDate().toString());
+                    .debtorBirthDate(debtor.getBirthDate() != null ? debtor.getBirthDate().toString() : null);
         }
 
         return enriched.build();
