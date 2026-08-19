@@ -77,7 +77,7 @@ function renderTable(contracts) {
                 <td>${nextDueAmount}원</td>
                 <td>${nearestDue}</td>
                 <td><span class="status-pill ${statusClass}">${CONTRACT_STATUS_LABELS[c.contractStatus]}</span></td>
-                <td><span class="payment-pill ${paymentClass}">${PAYMENT_STATUS_LABELS[c.paymentStatus]}</span></td>
+                <td><span class="payment-pill ${paymentClass}">${PAYMENT_STATUS_LABELS[c.paymentStatus] ?? '-'}</span></td>
                 <td>${c.maturityDate}</td>
                 <td><a class="detail-link" href="/contracts/${c.contractId}/schedule">보기</a></td>
             </tr>
