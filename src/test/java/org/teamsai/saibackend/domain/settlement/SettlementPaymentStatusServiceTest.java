@@ -26,6 +26,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SettlementPaymentStatusService 단위 테스트")
 class SettlementPaymentStatusServiceTest {
@@ -107,6 +108,74 @@ class SettlementPaymentStatusServiceTest {
                         OWNER_ID
                 );
     }
+
+    @Test
+    @DisplayName("납부의무 상태별 인원수를 집계한다")
+    void getPaymentStatusCountsObligationsByPaymentStatus() {
+
+        SettlementDTO settlement =
+                createSettlement();
+
+        given(
+                settlementMapper.findById(
+                        SETTLEMENT_ID
+                )
+        ).willReturn(
+                Optional.of(settlement)
+        );
+
+        given(
+                paymentStatusMapper
+                        .findPaymentObligationsBySettlementId(
+                                SETTLEMENT_ID
+                        )
+        ).willReturn(
+                List.of(
+                        obligation(
+                                10000,
+                                10000,
+                                0,
+                                PaymentStatus.PAID
+                        ),
+                        obligation(
+                                10000,
+                                4000,
+                                6000,
+                                PaymentStatus.PARTIALLY_PAID
+                        ),
+                        obligation(
+                                10000,
+                                4000,
+                                6000,
+                                PaymentStatus.PARTIALLY_PAID
+                        ),
+                        obligation(
+                                10000,
+                                0,
+                                10000,
+                                PaymentStatus.UNPAID
+                        )
+                )
+        );
+
+
+        SettlementPaymentStatusResponse response =
+                paymentStatusService.getPaymentStatus(
+                        SETTLEMENT_ID,
+                        OWNER_ID
+                );
+
+
+        assertThat(response.getPaidCount())
+                .isEqualTo(1L);
+
+        assertThat(response.getPartiallyPaidCount())
+                .isEqualTo(2L);
+
+        assertThat(response.getUnpaidCount())
+                .isEqualTo(1L);
+    }
+
 
     @Test
     @DisplayName("모든 납부의무가 PAID이면 마감 가능 상태가 된다")

@@ -236,6 +236,7 @@ class SettlementQueryServiceTest {
         return new SettlementDetailResponse(
                 SETTLEMENT_ID,
                 "테스트 정산",
+                "홍길동",
                 "모임",
                 "SHARED",
                 "IN_PROGRESS",

@@ -13,6 +13,7 @@ import org.teamsai.saibackend.domain.payment.type.SourceType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +71,18 @@ public class PaymentRecordService {
         }
 
         return paymentRecord.getPaymentRecordId();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PaymentRecordDTO> findConfirmedRecordsByTargetIds(
+            PaymentTargetType paymentTargetType,
+            List<Long> targetIds
+    ) {
+        if (targetIds == null || targetIds.isEmpty()) {
+            return List.of();
+        }
+
+        return paymentRecordMapper.findConfirmedByTargetIds(paymentTargetType, targetIds);
     }
 
     @Transactional(readOnly = true)

@@ -23,6 +23,30 @@
         )
     </select>
 
+    <select id="findConfirmedByTargetIds"
+            resultType="org.teamsai.saibackend.domain.payment.dto.PaymentRecordDTO">
+        SELECT
+        payment_record_id AS paymentRecordId,
+        bank_transaction_id AS bankTransactionId,
+        payment_target_type AS paymentTargetType,
+        target_id AS targetId,
+        amount,
+        source_type AS sourceType,
+        record_status AS recordStatus,
+        recorded_at AS recordedAt,
+        cancelled_by_id AS cancelledById,
+        cancelled_at AS cancelledAt,
+        memo
+        FROM payment_record
+        WHERE payment_target_type = #{paymentTargetType}
+        AND target_id IN
+        <foreach item="targetId" collection="targetIds" open="(" separator="," close=")">
+            #{targetId}
+        </foreach>
+        AND record_status = 'CONFIRMED'
+        ORDER BY recorded_at DESC
+    </select>
+
     <insert id="insert"
             parameterType="org.teamsai.saibackend.domain.payment.dto.PaymentRecordDTO"
             useGeneratedKeys="true"
