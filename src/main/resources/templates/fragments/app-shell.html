@@ -27,7 +27,7 @@
             th:href="@{/integration/dashboard}"
             aria-label="사이원장 홈">
 
-        <span class="app-brand__mark">S</span>
+        <img class="app-brand__logo" th:src="@{/images/common/logo.png}" alt="사이원장 로고">
         <span class="app-brand__name">사이원장</span>
 
     </a>
@@ -74,19 +74,49 @@
 
         <a
                 class="app-icon-button"
-                th:href="@{/notifications}"
-                aria-label="알림">
-            !
+                th:href="@{/archive}"
+                aria-label="보관함">
+            <img th:src="@{/images/common/archive.svg}" alt="">
         </a>
 
         <a
-                class="app-profile-button"
+                class="app-icon-button"
+                th:href="@{/notifications}"
+                aria-label="알림">
+            <img th:src="@{/images/common/notification.svg}" alt="">
+        </a>
+
+        <a
+                class="app-header-profile"
                 th:href="@{/mypage}">
-            마이페이지
+            <img th:src="@{/images/common/profile.svg}" alt="">
         </a>
 
     </div>
 
+</header>
+
+<header th:fragment="guestHeader(activeMenu)" class="app-header guest-app-header">
+    <a class="app-brand" th:href="@{/intro}" aria-label="사이원장 홈">
+        <img class="app-brand__logo" th:src="@{/images/common/logo.png}" alt="사이원장 로고">
+        <span class="app-brand__name">사이원장</span>
+    </a>
+    <nav class="app-nav" aria-label="주요 메뉴">
+        <a class="app-nav__link" th:classappend="${activeMenu == 'intro'} ? ' is-active' : ''" href="#intro">서비스소개</a>
+        <a class="app-nav__link" th:classappend="${activeMenu == 'settlement'} ? ' is-active' : ''" href="#settlement">정산</a>
+        <a class="app-nav__link" th:classappend="${activeMenu == 'iou'} ? ' is-active' : ''" href="#iou">금전소비대차</a>
+        <a class="app-nav__link" th:classappend="${activeMenu == 'calendar'} ? ' is-active' : ''" href="#calendar">캘린더</a>
+    </nav>
+    <div class="app-header-actions" aria-label="로그인 메뉴">
+        <a class="guest-header-login" th:href="@{/login}">로그인</a>
+    </div>
+</header>
+
+<header th:fragment="minimalHeader" class="app-header minimal-header">
+    <a class="app-brand" th:href="@{/intro}" aria-label="사이원장 홈">
+        <img class="app-brand__logo" th:src="@{/images/common/logo.png}" alt="사이원장 로고">
+        <span class="app-brand__name">사이원장</span>
+    </a>
 </header>
 
 
