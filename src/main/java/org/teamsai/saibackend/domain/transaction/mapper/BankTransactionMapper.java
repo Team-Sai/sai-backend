@@ -2,7 +2,6 @@ package org.teamsai.saibackend.domain.transaction.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.teamsai.saibackend.domain.matching.type.FailureReason;
 import org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO;
 import org.teamsai.saibackend.domain.transaction.dto.request.BankTransactionSearchCondition;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionProcessingStatus;

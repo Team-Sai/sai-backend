@@ -226,12 +226,5 @@
         WHERE bank_transaction_id = #{bankTransactionId}
         AND processing_status = #{currentStatus}
     </update>
-
-    <update id="recordFailure">
-        UPDATE bank_transaction
-        SET processing_status = #{nextStatus},
-        failure_reason = #{failureReason}
-        WHERE bank_transaction_id = #{bankTransactionId}
-    </update>
 </mapper>
 

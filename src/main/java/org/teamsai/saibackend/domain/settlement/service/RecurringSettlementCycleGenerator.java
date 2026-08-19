@@ -48,10 +48,7 @@ public class RecurringSettlementCycleGenerator {
         }
 
         List<SettlementParticipantDTO> activeParticipants =
-                participantMapper.findBySettlementId(previousSettlement.getSettlementId())
-                        .stream()
-                        .filter(p -> p.getParticipantStatus() == SettlementParticipantStatus.ACTIVE)
-                        .toList();
+                participantMapper.findActiveBySettlementId(previousSettlement.getSettlementId());
 
         if (activeParticipants.isEmpty()) {
             log.warn("ACTIVE 참여자 없음, 생성 스킵 recurringId={}, cycleDate={}",

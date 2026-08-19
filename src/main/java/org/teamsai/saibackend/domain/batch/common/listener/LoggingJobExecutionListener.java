@@ -56,7 +56,8 @@ public class LoggingJobExecutionListener implements JobExecutionListener {
         for (StepExecution step : jobExecution.getStepExecutions()) {
             long skipCount = step.getWriteSkipCount() + step.getReadSkipCount() + step.getProcessSkipCount();
             sb.append(String.format(
-                    "  · 조회 %d건, 처리 %d건, 건너뜀 %d건\n",
+                    "  ·  %s: 조회 %d건, 처리 %d건, 건너뜀 %d건\n",
+                    step.getStepName(),
                     step.getReadCount(),
                     step.getWriteCount(),
                     skipCount

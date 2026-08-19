@@ -12,6 +12,10 @@ import java.util.Optional;
 @Mapper
 public interface RepaymentScheduleMapper {
 
+    List<Long> findWriteOffCandidateIds(@Param("cutoffDate") LocalDate cutoffDate);
+
+    int writeOffBulk(@Param("scheduleIds") List<Long> scheduleIds);
+
     List<RepaymentScheduleDTO> findDueOnDates(@Param("dueDates") List<LocalDate> dueDates);
 
     Long findDebtorUserIdByContractId(@Param("contractId") Long contractId);

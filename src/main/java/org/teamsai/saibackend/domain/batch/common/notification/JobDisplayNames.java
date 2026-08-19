@@ -12,7 +12,9 @@ public class JobDisplayNames {
             "settlementDueReminderJob", "정산 마감일 리마인드",
             "recurringSettlementGenerationJob", "정기정산 자동생성",
             "bankTransactionRetryJob", "은행거래 매칭 재시도",
-            "settlementAbandonmentJob", "정산 장기방치 감지"
+            "settlementAbandonmentJob", "정산 장기방치 감지",
+            "settlementWriteOffJob", "결제의무 상각 처리(정산)",
+            "repaymentWriteOffJob", "결제의무 상각 처리(상환)"
     );
 
     private JobDisplayNames() {

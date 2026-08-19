@@ -52,13 +52,14 @@ public class RepaymentDueReminderJobConfig {
     @Bean
     public Step repaymentDueReminderStep(
             MyBatisPagingItemReader<RepaymentScheduleDTO> repaymentDueReminderReader,
+            ItemWriter<RepaymentScheduleDTO> repaymentDueReminderWriter,
             BaseSkipListener<RepaymentScheduleDTO, RepaymentScheduleDTO> skipListener) {
 
         return new StepBuilder("repaymentDueReminderStep", jobRepository)
                 .<RepaymentScheduleDTO, RepaymentScheduleDTO>chunk(100)
                 .transactionManager(transactionManager)
                 .reader(repaymentDueReminderReader)
-                .writer(writer())
+                .writer(repaymentDueReminderWriter)
                 .faultTolerant()
                 .skip(Exception.class)
                 .skipLimit(10)
@@ -88,11 +89,16 @@ public class RepaymentDueReminderJobConfig {
                 .build();
     }
 
-    private ItemWriter<RepaymentScheduleDTO> writer() {
+    @Bean
+    @StepScope
+    public ItemWriter<RepaymentScheduleDTO> repaymentDueReminderWriter(
+            @Value("#{jobParameters['baseDate']}") String baseDateParam) {
+
+        LocalDate baseDate = LocalDate.parse(baseDateParam);
+
         return chunk -> {
-            LocalDate today = LocalDate.now();
             for (RepaymentScheduleDTO schedule : chunk.getItems()) {
-                NotificationStage stage = resolveStage(schedule.getDueDate(), today);
+                NotificationStage stage = resolveStage(schedule.getDueDate(), baseDate);
                 if (stage == null) {
                     continue;
                 }

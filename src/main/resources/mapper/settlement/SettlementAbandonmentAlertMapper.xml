@@ -4,9 +4,10 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementAbandonmentAlertMapper">
 
-    <select id="existsBySettlementId" resultType="boolean">
+    <select id="existsBySettlementIdAndReferenceDate" resultType="boolean">
         SELECT EXISTS (
-        SELECT 1 FROM settlement_abandonment_alert WHERE settlement_id = #{settlementId}
+        SELECT 1 FROM settlement_abandonment_alert
+        WHERE settlement_id = #{settlementId} AND reference_date = #{referenceDate}
         )
     </select>
 

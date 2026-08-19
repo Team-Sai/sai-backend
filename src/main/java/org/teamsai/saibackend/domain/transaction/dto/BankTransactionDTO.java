@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.teamsai.saibackend.domain.matching.type.FailureReason;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionProcessingStatus;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionType;
 

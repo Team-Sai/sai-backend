@@ -37,6 +37,10 @@ DEALLOCATE PREPARE stmt;
 
 ALTER TABLE payment_obligation ADD COLUMN IF NOT EXISTS overdue_since DATETIME NULL;
 
+ALTER TABLE payment_obligation
+    MODIFY COLUMN obligation_status VARCHAR(20) NOT NULL
+        CHECK (obligation_status IN ('ACTIVE', 'EXCLUDED', 'CANCELLED', 'WRITTEN_OFF'));
+
 CREATE TABLE IF NOT EXISTS payment_record (
     payment_record_id BIGINT NOT NULL AUTO_INCREMENT,
     bank_transaction_id BIGINT NOT NULL,

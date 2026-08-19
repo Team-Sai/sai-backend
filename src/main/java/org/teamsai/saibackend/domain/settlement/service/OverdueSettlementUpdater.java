@@ -10,7 +10,6 @@ import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
-import org.teamsai.saibackend.domain.settlement.type.SettlementParticipantStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,9 +25,8 @@ public class OverdueSettlementUpdater {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateOverdueForSettlement(SettlementDTO settlement, LocalDate referenceDate) {
-        List<Long> activeParticipantIds = participantMapper.findBySettlementId(settlement.getSettlementId())
+        List<Long> activeParticipantIds = participantMapper.findActiveBySettlementId(settlement.getSettlementId())
                 .stream()
-                .filter(p -> p.getParticipantStatus() == SettlementParticipantStatus.ACTIVE)
                 .map(SettlementParticipantDTO::getParticipantId)
                 .toList();
 

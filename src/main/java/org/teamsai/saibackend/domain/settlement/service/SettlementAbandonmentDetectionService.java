@@ -43,7 +43,7 @@ public class SettlementAbandonmentDetectionService {
                 if (!isAbandoned(referenceDate, baseDate)) {
                     continue;
                 }
-                if (alertMapper.existsBySettlementId(settlement.getSettlementId())) {
+                if (alertMapper.existsBySettlementIdAndReferenceDate(settlement.getSettlementId(), referenceDate)) {
                     continue;
                 }
 

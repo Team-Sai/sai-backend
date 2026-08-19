@@ -12,7 +12,6 @@ import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementDTO;
 import org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper;
-import org.teamsai.saibackend.domain.settlement.type.SettlementParticipantStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -29,10 +28,7 @@ public class SettlementReminderSender {
 
     public int sendForSettlement(SettlementDTO settlement, ReminderStage stage) {
         List<SettlementParticipantDTO> activeParticipants =
-                participantMapper.findBySettlementId(settlement.getSettlementId())
-                        .stream()
-                        .filter(p -> p.getParticipantStatus() == SettlementParticipantStatus.ACTIVE)
-                        .toList();
+                participantMapper.findActiveBySettlementId(settlement.getSettlementId());
 
         if (activeParticipants.isEmpty()) {
             return 0;

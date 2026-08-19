@@ -146,4 +146,21 @@
     <select id="findDebtorUserIdByContractId" resultType="java.lang.Long">
         SELECT debtor_id FROM loan_contract WHERE contract_id = #{contractId}
     </select>
+
+    <select id="findWriteOffCandidateIds" resultType="long">
+        SELECT schedule_id
+        FROM repayment_schedule
+        WHERE status = 'OVERDUE'
+          AND due_date &lt;= #{cutoffDate}
+    </select>
+
+    <update id="writeOffBulk">
+        UPDATE repayment_schedule
+        SET status = 'WRITTEN_OFF'
+        WHERE schedule_id IN
+        <foreach collection="scheduleIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND status = 'OVERDUE'
+    </update>
 </mapper>

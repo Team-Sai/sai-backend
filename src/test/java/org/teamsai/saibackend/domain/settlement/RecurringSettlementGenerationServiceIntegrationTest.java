@@ -89,7 +89,7 @@ class RecurringSettlementGenerationServiceIntegrationTest {
             assertThat(latest.getSettlementId()).isNotEqualTo(settlement1Id);
             assertThat(latest.getCycleDate()).isEqualTo(LocalDate.of(2026, 2, 28));
 
-            var newParticipants = participantMapper.findBySettlementId(latest.getSettlementId());
+            var newParticipants = participantMapper.findActiveBySettlementId(latest.getSettlementId());
             assertThat(newParticipants).hasSize(2);
 
             Map<Long, BigDecimal> obligationByUserId = fetchObligationAmountsByUser(latest.getSettlementId());
@@ -126,7 +126,7 @@ class RecurringSettlementGenerationServiceIntegrationTest {
             generationService.generateTodaySettlements(LocalDate.of(2026, 2, 28));
 
             var latest = settlementMapper.findLatestByRecurringId(recurringId);
-            var newParticipants = participantMapper.findBySettlementId(latest.getSettlementId());
+            var newParticipants = participantMapper.findActiveBySettlementId(latest.getSettlementId());
 
             assertThat(newParticipants).hasSize(1);
 

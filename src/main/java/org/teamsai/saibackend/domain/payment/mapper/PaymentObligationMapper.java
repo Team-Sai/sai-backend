@@ -13,6 +13,13 @@ import java.util.Optional;
 
 @Mapper
 public interface PaymentObligationMapper {
+
+    List<Long> findWriteOffCandidateIds(@Param("cutoffDateTime") LocalDateTime cutoffDateTime);
+
+    int writeOffBulk(@Param("paymentObligationIds") List<Long> paymentObligationIds);
+
+    List<Long> findSettlementIdsByObligationIds(@Param("obligationIds") List<Long> obligationIds);
+
     List<PaymentObligationDTO> findByParticipantIds(@Param("participantIds") List<Long> participantIds);
 
     Optional<PaymentObligationDTO> findByIdForUpdate(

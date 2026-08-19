@@ -18,4 +18,5 @@ CREATE TABLE IF NOT EXISTS repayment_schedule (
     COLLATE=utf8mb4_unicode_ci;
 
 ALTER TABLE repayment_schedule
-    MODIFY COLUMN status varchar(20) NOT NULL CHECK (status IN ('PENDING', 'OVERDUE', 'PAID'));
+    MODIFY COLUMN status VARCHAR(20) NOT NULL
+        CHECK (status IN ('PENDING', 'OVERDUE', 'PAID', 'WRITTEN_OFF'));

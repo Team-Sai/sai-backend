@@ -220,4 +220,34 @@
         AND overdue_since IS NULL
         AND obligation_status = 'ACTIVE'
     </update>
+
+    <select id="findWriteOffCandidateIds" resultType="long">
+        SELECT payment_obligation_id
+        FROM payment_obligation
+        WHERE obligation_status = 'ACTIVE'
+        AND payment_status IN ('UNPAID', 'PARTIALLY_PAID')
+        AND overdue_since IS NOT NULL
+        AND overdue_since &lt;= #{cutoffDateTime}
+    </select>
+
+    <update id="writeOffBulk">
+        UPDATE payment_obligation
+        SET obligation_status = 'WRITTEN_OFF'
+        WHERE payment_obligation_id IN
+        <foreach collection="paymentObligationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND obligation_status = 'ACTIVE'
+        AND payment_status IN ('UNPAID', 'PARTIALLY_PAID')
+    </update>
+
+    <select id="findSettlementIdsByObligationIds" resultType="long">
+        SELECT DISTINCT sp.settlement_id
+        FROM payment_obligation po
+        JOIN settlement_participant sp ON sp.participant_id = po.participant_id
+        WHERE po.payment_obligation_id IN
+        <foreach collection="obligationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 </mapper>
