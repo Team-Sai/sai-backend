@@ -23,7 +23,6 @@ public class DashboardContractRowResponse {
     private BigDecimal principalAmount;
     private BigDecimal totalRemainingAmount;
     private BigDecimal thisMonthDueAmount;
-    private String maskedAccount;
     private DashboardContractStatus contractStatus;
     private DashboardPaymentStatus paymentStatus;
     private LocalDate maturityDate;
