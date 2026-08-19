@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS notification (
     CONSTRAINT fk_notification_user
     FOREIGN KEY (user_id)
     REFERENCES users (user_id)
-    ) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_unicode_ci;
+    )
+    ENGINE = InnoDB
+    DEFAULT CHARSET = utf8mb4
+    COLLATE = utf8mb4_unicode_ci;

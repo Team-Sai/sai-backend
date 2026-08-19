@@ -307,3 +307,4 @@ public class CalendarTest {
         return new DashboardService.IntegrationDashboardData(dashboard, contexts);
     }
 }
+

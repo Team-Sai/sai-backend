@@ -13,7 +13,6 @@
         <result property="paymentStatus" column="payment_status"/>
         <result property="reviewStatus" column="review_status"/>
         <result property="obligationStatus" column="obligation_status"/>
-        <result property="overdueSince" column="overdue_since"/>
     </resultMap>
     <resultMap id="MatchingCandidateResultMap"
                type="org.teamsai.saibackend.domain.matching.model.MatchingCandidate">
@@ -39,8 +38,7 @@
         expected_amount,
         payment_status,
         review_status,
-        obligation_status,
-        overdue_since
+        obligation_status
         FROM payment_obligation
         WHERE payment_obligation_id = #{paymentObligationId}
         FOR UPDATE
@@ -170,6 +168,25 @@
         #{obligationStatus}
         )
     </insert>
+
+    <!-- 주의: obligation_status='ACTIVE'는 "정산이 진행 중"이 아니라 "이 obligation이 취소/제외되지 않음"을 의미.
+     정산 종료 여부는 상위 settlement.settlement_status로 별도 판단해야 함. -->
+    <select id="findByParticipantIds" resultMap="PaymentObligationResultMap">
+        SELECT po.payment_obligation_id, po.participant_id, po.expected_amount,
+        po.payment_status, po.review_status, po.obligation_status
+        FROM payment_obligation po
+        INNER JOIN (
+        SELECT participant_id, MAX(payment_obligation_id) AS latest_id
+        FROM payment_obligation
+        WHERE participant_id IN
+        <foreach item="id" collection="participantIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND obligation_status = 'ACTIVE'
+        GROUP BY participant_id
+        ) latest ON latest.participant_id = po.participant_id
+        AND latest.latest_id = po.payment_obligation_id
+    </select>
 
     <select id="findUnpaidByParticipantIds" resultMap="PaymentObligationResultMap">
         SELECT payment_obligation_id, participant_id, expected_amount,

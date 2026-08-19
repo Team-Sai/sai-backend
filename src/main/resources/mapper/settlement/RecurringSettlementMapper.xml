@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.RecurringSettlementMapper">
+
+    <resultMap id="RecurringSettlementResultMap" type="org.teamsai.saibackend.domain.settlement.dto.RecurringSettlementDTO">
+        <id property="recurringSettlementId" column="recurring_settlement_id"/>
+        <result property="ownerId" column="owner_id"/>
+        <result property="settlementCategory" column="settlement_category"/>
+        <result property="title" column="title"/>
+        <result property="splitType" column="split_type"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="cycleRule" column="cycle_rule"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findActiveInRange" resultMap="RecurringSettlementResultMap">
+        SELECT rs.recurring_settlement_id, rs.owner_id, rs.settlement_category, rs.title,
+               rs.split_type, rs.total_amount, rs.cycle_rule, rs.start_date, rs.end_date, rs.created_at
+        FROM recurring_settlement rs
+        WHERE rs.start_date &lt;= #{baseDate}
+          AND NOT EXISTS (
+            SELECT 1 FROM settlement s
+            WHERE s.recurring_settlement_id = rs.recurring_settlement_id
+              AND s.cycle_date &gt;= COALESCE(rs.end_date, #{baseDate})
+        )
+    </select>
+
+</mapper>
