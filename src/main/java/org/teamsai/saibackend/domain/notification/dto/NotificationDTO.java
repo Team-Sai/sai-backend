@@ -20,6 +20,5 @@ public class NotificationDTO {
     private String content;
     private Long referenceId;
     private Long secondaryReferenceId;
-    private boolean read;
     private LocalDateTime createdAt;
 }
