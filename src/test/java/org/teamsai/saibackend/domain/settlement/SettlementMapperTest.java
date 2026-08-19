@@ -111,14 +111,14 @@ class SettlementMapperTest {
     @Test
     @Transactional
     @DisplayName("recurringSettlementId로 가장 최근 회차(cycleDate 기준)를 조회한다")
-    void findLatestByRecurringId_returnsMostRecentCycle() {
+    void findLatestByRecurringIdForUpdate_returnsMostRecentCycle() {
         insertUser(9901L, "정기정산 소유자");
         insertRecurringSettlement(9911L, 9901L, LocalDate.of(2026, 1, 31));
         insertRecurringSettlementInstance(9921L, 9911L, 9901L, LocalDate.of(2026, 1, 31));
         insertRecurringSettlementInstance(9922L, 9911L, 9901L, LocalDate.of(2026, 2, 28));
         insertRecurringSettlementInstance(9923L, 9911L, 9901L, LocalDate.of(2025, 12, 31)); // 더 과거 회차
 
-        SettlementDTO result = settlementMapper.findLatestByRecurringId(9911L);
+        SettlementDTO result = settlementMapper.findLatestByRecurringIdForUpdate(9911L);
 
         assertThat(result).isNotNull();
         assertThat(result.getSettlementId()).isEqualTo(9922L);
@@ -128,8 +128,8 @@ class SettlementMapperTest {
     @Test
     @Transactional
     @DisplayName("해당 recurringSettlementId로 생성된 회차가 없으면 null을 반환한다")
-    void findLatestByRecurringId_returnsNullWhenNoSettlement() {
-        SettlementDTO result = settlementMapper.findLatestByRecurringId(999999L);
+    void findLatestByRecurringIdForUpdate_returnsNullWhenNoSettlement() {
+        SettlementDTO result = settlementMapper.findLatestByRecurringIdForUpdate(999999L);
 
         assertThat(result).isNull();
     }

@@ -57,7 +57,7 @@ class RecurringSettlementGenerationServiceTest {
         LocalDate baseDate = LocalDate.of(2026, 3, 1);
         RecurringSettlementDTO r1 = recurring(1L, LocalDate.of(2026, 1, 31));
         when(recurringSettlementMapper.findActiveInRange(baseDate)).thenReturn(List.of(r1));
-        when(settlementMapper.findLatestByRecurringId(1L)).thenReturn(null);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(null);
 
         RecurringSettlementBatchResult result = sut.generateTodaySettlements(baseDate);
 
@@ -75,7 +75,7 @@ class RecurringSettlementGenerationServiceTest {
         SettlementDTO created = settlement(11L, 1L, LocalDate.of(2026, 2, 28));
 
         when(recurringSettlementMapper.findActiveInRange(baseDate)).thenReturn(List.of(r1));
-        when(settlementMapper.findLatestByRecurringId(1L)).thenReturn(latest);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(latest);
         when(settlementMapper.countByRecurringId(1L)).thenReturn(1);
 
         when(cycleGenerator.calculateNthCycleDate(r1.getStartDate(), CycleRule.MONTHLY, 1))
@@ -102,7 +102,7 @@ class RecurringSettlementGenerationServiceTest {
         SettlementDTO cycle3 = settlement(12L, 1L, LocalDate.of(2026, 3, 31));
 
         when(recurringSettlementMapper.findActiveInRange(baseDate)).thenReturn(List.of(r1));
-        when(settlementMapper.findLatestByRecurringId(1L)).thenReturn(cycle1);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(cycle1);
         when(settlementMapper.countByRecurringId(1L)).thenReturn(1);
 
         when(cycleGenerator.calculateNthCycleDate(r1.getStartDate(), CycleRule.MONTHLY, 1))
@@ -134,7 +134,7 @@ class RecurringSettlementGenerationServiceTest {
         SettlementDTO cycle2 = settlement(11L, 1L, LocalDate.of(2026, 2, 28));
 
         when(recurringSettlementMapper.findActiveInRange(baseDate)).thenReturn(List.of(r1));
-        when(settlementMapper.findLatestByRecurringId(1L)).thenReturn(cycle1);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(cycle1);
         when(settlementMapper.countByRecurringId(1L)).thenReturn(1);
 
         when(cycleGenerator.calculateNthCycleDate(r1.getStartDate(), CycleRule.MONTHLY, 1))
@@ -166,7 +166,7 @@ class RecurringSettlementGenerationServiceTest {
         SettlementDTO cycle1 = settlement(10L, 1L, LocalDate.of(2026, 1, 31));
 
         when(recurringSettlementMapper.findActiveInRange(baseDate)).thenReturn(List.of(r1));
-        when(settlementMapper.findLatestByRecurringId(1L)).thenReturn(cycle1);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(cycle1);
         when(settlementMapper.countByRecurringId(1L)).thenReturn(1);
 
         when(cycleGenerator.calculateNthCycleDate(r1.getStartDate(), CycleRule.MONTHLY, 1))
@@ -190,7 +190,7 @@ class RecurringSettlementGenerationServiceTest {
         SettlementDTO cycle1 = settlement(10L, 1L, LocalDate.of(2026, 1, 31));
 
         when(recurringSettlementMapper.findActiveInRange(baseDate)).thenReturn(List.of(r1));
-        when(settlementMapper.findLatestByRecurringId(1L)).thenReturn(cycle1);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(cycle1);
         when(settlementMapper.countByRecurringId(1L)).thenReturn(1);
 
         when(cycleGenerator.calculateNthCycleDate(r1.getStartDate(), CycleRule.MONTHLY, 1))
@@ -216,8 +216,8 @@ class RecurringSettlementGenerationServiceTest {
         SettlementDTO latest2 = settlement(20L, 2L, LocalDate.of(2026, 1, 31));
 
         when(recurringSettlementMapper.findActiveInRange(baseDate)).thenReturn(List.of(r1, r2));
-        when(settlementMapper.findLatestByRecurringId(1L)).thenReturn(latest1);
-        when(settlementMapper.findLatestByRecurringId(2L)).thenReturn(latest2);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(latest1);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(2L)).thenReturn(latest2);
         when(settlementMapper.countByRecurringId(1L)).thenReturn(1);
         when(settlementMapper.countByRecurringId(2L)).thenReturn(1);
 
@@ -252,7 +252,7 @@ class RecurringSettlementGenerationServiceTest {
         SettlementDTO generated = settlement(11L, 1L, LocalDate.of(2026, 8, 14));
 
         when(recurringSettlementMapper.findActiveInRange(baseDate)).thenReturn(List.of(recurring));
-        when(settlementMapper.findLatestByRecurringId(1L)).thenReturn(lastGenerated);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(lastGenerated);
         when(settlementMapper.countByRecurringId(1L)).thenReturn(13);
 
         when(cycleGenerator.calculateNthCycleDate(recurring.getStartDate(), recurring.getCycleRule(), 13))
@@ -286,8 +286,8 @@ class RecurringSettlementGenerationServiceTest {
         SettlementDTO normalLast = settlement(20L, 2L, LocalDate.of(2026, 12, 30));
 
         when(recurringSettlementMapper.findActiveInRange(baseDate)).thenReturn(List.of(heavilyDelayed, normal));
-        when(settlementMapper.findLatestByRecurringId(1L)).thenReturn(delayedLast);
-        when(settlementMapper.findLatestByRecurringId(2L)).thenReturn(normalLast);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(1L)).thenReturn(delayedLast);
+        when(settlementMapper.findLatestByRecurringIdForUpdate(2L)).thenReturn(normalLast);
         when(settlementMapper.countByRecurringId(1L)).thenReturn(1);
         when(settlementMapper.countByRecurringId(2L)).thenReturn(1);
 

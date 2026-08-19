@@ -9,10 +9,13 @@ import org.teamsai.saibackend.domain.settlement.dto.response.SettlementPaymentSt
 import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementPaymentStatusMapper;
+import org.teamsai.saibackend.domain.payment.type.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -72,12 +75,21 @@ public class SettlementPaymentStatusService {
 
         boolean closable = isFullyPaid(obligations);
 
+        Map<PaymentStatus, Long> countByStatus = obligations.stream()
+                .collect(Collectors.groupingBy(
+                        SettlementPaymentObligationResponse::getPaymentStatus,
+                        Collectors.counting()
+                ));
+
         return SettlementPaymentStatusResponse.builder()
                 .settlementId(settlement.getSettlementId())
                 .obligations(obligations)
                 .totalExpectedAmount(totalExpectedAmount)
                 .totalPaidAmount(totalPaidAmount)
                 .totalRemainingAmount(totalRemainingAmount)
+                .paidCount(countByStatus.getOrDefault(PaymentStatus.PAID, 0L))
+                .partiallyPaidCount(countByStatus.getOrDefault(PaymentStatus.PARTIALLY_PAID, 0L))
+                .unpaidCount(countByStatus.getOrDefault(PaymentStatus.UNPAID, 0L))
                 .progressRate(progressRate)
                 .closable(closable)
                 .build();
