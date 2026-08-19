@@ -29,7 +29,6 @@ public class NotificationService {
                 .content(content)
                 .referenceId(referenceId)
                 .secondaryReferenceId(secondaryReferenceId)
-                .read(false)
                 .createdAt(LocalDateTime.now())
                 .build();
 
