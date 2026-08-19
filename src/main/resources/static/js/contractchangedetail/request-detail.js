@@ -46,8 +46,8 @@ authFetch(
             document.getElementById('bannerTitle').textContent =
                 `${detail.rejectorName}님이 조건 변경을 반려했습니다.`;
 
-            document.getElementById('returnReasonText').textContent = detail.returnReason;
-            document.getElementById('returnReasonBlock').hidden = false;
+            document.getElementById('returnReasonTextSide').textContent = detail.returnReason;
+            document.getElementById('returnReasonBlockSide').hidden = false;
 
             isRejectedView = true;
 
