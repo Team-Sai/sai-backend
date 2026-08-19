@@ -50,6 +50,8 @@ class RecurringSettlementGenerationServiceIntegrationTest {
 
     @AfterEach
     void cleanUp() {
+        jdbcTemplate.update("DELETE FROM notification WHERE user_id >= 70000");
+        jdbcTemplate.update("DELETE FROM loan_contract WHERE creditor_id >= 70000 OR debtor_id >= 70000");
         jdbcTemplate.update("DELETE FROM payment_obligation WHERE participant_id >= 70000");
         jdbcTemplate.update("DELETE FROM settlement_participant WHERE participant_id >= 70000");
         jdbcTemplate.update("DELETE FROM settlement WHERE settlement_id >= 70000");

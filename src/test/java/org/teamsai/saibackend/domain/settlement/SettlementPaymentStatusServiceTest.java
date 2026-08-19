@@ -26,7 +26,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SettlementPaymentStatusService 단위 테스트")
 class SettlementPaymentStatusServiceTest {
@@ -62,29 +61,20 @@ class SettlementPaymentStatusServiceTest {
                         )
         ).willReturn(
                 List.of(
-                        obligation(
+                        obligationWithStatus(
                                 10000,
                                 5000,
                                 5000,
-                                PaymentStatus.PARTIALLY_PAID
+                                PaymentStatus.PARTIALLY_PAID,
+                                ObligationStatus.ACTIVE
                         ),
-                        obligation(
+                        obligationWithStatus(
                                 20000,
                                 20000,
                                 0,
-                                PaymentStatus.PAID
+                                PaymentStatus.PAID,
+                                ObligationStatus.ACTIVE
                         )
-                )
-        );
-        given(
-                paymentStatusMapper
-                        .findAllObligationStatusesBySettlementId(
-                                SETTLEMENT_ID
-                        )
-        ).willReturn(
-                List.of(
-                        obligationStatus(10000, 5000, ObligationStatus.ACTIVE),
-                        obligationStatus(20000, 20000, ObligationStatus.ACTIVE)
                 )
         );
         SettlementPaymentStatusResponse response =
@@ -112,10 +102,8 @@ class SettlementPaymentStatusServiceTest {
     @Test
     @DisplayName("납부의무 상태별 인원수를 집계한다")
     void getPaymentStatusCountsObligationsByPaymentStatus() {
-
         SettlementDTO settlement =
                 createSettlement();
-
         given(
                 settlementMapper.findById(
                         SETTLEMENT_ID
@@ -123,7 +111,6 @@ class SettlementPaymentStatusServiceTest {
         ).willReturn(
                 Optional.of(settlement)
         );
-
         given(
                 paymentStatusMapper
                         .findPaymentObligationsBySettlementId(
@@ -131,51 +118,32 @@ class SettlementPaymentStatusServiceTest {
                         )
         ).willReturn(
                 List.of(
-                        obligation(
-                                10000,
-                                10000,
-                                0,
-                                PaymentStatus.PAID
+                        obligationWithStatus(
+                                10000, 10000, 0, PaymentStatus.PAID, ObligationStatus.ACTIVE
                         ),
-                        obligation(
-                                10000,
-                                4000,
-                                6000,
-                                PaymentStatus.PARTIALLY_PAID
+                        obligationWithStatus(
+                                10000, 4000, 6000, PaymentStatus.PARTIALLY_PAID, ObligationStatus.ACTIVE
                         ),
-                        obligation(
-                                10000,
-                                4000,
-                                6000,
-                                PaymentStatus.PARTIALLY_PAID
+                        obligationWithStatus(
+                                10000, 4000, 6000, PaymentStatus.PARTIALLY_PAID, ObligationStatus.ACTIVE
                         ),
-                        obligation(
-                                10000,
-                                0,
-                                10000,
-                                PaymentStatus.UNPAID
+                        obligationWithStatus(
+                                10000, 0, 10000, PaymentStatus.UNPAID, ObligationStatus.ACTIVE
                         )
                 )
         );
-
-
         SettlementPaymentStatusResponse response =
                 paymentStatusService.getPaymentStatus(
                         SETTLEMENT_ID,
                         OWNER_ID
                 );
-
-
         assertThat(response.getPaidCount())
                 .isEqualTo(1L);
-
         assertThat(response.getPartiallyPaidCount())
                 .isEqualTo(2L);
-
         assertThat(response.getUnpaidCount())
                 .isEqualTo(1L);
     }
-
 
     @Test
     @DisplayName("모든 납부의무가 PAID이면 마감 가능 상태가 된다")
@@ -196,22 +164,9 @@ class SettlementPaymentStatusServiceTest {
                         )
         ).willReturn(
                 List.of(
-                        obligation(
-                                10000,
-                                10000,
-                                0,
-                                PaymentStatus.PAID
+                        obligationWithStatus(
+                                10000, 10000, 0, PaymentStatus.PAID, ObligationStatus.ACTIVE
                         )
-                )
-        );
-        given(
-                paymentStatusMapper
-                        .findAllObligationStatusesBySettlementId(
-                                SETTLEMENT_ID
-                        )
-        ).willReturn(
-                List.of(
-                        obligationStatus(10000, 10000, ObligationStatus.ACTIVE)
                 )
         );
         SettlementPaymentStatusResponse response =
@@ -249,22 +204,9 @@ class SettlementPaymentStatusServiceTest {
                         )
         ).willReturn(
                 List.of(
-                        obligation(
-                                10000,
-                                11000,
-                                0,
-                                PaymentStatus.PAID
+                        obligationWithStatus(
+                                10000, 11000, 0, PaymentStatus.PAID, ObligationStatus.ACTIVE
                         )
-                )
-        );
-        given(
-                paymentStatusMapper
-                        .findAllObligationStatusesBySettlementId(
-                                SETTLEMENT_ID
-                        )
-        ).willReturn(
-                List.of(
-                        obligationStatus(10000, 11000, ObligationStatus.ACTIVE)
                 )
         );
         SettlementPaymentStatusResponse response =
@@ -334,22 +276,9 @@ class SettlementPaymentStatusServiceTest {
                         )
         ).willReturn(
                 List.of(
-                        obligation(
-                                10000,
-                                5000,
-                                5000,
-                                PaymentStatus.PARTIALLY_PAID
+                        obligationWithStatus(
+                                10000, 5000, 5000, PaymentStatus.PARTIALLY_PAID, ObligationStatus.ACTIVE
                         )
-                )
-        );
-        given(
-                paymentStatusMapper
-                        .findAllObligationStatusesBySettlementId(
-                                SETTLEMENT_ID
-                        )
-        ).willReturn(
-                List.of(
-                        obligationStatus(10000, 5000, ObligationStatus.ACTIVE)
                 )
         );
         SettlementPaymentStatusResponse response =
@@ -524,6 +453,16 @@ class SettlementPaymentStatusServiceTest {
             long remainingAmount,
             PaymentStatus paymentStatus
     ) {
+        return obligationWithStatus(expectedAmount, paidAmount, remainingAmount, paymentStatus, ObligationStatus.ACTIVE);
+    }
+
+    private SettlementPaymentObligationResponse obligationWithStatus(
+            long expectedAmount,
+            long paidAmount,
+            long remainingAmount,
+            PaymentStatus paymentStatus,
+            ObligationStatus obligationStatus
+    ) {
         return SettlementPaymentObligationResponse.builder()
                 .paymentObligationId(1L)
                 .participantId(1L)
@@ -544,6 +483,9 @@ class SettlementPaymentStatusServiceTest {
                 )
                 .paymentStatus(
                         paymentStatus
+                )
+                .obligationStatus(
+                        obligationStatus
                 )
                 .build();
     }
