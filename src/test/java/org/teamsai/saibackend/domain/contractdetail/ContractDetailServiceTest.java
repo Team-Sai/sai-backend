@@ -70,11 +70,39 @@ class ContractDetailServiceTest {
         }
 
         @Test
-        @DisplayName("채무자면 PENDING 요청 여부와 상관없이 false를 반환한다")
-        void falseWhenDebtor() {
+        @DisplayName("채무자이고 PENDING 요청이 없으면 true를 반환한다")
+        void trueWhenDebtorAndNoPendingRequest() {
             given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID)).willReturn(contract());
+            given(contractChangeService.hasPendingChangeRequest(CONTRACT_ID)).willReturn(false);
 
             boolean result = contractDetailService.canRequestChange(CONTRACT_ID, DEBTOR_ID);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("채무자여도 PENDING 요청이 있으면 false를 반환한다")
+        void falseWhenDebtorButHasPendingRequest() {
+            given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID)).willReturn(contract());
+            given(contractChangeService.hasPendingChangeRequest(CONTRACT_ID)).willReturn(true);
+
+            boolean result = contractDetailService.canRequestChange(CONTRACT_ID, DEBTOR_ID);
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("당사자가 아니면 PENDING 요청 여부와 상관없이 false를 반환한다")
+        void falseWhenNotContractParty() {
+            LoanContractResponse contract = LoanContractResponse.builder()
+                    .contractId(CONTRACT_ID)
+                    .creditorId(CREDITOR_ID)
+                    .debtorId(DEBTOR_ID)
+                    .build();
+
+            given(loanContractService.findContract(CONTRACT_ID, 999L)).willReturn(contract);
+
+            boolean result = contractDetailService.canRequestChange(CONTRACT_ID, 999L);
 
             assertThat(result).isFalse();
         }
@@ -101,12 +129,13 @@ class ContractDetailServiceTest {
         @DisplayName("채무자로 조회하면 채무자 주소를 반환하고 isCreditor는 false다")
         void returnsDebtorAddressForDebtor() {
             given(loanContractService.findContract(CONTRACT_ID, DEBTOR_ID)).willReturn(contract());
+            given(contractChangeService.hasPendingChangeRequest(CONTRACT_ID)).willReturn(false);
 
             ContractDetailResponse result = contractDetailService.getCheck(CONTRACT_ID, DEBTOR_ID);
 
             assertThat(result.getAddress()).isEqualTo("서울시 채무자로 1");
             assertThat(result.isCreditor()).isFalse();
-            assertThat(result.isCanRequestChange()).isFalse();
+            assertThat(result.isCanRequestChange()).isTrue();
         }
     }
 }

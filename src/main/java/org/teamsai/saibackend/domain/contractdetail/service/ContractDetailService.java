@@ -7,6 +7,8 @@ import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.domain.contractdetail.dto.response.ContractDetailResponse;
 
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
 public class ContractDetailService {
@@ -17,7 +19,8 @@ public class ContractDetailService {
     public boolean canRequestChange(Long contractId, Long userId) {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
         boolean isCreditor = contract.getCreditorId().equals(userId);
-        return isCreditor && !contractChangeService.hasPendingChangeRequest(contractId);
+        boolean isDebtor = Objects.equals(contract.getDebtorId(), userId);
+        return (isCreditor || isDebtor) && !contractChangeService.hasPendingChangeRequest(contractId);
     }
 
 
@@ -25,7 +28,8 @@ public class ContractDetailService {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
         boolean isCreditor = contract.getCreditorId().equals(userId);
-        boolean canRequestChange = isCreditor && !contractChangeService.hasPendingChangeRequest(contractId);
+        boolean isDebtor = Objects.equals(contract.getDebtorId(), userId);
+        boolean canRequestChange = (isCreditor || isDebtor) && !contractChangeService.hasPendingChangeRequest(contractId);
 
         String address = isCreditor
                 ? contract.getCreditorAddress()
