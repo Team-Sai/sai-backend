@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.batch.writeoff.service;
+package org.teamsai.saibackend.domain.batch.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

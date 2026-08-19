@@ -1,4 +1,4 @@
-package org.teamsai.saibackend.domain.batch.writeoff.config;
+package org.teamsai.saibackend.domain.batch.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.job.Job;
@@ -12,8 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.teamsai.saibackend.domain.batch.common.listener.LoggingJobExecutionListener;
-import org.teamsai.saibackend.domain.batch.writeoff.service.WriteOffBatchService;
-import org.teamsai.saibackend.domain.batch.writeoff.service.WriteOffResult;
+import org.teamsai.saibackend.domain.batch.service.WriteOffBatchService;
+import org.teamsai.saibackend.domain.batch.service.WriteOffResult;
 
 import java.time.LocalDate;
 

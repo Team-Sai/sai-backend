@@ -21,14 +21,6 @@ public class SettlementBatchConfig {
     private final PlatformTransactionManager transactionManager;
 
     @Bean
-    public Job dailySettlementJob(Step settlementStep, LoggingJobExecutionListener listener) {
-        return new JobBuilder("dailySettlementJob", jobRepository)
-                .listener(listener)
-                .start(settlementStep)
-                .build();
-    }
-
-    @Bean
     public Step settlementStep() {
         return new StepBuilder("settlementStep", jobRepository)
                 .tasklet(settlementTasklet(), transactionManager)

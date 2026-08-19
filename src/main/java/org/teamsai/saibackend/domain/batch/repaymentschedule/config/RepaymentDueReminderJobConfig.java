@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.batch.MyBatisCursorItemReader;
-import org.mybatis.spring.batch.MyBatisPagingItemReader;
 import org.mybatis.spring.batch.builder.MyBatisCursorItemReaderBuilder;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
@@ -51,7 +50,7 @@ public class RepaymentDueReminderJobConfig {
 
     @Bean
     public Step repaymentDueReminderStep(
-            MyBatisPagingItemReader<RepaymentScheduleDTO> repaymentDueReminderReader,
+            MyBatisCursorItemReader<RepaymentScheduleDTO> repaymentDueReminderReader,
             ItemWriter<RepaymentScheduleDTO> repaymentDueReminderWriter,
             BaseSkipListener<RepaymentScheduleDTO, RepaymentScheduleDTO> skipListener) {
 
