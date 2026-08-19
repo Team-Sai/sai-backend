@@ -80,7 +80,7 @@ public class SettlementArchiveService {
     public SettlementArchivePreviewResponse getArchivePreview(Long settlementId, Long userId) {
 
         SettlementDetailResponse detail = settlementQueryService.getSettlementDetail(settlementId, userId);
-        ArchiveData data = gatherArchiveData(settlementId, userId);
+        ArchiveData data = gatherArchiveData(settlementId, userId, detail);
 
         return SettlementArchivePreviewResponse.builder()
                 .settlementId(detail.settlementId())
@@ -102,7 +102,7 @@ public class SettlementArchiveService {
 
     private byte[] renderSettlementPdf(Long settlementId, Long userId, SettlementDetailResponse detail) {
 
-        ArchiveData data = gatherArchiveData(settlementId, userId);
+        ArchiveData data = gatherArchiveData(settlementId, userId, detail);
 
         String pdfCss = loadPdfCss();
         LocalDateTime generatedAt = LocalDateTime.now();
@@ -197,8 +197,7 @@ public class SettlementArchiveService {
         }
     }
 
-    private ArchiveData gatherArchiveData(Long settlementId, Long userId) {
-        SettlementDetailResponse archiveDetail = settlementQueryService.getSettlementDetail(settlementId, userId);
+    private ArchiveData gatherArchiveData(Long settlementId, Long userId, SettlementDetailResponse archiveDetail) {
         SettlementPaymentStatusResponse paymentStatus = settlementPaymentStatusService.getPaymentStatus(settlementId, userId);
         List<SettlementPaymentHistoryResponse> paymentHistory = settlementPaymentHistoryService.getPaymentHistory(settlementId, userId);
         Optional<SettlementAccountResponse> settlementAccount = findSettlementAccountIfExists(settlementId, userId);

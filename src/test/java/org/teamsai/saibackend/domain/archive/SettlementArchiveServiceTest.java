@@ -92,8 +92,6 @@ class SettlementArchiveServiceTest {
     class CachingBehavior {
 
         private void stubRenderingDependencies() {
-            given(settlementQueryService.getSettlementArchiveDetail(SETTLEMENT_ID, USER_ID))
-                    .willReturn(archiveDetail());
             given(settlementPaymentStatusService.getPaymentStatus(SETTLEMENT_ID, USER_ID))
                     .willReturn(paymentStatus());
             given(settlementPaymentHistoryService.getPaymentHistory(SETTLEMENT_ID, USER_ID))
@@ -178,8 +176,6 @@ class SettlementArchiveServiceTest {
         void stubRenderingDependencies() {
             given(settlementQueryService.getSettlementDetail(SETTLEMENT_ID, USER_ID))
                     .willReturn(detail("IN_PROGRESS"));
-            given(settlementQueryService.getSettlementArchiveDetail(SETTLEMENT_ID, USER_ID))
-                    .willReturn(archiveDetail());
             given(settlementPaymentStatusService.getPaymentStatus(SETTLEMENT_ID, USER_ID))
                     .willReturn(paymentStatus());
             given(settlementPaymentHistoryService.getPaymentHistory(SETTLEMENT_ID, USER_ID))
@@ -241,8 +237,6 @@ class SettlementArchiveServiceTest {
                     .willReturn(detail("CLOSED"));
             given(archiveMapper.findFilesByReference(ArchiveStatus.SETTLEMENT.name(), SETTLEMENT_ID))
                     .willReturn(List.of());
-            given(settlementQueryService.getSettlementArchiveDetail(SETTLEMENT_ID, USER_ID))
-                    .willReturn(archiveDetail());
             given(settlementPaymentStatusService.getPaymentStatus(SETTLEMENT_ID, USER_ID))
                     .willReturn(paymentStatusWithObligation());
             given(settlementPaymentHistoryService.getPaymentHistory(SETTLEMENT_ID, USER_ID))
@@ -282,10 +276,6 @@ class SettlementArchiveServiceTest {
                 LocalDateTime.of(2026, 8, 1, 10, 0),
                 "OWNER"
         );
-    }
-
-    private SettlementDetailResponse archiveDetail() {
-        return detail("CLOSED");
     }
 
     private SettlementPaymentStatusResponse paymentStatus() {
