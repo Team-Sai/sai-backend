@@ -36,7 +36,7 @@ public class DailyBatchPipelineScheduler {
     @Autowired
     private Job repaymentWriteOffJob;
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void runPipeline() {
         LocalDate baseDate = LocalDate.now();
         runStep("transactionSync", transactionSyncJob, baseDate);

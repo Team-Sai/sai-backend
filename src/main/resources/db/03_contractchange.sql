@@ -8,15 +8,16 @@ CREATE TABLE IF NOT EXISTS loan_contract_change_request (
     new_repayment_date INT NULL,
     new_terms TEXT NULL,
     return_reason TEXT NULL,
-    status VARCHAR(20) NOT NULL CHECK (
-    status IN ('PENDING', 'APPROVED', 'REJECTED')
-    ),
+    requester_signature VARCHAR(255) NULL,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
+    pending_lock_key BIGINT AS (CASE WHEN status = 'PENDING' THEN contract_id ELSE NULL END) VIRTUAL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
     contract_id BIGINT NOT NULL,
 
     PRIMARY KEY (change_request_id),
+    UNIQUE INDEX uq_pending_per_contract (pending_lock_key),
 
     CONSTRAINT fk_change_request_contract FOREIGN KEY (contract_id) REFERENCES loan_contract(contract_id),
     CONSTRAINT fk_change_request_user FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -38,9 +39,6 @@ ALTER TABLE loan_contract_change_request
 
 ALTER TABLE loan_contract_change_request
     MODIFY COLUMN new_repayment_type VARCHAR(30) NULL;
-
-ALTER TABLE loan_contract_change_request
-    ADD COLUMN IF NOT EXISTS requester_signature VARCHAR(255) NULL AFTER return_reason;
 
 ALTER TABLE loan_contract_change_request
     DROP CONSTRAINT IF EXISTS status;
