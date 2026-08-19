@@ -23,7 +23,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @Tag(
-        name = "정산 아카이브 API",
+        name = "정산 보관함 API",
         description = "정산 이행현황 PDF 다운로드 API"
 )
 @Slf4j
@@ -44,7 +44,7 @@ public class SettlementArchiveController {
     }
 
     @Operation(
-            summary = "정산 아카이브 미리보기 조회",
+            summary = "정산 보관함 미리보기 조회",
             description = "PDF로 내려받기 전, PDF에 담길 정산 기본정보·이행현황·참여자별 납부 현황·상세 납부 내역·수취 계좌 정보를 화면에서 미리 확인합니다."
     )
     @ApiResponses(value = {
