@@ -28,6 +28,7 @@ import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -82,7 +83,7 @@ public class ContractChangeService {
 
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
 
-        boolean isCreditor = contract.getCreditorId().equals(userId);
+        boolean isCreditor = Objects.equals(contract.getCreditorId(), userId);
         boolean isDebtor = java.util.Objects.equals(contract.getDebtorId(), userId);
 
         if (!isCreditor && !isDebtor) {
@@ -202,10 +203,10 @@ public class ContractChangeService {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
         LoanContractChangeDTO changeRequest = getChangeRequest(changeRequestId);
 
-        boolean requesterIsCreditor = contract.getCreditorId().equals(changeRequest.getUserId());
+        boolean requesterIsCreditor = Objects.equals(contract.getCreditorId(), changeRequest.getUserId());
         Long approverId = requesterIsCreditor ? contract.getDebtorId() : contract.getCreditorId();
 
-        if(!approverId.equals(userId)) {
+        if(!Objects.equals(approverId, userId)) {
             throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
         }
 
@@ -311,17 +312,22 @@ public class ContractChangeService {
         LoanContractResponse contract = loanContractService.findContract(contractId, userId);
         UserResponse requesterInfo = userService.getMyInfo(userId);
 
-        boolean isCreditor = contract.getCreditorId().equals(userId);
+        boolean isCreditor = Objects.equals(contract.getCreditorId(), userId);
         Long recipientId = isCreditor ? contract.getDebtorId() : contract.getCreditorId();
 
-        notificationService.create(
-                recipientId,
-                NotificationType.CONTRACT_CHANGE,
-                "계약 변경 요청",
-                requesterInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
-                contractId,
-                changeRequestId
-        );
+        if(recipientId != null) {
+            notificationService.create(
+                    recipientId,
+                    NotificationType.CONTRACT_CHANGE,
+                    "계약 변경 요청",
+                    requesterInfo.getName() + "님으로부터 계약 내용 변경 요청이 도착했습니다.",
+                    contractId,
+                    changeRequestId
+            );
+        }else{
+            log.warn("계약 변경 요청 알림 발송 실패 - recipientId가 null입니다. contractId={}, changeRequestId={}",
+            contractId, changeRequestId);
+        }
 
         return getChangeRequest(changeRequestId);
     }
