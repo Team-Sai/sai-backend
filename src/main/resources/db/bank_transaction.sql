@@ -42,3 +42,6 @@ CREATE TABLE IF NOT EXISTS bank_transaction (
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE bank_transaction
+    ADD COLUMN IF NOT EXISTS retry_count INT NOT NULL DEFAULT 0;

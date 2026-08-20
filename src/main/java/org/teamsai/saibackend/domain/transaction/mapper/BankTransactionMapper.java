@@ -11,6 +11,12 @@ import java.util.Optional;
 
 @Mapper
 public interface BankTransactionMapper {
+    List<BankTransactionDTO> findRetryCandidates(@Param("linkedAccountId") Long linkedAccountId);
+
+    int resetToPendingForRetry(
+            @Param("bankTransactionId") Long bankTransactionId,
+            @Param("currentStatus") BankTransactionProcessingStatus currentStatus
+    );
 
     int insertOrGetId(BankTransactionDTO bankTransaction);
 

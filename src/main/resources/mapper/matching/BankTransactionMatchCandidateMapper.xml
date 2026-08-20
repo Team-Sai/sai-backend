@@ -372,4 +372,8 @@
         AND candidate_status = 'AVAILABLE'
     </select>
 
+    <delete id="deleteAllByBankTransactionId">
+        DELETE FROM bank_transaction_match_candidate
+        WHERE bank_transaction_id = #{bankTransactionId}
+    </delete>
 </mapper>

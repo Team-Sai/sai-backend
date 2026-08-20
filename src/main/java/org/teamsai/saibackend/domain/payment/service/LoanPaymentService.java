@@ -60,7 +60,7 @@ public class LoanPaymentService {
 
         RepaymentScheduleDTO schedule = repaymentScheduleService.getScheduleByScheduleId(targetId);
 
-        if (schedule.getStatus() != RepaymentScheduleStatus.PENDING) {
+        if (!schedule.getStatus().isUnresolved()) {
             log.warn("[LoanPaymentService] 처리 불가능한 스케줄 상태 - scheduleId: {}, status: {}", targetId, schedule.getStatus());
             throw RepaymentScheduleErrorCode.SCHEDULE_NOT_PENDING.toException();
         }

@@ -13,6 +13,7 @@
         <result property="paymentStatus" column="payment_status"/>
         <result property="reviewStatus" column="review_status"/>
         <result property="obligationStatus" column="obligation_status"/>
+        <result property="overdueSince" column="overdue_since"/>
     </resultMap>
     <resultMap id="MatchingCandidateResultMap"
                type="org.teamsai.saibackend.domain.matching.model.MatchingCandidate">
@@ -38,7 +39,8 @@
         expected_amount,
         payment_status,
         review_status,
-        obligation_status
+        obligation_status,
+        overdue_since
         FROM payment_obligation
         WHERE payment_obligation_id = #{paymentObligationId}
         FOR UPDATE
@@ -89,8 +91,8 @@
         AND po.payment_status != 'PAID'
         AND sp.participant_status = 'ACTIVE'
         <if test="targetType != null and aggregateId != null">
-        AND #{targetType} = 'SETTLEMENT'
-        AND s.settlement_id = #{aggregateId}
+            AND #{targetType} = 'SETTLEMENT'
+            AND s.settlement_id = #{aggregateId}
         </if>
         GROUP BY
         po.payment_obligation_id,
@@ -132,8 +134,8 @@
         AND rs.created_at &lt;= #{transactionAt}
         AND rs.status = 'PENDING'
         <if test="targetType != null and aggregateId != null">
-        AND #{targetType} = 'LOAN'
-        AND lc.contract_id = #{aggregateId}
+            AND #{targetType} = 'LOAN'
+            AND lc.contract_id = #{aggregateId}
         </if>
         AND NOT EXISTS (
         SELECT 1
@@ -170,7 +172,7 @@
     </insert>
 
     <!-- 주의: obligation_status='ACTIVE'는 "정산이 진행 중"이 아니라 "이 obligation이 취소/제외되지 않음"을 의미.
-     정산 종료 여부는 상위 settlement.settlement_status로 별도 판단해야 함. -->
+ 정산 종료 여부는 상위 settlement.settlement_status로 별도 판단해야 함. -->
     <select id="findByParticipantIds" resultMap="PaymentObligationResultMap">
         SELECT po.payment_obligation_id, po.participant_id, po.expected_amount,
         po.payment_status, po.review_status, po.obligation_status
@@ -183,6 +185,24 @@
             #{id}
         </foreach>
         AND obligation_status = 'ACTIVE'
+        GROUP BY participant_id
+        ) latest ON latest.participant_id = po.participant_id
+        AND latest.latest_id = po.payment_obligation_id
+    </select>
+
+    <!-- 정기정산 회차 생성 전용: 상각(WRITTEN_OFF)된 직전 obligation도 금액 복사 대상에 포함 -->
+    <select id="findLatestByParticipantIdsIncludingWrittenOff" resultMap="PaymentObligationResultMap">
+        SELECT po.payment_obligation_id, po.participant_id, po.expected_amount,
+        po.payment_status, po.review_status, po.obligation_status
+        FROM payment_obligation po
+        INNER JOIN (
+        SELECT participant_id, MAX(payment_obligation_id) AS latest_id
+        FROM payment_obligation
+        WHERE participant_id IN
+        <foreach item="id" collection="participantIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND obligation_status IN ('ACTIVE', 'WRITTEN_OFF')
         GROUP BY participant_id
         ) latest ON latest.participant_id = po.participant_id
         AND latest.latest_id = po.payment_obligation_id
@@ -218,4 +238,34 @@
         AND overdue_since IS NULL
         AND obligation_status = 'ACTIVE'
     </update>
+
+    <select id="findWriteOffCandidateIds" resultType="long">
+        SELECT payment_obligation_id
+        FROM payment_obligation
+        WHERE obligation_status = 'ACTIVE'
+        AND payment_status IN ('UNPAID', 'PARTIALLY_PAID')
+        AND overdue_since IS NOT NULL
+        AND overdue_since &lt;= #{cutoffDateTime}
+    </select>
+
+    <update id="writeOffBulk">
+        UPDATE payment_obligation
+        SET obligation_status = 'WRITTEN_OFF'
+        WHERE payment_obligation_id IN
+        <foreach collection="paymentObligationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND obligation_status = 'ACTIVE'
+        AND payment_status IN ('UNPAID', 'PARTIALLY_PAID')
+    </update>
+
+    <select id="findSettlementIdsByObligationIds" resultType="long">
+        SELECT DISTINCT sp.settlement_id
+        FROM payment_obligation po
+        JOIN settlement_participant sp ON sp.participant_id = po.participant_id
+        WHERE po.payment_obligation_id IN
+        <foreach collection="obligationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 </mapper>

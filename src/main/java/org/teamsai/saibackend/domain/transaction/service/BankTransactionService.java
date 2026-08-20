@@ -141,7 +141,14 @@ public class BankTransactionService {
                     || nextStatus
                     == BankTransactionProcessingStatus.UNMATCHED
                     || nextStatus
-                    == BankTransactionProcessingStatus.FAILED;
+                    == BankTransactionProcessingStatus.FAILED
+                    || nextStatus
+                    == BankTransactionProcessingStatus.PENDING;
+        }
+
+        if (currentStatus == BankTransactionProcessingStatus.UNMATCHED
+                || currentStatus == BankTransactionProcessingStatus.FAILED) {
+            return nextStatus == BankTransactionProcessingStatus.PENDING;
         }
 
         return false;
