@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -122,6 +123,8 @@ public class ArchiveService {
         context.setVariable("contract", contract);
         context.setVariable("repaymentTypeLabel", contract.getRepaymentType().getDescription());
         context.setVariable("pdfCss", pdfCss);
+        context.setVariable("creditorSignatureDataUri", loadSignatureDataUri(contract.getCreditorSignature()));
+        context.setVariable("debtorSignatureDataUri", loadSignatureDataUri(contract.getDebtorSignature()));
 
         String html = templateEngine.process("archive/contract-pdf", context);
 
@@ -149,6 +152,22 @@ public class ArchiveService {
         }
 
         return pdfBuffer.toByteArray();
+    }
+
+    private String loadSignatureDataUri(String savedFilename) {
+        if (savedFilename == null || savedFilename.isBlank()) {
+            return null;
+        }
+
+        try {
+            Path filePath = Paths.get(uploadDir).resolve(savedFilename).normalize();
+            byte[] bytes = Files.readAllBytes(filePath);
+            String mimeType = savedFilename.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+            return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(bytes);
+        } catch (IOException e) {
+            log.warn("서명 이미지 로딩 실패 - fileName: {}", savedFilename, e);
+            return null;
+        }
     }
 
     public FileDTO getFileById(Long fileId) {

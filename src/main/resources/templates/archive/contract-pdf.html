@@ -92,7 +92,10 @@
         <tr>
             <th class="parties__role">채권자</th>
             <td class="parties__label">성 명</td>
-            <td class="parties__value"><strong class="doc__readonly" th:text="${contract.creditorName}">-</strong></td>
+            <td class="parties__value">
+                <strong class="doc__readonly" th:text="${contract.creditorName}">-</strong>
+                <img th:if="${creditorSignatureDataUri != null}" th:src="${creditorSignatureDataUri}" class="doc__signature" alt="채권자 서명" />
+            </td>
             <td class="parties__label">생년월일</td>
             <td class="parties__value"><strong class="doc__readonly" th:text="${contract.creditorBirthDate}">-</strong></td>
             <td class="parties__label">주 소</td>
@@ -101,7 +104,10 @@
         <tr>
             <th class="parties__role">채무자</th>
             <td class="parties__label">성 명</td>
-            <td class="parties__value"><strong class="doc__readonly" th:text="${contract.debtorName} ?: '-'">-</strong></td>
+            <td class="parties__value">
+                <strong class="doc__readonly" th:text="${contract.debtorName} ?: '-'">-</strong>
+                <img th:if="${debtorSignatureDataUri != null}" th:src="${debtorSignatureDataUri}" class="doc__signature" alt="채무자 서명" />
+            </td>
             <td class="parties__label">생년월일</td>
             <td class="parties__value"><strong class="doc__readonly" th:text="${contract.debtorBirthDate} ?: '-'">-</strong></td>
             <td class="parties__label">주 소</td>

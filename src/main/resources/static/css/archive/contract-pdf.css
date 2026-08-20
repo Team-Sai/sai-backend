@@ -95,3 +95,10 @@ body {
 .parties__value {
     background: #ffffff;
 }
+
+.doc__signature {
+    display: inline-block;
+    height: 24px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
