@@ -1,7 +1,5 @@
 package org.teamsai.saibackend.domain.archive.service;
 
-import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +17,10 @@ import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import javax.imageio.ImageIO;
+
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +43,7 @@ public class ArchiveService {
 
     private final ArchiveMapper archiveMapper;
     private final TemplateEngine templateEngine;
+    private final HtmlToPdfRenderer htmlToPdfRenderer;
 
     @Getter
     @Value("${file.upload-dir}")
@@ -128,31 +131,10 @@ public class ArchiveService {
 
         String html = templateEngine.process("archive/contract-pdf", context);
 
-        ByteArrayOutputStream pdfBuffer = new ByteArrayOutputStream();
-        try {
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-
-            builder.useFont(
-                    () -> getClass().getResourceAsStream("/static/font/pretendard/Pretendard-Regular.ttf"),
-                    "Pretendard", 400, BaseRendererBuilder.FontStyle.NORMAL, true
-            );
-            builder.useFont(
-                    () -> getClass().getResourceAsStream("/static/font/pretendard/Pretendard-Bold.ttf"),
-                    "Pretendard", 700, BaseRendererBuilder.FontStyle.NORMAL, true
-            );
-
-            builder.useDefaultPageSize(210, 297, BaseRendererBuilder.PageSizeUnits.MM);
-            builder.withHtmlContent(html, "");
-            builder.toStream(pdfBuffer);
-            builder.run();
-
-        } catch (Exception e) {
-            log.error("PDF 생성 실패 - contractId: {}", contract.getContractId(), e);
-            throw new RuntimeException("PDF 생성 중 오류가 발생했습니다.", e);
-        }
-
-        return pdfBuffer.toByteArray();
+        return htmlToPdfRenderer.render(html, "contractId: " + contract.getContractId());
     }
+
+    private static final int SEAL_RED_RGB = 0xC0272D;
 
     private String loadSignatureDataUri(String savedFilename) {
         if (savedFilename == null || savedFilename.isBlank()) {
@@ -162,12 +144,36 @@ public class ArchiveService {
         try {
             Path filePath = Paths.get(uploadDir).resolve(savedFilename).normalize();
             byte[] bytes = Files.readAllBytes(filePath);
-            String mimeType = savedFilename.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
-            return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(bytes);
+
+            BufferedImage original = ImageIO.read(new ByteArrayInputStream(bytes));
+            if (original == null) {
+                String mimeType = savedFilename.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+                return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(bytes);
+            }
+
+            byte[] recolored = recolorToSealRed(original);
+            return "data:image/png;base64," + Base64.getEncoder().encodeToString(recolored);
         } catch (IOException e) {
             log.warn("서명 이미지 로딩 실패 - fileName: {}", savedFilename, e);
             return null;
         }
+    }
+
+    private byte[] recolorToSealRed(BufferedImage original) throws IOException {
+        BufferedImage recolored = new BufferedImage(
+                original.getWidth(), original.getHeight(), BufferedImage.TYPE_INT_ARGB
+        );
+
+        for (int y = 0; y < original.getHeight(); y++) {
+            for (int x = 0; x < original.getWidth(); x++) {
+                int alpha = (original.getRGB(x, y) >>> 24) & 0xFF;
+                recolored.setRGB(x, y, (alpha << 24) | SEAL_RED_RGB);
+            }
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(recolored, "png", out);
+        return out.toByteArray();
     }
 
     public FileDTO getFileById(Long fileId) {

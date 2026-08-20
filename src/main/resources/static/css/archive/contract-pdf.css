@@ -96,9 +96,17 @@ body {
     background: #ffffff;
 }
 
-.doc__signature {
+.seal-mark {
+    position: relative;
     display: inline-block;
+}
+
+.doc__signature {
+    position: absolute;
+    top: -2px;
+    left: -28px;
     height: 24px;
-    margin-left: 6px;
-    vertical-align: middle;
+    width: auto;
+    pointer-events: none;
+    z-index: 1;
 }

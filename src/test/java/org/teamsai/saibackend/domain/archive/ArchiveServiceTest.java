@@ -20,6 +20,7 @@ import org.teamsai.saibackend.domain.archive.dto.ArchiveStatus;
 import org.teamsai.saibackend.domain.archive.dto.FileDTO;
 import org.teamsai.saibackend.domain.archive.mapper.ArchiveMapper;
 import org.teamsai.saibackend.domain.archive.service.ArchiveService;
+import org.teamsai.saibackend.domain.archive.service.HtmlToPdfRenderer;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -189,6 +190,7 @@ class ArchiveServiceTest {
             templateEngine.setTemplateResolver(resolver);
 
             ReflectionTestUtils.setField(archiveService, "templateEngine", templateEngine);
+            ReflectionTestUtils.setField(archiveService, "htmlToPdfRenderer", new HtmlToPdfRenderer());
         }
 
         @Test
