@@ -16,12 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * 참여자별 납부/은행거래 상세 내역을 다른 도메인의 기존 조회 로직을 조합해서 구성한다.
- * - 참여자 이름: SettlementPaymentStatusService.getPaymentStatus()의 obligations 재사용
- * - 납부 승인 내역: PaymentRecordService.findConfirmedRecordsByTargetIds() 재사용
- * - 연결 거래 정보: BankTransactionMapper.findById() 재사용
- */
 @Service
 @RequiredArgsConstructor
 public class SettlementPaymentHistoryService {
