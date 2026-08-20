@@ -37,6 +37,13 @@
         AND connection_status = 'AVAILABLE'
     </select>
 
+    <select id="findAllAvailableForSync" resultType="org.teamsai.saibackend.domain.account.dto.LinkedAccountSyncTargetDTO">
+        SELECT linked_account_id AS linkedAccountId, user_id AS userId
+        FROM linked_bank_account
+        WHERE connection_status = 'AVAILABLE'
+        ORDER BY linked_account_id
+    </select>
+
     <insert id="insertOne" useGeneratedKeys="true" keyProperty="linkedAccountId">
         INSERT INTO linked_bank_account (
         user_id, account_id, bank_code, account_number,
