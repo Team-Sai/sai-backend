@@ -214,6 +214,7 @@ class ArchiveServiceTest {
                 assertThat(text).contains(contract.getCreditorName());
                 assertThat(text).contains(contract.getDebtorName());
                 assertThat(text).contains(RepaymentMethod.EQUAL_PRINCIPAL_AND_INTEREST.getDescription());
+                assertThat(text).contains("법적 분쟁에 대해 책임을 지지 않습니다");
             }
         }
 

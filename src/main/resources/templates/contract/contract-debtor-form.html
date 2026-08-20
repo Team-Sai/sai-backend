@@ -18,8 +18,6 @@
 </header>
 <main class="page">
 
-  <!-- stepper-card: .doc 과 같은 부모(.page) 아래에서 폭을 지정하지 않으므로
-       계약서 카드(.doc)와 픽셀 단위로 동일한 폭을 갖는다 -->
   <div class="stepper-card">
     <ol class="stepper">
       <li class="stepper__step is-done">
@@ -117,8 +115,6 @@
       갑과 을은 상기 계약을 증명하기 위하여 본 계약서 2통을 작성하고, 각자 서명 날인한 후 1통씩을 보관한다.
     </p>
 
-    <!-- contract-form.html 과 동일한 형식: 채권자/채무자 각각 한 줄(성명·생년월일·주소)로 표시.
-         채무자 주소만 이 단계에서 본인이 직접 입력하는 값이라 input, 나머지는 doc__readonly. -->
     <table class="parties">
       <colgroup>
         <col style="width: 9%">
@@ -164,6 +160,12 @@
     </table>
 
     <p class="doc__hint">채권자가 작성한 아래 계약 내용을 확인한 뒤, 본인 주소를 입력하고 다음 단계에서 전자서명을 진행해 주세요.</p>
+
+    <p class="doc__disclaimer">
+      본 서비스가 제공하는 차용증 양식은 일반적인 금전소비대차 계약서 작성 편의를 위한 참고용 문서입니다.
+      서비스 제공자는 이용자가 입력한 데이터의 정확성 및 개별 계약 조건에 따른 법적 분쟁에 대해 책임을 지지 않습니다.
+      구체적인 법적 조언이나 강제집행력이 필요한 경우 법률 전문가의 상담 또는 공증 절차를 진행하시길 권장합니다.
+    </p>
 
     <div class="doc__actions">
       <button type="button" class="btn btn--primary" id="btnNext">확인</button>
