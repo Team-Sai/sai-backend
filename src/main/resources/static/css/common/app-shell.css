@@ -1,6 +1,6 @@
 @font-face {
     font-family: "Pretendard";
-    src: url("/font/pretendard/Pretendard-Regular.ttf") format("truetype");
+    src: url("../../font/pretendard/Pretendard-Regular.ttf") format("truetype");
     font-weight: 400;
     font-style: normal;
     font-display: block;
@@ -8,7 +8,7 @@
 
 @font-face {
     font-family: "Pretendard";
-    src: url("/font/pretendard/Pretendard-Bold.ttf") format("truetype");
+    src: url("../../font/pretendard/Pretendard-Bold.ttf") format("truetype");
     font-weight: 700 900;
     font-style: normal;
     font-display: block;
@@ -94,6 +94,10 @@ body.app-shell-page textarea {
 /* 페이지별 컴포넌트가 다른 한글 폰트로 덮어쓰지 않도록 공통 폰트를 고정한다. */
 body.app-shell-page main,
 body.app-shell-page main * {
+    font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif !important;
+}
+
+body.app-shell-page * {
     font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif !important;
 }
 
