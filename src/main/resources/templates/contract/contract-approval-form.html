@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>계약 변경 승인</title>
+    <link rel="stylesheet" as="style" crossorigin
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="../../static/css/contract/contract-form.css" />
+    <link rel="stylesheet" th:href="@{/css/contract/contract-debtor-approve.css}" href="../../static/css/contract/contract-debtor-approve.css" />
+</head>
+<body class="app-shell-page">
+<header
+        th:replace="~{fragments/app-shell :: appHeader('contract')}">
+</header>
+<main class="page">
+
+    <div class="stepper-card">
+        <ol class="stepper">
+            <li class="stepper__step is-done">
+        <span class="stepper__circle">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
+            <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+                <span class="stepper__label">변경 요청 접수</span>
+            </li>
+            <li class="stepper__step is-active">
+                <span class="stepper__circle">2</span>
+                <span class="stepper__label">변경 내용 확인</span>
+            </li>
+            <li class="stepper__step">
+                <span class="stepper__circle">3</span>
+                <span class="stepper__label">본인인증 · 서명날인</span>
+            </li>
+        </ol>
+    </div>
+
+    <form class="doc" id="approveForm" data-contract-id="" th:attr="data-contract-id=${contractId}">
+
+        <h1 class="doc__title">금 전 차 용 계 약 서 (변경)</h1>
+
+        <p class="doc__status-banner" id="statusBanner" hidden></p>
+
+        <section class="doc__article">
+            <span class="doc__clause">제1조(당사자)</span>
+            <div class="doc__body">
+        <span class="doc__text">
+          채권자 <strong id="creditorNameDisplay" class="doc__readonly">-</strong>(이하 "갑"이라고 함)는
+        </span>
+                <span class="doc__text doc__text--indent">
+          금 <strong id="principalAmount" class="doc__readonly">-</strong>원을 채무자 <strong id="debtorNameDisplay" class="doc__readonly">-</strong>(이하 "을"이라고 함)에게 대여하고 을은 이를 차용한다.
+        </span>
+            </div>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제2조(대출기간)</span>
+            <div class="doc__body">
+        <span class="doc__text">
+          대출 시작일은 <strong id="startDate" class="doc__readonly">-</strong>로 한다.
+        </span>
+                <span class="doc__text doc__text--indent">
+          차용금의 변제기한(만기일)은 <strong id="maturityDate" class="doc__readonly">-</strong>로 한다.
+        </span>
+            </div>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제3조(이자)</span>
+            <span class="doc__text">
+        이자는 연 <strong id="interestRate" class="doc__readonly">-</strong>%의 비율로 하며, 20%를 초과할 수 없다.
+      </span>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제4조(변제방법)</span>
+            <div class="doc__body">
+        <span class="doc__text">
+          채무의 변제는 갑의 주소 또는 갑이 지정하는 장소에 지참 또는 송금해서 지불하며,
+        </span>
+                <span class="doc__text doc__text--indent">
+          매월 <strong id="repaymentDay" class="doc__readonly">-</strong>일에 지급하기로 한다.
+        </span>
+            </div>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제5조(상환방식)</span>
+            <span class="doc__text"><strong id="repaymentType" class="doc__readonly">-</strong></span>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제6조(계약의 목적)</span>
+            <span class="doc__text"><strong id="contractAlias" class="doc__readonly">-</strong></span>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">제7조(특약사항)</span>
+            <span class="doc__text"><strong id="terms" class="doc__readonly">-</strong></span>
+        </section>
+
+        <p class="doc__closing">
+            갑과 을은 상기 변경된 계약을 증명하기 위하여 본 계약서 2통을 작성하고, 각자 서명 날인한 후 1통씩을 보관한다.
+        </p>
+
+        <!-- 승인자는 이미 계약 당사자로 확정되어 있으므로, 주소는 입력받지 않고 기존 값을 그대로 읽기전용으로 표시한다. -->
+        <table class="parties">
+            <colgroup>
+                <col style="width: 9%">
+                <col style="width: 9%">
+                <col style="width: 14%">
+                <col style="width: 11%">
+                <col style="width: 14%">
+                <col style="width: 7%">
+                <col style="width: 36%">
+            </colgroup>
+            <tbody>
+            <tr>
+                <th class="parties__role">채권자</th>
+                <td class="parties__label">성 명</td>
+                <td class="parties__value">
+                    <strong id="creditorNameCell" class="doc__readonly">-</strong>
+                </td>
+                <td class="parties__label">생년월일</td>
+                <td class="parties__value">
+                    <strong id="creditorBirthDateCell" class="doc__readonly">-</strong>
+                </td>
+                <td class="parties__label">주 소</td>
+                <td class="parties__value">
+                    <strong id="creditorAddress" class="doc__readonly">-</strong>
+                </td>
+            </tr>
+            <tr>
+                <th class="parties__role">채무자</th>
+                <td class="parties__label">성 명</td>
+                <td class="parties__value">
+                    <strong id="debtorName" class="doc__readonly">-</strong>
+                </td>
+                <td class="parties__label">생년월일</td>
+                <td class="parties__value">
+                    <strong id="debtorBirthDate" class="doc__readonly">-</strong>
+                </td>
+                <td class="parties__label">주 소</td>
+                <td class="parties__value">
+                    <strong id="debtorAddressCell" class="doc__readonly">-</strong>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <p class="doc__hint">위 변경된 계약 내용을 확인한 뒤, 다음 단계에서 전자서명을 진행해 주세요.</p>
+
+        <div class="doc__actions">
+            <button type="button" class="btn btn--primary" id="btnNext">확인</button>
+        </div>
+
+        <p class="doc__status" id="formStatus" role="status" aria-live="polite"></p>
+    </form>
+</main>
+
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+
+<script th:src="@{/js/contract/contract-approval-form.js}" src="../../static/js/contract/contract-approval-form.js"></script>
+</body>
+</html>

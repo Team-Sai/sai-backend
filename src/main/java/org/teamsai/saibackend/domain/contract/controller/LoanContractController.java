@@ -54,6 +54,26 @@ public class LoanContractController {
     }
 
     @Operation(hidden = true)
+    @GetMapping("/contracts/{contractId}/change-approval")
+    public String contractChangeApprovalPage(
+            @PathVariable Long contractId,
+            Model model
+    ) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-approval-form";
+    }
+
+    @Operation(hidden = true)
+    @GetMapping("/contracts/{contractId}/change-approval/signature")
+    public String contractChangeApprovalSignaturePage(
+            @PathVariable Long contractId,
+            Model model
+    ) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-approval-signature";
+    }
+
+    @Operation(hidden = true)
     @GetMapping("/contracts/{contractId}/approve/signature")
     public String contractDebtorSignaturePage(
             @PathVariable Long contractId,
@@ -124,6 +144,22 @@ public class LoanContractController {
     }
 
     @Operation(
+            summary = "계약 변경 승인 및 전자서명 제출",
+            description = "채권자와 채무자에게 계약 변경 요청 오고 승인 했을 시 전자서명을 하여 수정을 할 수 있다."
+    )
+    @ResponseBody
+    @PatchMapping(value = "/api/contracts/{contractId}/change-approval", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ContractStatus approveChange(
+            @PathVariable Long contractId,
+            @Parameter(description = "전자서명") @RequestParam("signature") MultipartFile signature,
+            @Parameter(description = "본인인증 요청 식별값", example = "identity-verification-a1b2c3d4")
+            @RequestParam String identityVerificationId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return contractService.approveChange(contractId, userDetails.getUserId(), signature, identityVerificationId);
+    }
+
+    @Operation(
             summary = "채무자 승인 및 전자서명 제출",
             description = "채무자가 본인 주소를 입력하고 수기로 남긴 서명 이미지를 저장한 뒤, 상태를 완료(COMPLETED)로 변경합니다. 제출 직전 본인인증을 완료한 identityVerificationId를 소비하여 검증합니다."
     )
@@ -149,7 +185,7 @@ public class LoanContractController {
             description = "로그인이 된 사용자가 차용증 ID로 차용증 상세 내용을 조회합니다."
     )
     @ResponseBody
-    @GetMapping("/api/contracts/{contractId}/listdetails")
+    @GetMapping(value = "/api/contracts/{contractId}/listdetails")
     public LoanContractResponse getContractDetails(
             @PathVariable Long contractId,
             @AuthenticationPrincipal CustomUserDetails userDetails

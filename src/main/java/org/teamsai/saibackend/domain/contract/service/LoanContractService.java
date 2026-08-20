@@ -133,10 +133,6 @@ public class LoanContractService {
         String savedPath = fileService.saveSignatureFile(contractId, signature);
         contractMapper.updateDebtorSignature(contractId, debtorAddress, savedPath, ContractStatus.COMPLETED);
 
-        if (contract.getPreviousContractId() != null) {
-            eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));
-        }
-
         LoanContractResponse completedContract = withPartyInfo(
                 contract.toBuilder()
                         .debtorAddress(debtorAddress)
@@ -204,6 +200,51 @@ public class LoanContractService {
     @Transactional
     public void supersedeContract(Long contractId) {
         contractMapper.updateChangeStatus(contractId, ContractStatus.SUPERSEDED);
+    }
+
+    @Transactional
+    public ContractStatus approveChange(Long contractId, Long userId, MultipartFile signature, String identityVerificationId) {
+
+        LoanContractResponse contract = contractMapper.findContractById(contractId)
+                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+
+        boolean isCreditor = Objects.equals(contract.getCreditorId(), userId);
+        boolean isDebtor = Objects.equals(contract.getDebtorId(), userId);
+
+        if (!isCreditor && !isDebtor) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+        }
+            if (contract.getStatus() == ContractStatus.COMPLETED) {
+                throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
+            }
+
+        identityService.consume(
+                userId,
+                identityVerificationId,
+                IdentityPurpose.LOAN_CONTRACT
+        );
+
+        String savedPath = fileService.saveSignatureFile(contractId, signature);
+
+        if (isCreditor) {
+            contractMapper.updateCreditorSignatureOnly(contractId, savedPath, ContractStatus.COMPLETED);
+        } else {
+            contractMapper.updateDebtorSignatureOnly(contractId, savedPath, ContractStatus.COMPLETED);
+        }
+
+        eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));
+
+        LoanContractResponse completedContract = withPartyInfo(
+                contract.toBuilder()
+                        .creditorSignature(isCreditor ? savedPath : contract.getCreditorSignature())
+                        .debtorSignature(isDebtor ? savedPath : contract.getDebtorSignature())
+                        .status(ContractStatus.COMPLETED)
+                        .build()
+        );
+
+        eventPublisher.publishEvent(new ContractCompletedEvent(completedContract));
+
+        return ContractStatus.COMPLETED;
     }
 
 }
