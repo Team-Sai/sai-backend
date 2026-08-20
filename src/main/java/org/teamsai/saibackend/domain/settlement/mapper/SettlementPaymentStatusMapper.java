@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.settlement.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.teamsai.saibackend.domain.settlement.dto.response.SettlementObligationStatusResponse;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementPaymentObligationResponse;
 
 import java.util.List;
@@ -12,5 +13,9 @@ public interface SettlementPaymentStatusMapper {
     List<SettlementPaymentObligationResponse>
             findPaymentObligationsBySettlementId(
                     @Param("settlementId") Long settlementId
+    );
+
+    List<SettlementObligationStatusResponse> findAllObligationStatusesBySettlementId(
+            @Param("settlementId") Long settlementId
     );
 }

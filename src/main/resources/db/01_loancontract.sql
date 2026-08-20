@@ -53,3 +53,4 @@ CREATE TABLE IF NOT EXISTS loan_contract_file (
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;
+ALTER TABLE loan_contract ADD COLUMN IF NOT EXISTS relation_type VARCHAR(50) DEFAULT NULL;

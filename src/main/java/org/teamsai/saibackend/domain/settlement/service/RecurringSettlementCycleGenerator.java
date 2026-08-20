@@ -48,10 +48,7 @@ public class RecurringSettlementCycleGenerator {
         }
 
         List<SettlementParticipantDTO> activeParticipants =
-                participantMapper.findBySettlementId(previousSettlement.getSettlementId())
-                        .stream()
-                        .filter(p -> p.getParticipantStatus() == SettlementParticipantStatus.ACTIVE)
-                        .toList();
+                participantMapper.findActiveBySettlementId(previousSettlement.getSettlementId());
 
         if (activeParticipants.isEmpty()) {
             log.warn("ACTIVE 참여자 없음, 생성 스킵 recurringId={}, cycleDate={}",
@@ -107,10 +104,11 @@ public class RecurringSettlementCycleGenerator {
                 .map(SettlementParticipantDTO::getParticipantId)
                 .toList();
 
-        Map<Long, BigDecimal> latestObligationByParticipant = paymentObligationMapper.findByParticipantIds(participantIds)
+        Map<Long, BigDecimal> latestObligationByParticipant = paymentObligationMapper
+                .findLatestByParticipantIdsIncludingWrittenOff(participantIds)
                 .stream()
                 .collect(Collectors.toMap(PaymentObligationDTO::getParticipantId, PaymentObligationDTO::getExpectedAmount));
-
+        
         for (SettlementParticipantDTO oldParticipant : activeParticipants) {
             BigDecimal expectedAmount = latestObligationByParticipant.get(oldParticipant.getParticipantId());
             if (expectedAmount == null) {

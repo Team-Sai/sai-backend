@@ -35,4 +35,6 @@ public class BankTransactionDTO {
     private String memo;
 
     private LocalDateTime syncedAt;
+
+    private Integer retryCount;
 }
