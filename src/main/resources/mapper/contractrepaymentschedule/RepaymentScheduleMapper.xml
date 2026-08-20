@@ -4,6 +4,21 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper">
 
+    <select id="findOverdueCandidates" resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
+        SELECT *
+        FROM repayment_schedule
+        WHERE due_date &lt; #{baseDate}
+          AND status = 'PENDING'
+        ORDER BY schedule_id
+    </select>
+
+    <update id="updateStatusToOverdue">
+        UPDATE repayment_schedule
+        SET status = 'OVERDUE'
+        WHERE schedule_id = #{scheduleId}
+          AND status = 'PENDING'
+    </update>
+
     <insert id="insertAll">
         INSERT INTO repayment_schedule (
         contract_id, sequence, due_date,
@@ -49,14 +64,14 @@
             interest_due          AS interestDue,
             total_payment_due     AS totalPaymentDue,
             GREATEST(
-                total_payment_due - COALESCE((
-                    SELECT SUM(pr.amount)
-                    FROM payment_record pr
-                    WHERE pr.payment_target_type = 'LOAN'
-                    AND pr.target_id = repayment_schedule.schedule_id
-                    AND pr.record_status = 'CONFIRMED'
-                ), 0),
-                0
+            total_payment_due - COALESCE((
+            SELECT SUM(pr.amount)
+            FROM payment_record pr
+            WHERE pr.payment_target_type = 'LOAN'
+            AND pr.target_id = repayment_schedule.schedule_id
+            AND pr.record_status = 'CONFIRMED'
+            ), 0),
+            0
             ) AS remainingPaymentAmount,
             remaining_principal   AS remainingPrincipal,
             status,
@@ -78,7 +93,7 @@
         status, paid_at AS paidAt, created_at AS createdAt
         FROM repayment_schedule
         WHERE contract_id = #{contractId}
-        AND status = 'PENDING'
+        AND status IN ('PENDING', 'OVERDUE')
         ORDER BY sequence ASC
         LIMIT 1
     </select>
@@ -112,4 +127,40 @@
         WHERE schedule_id = #{scheduleId}
         FOR UPDATE
     </select>
+
+    <select id="findDueOnDates" resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
+        SELECT
+        schedule_id AS scheduleId, contract_id AS contractId, sequence,
+        due_date AS dueDate, principal_due AS principalDue, interest_due AS interestDue,
+        total_payment_due AS totalPaymentDue, remaining_principal AS remainingPrincipal,
+        status, paid_at AS paidAt, created_at AS createdAt
+        FROM repayment_schedule
+        WHERE due_date IN
+        <foreach item="date" collection="dueDates" open="(" separator="," close=")">
+            #{date}
+        </foreach>
+        AND status = 'PENDING'
+        ORDER BY schedule_id
+    </select>
+
+    <select id="findDebtorUserIdByContractId" resultType="java.lang.Long">
+        SELECT debtor_id FROM loan_contract WHERE contract_id = #{contractId}
+    </select>
+
+    <select id="findWriteOffCandidateIds" resultType="long">
+        SELECT schedule_id
+        FROM repayment_schedule
+        WHERE status = 'OVERDUE'
+          AND due_date &lt;= #{cutoffDate}
+    </select>
+
+    <update id="writeOffBulk">
+        UPDATE repayment_schedule
+        SET status = 'WRITTEN_OFF'
+        WHERE schedule_id IN
+        <foreach collection="scheduleIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND status = 'OVERDUE'
+    </update>
 </mapper>

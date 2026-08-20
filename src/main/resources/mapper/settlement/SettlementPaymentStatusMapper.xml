@@ -8,55 +8,62 @@
 
     <select id="findPaymentObligationsBySettlementId"
             resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementPaymentObligationResponse">
-
         SELECT
         po.payment_obligation_id AS paymentObligationId,
         po.participant_id AS participantId,
         sp.user_id AS userId,
         u.name AS participantName,
         po.expected_amount AS expectedAmount,
-
         COALESCE(SUM(pr.amount), 0) AS paidAmount,
-
         GREATEST(
         po.expected_amount - COALESCE(SUM(pr.amount), 0),
         0
         ) AS remainingAmount,
-
         CASE
         WHEN COALESCE(SUM(pr.amount), 0) = 0
         THEN 'UNPAID'
         WHEN COALESCE(SUM(pr.amount), 0) &lt; po.expected_amount
         THEN 'PARTIALLY_PAID'
         ELSE 'PAID'
-        END AS paymentStatus
-
+        END AS paymentStatus,
+        po.obligation_status AS obligationStatus
         FROM payment_obligation po
-
         JOIN settlement_participant sp
         ON sp.participant_id = po.participant_id
-
         JOIN users u
         ON u.user_id = sp.user_id
-
         LEFT JOIN payment_record pr
         ON pr.payment_target_type = 'SETTLEMENT'
         AND pr.target_id = po.payment_obligation_id
         AND pr.record_status = 'CONFIRMED'
-
         WHERE sp.settlement_id = #{settlementId}
         AND sp.participant_status = 'ACTIVE'
-        AND po.obligation_status = 'ACTIVE'
-
+        AND po.obligation_status IN ('ACTIVE', 'WRITTEN_OFF')
         GROUP BY
         po.payment_obligation_id,
         po.participant_id,
         sp.user_id,
         u.name,
-        po.expected_amount
-
+        po.expected_amount,
+        po.obligation_status
         ORDER BY po.payment_obligation_id
+    </select>
 
+    <select id="findAllObligationStatusesBySettlementId" resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementObligationStatusResponse">
+        SELECT
+        po.payment_obligation_id AS paymentObligationId,
+        po.obligation_status AS obligationStatus,
+        po.expected_amount AS expectedAmount,
+        COALESCE(SUM(pr.amount), 0) AS paidAmount
+        FROM payment_obligation po
+        JOIN settlement_participant sp ON sp.participant_id = po.participant_id
+        LEFT JOIN payment_record pr
+        ON pr.payment_target_type = 'SETTLEMENT'
+        AND pr.target_id = po.payment_obligation_id
+        AND pr.record_status = 'CONFIRMED'
+        WHERE sp.settlement_id = #{settlementId}
+        AND sp.participant_status = 'ACTIVE'
+        GROUP BY po.payment_obligation_id, po.obligation_status, po.expected_amount
     </select>
 
 </mapper>

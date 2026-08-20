@@ -14,6 +14,10 @@ import java.util.Optional;
 @Mapper
 public interface BankTransactionMatchCandidateMapper {
 
+    int deleteAllByBankTransactionId(
+            @Param("bankTransactionId") Long bankTransactionId
+    );
+
     int insertAll(
             @Param("candidates")
             List<BankTransactionMatchCandidateDTO> candidates

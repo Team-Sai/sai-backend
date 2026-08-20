@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.teamsai.saibackend.domain.payment.type.ObligationStatus;
 import org.teamsai.saibackend.domain.payment.type.PaymentStatus;
 
 import java.math.BigDecimal;
@@ -25,4 +26,5 @@ public class SettlementPaymentObligationResponse {
     private BigDecimal remainingAmount;
 
     private PaymentStatus paymentStatus;
+    private ObligationStatus obligationStatus;
 }
