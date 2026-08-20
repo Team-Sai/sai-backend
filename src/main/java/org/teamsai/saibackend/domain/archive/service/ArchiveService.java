@@ -153,7 +153,7 @@ public class ArchiveService {
 
             byte[] recolored = recolorToSealRed(original);
             return "data:image/png;base64," + Base64.getEncoder().encodeToString(recolored);
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.warn("서명 이미지 로딩 실패 - fileName: {}", savedFilename, e);
             return null;
         }

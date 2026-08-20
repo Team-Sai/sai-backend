@@ -41,6 +41,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -249,6 +250,50 @@ class ArchiveServiceTest {
             assertThat((bgArgb >>> 24) & 0xFF).isEqualTo(0);
             assertThat((strokeArgb >>> 24) & 0xFF).isEqualTo(255);
             assertThat(strokeArgb & 0xFFFFFF).isEqualTo(0xC0272D);
+        }
+
+        @Test
+        @DisplayName("알파 채널이 있는 일반 서명 이미지는 투명도를 유지한 채 획만 빨갛게 바뀐다")
+        void recolorsAlphaSignatureToSealRedPreservingTransparency() throws Exception {
+            BufferedImage transparent = new BufferedImage(4, 4, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = transparent.createGraphics();
+            // 배경은 그대로 두어 완전 투명 유지
+            g.setColor(new Color(0x18, 0x1c, 0x1e, 255));
+            g.fillRect(1, 1, 1, 1); // 서명 획(불투명 검정)
+            g.dispose();
+
+            byte[] pngBytes = ReflectionTestUtils.invokeMethod(archiveService, "recolorToSealRed", transparent);
+            BufferedImage result = ImageIO.read(new ByteArrayInputStream(pngBytes));
+
+            int bgArgb = result.getRGB(0, 0);
+            int strokeArgb = result.getRGB(1, 1);
+
+            assertThat((bgArgb >>> 24) & 0xFF).isEqualTo(0);
+            assertThat((strokeArgb >>> 24) & 0xFF).isEqualTo(255);
+            assertThat(strokeArgb & 0xFFFFFF).isEqualTo(0xC0272D);
+        }
+
+        @Test
+        @DisplayName("loadSignatureDataUri는 디스크의 서명 파일을 읽어 빨간색 data URI로 변환한다")
+        void loadSignatureDataUriProducesRedSealDataUri() throws Exception {
+            BufferedImage transparent = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = transparent.createGraphics();
+            g.setColor(new Color(0x18, 0x1c, 0x1e, 255));
+            g.fillRect(0, 0, 2, 2);
+            g.dispose();
+
+            String savedFilename = "sig_" + UUID.randomUUID() + ".png";
+            ImageIO.write(transparent, "png", tempDir.resolve(savedFilename).toFile());
+
+            String dataUri = ReflectionTestUtils.invokeMethod(archiveService, "loadSignatureDataUri", savedFilename);
+
+            assertThat(dataUri).startsWith("data:image/png;base64,");
+
+            byte[] decodedPng = java.util.Base64.getDecoder()
+                    .decode(dataUri.substring("data:image/png;base64,".length()));
+            BufferedImage result = ImageIO.read(new ByteArrayInputStream(decodedPng));
+
+            assertThat(result.getRGB(0, 0) & 0xFFFFFF).isEqualTo(0xC0272D);
         }
 
         private LoanContractResponse createContract(RepaymentMethod repaymentMethod) {
