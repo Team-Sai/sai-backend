@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.teamsai.saibackend.domain.user.dto.UserDTO;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
@@ -17,6 +18,7 @@ public class UserResponse {
     private String email;
     private String name;
     private LocalDate birthDate;
+    private LocalDateTime createdAt;
 
     public static UserResponse from(UserDTO user) {
         return UserResponse.builder()
@@ -24,6 +26,7 @@ public class UserResponse {
                 .email(user.getEmail())
                 .name(user.getName())
                 .birthDate(user.getBirthDate())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 }

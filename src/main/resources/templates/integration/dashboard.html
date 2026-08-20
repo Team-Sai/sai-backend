@@ -9,22 +9,18 @@
     </th:block>
     <link rel="stylesheet" th:href="@{/css/integration/dashboard.css}" href="/css/integration/dashboard.css">
 </head>
-<body class="app-shell-page">
+<body class="app-shell-page integration-page integration-loading">
 <header
         th:replace="~{fragments/app-shell :: appHeader('dashboard')}">
 </header>
 
     <main class="dashboard-main">
-        <h1 class="page-title">통합 대시보드</h1>
+        <div class="unified-page-header"><h1 class="page-title unified-page-title">통합 대시보드</h1></div>
 
         <section class="hero-summary" aria-labelledby="summaryTitle">
             <div class="hero-summary__copy">
                 <p id="summaryTitle" class="section-kicker">요약 현황</p>
-                <p class="summary-sentence">
-                    현재 받을 돈은 <strong id="receiveTotalText">-</strong>이고
-                    <span>현재 보낼 돈은 <strong id="sendTotalText">-</strong>이에요.</span>
-                </p>
-                <p class="summary-detail" id="receiveBreakdownText">-</p>
+                <p class="summary-sentence" id="summaryRotatingText"></p>
             </div>
         </section>
 

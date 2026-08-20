@@ -12,7 +12,7 @@ let currentTransactionFilter = "ALL";
 const currencyFormatter = new Intl.NumberFormat("ko-KR");
 const transactionStatusLabels = {
     COMPLETED: "완료",
-    IN_PROGRESS: "진행중"
+    IN_PROGRESS: "진행 중"
 };
 const transactionStatusClasses = {
     COMPLETED: "done",
@@ -26,6 +26,15 @@ function toAmount(value) {
 
 function formatWon(amount) {
     return `${currencyFormatter.format(toAmount(amount))}원`;
+}
+
+function formatSummaryAmount(amount) {
+    return `${currencyFormatter.format(toAmount(amount))}원`
+        .split("")
+        .map((character, index) => character >= "0" && character <= "9"
+            ? `<span class="summary-digit" style="--digit-index:${index}">${character}</span>`
+            : character)
+        .join("");
 }
 
 function toDateKey(date) {
@@ -72,18 +81,21 @@ async function loadDashboard(calendarOnly = false) {
         dashboardState.attentionItems = data.attentionItems || [];
         dashboardState.recentTransactions = data.recentTransactions || [];
         renderDashboard();
+        document.body.classList.remove("integration-loading");
     } catch (error) {
         console.error(error);
         if (!calendarOnly) {
             renderLoadError();
+            document.body.classList.remove("integration-loading");
         }
     }
 }
 
 function setLoadingState() {
-    document.getElementById("receiveTotalText").textContent = "불러오는 중";
-    document.getElementById("sendTotalText").textContent = "불러오는 중";
-    document.getElementById("receiveBreakdownText").textContent = "-";
+    const summary = document.getElementById("summaryRotatingText");
+    if (summary) {
+        summary.textContent = "불러오는 중";
+    }
     document.getElementById("attentionList").innerHTML =
         '<div class="empty-state">내역을 불러오는 중입니다.</div>';
     document.getElementById("transactionList").innerHTML =
@@ -102,10 +114,24 @@ function renderAmountSummary() {
     const receivable = dashboardState.amountSummary?.receivable || {};
     const payable = dashboardState.amountSummary?.payable || {};
 
-    document.getElementById("receiveTotalText").textContent = formatWon(receivable.totalAmount);
-    document.getElementById("sendTotalText").textContent = formatWon(payable.totalAmount);
-    document.getElementById("receiveBreakdownText").textContent =
-        `정산 ${formatWon(receivable.settlementAmount)} 차용증 ${formatWon(receivable.loanAmount)} 입니다`;
+    const messages = [
+        `현재 받을 금액은 <strong class="summary-amount-number">${formatSummaryAmount(receivable.totalAmount)}</strong>이고<br>현재 보낼 금액은 <strong class="summary-amount-number">${formatSummaryAmount(payable.totalAmount)}</strong>이에요.`,
+        `정산 받을 금액은 <strong class="summary-amount-number">${formatSummaryAmount(receivable.settlementAmount)}</strong>이고<br>정산 보낼 금액은 <strong class="summary-amount-number">${formatSummaryAmount(payable.settlementAmount)}</strong>이에요.`,
+        `대여금은 <strong class="summary-amount-number">${formatSummaryAmount(receivable.loanAmount)}</strong>이고<br>차입금은 <strong class="summary-amount-number">${formatSummaryAmount(payable.loanAmount)}</strong>이에요.`
+    ];
+    const target = document.getElementById("summaryRotatingText");
+    if (!target) return;
+    let index = 0;
+    const show = () => {
+        target.classList.remove("is-summary-entering");
+        void target.offsetWidth;
+        target.innerHTML = messages[index];
+        target.classList.add("is-summary-entering");
+        index = (index + 1) % messages.length;
+    };
+    show();
+    window.clearInterval(window.summaryRotationTimer);
+    window.summaryRotationTimer = window.setInterval(show, 3200);
 }
 
 function renderAttentionItems() {
@@ -123,6 +149,7 @@ function renderAttentionItems() {
         row.className = "attention-item";
         row.innerHTML = `<span>${escapeHtml(getAttentionMessage(item))}</span>`;
         button.type = "button";
+        button.className = "status-badge badge-progress attention-confirm-button";
         button.textContent = "확인";
         button.addEventListener("click", () => {
             if (item.actionUrl) window.location.href = item.actionUrl;
@@ -242,7 +269,7 @@ function renderTransactions() {
         row.setAttribute("role", "row");
         row.innerHTML = `
             <span>${escapeHtml(transaction.title)}</span>
-            <span><i class="status-chip status-chip--${statusClass}">${escapeHtml(statusLabel)}</i></span>
+            <span><span class="status-badge ${statusClass === "done" ? "badge-completed" : "badge-progress"}">${escapeHtml(statusLabel)}</span></span>
             <span>${formatWon(transaction.amount)}</span>
             <span><a class="detail-arrow" href="${escapeHtml(detailUrl)}" aria-label="${escapeHtml(transaction.title)} 상세보기">›</a></span>
         `;
@@ -251,9 +278,8 @@ function renderTransactions() {
 }
 
 function renderLoadError() {
-    document.getElementById("receiveTotalText").textContent = "-";
-    document.getElementById("sendTotalText").textContent = "-";
-    document.getElementById("receiveBreakdownText").textContent = "금액을 불러오지 못했습니다.";
+    const summary = document.getElementById("summaryRotatingText");
+    if (summary) summary.textContent = "금액을 불러오지 못했습니다.";
     document.getElementById("attentionList").innerHTML =
         '<div class="empty-state">내역을 불러오지 못했습니다.</div>';
     document.getElementById("transactionList").innerHTML =

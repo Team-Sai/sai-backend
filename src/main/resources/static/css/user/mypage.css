@@ -4,7 +4,7 @@
     --text: #191b23;
     --muted: #434655;
     --line: #c3c6d7;
-    --primary: #006d44;
+    --primary: #0f8a5f;
     --soft: #f3f3fe;
     --error: #ba1a1a;
     --badge-bg: #ffdad6;
@@ -18,7 +18,7 @@
 body {
     margin: 0;
     min-height: 100vh;
-    font-family: "Noto Sans KR", sans-serif;
+    font-family: Pretendard, Arial, sans-serif;
     color: var(--text);
     background: var(--page);
     -webkit-font-smoothing: antialiased;
@@ -168,7 +168,7 @@ svg {
 .mypage-main {
     width: min(1040px, calc(100% - 40px));
     margin: 0 auto;
-    padding: 30px 0 72px;
+    padding: 36px 0 72px;
 }
 
 .page-title {
@@ -176,8 +176,9 @@ svg {
 }
 
 .page-title h1 {
-    font-size: 32px;
-    letter-spacing: -0.02em;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
 }
 
 .page-title p {
@@ -320,11 +321,15 @@ svg {
     border-color: var(--primary);
 }
 
+.profile-actions button:not(#logout-button) {
+    display: none;
+}
+
 .info-grid {
-    margin-top: 24px;
+    margin-top: 8px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
+    gap: 8px;
 }
 
 .info-card {
@@ -373,18 +378,20 @@ svg {
 }
 
 .add-account-button {
-    padding: 0;
+    padding: 9px 14px;
     display: flex;
     align-items: center;
     gap: 5px;
     border: 0;
-    background: transparent;
-    font-size: 11px;
+    border-radius: 7px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px;
     font-weight: 600;
 }
 
 .add-account-button:hover {
-    color: var(--primary);
+    background: #0b754f;
 }
 
 .add-account-button svg {
@@ -422,21 +429,13 @@ svg {
     display: flex;
     align-items: center;
     gap: 13px;
-    background: var(--soft);
-    border: 1px solid #cbd0de;
+    background: #eaf8f1;
+    border: 1px solid #b9e5d0;
     border-radius: 8px;
 }
 
 .bank-icon {
-    width: 5px;
-    height: 5px;
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    border: 1px solid #006C49;
-    border-radius: 10px;
+    display: none;
 }
 
 .bank-icon svg {
@@ -456,6 +455,17 @@ svg {
     gap: 13px;
 }
 
+.account-identity {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.account-divider {
+    color: var(--muted);
+}
+
 .bank-name {
     font-size: 12px;
     font-weight: 700;
@@ -473,7 +483,7 @@ svg {
 }
 
 .account-number {
-    margin-top: 3px;
+    margin-top: 0;
     color: var(--muted);
     font-size: 10px;
     letter-spacing: .11em;
@@ -481,7 +491,11 @@ svg {
 
 .security-banner {
     min-height: 54px;
-    margin-top: 24px;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 8px;
+    margin-left: auto;
+    margin-right: auto;
     padding: 14px 24px;
     display: flex;
     align-items: center;
@@ -497,6 +511,11 @@ svg {
     height: 18px;
     flex: 0 0 auto;
     color: #232830;
+}
+
+.add-account-button svg,
+.account-empty-button svg {
+    display: none;
 }
 
 .empty-value {
@@ -519,6 +538,7 @@ svg {
 }
 
 .account-empty-icon {
+    display: none;
     width: 20px;
     height: 20px;
     display: flex;
@@ -564,7 +584,7 @@ svg {
 }
 
 .account-empty-button:hover {
-    background: #00591f;
+    background: #0f8a5f;
 }
 
 .account-empty-button svg {
@@ -633,8 +653,33 @@ svg {
         font-size: 18px;
     }
 
-    .security-banner {
+.security-banner {
         align-items: flex-start;
         text-align: left;
     }
 }
+
+#last-login-at {
+    display: none;
+}
+
+.detail-row:has(#last-login-at) {
+    display: none;
+}
+
+.profile-card {
+    margin-bottom: 8px;
+}
+
+.info-grid {
+    margin-bottom: 8px;
+}
+
+/* integration dashboard visual system */
+body { background: #f5f7fb; }
+.profile-card, .info-card, .security-banner, .account-empty, .account-item {
+    border-color: #d9dee8;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(28, 39, 60, 0.08);
+}
+.account-item { background: #e9f7f0; }

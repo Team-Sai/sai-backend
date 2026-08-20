@@ -206,6 +206,8 @@ public class DashboardService {
                 .totalContractCount(totalContractCount)
                 .totalLentAmount(totalLentAmount)
                 .totalBorrowedAmount(totalBorrowedAmount)
+                .receivableCount(creditorRows.size())
+                .payableCount(debtorRows.size())
                 .nearestDueDate(nearestDueDate)
                 .defaultFilter(defaultFilter)
                 .thisMonthDueAmount(allSummary.amount())

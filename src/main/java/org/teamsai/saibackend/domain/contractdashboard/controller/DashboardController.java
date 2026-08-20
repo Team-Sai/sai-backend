@@ -32,6 +32,12 @@ public class DashboardController  {
         return "contractdashboard/dashboard";
     }
 
+    @Hidden
+    @GetMapping("/dashboard2")
+    public String dashboard2Page(){
+        return "contractdashboard/dashboard2";
+    }
+
     @Operation(
             summary = "계약 대시보드 조회",
             description = "로그인한 사용자가 채권자 또는 채무자로 참여 중인 계약 목록과 요약 정보를 조회합니다. " +
