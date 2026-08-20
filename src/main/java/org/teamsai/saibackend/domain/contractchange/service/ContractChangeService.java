@@ -2,6 +2,7 @@ package org.teamsai.saibackend.domain.contractchange.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,8 @@ import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
+import org.teamsai.saibackend.domain.contract.event.ContractCompletedEvent;
+import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
 import org.teamsai.saibackend.domain.contractchange.dto.LoanContractChangeDTO;
@@ -45,6 +48,7 @@ public class ContractChangeService {
     private final UserService userService;
     private final LoanContractFileService fileService;
     private final IdentityService identityService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     public void checkAccess(Long contractId, Long userId) {
@@ -249,6 +253,61 @@ public class ContractChangeService {
 
         return getChangeRequest(changeRequestId);
 
+    }
+
+    @Transactional
+    public ContractStatus approveChange(Long contractId, Long userId, MultipartFile signature, String identityVerificationId) {
+
+        LoanContractResponse contract = loanContractService.getContractForInternalUse(contractId);
+
+        boolean isCreditor = Objects.equals(contract.getCreditorId(), userId);
+        boolean isDebtor = Objects.equals(contract.getDebtorId(), userId);
+
+        if (!isCreditor && !isDebtor) {
+            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
+        }
+
+        if (contract.getStatus() == ContractStatus.COMPLETED) {
+            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
+        }
+
+        if (contract.getPreviousContractId() == null) {
+            throw LoanContractErrorCode.NOT_A_CHANGE_CONTRACT.toException();
+        }
+
+        LoanContractChangeDTO changeRequest = contractChangeMapper.findByContractId(contract.getPreviousContractId()).stream()
+                .filter(r -> r.getStatus() == ChangeRequestStatus.PENDING)
+                .findFirst()
+                .orElseThrow(ContractChangeErrorCode.CHANGE_REQUEST_NOT_FOUND::toException);
+
+        boolean requesterIsCreditor = Objects.equals(contract.getCreditorId(), changeRequest.getUserId());
+        Long approverId = requesterIsCreditor ? contract.getDebtorId() : contract.getCreditorId();
+
+        if (!Objects.equals(approverId, userId)) {
+            throw ContractChangeErrorCode.NOT_CONTRACT_PARTY.toException();
+        }
+
+        identityService.consume(
+                userId,
+                identityVerificationId,
+                IdentityPurpose.LOAN_CONTRACT
+        );
+
+        String savedPath = fileService.saveSignatureFile(contractId, signature);
+
+        if (isCreditor) {
+            loanContractService.updateCreditorSignatureOnly(contractId, savedPath);
+        } else {
+            loanContractService.updateDebtorSignatureOnly(contractId, savedPath);
+        }
+
+        eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));
+
+        LoanContractResponse completedContract = loanContractService.buildCompletedSnapshot(contract, isCreditor, savedPath);
+
+        eventPublisher.publishEvent(new ContractCompletedEvent(completedContract));
+
+        return ContractStatus.COMPLETED;
     }
 
     public boolean hasPendingChangeRequest(Long contractId) {

@@ -18,6 +18,7 @@ import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
+import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 @Tag(
@@ -30,6 +31,7 @@ import org.teamsai.saibackend.global.security.CustomUserDetails;
 public class LoanContractController {
 
     private final LoanContractService contractService;
+    private final ContractChangeService contractChangeService;
 
     @Operation(hidden = true)
     @GetMapping("/contracts/new")
@@ -51,26 +53,6 @@ public class LoanContractController {
     ) {
         model.addAttribute("contractId", contractId);
         return "contract/contract-debtor-form";
-    }
-
-    @Operation(hidden = true)
-    @GetMapping("/contracts/{contractId}/change-approval")
-    public String contractChangeApprovalPage(
-            @PathVariable Long contractId,
-            Model model
-    ) {
-        model.addAttribute("contractId", contractId);
-        return "contract/contract-approval-form";
-    }
-
-    @Operation(hidden = true)
-    @GetMapping("/contracts/{contractId}/change-approval/signature")
-    public String contractChangeApprovalSignaturePage(
-            @PathVariable Long contractId,
-            Model model
-    ) {
-        model.addAttribute("contractId", contractId);
-        return "contract/contract-approval-signature";
     }
 
     @Operation(hidden = true)
@@ -144,22 +126,6 @@ public class LoanContractController {
     }
 
     @Operation(
-            summary = "계약 변경 승인 및 전자서명 제출",
-            description = "채권자와 채무자에게 계약 변경 요청 오고 승인 했을 시 전자서명을 하여 수정을 할 수 있다."
-    )
-    @ResponseBody
-    @PatchMapping(value = "/api/contracts/{contractId}/change-approval", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ContractStatus approveChange(
-            @PathVariable Long contractId,
-            @Parameter(description = "전자서명") @RequestParam("signature") MultipartFile signature,
-            @Parameter(description = "본인인증 요청 식별값", example = "identity-verification-a1b2c3d4")
-            @RequestParam String identityVerificationId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        return contractService.approveChange(contractId, userDetails.getUserId(), signature, identityVerificationId);
-    }
-
-    @Operation(
             summary = "채무자 승인 및 전자서명 제출",
             description = "채무자가 본인 주소를 입력하고 수기로 남긴 서명 이미지를 저장한 뒤, 상태를 완료(COMPLETED)로 변경합니다. 제출 직전 본인인증을 완료한 identityVerificationId를 소비하여 검증합니다."
     )
@@ -200,5 +166,41 @@ public class LoanContractController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         return contractService.findContract(contractId, userDetails.getUserId());
+    }
+
+    @Operation(hidden = true)
+    @GetMapping("/contracts/{contractId}/change-approval")
+    public String contractChangeApprovalPage(
+            @PathVariable Long contractId,
+            Model model
+    ) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-approval-form";
+    }
+
+    @Operation(hidden = true)
+    @GetMapping("/contracts/{contractId}/change-approval/signature")
+    public String contractChangeApprovalSignaturePage(
+            @PathVariable Long contractId,
+            Model model
+    ) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-approval-signature";
+    }
+
+    @Operation(
+            summary = "계약 변경 승인 및 전자서명 제출",
+            description = "계약 변경 요청받은 상대방(요청자 본인은 불가)이 본인인증 완료 후 서명을 제출하면, 역할(채권자/채무자)에 맞는 서명란에 반영하고 계약을 완료 처리합니다."
+    )
+    @ResponseBody
+    @PatchMapping(value = "/api/contracts/{contractId}/change-approval", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ContractStatus approveChange(
+            @PathVariable Long contractId,
+            @Parameter(description = "전자서명 이미지 파일") @RequestParam("signature") MultipartFile signature,
+            @Parameter(description = "본인인증 요청 식별값", example = "identity-verification-a1b2c3d4")
+            @RequestParam String identityVerificationId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return contractChangeService.approveChange(contractId, userDetails.getUserId(), signature, identityVerificationId);
     }
 }

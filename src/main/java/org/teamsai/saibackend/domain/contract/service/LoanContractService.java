@@ -11,7 +11,6 @@ import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
 import org.teamsai.saibackend.domain.contract.event.ContractCompletedEvent;
 import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
@@ -203,48 +202,23 @@ public class LoanContractService {
     }
 
     @Transactional
-    public ContractStatus approveChange(Long contractId, Long userId, MultipartFile signature, String identityVerificationId) {
+    public void updateCreditorSignatureOnly(Long contractId, String signaturePath) {
+        contractMapper.updateCreditorSignatureOnly(contractId, signaturePath, ContractStatus.COMPLETED);
+    }
 
-        LoanContractResponse contract = contractMapper.findContractById(contractId)
-                .orElseThrow(LoanContractErrorCode.CONTRACT_NOT_FOUND::toException);
+    @Transactional
+    public void updateDebtorSignatureOnly(Long contractId, String signaturePath) {
+        contractMapper.updateDebtorSignatureOnly(contractId, signaturePath, ContractStatus.COMPLETED);
+    }
 
-        boolean isCreditor = Objects.equals(contract.getCreditorId(), userId);
-        boolean isDebtor = Objects.equals(contract.getDebtorId(), userId);
-
-        if (!isCreditor && !isDebtor) {
-            throw LoanContractErrorCode.CONTRACT_ACCESS_DENIED.toException();
-        }
-            if (contract.getStatus() == ContractStatus.COMPLETED) {
-                throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
-            }
-
-        identityService.consume(
-                userId,
-                identityVerificationId,
-                IdentityPurpose.LOAN_CONTRACT
-        );
-
-        String savedPath = fileService.saveSignatureFile(contractId, signature);
-
-        if (isCreditor) {
-            contractMapper.updateCreditorSignatureOnly(contractId, savedPath, ContractStatus.COMPLETED);
-        } else {
-            contractMapper.updateDebtorSignatureOnly(contractId, savedPath, ContractStatus.COMPLETED);
-        }
-
-        eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));
-
-        LoanContractResponse completedContract = withPartyInfo(
+    public LoanContractResponse buildCompletedSnapshot(LoanContractResponse contract, boolean isCreditor, String signaturePath) {
+        return withPartyInfo(
                 contract.toBuilder()
-                        .creditorSignature(isCreditor ? savedPath : contract.getCreditorSignature())
-                        .debtorSignature(isDebtor ? savedPath : contract.getDebtorSignature())
+                        .creditorSignature(isCreditor ? signaturePath : contract.getCreditorSignature())
+                        .debtorSignature(!isCreditor ? signaturePath : contract.getDebtorSignature())
                         .status(ContractStatus.COMPLETED)
                         .build()
         );
-
-        eventPublisher.publishEvent(new ContractCompletedEvent(completedContract));
-
-        return ContractStatus.COMPLETED;
     }
 
 }
