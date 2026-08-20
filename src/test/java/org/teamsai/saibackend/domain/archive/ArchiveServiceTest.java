@@ -27,6 +27,11 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
+import javax.imageio.ImageIO;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -222,6 +227,28 @@ class ArchiveServiceTest {
                 String text = new PDFTextStripper().getText(document);
                 assertThat(text).contains(RepaymentMethod.BULLET_REPAYMENT.getDescription());
             }
+        }
+
+        @Test
+        @DisplayName("알파 채널이 없는 서명 이미지는 흰 배경만 투명 처리되고 획만 빨갛게 남는다")
+        void recolorsAlphaLessSignatureKeepingOnlyStrokeVisible() throws Exception {
+            BufferedImage opaque = new BufferedImage(4, 4, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = opaque.createGraphics();
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, 4, 4);
+            g.setColor(Color.BLACK);
+            g.fillRect(1, 1, 1, 1);
+            g.dispose();
+
+            byte[] pngBytes = ReflectionTestUtils.invokeMethod(archiveService, "recolorToSealRed", opaque);
+            BufferedImage result = ImageIO.read(new ByteArrayInputStream(pngBytes));
+
+            int bgArgb = result.getRGB(0, 0);
+            int strokeArgb = result.getRGB(1, 1);
+
+            assertThat((bgArgb >>> 24) & 0xFF).isEqualTo(0);
+            assertThat((strokeArgb >>> 24) & 0xFF).isEqualTo(255);
+            assertThat(strokeArgb & 0xFFFFFF).isEqualTo(0xC0272D);
         }
 
         private LoanContractResponse createContract(RepaymentMethod repaymentMethod) {

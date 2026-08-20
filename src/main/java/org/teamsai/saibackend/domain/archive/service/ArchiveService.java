@@ -160,13 +160,16 @@ public class ArchiveService {
     }
 
     private byte[] recolorToSealRed(BufferedImage original) throws IOException {
+        boolean hasAlpha = original.getColorModel().hasAlpha();
+
         BufferedImage recolored = new BufferedImage(
                 original.getWidth(), original.getHeight(), BufferedImage.TYPE_INT_ARGB
         );
 
         for (int y = 0; y < original.getHeight(); y++) {
             for (int x = 0; x < original.getWidth(); x++) {
-                int alpha = (original.getRGB(x, y) >>> 24) & 0xFF;
+                int argb = original.getRGB(x, y);
+                int alpha = hasAlpha ? (argb >>> 24) & 0xFF : opacityFromBrightness(argb);
                 recolored.setRGB(x, y, (alpha << 24) | SEAL_RED_RGB);
             }
         }
@@ -174,6 +177,14 @@ public class ArchiveService {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ImageIO.write(recolored, "png", out);
         return out.toByteArray();
+    }
+
+    private int opacityFromBrightness(int argb) {
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = argb & 0xFF;
+        int brightness = (r + g + b) / 3;
+        return 255 - brightness;
     }
 
     public FileDTO getFileById(Long fileId) {
