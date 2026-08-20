@@ -95,3 +95,13 @@ body {
 .parties__value {
     background: #ffffff;
 }
+
+.doc__disclaimer {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #CFD5E2;
+    color: #9AA1AF;
+    font-size: 10.5px;
+    line-height: 1.6;
+    text-align: justify;
+}
