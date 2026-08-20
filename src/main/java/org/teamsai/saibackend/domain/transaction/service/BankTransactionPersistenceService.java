@@ -67,7 +67,13 @@ public class BankTransactionPersistenceService {
 
     private BankTransactionType toTransactionType(Long linkedAccountId, BankTransactionResponse tx) {
         try {
-            return BankTransactionType.valueOf(tx.transactionType());
+            return switch (tx.transactionType()) {
+                case "DEPOSIT" -> BankTransactionType.DEPOSIT;
+                case "WITHDRAW", "WITHDRAWAL" -> BankTransactionType.WITHDRAWAL;
+                default -> throw new IllegalArgumentException(
+                        "Unsupported bank transaction type: " + tx.transactionType()
+                );
+            };
         } catch (IllegalArgumentException e) {
             log.error(
                     "[BankTransactionPersistenceService] 사이은행 응답의 거래유형이 올바르지 않음 - "
