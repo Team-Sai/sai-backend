@@ -96,12 +96,17 @@ body {
     background: #ffffff;
 }
 
-.doc__disclaimer {
-    margin-top: 20px;
-    padding-top: 10px;
-    border-top: 1px solid #CFD5E2;
-    color: #9AA1AF;
-    font-size: 10.5px;
-    line-height: 1.6;
-    text-align: justify;
+.seal-mark {
+    position: relative;
+    display: inline-block;
+}
+
+.doc__signature {
+    position: absolute;
+    top: -2px;
+    left: -28px;
+    height: 24px;
+    width: auto;
+    pointer-events: none;
+    z-index: 1;
 }
