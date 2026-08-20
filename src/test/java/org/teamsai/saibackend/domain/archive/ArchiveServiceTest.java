@@ -20,12 +20,18 @@ import org.teamsai.saibackend.domain.archive.dto.ArchiveStatus;
 import org.teamsai.saibackend.domain.archive.dto.FileDTO;
 import org.teamsai.saibackend.domain.archive.mapper.ArchiveMapper;
 import org.teamsai.saibackend.domain.archive.service.ArchiveService;
+import org.teamsai.saibackend.domain.archive.service.HtmlToPdfRenderer;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
+import javax.imageio.ImageIO;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -35,6 +41,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -189,6 +196,7 @@ class ArchiveServiceTest {
             templateEngine.setTemplateResolver(resolver);
 
             ReflectionTestUtils.setField(archiveService, "templateEngine", templateEngine);
+            ReflectionTestUtils.setField(archiveService, "htmlToPdfRenderer", new HtmlToPdfRenderer());
         }
 
         @Test
@@ -220,6 +228,72 @@ class ArchiveServiceTest {
                 String text = new PDFTextStripper().getText(document);
                 assertThat(text).contains(RepaymentMethod.BULLET_REPAYMENT.getDescription());
             }
+        }
+
+        @Test
+        @DisplayName("알파 채널이 없는 서명 이미지는 흰 배경만 투명 처리되고 획만 빨갛게 남는다")
+        void recolorsAlphaLessSignatureKeepingOnlyStrokeVisible() throws Exception {
+            BufferedImage opaque = new BufferedImage(4, 4, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = opaque.createGraphics();
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, 4, 4);
+            g.setColor(Color.BLACK);
+            g.fillRect(1, 1, 1, 1);
+            g.dispose();
+
+            byte[] pngBytes = ReflectionTestUtils.invokeMethod(archiveService, "recolorToSealRed", opaque);
+            BufferedImage result = ImageIO.read(new ByteArrayInputStream(pngBytes));
+
+            int bgArgb = result.getRGB(0, 0);
+            int strokeArgb = result.getRGB(1, 1);
+
+            assertThat((bgArgb >>> 24) & 0xFF).isEqualTo(0);
+            assertThat((strokeArgb >>> 24) & 0xFF).isEqualTo(255);
+            assertThat(strokeArgb & 0xFFFFFF).isEqualTo(0xC0272D);
+        }
+
+        @Test
+        @DisplayName("알파 채널이 있는 일반 서명 이미지는 투명도를 유지한 채 획만 빨갛게 바뀐다")
+        void recolorsAlphaSignatureToSealRedPreservingTransparency() throws Exception {
+            BufferedImage transparent = new BufferedImage(4, 4, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = transparent.createGraphics();
+            // 배경은 그대로 두어 완전 투명 유지
+            g.setColor(new Color(0x18, 0x1c, 0x1e, 255));
+            g.fillRect(1, 1, 1, 1); // 서명 획(불투명 검정)
+            g.dispose();
+
+            byte[] pngBytes = ReflectionTestUtils.invokeMethod(archiveService, "recolorToSealRed", transparent);
+            BufferedImage result = ImageIO.read(new ByteArrayInputStream(pngBytes));
+
+            int bgArgb = result.getRGB(0, 0);
+            int strokeArgb = result.getRGB(1, 1);
+
+            assertThat((bgArgb >>> 24) & 0xFF).isEqualTo(0);
+            assertThat((strokeArgb >>> 24) & 0xFF).isEqualTo(255);
+            assertThat(strokeArgb & 0xFFFFFF).isEqualTo(0xC0272D);
+        }
+
+        @Test
+        @DisplayName("loadSignatureDataUri는 디스크의 서명 파일을 읽어 빨간색 data URI로 변환한다")
+        void loadSignatureDataUriProducesRedSealDataUri() throws Exception {
+            BufferedImage transparent = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = transparent.createGraphics();
+            g.setColor(new Color(0x18, 0x1c, 0x1e, 255));
+            g.fillRect(0, 0, 2, 2);
+            g.dispose();
+
+            String savedFilename = "sig_" + UUID.randomUUID() + ".png";
+            ImageIO.write(transparent, "png", tempDir.resolve(savedFilename).toFile());
+
+            String dataUri = ReflectionTestUtils.invokeMethod(archiveService, "loadSignatureDataUri", savedFilename);
+
+            assertThat(dataUri).startsWith("data:image/png;base64,");
+
+            byte[] decodedPng = java.util.Base64.getDecoder()
+                    .decode(dataUri.substring("data:image/png;base64,".length()));
+            BufferedImage result = ImageIO.read(new ByteArrayInputStream(decodedPng));
+
+            assertThat(result.getRGB(0, 0) & 0xFFFFFF).isEqualTo(0xC0272D);
         }
 
         private LoanContractResponse createContract(RepaymentMethod repaymentMethod) {
