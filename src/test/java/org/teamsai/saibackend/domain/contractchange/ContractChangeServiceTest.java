@@ -8,12 +8,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.multipart.MultipartFile;
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
 import org.teamsai.saibackend.domain.contract.service.LoanContractFileService;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
@@ -71,6 +71,9 @@ class ContractChangeServiceTest {
 
     @Mock
     private IdentityService identityService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ContractChangeService contractChangeService;
@@ -247,18 +250,20 @@ class ContractChangeServiceTest {
     }
 
     @Nested
-    @DisplayName("계약 변경 승인 이벤트 처리")
-    class OnContractChangeApproved {
+    @DisplayName("계약 변경 승인")
+    class ApproveChange {
 
         private static final Long V1_CONTRACT_ID = 1L;
         private static final Long V2_CONTRACT_ID = 2L;
         private static final Long CHANGE_REQUEST_ID = 5L;
+        private static final String IDENTITY_VERIFICATION_ID = "identity-verification-id";
+        private static final String SAVED_PATH = "uploads/signatures/change_2_signature.png";
 
-        private LoanContractResponse v2Contract() {
+        private LoanContractResponse pendingV2Contract() {
             return LoanContractResponse.builder()
                     .contractId(V2_CONTRACT_ID)
                     .previousContractId(V1_CONTRACT_ID)
-                    .status(ContractStatus.COMPLETED)
+                    .status(ContractStatus.PENDING)
                     .creditorId(USER_ID)
                     .debtorId(DEBTOR_ID)
                     .build();
@@ -268,42 +273,55 @@ class ContractChangeServiceTest {
             return LoanContractChangeDTO.builder()
                     .changeRequestId(CHANGE_REQUEST_ID)
                     .contractId(V1_CONTRACT_ID)
-                    .userId(USER_ID)
+                    .userId(USER_ID)   // 요청자 = 채권자(USER_ID)
                     .status(ChangeRequestStatus.PENDING)
                     .build();
         }
 
         @Test
         @DisplayName("승인 처리 시 변경 요청을 APPROVED로 바꾸고 v1 계약을 SUPERSEDED로 전환한다")
-        void supersedesV1Contract() {
+        void approveChangeSupersedesV1Contract() {
+            MultipartFile signature = mock(MultipartFile.class);
+
             given(loanContractService.getContractForInternalUse(V2_CONTRACT_ID))
-                    .willReturn(v2Contract());
+                    .willReturn(pendingV2Contract());
             given(contractChangeMapper.findByContractId(V1_CONTRACT_ID))
                     .willReturn(List.of(pendingChangeRequest()));
+            given(fileService.saveSignatureFile(V2_CONTRACT_ID, signature))
+                    .willReturn(SAVED_PATH);
             given(contractChangeMapper.updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.APPROVED))
                     .willReturn(1);
+            given(loanContractService.buildCompletedSnapshot(any(), eq(false), eq(SAVED_PATH)))
+                    .willReturn(pendingV2Contract());
             given(userService.getMyInfo(DEBTOR_ID))
                     .willReturn(UserResponse.builder().name("채무자").build());
 
-            contractChangeService.onContractChangeApproved(new ContractChangeApprovedEvent(V2_CONTRACT_ID));
+            // 요청자(USER_ID)가 채권자이므로, 승인자는 채무자(DEBTOR_ID)
+            contractChangeService.approveChange(V2_CONTRACT_ID, DEBTOR_ID, signature, IDENTITY_VERIFICATION_ID);
 
+            verify(loanContractService).updateDebtorSignatureOnly(V2_CONTRACT_ID, SAVED_PATH);
             verify(contractChangeMapper).updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.APPROVED);
             verify(loanContractService).supersedeContract(V1_CONTRACT_ID);
             verify(repaymentScheduleService).generateChangedSchedule(V1_CONTRACT_ID, V2_CONTRACT_ID);
         }
 
+
         @Test
         @DisplayName("변경 요청 상태 갱신이 경쟁 상태로 실패하면 v1을 SUPERSEDED로 바꾸지 않는다")
-        void doesNotSupersedeWhenChangeRequestUpdateRaceConditionFails() {
+        void approveChangeDoesNotSupersedeWhenRaceConditionFails() {
+            MultipartFile signature = mock(MultipartFile.class);
+
             given(loanContractService.getContractForInternalUse(V2_CONTRACT_ID))
-                    .willReturn(v2Contract());
+                    .willReturn(pendingV2Contract());
             given(contractChangeMapper.findByContractId(V1_CONTRACT_ID))
                     .willReturn(List.of(pendingChangeRequest()));
+            given(fileService.saveSignatureFile(V2_CONTRACT_ID, signature))
+                    .willReturn(SAVED_PATH);
             given(contractChangeMapper.updateStatus(CHANGE_REQUEST_ID, ChangeRequestStatus.APPROVED))
                     .willReturn(0);
 
             assertThatThrownBy(() ->
-                    contractChangeService.onContractChangeApproved(new ContractChangeApprovedEvent(V2_CONTRACT_ID)))
+                    contractChangeService.approveChange(V2_CONTRACT_ID, DEBTOR_ID, signature, IDENTITY_VERIFICATION_ID))
                     .isInstanceOfSatisfying(
                             DomainException.class,
                             exception -> assertThat(exception.getErrorCode())

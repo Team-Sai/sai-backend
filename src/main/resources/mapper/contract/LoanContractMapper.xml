@@ -238,6 +238,21 @@
         WHERE lc.previous_contract_id = #{previousContractId} AND lc.status = 'PENDING'
     </select>
 
+    <update id="updateCreditorSignatureOnly">
+        UPDATE loan_contract
+        SET creditor_signature = #{creditorSignature}, status = #{status}, updated_at = NOW()
+        WHERE contract_id = #{contractId}
+        AND creditor_signature IS NULL
+    </update>
 
+    <update id="updateDebtorSignatureOnly">
+        UPDATE loan_contract
+        SET
+        debtor_signature = #{debtorSignature},
+        status = #{status},
+        updated_at = NOW()
+        WHERE contract_id = #{contractId}
+        AND debtor_signature IS NULL
+    </update>
 
 </mapper>

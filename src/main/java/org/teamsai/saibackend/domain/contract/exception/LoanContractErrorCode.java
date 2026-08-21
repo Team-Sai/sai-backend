@@ -53,6 +53,11 @@ public enum LoanContractErrorCode implements BaseErrorCode<DomainException> {
     CONTRACT_ALREADY_COMPLETED(
             HttpStatus.CONFLICT,
             "이미 완료된 계약입니다."
+    ),
+
+    NOT_A_CHANGE_CONTRACT(
+            HttpStatus.BAD_REQUEST,
+            "계약 변경 승인 대상이 아닌 계약입니다."
     );
 
     private final HttpStatus httpStatus;
