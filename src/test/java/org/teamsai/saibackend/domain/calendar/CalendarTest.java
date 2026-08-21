@@ -322,7 +322,7 @@ public class CalendarTest {
     private SettlementListResponse settlement(
             Long id, String title, String role, String status, LocalDate dueDate, LocalDateTime createdAt
     ) {
-        return new SettlementListResponse(id, title, role, "ETC", "ONE_TIME", "EQUAL", status, dueDate, null, null, null, createdAt);
+        return new SettlementListResponse(id, title, role, "ETC", "ONE_TIME", "EQUAL", status, BigDecimal.ZERO, dueDate, null, null, null, createdAt);
     }
 
     private DashboardService.IntegrationDashboardData loanData(
@@ -460,7 +460,7 @@ public class CalendarTest {
 
         SettlementListResponse settlement = new SettlementListResponse(
                 106L, "여행 정산", "OWNER", "TRAVEL", "RECURRING", "CUSTOM",
-                "OPEN", null, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31),
+                "OPEN", BigDecimal.valueOf(100_000), null, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31),
                 TARGET_DATE,
                 LocalDateTime.now()
         );
@@ -500,4 +500,3 @@ public class CalendarTest {
         assertThat(item.getSplitTypeLabel()).isEqualTo("균등");
     }
 }
-

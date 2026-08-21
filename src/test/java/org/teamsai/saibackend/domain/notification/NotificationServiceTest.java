@@ -103,6 +103,9 @@ class NotificationServiceTest {
                                 10L,
                                 null,          // ← 이 줄 추가 (secondaryReferenceId)
                                 null,
+                                null,
+                                null,
+                                null,
                                 false,
                                 createdAt
                         )

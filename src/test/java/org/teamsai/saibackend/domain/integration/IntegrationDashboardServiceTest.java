@@ -383,7 +383,7 @@ class IntegrationDashboardServiceTest {
             Long id, String title, String role, String status, LocalDate dueDate, LocalDateTime createdAt
     ) {
         return new SettlementListResponse(
-                id, title, role, "ETC", "SHARED", "EQUAL", status, dueDate, null, null, null, createdAt
+                id, title, role, "ETC", "SHARED", "EQUAL", status, BigDecimal.ZERO, dueDate, null, null, null, createdAt
         );
     }
 
