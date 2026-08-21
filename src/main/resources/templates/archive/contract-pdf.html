@@ -92,7 +92,13 @@
         <tr>
             <th class="parties__role">채권자</th>
             <td class="parties__label">성 명</td>
-            <td class="parties__value"><strong class="doc__readonly" th:text="${contract.creditorName}">-</strong></td>
+            <td class="parties__value">
+                <strong class="doc__readonly" th:text="${contract.creditorName}">-</strong>
+                <span class="seal-mark">
+                    (인)
+                    <img th:if="${creditorSignatureDataUri != null}" th:src="${creditorSignatureDataUri}" class="doc__signature" alt="채권자 서명" />
+                </span>
+            </td>
             <td class="parties__label">생년월일</td>
             <td class="parties__value"><strong class="doc__readonly" th:text="${contract.creditorBirthDate}">-</strong></td>
             <td class="parties__label">주 소</td>
@@ -101,7 +107,13 @@
         <tr>
             <th class="parties__role">채무자</th>
             <td class="parties__label">성 명</td>
-            <td class="parties__value"><strong class="doc__readonly" th:text="${contract.debtorName} ?: '-'">-</strong></td>
+            <td class="parties__value">
+                <strong class="doc__readonly" th:text="${contract.debtorName} ?: '-'">-</strong>
+                <span class="seal-mark">
+                    (인)
+                    <img th:if="${debtorSignatureDataUri != null}" th:src="${debtorSignatureDataUri}" class="doc__signature" alt="채무자 서명" />
+                </span>
+            </td>
             <td class="parties__label">생년월일</td>
             <td class="parties__value"><strong class="doc__readonly" th:text="${contract.debtorBirthDate} ?: '-'">-</strong></td>
             <td class="parties__label">주 소</td>
@@ -109,6 +121,12 @@
         </tr>
         </tbody>
     </table>
+
+    <p class="doc__disclaimer">
+        본 서비스가 제공하는 차용증 양식은 일반적인 금전소비대차 계약서 작성 편의를 위한 참고용 문서입니다.
+        서비스 제공자는 이용자가 입력한 데이터의 정확성 및 개별 계약 조건에 따른 법적 분쟁에 대해 책임을 지지 않습니다.
+        구체적인 법적 조언이나 강제집행력이 필요한 경우 법률 전문가의 상담 또는 공증 절차를 진행하시길 권장합니다.
+    </p>
 </div>
 </body>
 </html>

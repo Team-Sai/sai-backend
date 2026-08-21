@@ -95,3 +95,18 @@ body {
 .parties__value {
     background: #ffffff;
 }
+
+.seal-mark {
+    position: relative;
+    display: inline-block;
+}
+
+.doc__signature {
+    position: absolute;
+    top: -2px;
+    left: -28px;
+    height: 24px;
+    width: auto;
+    pointer-events: none;
+    z-index: 1;
+}
