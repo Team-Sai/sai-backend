@@ -1,5 +1,6 @@
 let currentKeyword = '';
 let currentRoleFilter = 'ALL';
+let currentStatusFilter = 'ALL';
 let currentSortType = '';
 let currentPage = 1;
 let isFirstLoad = true;
@@ -12,6 +13,7 @@ const PAYMENT_STATUS_LABELS = {ONGOING: '납부중', PAID: '납부완료'};
 function fetchDashboard() {
     const url = `/api/dashboard?keyword=${encodeURIComponent(currentKeyword)}`
         + `&roleFilter=${currentRoleFilter}`
+        + `&statusFilter=${currentStatusFilter}`
         + `&sortType=${currentSortType}`
         + `&page=${currentPage}`;
 
@@ -36,10 +38,6 @@ function renderSummary(summary) {
     if (isFirstLoad) {
         isFirstLoad = false;
         currentRoleFilter = summary.defaultFilter;
-
-        document.querySelectorAll('.role-toggle button').forEach(btn => {
-            btn.classList.toggle('is-active', btn.dataset.role === currentRoleFilter);
-        });
 
         fetchDashboard();
         return false;
@@ -107,14 +105,10 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
     fetchDashboard();
 });
 
-document.querySelectorAll('.role-toggle button').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.role-toggle button').forEach(b => b.classList.remove('is-active'));
-        btn.classList.add('is-active');
-        currentRoleFilter = btn.dataset.role;
-        currentPage = 1;
-        fetchDashboard();
-    });
+document.getElementById('contractStatusFilter')?.addEventListener('change', (e) => {
+    currentStatusFilter = e.target.value;
+    currentPage = 1;
+    fetchDashboard();
 });
 
 document.getElementById('sortSelect').addEventListener('change', (e) => {

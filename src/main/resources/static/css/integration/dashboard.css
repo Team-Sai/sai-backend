@@ -14,15 +14,14 @@
     --amber: #b46a00;
     --amber-soft: #fff4df;
     --shadow: 0 10px 30px rgba(28, 39, 60, 0.08);
-    --font-ui: "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
+    --font-ui: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif;
 }
 
 * {
     box-sizing: border-box;
 }
 
-html,
-body {
+body.integration-page {
     margin: 0;
     min-height: 100%;
     background: var(--page);
@@ -30,13 +29,22 @@ body {
     font-family: var(--font-ui);
 }
 
-a {
+body.integration-page a {
     color: inherit;
     text-decoration: none;
 }
 
-button {
+body.integration-page button {
     font: inherit;
+}
+
+body.integration-loading {
+    background: #ffffff;
+}
+
+body.integration-loading > main,
+body.integration-loading > footer {
+    visibility: hidden;
 }
 
 .dashboard-shell {
@@ -141,13 +149,13 @@ button {
 
 .dashboard-main {
     width: min(1344px, calc(100% - 96px));
-    margin: 37px auto 80px;
+    margin: 36px auto 80px;
     flex: 1;
 }
 
 .page-title {
-    margin: 0 0 20px;
-    font-size: 20px;
+    margin: 0 0 16px;
+    font-size: 36px;
     line-height: 1;
     font-weight: 800;
 }
@@ -191,6 +199,38 @@ button {
 
 .summary-sentence strong {
     color: var(--green);
+}
+
+.summary-amount-number {
+    display: inline-flex;
+    overflow: hidden;
+    vertical-align: bottom;
+}
+
+.summary-digit {
+    display: inline-block;
+    animation: summary-digit-rise 620ms cubic-bezier(.22, .8, .25, 1) both;
+    animation-delay: calc(var(--digit-index) * 45ms);
+}
+
+@keyframes summary-digit-rise {
+    from {
+        opacity: 0;
+        transform: translateY(22px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.summary-sentence.is-summary-entering {
+    animation: summary-slide-up 480ms ease both;
+}
+
+@keyframes summary-slide-up {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .summary-detail {
@@ -439,6 +479,7 @@ button {
 .month-stats strong {
     font-size: 36px;
     line-height: 1;
+    color: var(--green);
 }
 
 .month-stats em {
@@ -493,6 +534,7 @@ button {
 .filter-tab {
     width: 53px;
     height: 26px;
+    border: 0;
     border-radius: 999px;
     background: transparent;
     color: var(--muted);
@@ -531,25 +573,23 @@ button {
     font-weight: 800;
 }
 
-.status-chip {
+.status-badge {
     width: fit-content;
-    min-width: 48px;
-    display: inline-flex;
-    justify-content: center;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 800;
+    padding: 5px 7px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    font-style: normal;
 }
 
-.status-chip--done {
-    background: var(--green-soft);
-    color: var(--green);
+.badge-completed {
+    background: #edf1f4;
+    color: #65717f;
 }
 
-.status-chip--waiting {
-    background: var(--blue-soft);
-    color: var(--blue);
+.badge-progress {
+    background: #e9f3ff;
+    color: #1478d4;
 }
 
 .detail-arrow {
@@ -567,6 +607,19 @@ button {
     padding: 34px 32px;
     color: var(--muted);
     text-align: center;
+}
+
+/* 마감일 확인 버튼도 목록의 진행 중 배지와 동일한 모양을 사용한다. */
+.attention-item .attention-confirm-button {
+    min-width: 0;
+    height: auto;
+    padding: 5px 7px;
+    border: 0;
+    border-radius: 3px;
+    background: #edf6ff;
+    color: #2563a8;
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .site-footer {

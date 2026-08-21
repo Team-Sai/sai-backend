@@ -53,7 +53,7 @@ class DashboardServiceTest {
         when(repaymentScheduleService.getSchedulesByContractIds(List.of(11L)))
                 .thenReturn(Map.of());
 
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 1);
 
         assertThat(response.getContracts()).hasSize(1);
         assertThat(response.getContracts().get(0).getContractId()).isEqualTo(11L);
@@ -73,7 +73,7 @@ class DashboardServiceTest {
         when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(borrowedContract));
         when(repaymentScheduleService.getSchedulesByContractIds(List.of(20L)))
                 .thenReturn(Map.of(20L, schedules));
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 1);
         DashboardContractRowResponse row = response.getContracts().get(0);
 
         assertThat(row.getTotalRemainingAmount()).isEqualByComparingTo("1250000");
@@ -101,7 +101,7 @@ class DashboardServiceTest {
                 .thenReturn(Map.of(21L, List.of(schedule)));
 
         DashboardResponse response = dashboardService.getDashboard(
-                USER_ID, null, "ALL", null, 1
+                USER_ID, null, "ALL", null, null, 1
         );
 
         assertThat(response.getContracts().get(0).getTotalRemainingAmount())
@@ -122,7 +122,7 @@ class DashboardServiceTest {
                         31L, List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 1_250_000, LocalDate.now()))
                 ));
 
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 1);
 
         assertThat(response.getSummary().getTotalContractCount()).isEqualTo(2);
         assertThat(response.getSummary().getTotalLentAmount()).isEqualByComparingTo("200000");
@@ -141,7 +141,7 @@ class DashboardServiceTest {
         when(repaymentScheduleService.getSchedulesByContractIds(List.of(40L, 41L)))
                 .thenReturn(Map.of());
 
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, "생활비", "ALL", null, 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, "생활비", "ALL", null, null, 1);
 
         assertThat(response.getContracts()).hasSize(1);
         assertThat(response.getContracts().get(0).getContractAlias()).isEqualTo("생활비 대출");
@@ -157,7 +157,7 @@ class DashboardServiceTest {
         when(repaymentScheduleService.getSchedulesByContractIds(List.of(50L, 51L)))
                 .thenReturn(Map.of());
 
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "LENT", null, 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "LENT", null, null, 1);
 
         assertThat(response.getContracts()).hasSize(1);
         assertThat(response.getContracts().get(0).getContractId()).isEqualTo(50L);
@@ -176,7 +176,7 @@ class DashboardServiceTest {
                         60L, List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 100_000, LocalDate.now())),
                         61L, List.of(buildSchedule(RepaymentScheduleStatus.PENDING, 9_000_000, LocalDate.now()))
                 ));
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", "AMOUNT_DESC", 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, "AMOUNT_DESC", 1);
 
         assertThat(response.getContracts().get(0).getContractId()).isEqualTo(61L);
         assertThat(response.getContracts().get(1).getContractId()).isEqualTo(60L);
@@ -194,10 +194,10 @@ class DashboardServiceTest {
                 .thenReturn(Map.of());
 
         DashboardResponse integration = dashboardService.getDashboard(
-                USER_ID, null, "ALL", "CREATED_DESC", 1
+                USER_ID, null, "ALL", null, "CREATED_DESC", 1
         );
         DashboardResponse existingDefault = dashboardService.getDashboard(
-                USER_ID, null, "ALL", null, 1
+                USER_ID, null, "ALL", null, null, 1
         );
 
         assertThat(integration.getContracts()).extracting(DashboardContractRowResponse::getContractId)
@@ -245,8 +245,8 @@ class DashboardServiceTest {
         when(repaymentScheduleService.getSchedulesByContractIds(List.of(70L, 71L, 72L, 73L, 74L, 75L)))
                 .thenReturn(Map.of());
 
-        DashboardResponse page1 = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
-        DashboardResponse page2 = dashboardService.getDashboard(USER_ID, null, "ALL", null, 2);
+        DashboardResponse page1 = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 1);
+        DashboardResponse page2 = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 2);
 
         assertThat(page1.getContracts()).hasSize(5);
         assertThat(page2.getContracts()).hasSize(1);
@@ -292,7 +292,7 @@ class DashboardServiceTest {
         when(repaymentScheduleService.getSchedulesByContractIds(List.of(80L, 81L)))
                 .thenReturn(Map.of());
 
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 1);
 
         assertThat(response.getContracts()).hasSize(2);
         assertThat(response.getContracts().get(0).getContractId()).isEqualTo(81L);
@@ -308,8 +308,8 @@ class DashboardServiceTest {
         when(repaymentScheduleService.getSchedulesByContractIds(List.of(90L)))
                 .thenReturn(Map.of());
 
-        DashboardResponse responseZero = dashboardService.getDashboard(USER_ID, null, "ALL", null, 0);
-        DashboardResponse responseNegative = dashboardService.getDashboard(USER_ID, null, "ALL", null, -5);
+        DashboardResponse responseZero = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 0);
+        DashboardResponse responseNegative = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, -5);
 
         assertThat(responseZero.getContracts()).hasSize(1);
         assertThat(responseNegative.getContracts()).hasSize(1);
@@ -331,7 +331,7 @@ class DashboardServiceTest {
 
                 ));
 
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 1);
 
         assertThat(response.getSummary().getDefaultFilter()).isEqualTo("LENT");
     }
@@ -347,16 +347,16 @@ class DashboardServiceTest {
         when(repaymentScheduleService.getSchedulesByContractIds(List.of(111L, 110L)))
                 .thenReturn(Map.of());
 
-        DashboardResponse alphabetSorted = dashboardService.getDashboard(USER_ID, null, "ALL", "ALPHABET", 1);
+        DashboardResponse alphabetSorted = dashboardService.getDashboard(USER_ID, null, "ALL", null, "ALPHABET", 1);
         assertThat(alphabetSorted.getContracts().get(0).getContractAlias()).isEqualTo("가나다1");
 
-        DashboardResponse roleSorted = dashboardService.getDashboard(USER_ID, null, "ALL", "ROLE", 1);
+        DashboardResponse roleSorted = dashboardService.getDashboard(USER_ID, null, "ALL", null, "ROLE", 1);
         assertThat(roleSorted.getContracts().get(0).getRole()).isEqualTo(ContractRole.CREDITOR);
 
-        DashboardResponse categorySorted = dashboardService.getDashboard(USER_ID, null, "ALL", "CATEGORY", 1);
+        DashboardResponse categorySorted = dashboardService.getDashboard(USER_ID, null, "ALL", null, "CATEGORY", 1);
         assertThat(categorySorted.getContracts().get(0).getCategory().name()).isEqualTo("RECEIVE");
 
-        DashboardResponse deadlineSorted = dashboardService.getDashboard(USER_ID, null, "ALL", "DEADLINE", 1);
+        DashboardResponse deadlineSorted = dashboardService.getDashboard(USER_ID, null, "ALL", null, "DEADLINE", 1);
         assertThat(deadlineSorted.getContracts()).hasSize(2);
     }
 
@@ -371,7 +371,7 @@ class DashboardServiceTest {
                         buildSchedule(RepaymentScheduleStatus.PAID, 500_000, LocalDate.now().minusMonths(1))
                 )));
 
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 1);
         DashboardContractRowResponse row = response.getContracts().get(0);
 
         assertThat(row.getTotalRemainingAmount()).isEqualByComparingTo("0");
@@ -391,7 +391,7 @@ class DashboardServiceTest {
         when(repaymentScheduleService.getSchedulesByContractIds(List.of(120L)))
                 .thenReturn(Map.of(120L, schedules));
 
-        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, 1);
+        DashboardResponse response = dashboardService.getDashboard(USER_ID, null, "ALL", null, null, 1);
         DashboardContractRowResponse row = response.getContracts().get(0);
 
         assertThat(row.getTotalRemainingAmount()).isEqualByComparingTo("500000");

@@ -120,17 +120,14 @@ body {
       );
 
   margin:
-      32px auto 80px;
+      36px auto 80px;
 
   flex: 1 0 auto;
 }
 
 
 .page-title {
-  font-size: 24px;
-  font-weight: 700;
-
-  margin: 0 0 6px;
+  margin: 0 0 16px;
 }
 
 

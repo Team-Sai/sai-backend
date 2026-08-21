@@ -4,9 +4,9 @@
     --text: #17191D;
     --muted: #697080;
     --line: #CFD5E2;
-    --primary: #006E2A;
+    --primary: #0f8a5f;
     --primary-soft: #E6F4EC;
-    --font-ui: "Noto Sans KR", sans-serif;
+    --font-ui: "Pretendard", "Noto Sans KR", sans-serif;
     --radius-md: 8px;
     --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
@@ -27,18 +27,24 @@ html, body {
     padding: 0 20px;
 }
 
+.dashboard2-page {
+    width: min(1120px, calc(100% - 48px));
+    max-width: none;
+    padding: 34px 0 96px;
+}
+
 /* 헤더 영역 */
 .dashboard-header {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 8px;
 }
 
 .dashboard-title {
-    font-size: 22px;
+    font-size: 36px;
     font-weight: 800;
-    margin: 0 0 10px;
+    margin: 0 0 8px;
 }
 
 .role-toggle {
@@ -93,8 +99,13 @@ html, body {
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
+    gap: 0;
+    margin-bottom: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 30px rgba(28, 39, 60, 0.08);
+    overflow: hidden;
 }
 
 .summary-card {
@@ -103,6 +114,14 @@ html, body {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
     padding: 18px 20px;
+    border: 0;
+    border-right: 1px solid var(--line);
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.summary-card:last-child {
+    border-right: 0;
 }
 
 .summary-card__label {
@@ -131,17 +150,42 @@ html, body {
 /* 검색/필터/정렬 바 */
 .control-bar {
     display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
+    align-items: end;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.control-bar .filter-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.control-bar .filter-field select {
+    height: 44px;
+    min-width: 118px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
 }
 
 .search-input {
+    height: 44px;
+    min-width: 240px;
     flex: 1;
-    padding: 10px 14px;
+    padding: 0 14px;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 4px;
     font-size: 13.5px;
     font-family: var(--font-ui);
+    background: var(--surface);
+    color: var(--text);
 }
 
 .control-bar select {
@@ -159,7 +203,9 @@ html, body {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-card);
+    border-color: #d9dee8;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(28, 39, 60, 0.08);
     overflow: hidden;
 }
 
@@ -171,17 +217,32 @@ html, body {
 
 .contract-table th {
     text-align: left;
-    padding: 12px 16px;
+    height: 52px;
+    padding: 0 24px;
     border-bottom: 1px solid var(--line);
     color: var(--muted);
     font-weight: 700;
     font-size: 12.5px;
-    background: var(--page);
+    background: #f9fafc;
+}
+
+.contract-table-head {
+    min-height: 52px;
+    background: #f9fafc;
 }
 
 .contract-table td {
-    padding: 14px 16px;
+    height: 74px;
+    padding: 0 16px;
     border-bottom: 1px solid var(--line);
+}
+
+.contract-table tbody tr {
+    min-height: 74px;
+}
+
+.contract-table tbody tr:last-child td {
+    border-bottom: 0;
 }
 
 .contract-table tbody tr:last-child td {
@@ -241,7 +302,7 @@ html, body {
     justify-content: center;
     align-items: center;
     gap: 6px;
-    margin-top: 20px;
+    margin-top: 8px;
 }
 
 .pagination button {
@@ -260,3 +321,13 @@ html, body {
     color: var(--surface);
     border-color: var(--primary);
 }
+
+/* integration dashboard visual system */
+body { background: #f5f7fb; }
+.control-bar, .contract-table-wrap, .notice, .pagination {
+    border-color: #d9dee8;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(28, 39, 60, 0.08);
+    background: #ffffff;
+}
+.contract-table thead { background: #f9fafc; color: #667085; }

@@ -15,6 +15,7 @@
         <result property="password" column="password"/>
         <result property="name" column="name"/>
         <result property="birthDate" column="birth_date"/>
+        <result property="createdAt" column="created_at"/>
 
     </resultMap>
 
@@ -66,7 +67,8 @@
         email,
         password,
         name,
-        birth_date
+        birth_date,
+        created_at
         FROM users
         WHERE email = #{email}
 
@@ -82,7 +84,8 @@
         email,
         password,
         name,
-        birth_date
+        birth_date,
+        created_at
         FROM users
         WHERE user_id = #{userId}
 

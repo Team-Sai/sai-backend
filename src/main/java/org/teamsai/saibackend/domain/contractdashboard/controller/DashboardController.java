@@ -32,6 +32,12 @@ public class DashboardController  {
         return "contractdashboard/dashboard";
     }
 
+    @Hidden
+    @GetMapping("/dashboard2")
+    public String dashboard2Page(){
+        return "contractdashboard/dashboard2";
+    }
+
     @Operation(
             summary = "계약 대시보드 조회",
             description = "로그인한 사용자가 채권자 또는 채무자로 참여 중인 계약 목록과 요약 정보를 조회합니다. " +
@@ -52,6 +58,7 @@ public class DashboardController  {
 
             @Parameter(description = "역할 필터 (ALL, LENT, BORROWED", example = "ALL")
             @RequestParam(required = false) String roleFilter,
+            @RequestParam(required = false) String statusFilter,
 
             @Parameter(description = "정렬 기준 (ALPHABET, ROLE, CATEGORY, AMOUNT_DESC, AMOUNT_ASC, STATUS, DEADLINE")
             @RequestParam(required = false) String sortType,
@@ -59,6 +66,7 @@ public class DashboardController  {
             @Parameter(description = "페이지 번호 (1부터 시작)", example = "1")
             @RequestParam(defaultValue = "1") int page
     ) {
-        return dashboardService.getDashboard(userId, keyword, roleFilter,sortType, page);
+        return dashboardService.getDashboard(userId, keyword, roleFilter, statusFilter, sortType, page);
     }
+
 }

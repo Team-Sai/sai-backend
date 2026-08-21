@@ -32,7 +32,7 @@ a {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: #006c49;
+  background: #0f8a5f;
   color: #fff;
   font-size: 16px;
   font-weight: 600;
@@ -102,7 +102,7 @@ a {
 
 .hero h1 em {
   font-style: normal;
-  color: #006c49
+  color: #0f8a5f
 }
 
 .hero-copy p {
@@ -1059,4 +1059,3 @@ a {
 }
 
 }
-

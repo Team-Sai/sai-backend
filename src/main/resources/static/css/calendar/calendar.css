@@ -60,7 +60,7 @@
 
 .month-picker-go {
     border: none;
-    background: #3b6de0;
+    background: #0f8a5f;
     color: #fff;
     font-size: 14px;
     padding: 7px 14px;
@@ -142,7 +142,7 @@
 
 .day-cell.selected {
     background: #eaf1ff;
-    outline: 2px solid #3b6de0;
+    outline: 2px solid #0f8a5f;
     outline-offset: -2px;
 }
 
@@ -162,11 +162,11 @@
 }
 
 .dot-inbound {
-    background: #2f9e6b;
+    background: #0f8a5f;
 }
 
 .dot-outbound {
-    background: #d8583a;
+    background: #d94c4c;
 }
 
 .calendar-legend {
@@ -230,8 +230,8 @@
 }
 
 .tab-btn.active {
-    background: #3b6de0;
-    border-color: #3b6de0;
+    background: #0f8a5f;
+    border-color: #0f8a5f;
     color: #fff;
 }
 
@@ -303,7 +303,7 @@
     margin-top: 4px;
     font-size: 14px;
     font-weight: 600;
-    color: #3b6de0;
+    color: #0f8a5f;
     text-decoration: none;
 }
 
@@ -342,16 +342,16 @@
 
 .badge-overdue {
     background: #fdeceb;
-    color: #c0392b;
+    color: #d94c4c;
 }
 
 .detail-item.is-overdue {
-    border-color: #f3c6c1;
+    border-color: #d94c4c;
     background: #fffaf9;
 }
 
 .detail-item.is-overdue .detail-amount {
-    color: #c0392b;
+    color: #d94c4c;
 }
 
 .badge {
@@ -363,7 +363,7 @@
 
 .badge-loan {
     background: #e1f5ee;
-    color: #0f6e56;
+    color: #0f8a5f;
 }
 
 .badge-settlement {
@@ -398,10 +398,10 @@
 
 .detail-item.is-receivable .direction-label,
 .detail-item.is-receivable .detail-amount {
-    color: #2f9e6b;
+    color: #0f8a5f;
 }
 
 .detail-item.is-payable .direction-label,
 .detail-item.is-payable .detail-amount {
-    color: #d8583a;
+    color: #d94c4c;
 }
