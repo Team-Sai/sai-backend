@@ -283,6 +283,12 @@ public class ContractChangeService {
         return ContractStatus.COMPLETED;
     }
 
+    public boolean hasPendingChangeRequest(Long contractId) {
+        List<LoanContractChangeDTO> existingRequests = contractChangeMapper.findByContractId(contractId);
+        return existingRequests.stream()
+                .anyMatch(changeRequest -> ChangeRequestStatus.PENDING.equals(changeRequest.getStatus()));
+    }
+
     @Transactional
     public void cancelChangeRequest(Long contractId, Long changeRequestId, Long userId) {
         LoanContractChangeDTO changeDTO = getChangeRequest(changeRequestId);
