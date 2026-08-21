@@ -18,7 +18,7 @@
   });
 
   btnGoToDashboard?.addEventListener("click", () => {
-    window.location.href = "/dashboard";
+    window.location.href = "/contract";
   });
 
   authFetch(`/api/contracts/${contractId}/listdetails`, {

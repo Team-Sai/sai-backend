@@ -116,14 +116,17 @@ function initNotificationCenter() {
                             `/contracts/${notification.referenceId}/contract-detail`
                     };
 
+            case "SETTLEMENT_DUE_REMINDER_D3":
+            case "SETTLEMENT_DUE_REMINDER_D1":
+            case "SETTLEMENT_DUE_REMINDER_DDAY":
             case "SETTLEMENT_PARTICIPANT_ADDED":
                 return {
                     category: "SETTLEMENT",
                     iconClass: "icon-green",
                     accentClass: "accent-green",
                     ctaLabel: "정산 보기",
-                    ctaUrl:
-                        `/settlements/${notification.referenceId}`
+                    ctaUrl: null,
+                    ctaLabel: null
                 };
 
             case "BANK_TRANSACTION_MATCHING_REVIEW":
@@ -165,6 +168,24 @@ function initNotificationCenter() {
                 notification
             );
 
+        const referenceTitle = notification.referenceTitle || "";
+        const settlementTypeLabel =
+            notification.settlementType === "RECURRING"
+                ? "정기정산"
+                : notification.settlementType === "SHARED"
+                    ? "공동정산"
+                    : null;
+        const displayTitle =
+            notification.notificationType === "SETTLEMENT_PARTICIPANT_ADDED"
+                ? `${referenceTitle || "새로운 정산"}에 참여자로 등록되었습니다.`
+                : notification.title;
+        const finalTitle = referenceTitle || displayTitle;
+        const finalDescription =
+            notification.notificationType === "SETTLEMENT_PARTICIPANT_ADDED"
+                ? "참여자로 등록되었습니다."
+                : notification.content;
+        const normalizedCtaLabel = view.category === "SIGN" ? null : view.ctaLabel;
+
         return {
             id:
                 notification.notificationId,
@@ -175,14 +196,18 @@ function initNotificationCenter() {
             category:
                 view.category,
 
-            title:
-                escapeHtml(
-                    notification.title
-                ),
+            title: escapeHtml(finalTitle),
+
+            categoryLabel:
+                view.category === "SIGN"
+                    ? "\uCC28\uC6A9\uC99D"
+                    : view.category === "SYSTEM"
+                        ? "\uACF5\uC9C0\uC0AC\uD56D"
+                        : "\uC815\uC0B0",
 
             description:
                 escapeHtml(
-                    notification.content
+                    finalDescription
                 ),
 
             timeLabel:
@@ -191,7 +216,7 @@ function initNotificationCenter() {
                 ),
 
             ctaLabel:
-                view.ctaLabel,
+                normalizedCtaLabel,
 
             ctaUrl:
                 view.ctaUrl,
@@ -204,6 +229,11 @@ function initNotificationCenter() {
 
             secondaryReferenceId:
                 notification.secondaryReferenceId,
+
+            referenceTitle: escapeHtml(referenceTitle),
+            referenceType: notification.referenceType || null,
+            settlementType: notification.settlementType || null,
+            settlementTypeLabel,
 
             resolved:
                 Boolean(notification.resolved),
@@ -338,33 +368,13 @@ function initNotificationCenter() {
                                 data-id="${notification.id}"
                             >
 
-                                <div
-                                    class="
-                                        notif-icon
-                                        ${notification.iconClass}
-                                    "
-                                >
-                                    <svg
-                                        width="18"
-                                        height="18"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            d="M4 8h16M4 8l3-3M4 8l3 3"
-                                            stroke="currentColor"
-                                            stroke-width="1.6"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                        />
-                                    </svg>
-                                </div>
-
-
                                 <div class="notif-body">
 
                                     <div class="notif-row">
+
+                                        <span class="notification-badge notification-badge-${notification.category.toLowerCase()}">
+                                            ${notification.category === "SETTLEMENT" ? (notification.settlementTypeLabel || "정산") : notification.categoryLabel}
+                                        </span>
 
                                         <span
                                             class="notif-title"
@@ -378,14 +388,11 @@ function initNotificationCenter() {
                                             ${notification.timeLabel}
                                         </span>
 
+                                        <span class="notif-desc">
+                                            ${notification.description}
+                                        </span>
+
                                     </div>
-
-
-                                    <p
-                                        class="notif-desc"
-                                    >
-                                        ${notification.description}
-                                    </p>
 
 
                                     ${ctaHtml}
@@ -469,6 +476,20 @@ function initNotificationCenter() {
                     (item) =>
                         item.id === id
                 );
+
+            if (notification?.category === "SETTLEMENT") {
+                const settlementId =
+                    notification.notificationType.startsWith("SETTLEMENT_DUE")
+                        ? notification.secondaryReferenceId
+                        : notification.referenceType === "SETTLEMENT"
+                        ? notification.referenceId
+                        : notification.secondaryReferenceId;
+
+                if (settlementId) {
+                    window.location.href = `/settlements/${settlementId}`;
+                    return;
+                }
+            }
 
 
             if (

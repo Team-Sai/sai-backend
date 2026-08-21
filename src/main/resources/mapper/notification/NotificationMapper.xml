@@ -43,6 +43,13 @@
         n.content,
         n.reference_id AS referenceId,
         n.secondary_reference_id AS secondaryReferenceId,
+        COALESCE(s.title, lc.contract_alias, lc_schedule.contract_alias) AS referenceTitle,
+        CASE
+            WHEN s.settlement_id IS NOT NULL THEN 'SETTLEMENT'
+            WHEN lc.contract_id IS NOT NULL OR lc_schedule.contract_id IS NOT NULL THEN 'CONTRACT'
+            ELSE NULL
+        END AS referenceType,
+        s.settlement_type AS settlementType,
         bt.processing_status AS relatedTransactionStatus,
         CASE
             WHEN n.notification_type =
@@ -60,6 +67,31 @@
                'BANK_TRANSACTION_MATCHING_REVIEW'
             AND bt.bank_transaction_id = n.reference_id
             AND bt.linked_account_id = n.secondary_reference_id
+        LEFT JOIN settlement s
+            ON (
+                n.notification_type = 'SETTLEMENT_PARTICIPANT_ADDED'
+                AND s.settlement_id = n.reference_id
+            )
+            OR (
+                n.notification_type IN (
+                    'SETTLEMENT_DUE_REMINDER_D3',
+                    'SETTLEMENT_DUE_REMINDER_D1',
+                    'SETTLEMENT_DUE_REMINDER_DDAY'
+                )
+                AND s.settlement_id = n.secondary_reference_id
+            )
+        LEFT JOIN loan_contract lc
+            ON n.notification_type IN ('CONTRACT_REQUESTED', 'CONTRACT_CHANGE')
+            AND lc.contract_id = n.reference_id
+        LEFT JOIN repayment_schedule rs
+            ON n.notification_type IN (
+                'REPAYMENT_DUE_REMINDER_D3',
+                'REPAYMENT_DUE_REMINDER_D1',
+                'REPAYMENT_DUE_REMINDER_DDAY'
+            )
+            AND rs.schedule_id = n.reference_id
+        LEFT JOIN loan_contract lc_schedule
+            ON lc_schedule.contract_id = rs.contract_id
 
         WHERE n.user_id = #{userId}
 

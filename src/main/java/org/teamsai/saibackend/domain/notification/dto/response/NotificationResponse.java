@@ -12,6 +12,9 @@ public record NotificationResponse(
         String content,
         Long referenceId,
         Long secondaryReferenceId,
+        String referenceTitle,
+        String referenceType,
+        String settlementType,
         BankTransactionProcessingStatus relatedTransactionStatus,
         boolean resolved,
         LocalDateTime createdAt

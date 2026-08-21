@@ -12,6 +12,7 @@ import org.teamsai.saibackend.domain.transaction.mapper.BankTransactionMapper;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionType;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -42,12 +43,21 @@ public class BankTransactionPersistenceService {
             bankTransactionMapper.insertOrGetId(toDto(linkedAccountId, tx, now));
         }
 
-        Long latestTransactionId = transactions.stream()
-                .map(BankTransactionResponse::transactionId)
-                .max(Long::compareTo)
+        BankTransactionResponse latestTransaction = transactions.stream()
+                .max(Comparator.comparing(BankTransactionResponse::transactionId))
                 .orElseThrow();
 
-        linkedBankAccountMapper.updateLastSyncedTransactionId(linkedAccountId, latestTransactionId);
+        if (latestTransaction.balanceAfter() != null) {
+            linkedBankAccountMapper.updateBalance(
+                    linkedAccountId,
+                    latestTransaction.balanceAfter()
+            );
+        }
+
+        linkedBankAccountMapper.updateLastSyncedTransactionId(
+                linkedAccountId,
+                latestTransaction.transactionId()
+        );
 
         return transactions.size();
     }
