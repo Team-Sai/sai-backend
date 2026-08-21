@@ -13,6 +13,8 @@ public class DashboardSummaryResponse {
     private int totalContractCount;
     private BigDecimal totalLentAmount;
     private BigDecimal totalBorrowedAmount;
+    private int receivableCount;
+    private int payableCount;
 
     private BigDecimal thisMonthDueAmount;
     private Integer dueMonth;

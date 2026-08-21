@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preload" href="/font/pretendard/Pretendard-Regular.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="/font/pretendard/Pretendard-Bold.ttf" as="font" type="font/ttf" crossorigin>
+    <title>내 계약</title>
+    <th:block th:replace="~{fragments/app-shell :: commonStyles}"></th:block>
+    <link rel="stylesheet" href="/css/settlement/settlement-common.css">
+    <link rel="stylesheet" href="/css/settlement/settlement-list.css">
+    <link rel="stylesheet" href="/css/matching/matching-review-modal.css">
+</head>
+<body class="app-shell-page">
+<header th:replace="~{fragments/app-shell :: appHeader('contract')}"></header>
+
+<main class="page-shell dashboard2-shell">
+    <section class="page-heading unified-page-header">
+        <div>
+            <h1 class="unified-page-title">내 계약</h1>
+        </div>
+        <div class="heading-actions">
+            <p class="updated-text">최근 동기화 <span id="sync-time">-</span></p>
+            <button id="sync-button" class="button button-secondary" type="button">↻ 거래내역 동기화</button>
+            <button id="create-contract-button" class="button button-primary" type="button">계약 만들기</button>
+        </div>
+    </section>
+
+    <section class="summary-grid" aria-label="차용증 요약">
+        <article class="summary-card"><p class="summary-label">전체 계약 수</p><p class="summary-value"><strong id="contract-total-count">0</strong><span>건</span></p><p class="summary-foot">전체 계약 내역</p></article>
+        <article class="summary-card"><p class="summary-label">받을 금액</p><p class="summary-value"><strong id="lent-amount">0</strong><span>원</span></p><span class="summary-arrow">↙</span><p class="summary-foot"><span id="receivable-count">0건</span> 받아야하는 계약</p></article>
+        <article class="summary-card"><p class="summary-label">보낼 금액</p><p class="summary-value"><strong id="borrowed-amount">0</strong><span>원</span></p><span class="summary-arrow positive">↗</span><p class="summary-foot"><span id="payable-count">0건</span> 보내야하는 계약</p></article>
+    </section>
+
+    <section class="filter-panel">
+        <label class="search-box"><span>⌕</span><input id="contract-search" type="search" placeholder="계약명 검색"></label>
+        <label class="filter-field"><span>계약 상태</span><select id="contract-status"><option value="ALL">전체</option><option value="ONGOING">진행 중</option><option value="COMPLETED">완료</option></select></label>
+        <label class="filter-field"><span>정렬</span><select id="contract-sort"><option value="CREATED_DESC">최신순</option><option value="AMOUNT_DESC">금액순</option><option value="DEADLINE">마감일순</option></select></label>
+    </section>
+
+    <section class="table-card" aria-label="차용증 목록">
+        <div class="settlement-table settlement-table-head contract2-table-head contract2-table-head-wide"><span>계약명</span><span>역할</span><span>거래 금액(원금/잔액)</span><span>다음 상환 예정금액</span><span>다음 상환일</span><span>계약 상태</span><span>만기일</span><span>상세</span></div>
+        <div id="contract-list" class="settlement-list"></div>
+        <div id="contract-empty-state" class="empty-state" hidden><h2>표시할 계약 없습니다.</h2><p>계약을 만들면 이곳에서 확인할 수 있어요.</p><button id="empty-create-button" class="button button-primary" type="button">첫 계약 만들기</button></div>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/app-shell :: appFooter}"></footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<th:block th:replace="~{fragments/matching-review-modal :: matchingReviewModal}"></th:block>
+<th:block th:replace="~{fragments/app-shell :: commonScripts}"></th:block>
+<script src="/js/matching/matching-review-modal.js"></script>
+<script th:src="@{/js/contractdashboard/dashboard2.js}"></script>
+</body>
+</html>

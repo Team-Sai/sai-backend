@@ -20,11 +20,6 @@
     <div class="dashboard-header">
         <div>
             <h1 class="dashboard-title">내 계약</h1>
-            <div class="role-toggle">
-                <button type="button" data-role="ALL" id="roleAll">전체</button>
-                <button type="button" data-role="LENT" id="roleLent">빌려준 돈</button>
-                <button type="button" data-role="BORROWED" id="roleBorrowed">내가 빌린 돈</button>
-            </div>
         </div>
         <div class="header-actions">
             <button type="button" class="btn" id="btnSyncTransactions" >거래내역 동기화</button>
@@ -50,6 +45,16 @@
 
     <div class="control-bar">
         <input type="text" class="search-input" id="searchInput" placeholder="계약명 검색">
+        <label class="filter-field">
+            <span>차용증 상태</span>
+            <select id="contractStatusFilter">
+                <option value="ALL">전체</option>
+                <option value="ONGOING">진행 중</option>
+                <option value="COMPLETED">완료</option>
+            </select>
+        </label>
+        <label class="filter-field">
+            <span>정렬</span>
         <select id="sortSelect">
             <option value="">정렬</option>
             <option value="ALPHABET">가나다순</option>
@@ -60,11 +65,12 @@
             <option value="STATUS">상태순</option>
             <option value="DEADLINE">마감일순</option>
         </select>
+        </label>
     </div>
 
     <div class="contract-table-wrap">
         <table class="contract-table">
-            <thead>
+            <thead class="contract-table-head">
             <tr>
                 <th>계약명</th>
                 <th>역할</th>
@@ -82,6 +88,7 @@
             </tbody>
         </table>
     </div>
+
 
     <p class="disclaimer">
         * 본 화면에 표시되는 금액과 일정은 각 계약의 내용을 요약하여 참고용으로 안내하는 정보이며,

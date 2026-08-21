@@ -1,7 +1,22 @@
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+@font-face {
+    font-family: "Pretendard";
+    src: url("../../font/pretendard/Pretendard-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+}
+
+@font-face {
+    font-family: "Pretendard";
+    src: url("../../font/pretendard/Pretendard-Bold.ttf") format("truetype");
+    font-weight: 700 900;
+    font-style: normal;
+    font-display: block;
+}
 
 html {
     min-height: 100%;
+    overflow-y: scroll;
 }
 
 body.app-shell-page {
@@ -38,6 +53,52 @@ body.app-shell-page > .app-footer {
             "Apple SD Gothic Neo",
             Arial,
             sans-serif;
+}
+
+.unified-page-title {
+    margin: 0 0 16px;
+    color: #151922;
+    font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: normal;
+}
+
+.unified-page-header {
+    font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif;
+    color: #151922;
+}
+
+.unified-page-header > h1,
+.unified-page-header .unified-page-title {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: normal;
+    color: #151922;
+}
+
+body.app-shell-page,
+body.app-shell-page main,
+body.app-shell-page button,
+body.app-shell-page input,
+body.app-shell-page select,
+body.app-shell-page textarea {
+    font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif;
+}
+
+/* 페이지별 컴포넌트가 다른 한글 폰트로 덮어쓰지 않도록 공통 폰트를 고정한다. */
+body.app-shell-page main,
+body.app-shell-page main * {
+    font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif !important;
+}
+
+body.app-shell-page * {
+    font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif !important;
 }
 
 .app-header *,
@@ -134,7 +195,7 @@ body.app-shell-page > .app-footer {
 
     color: #667085;
 
-    font-size: 24px;
+    font-size: 17px;
     font-weight: 700;
 
     margin-left: 0;
@@ -431,7 +492,7 @@ body.app-shell-page > .app-footer {
     padding: 0;
     border: 0;
     border-radius: 8px;
-    background: #006c49;
+    background: #0f8a5f;
     color: #ffffff;
     font-size: 16px;
     font-weight: 600;
