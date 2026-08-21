@@ -42,6 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             await loadPage();
 
+            await new Promise(resolve => window.setTimeout(resolve, 1250));
+
             await MatchingReviewModal.open({
                 reviewChannel: "TRANSACTION_HISTORY",
                 targetType: "SETTLEMENT",
@@ -135,6 +137,10 @@ document.addEventListener("DOMContentLoaded", () => {
         setText("split-type", getSplitTypeText(detail.splitType));
         setText("settlement-status-badge", getSettlementStatusText(detail.settlementStatus));
         setText("settlement-role-badge", getRoleText(detail.role));
+
+        if (syncButton) {
+            syncButton.hidden = detail.role === "MEMBER";
+        }
 
         const typeBadge = document.getElementById("settlement-type-badge");
         if (typeBadge) {

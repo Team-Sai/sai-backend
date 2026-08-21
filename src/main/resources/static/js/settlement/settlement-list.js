@@ -54,6 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             await loadSettlements();
 
+            await new Promise(resolve => window.setTimeout(resolve, 1250));
+
             await MatchingReviewModal.open({
                 reviewChannel: "TRANSACTION_HISTORY",
                 targetType: "SETTLEMENT"

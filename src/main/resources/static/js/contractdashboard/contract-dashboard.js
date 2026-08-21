@@ -156,6 +156,8 @@ async function syncTransactions() {
         // 상환 금액과 납부 상태를 다시 조회한다.
         fetchDashboard();
 
+        await new Promise(resolve => window.setTimeout(resolve, 1250));
+
         await MatchingReviewModal.open({
             reviewChannel: 'TRANSACTION_HISTORY',
             targetType: 'LOAN'
