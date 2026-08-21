@@ -16,6 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.teamsai.saibackend.domain.archive.dto.ArchiveStatus;
 import org.teamsai.saibackend.domain.archive.dto.FileDTO;
 import org.teamsai.saibackend.domain.archive.mapper.ArchiveMapper;
+import org.teamsai.saibackend.domain.archive.service.HtmlToPdfRenderer;
 import org.teamsai.saibackend.domain.archive.service.SettlementArchiveService;
 import org.teamsai.saibackend.domain.payment.type.SourceType;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse;
@@ -85,6 +86,7 @@ class SettlementArchiveServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(settlementArchiveService, "uploadDir", tempDir.toString());
+        ReflectionTestUtils.setField(settlementArchiveService, "htmlToPdfRenderer", new HtmlToPdfRenderer());
     }
 
     @Nested

@@ -6,9 +6,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>사이원장 | 내 정보</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <th:block
             th:replace="~{fragments/app-shell :: commonStyles}">
     </th:block>
@@ -22,8 +19,8 @@
 </header>
 
 <main class="mypage-main">
-    <section class="page-title">
-        <h1>내 정보</h1>
+    <section class="page-title unified-page-header">
+        <h1 class="unified-page-title">내 정보</h1>
         <p>회원 정보와 연결 계좌를 관리할 수 있습니다.</p>
     </section>
 
@@ -41,14 +38,6 @@
                 </svg>
             </div>
 
-            <button class="camera-button"
-                    type="button"
-                    aria-label="프로필 이미지 변경">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M14.5 4h-5L7.8 6H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.8z"></path>
-                    <circle cx="12" cy="13" r="3"></circle>
-                </svg>
-            </button>
         </div>
 
         <div class="profile-content">
@@ -57,9 +46,6 @@
                 <span id="verification-status"
                       class="empty-value verification-status" hidden></span>
             </div>
-
-            <div id="member-email"
-                 class="empty-value member-email"></div>
 
             <div class="profile-actions">
                 <button type="button">프로필 수정</button>
@@ -87,13 +73,23 @@
 
             <div class="detail-list">
                 <div class="detail-row">
+                    <span>이메일</span>
+                    <strong id="member-email-detail" class="empty-value"></strong>
+                </div>
+
+                <div class="detail-row">
+                    <span>사용자 토큰</span>
+                    <strong id="user-token" class="empty-value"></strong>
+                </div>
+
+                <div class="detail-row">
                     <span>가입일</span>
                     <strong id="joined-at" class="empty-value"></strong>
                 </div>
 
                 <div class="detail-row">
-                    <span>마케팅 수신</span>
-                    <strong id="marketing-consent"
+                    <span>마지막 로그인</span>
+                    <strong id="last-login-at"
                             class="empty-value"></strong>
                 </div>
             </div>
@@ -122,11 +118,7 @@
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
             <path d="m9 12 2 2 4-4"></path>
         </svg>
-
-        <span>
-            사용자의 금융 정보는 암호화되어 안전하게 보호됩니다.
-            계좌 연결 시 본인 확인 절차가 진행됩니다.
-        </span>
+        <span>사용자의 금융 정보는 암호화되어 안전하게 보호됩니다.</span>
     </section>
 </main>
 <footer

@@ -1,7 +1,5 @@
 package org.teamsai.saibackend.domain.archive.service;
 
-import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +23,6 @@ import org.teamsai.saibackend.global.exception.DomainException;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +44,7 @@ public class SettlementArchiveService {
 
     private final TemplateEngine templateEngine;
     private final ArchiveMapper archiveMapper;
+    private final HtmlToPdfRenderer htmlToPdfRenderer;
     private final SettlementQueryService settlementQueryService;
     private final SettlementPaymentStatusService settlementPaymentStatusService;
     private final SettlementPaymentHistoryService settlementPaymentHistoryService;
@@ -121,31 +119,7 @@ public class SettlementArchiveService {
 
         String html = templateEngine.process("archive/settlement-pdf", context);
 
-        ByteArrayOutputStream pdfBuffer = new ByteArrayOutputStream();
-        try {
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-
-
-            builder.useFont(
-                    () -> getClass().getResourceAsStream("/static/font/pretendard/Pretendard-Regular.ttf"),
-                    "Pretendard", 400, BaseRendererBuilder.FontStyle.NORMAL, true
-            );
-            builder.useFont(
-                    () -> getClass().getResourceAsStream("/static/font/pretendard/Pretendard-Bold.ttf"),
-                    "Pretendard", 700, BaseRendererBuilder.FontStyle.NORMAL, true
-            );
-
-            builder.useDefaultPageSize(210, 297, BaseRendererBuilder.PageSizeUnits.MM); // A4 사이즈
-            builder.withHtmlContent(html, "");
-            builder.toStream(pdfBuffer);
-            builder.run();
-
-        } catch (Exception e) {
-            log.error("정산 PDF 생성 실패 - settlementId: {}", settlementId, e);
-            throw new RuntimeException("정산 PDF 생성 중 오류가 발생했습니다.", e);
-        }
-
-        return pdfBuffer.toByteArray();
+        return htmlToPdfRenderer.render(html, "settlementId: " + settlementId);
     }
 
     private Optional<byte[]> findExistingPdf(Long settlementId) {

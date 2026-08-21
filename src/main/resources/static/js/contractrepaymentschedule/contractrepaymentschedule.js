@@ -146,7 +146,7 @@ function renderSchedulePage() {
                 <td>${s.sequence}회차</td>
                 <td>${s.dueDate}</td>
                 <td>${s.totalPaymentDue.toLocaleString(undefined, {maximumFractionDigits: 0})}원</td>
-                <td>${s.paidAt ? s.paidAt : '-'}</td>
+                <td>${s.paidAt ? formatDateTimeKorean(s.paidAt) : '-'}</td>
                 <td><span class="${statusClass}">${statusText}</span></td>
             </tr>
         `;

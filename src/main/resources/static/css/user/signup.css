@@ -1,6 +1,6 @@
 :root {
-    --primary: #006e2a;
-    --primary-bright: #00c853;
+    --primary: #0f8a5f;
+    --primary-bright: #0f8a5f;
     --background: #f8f9fa;
     --surface: #ffffff;
     --surface-low: #f3f4f5;
@@ -21,7 +21,7 @@ body {
 }
 
 body {
-    font-family: "Noto Sans KR", sans-serif;
+    font-family: Pretendard, Arial, sans-serif;
     color: var(--text);
     background: var(--background);
     -webkit-font-smoothing: antialiased;
@@ -103,7 +103,7 @@ a {
 .page-message {
     margin-bottom: 14px;
     padding: 11px 13px;
-    color: #165c2d;
+    color: #0f8a5f;
     background: #edf9f0;
     border: 1px solid #b9dfc2;
     border-radius: 7px;

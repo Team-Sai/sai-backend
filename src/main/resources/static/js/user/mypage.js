@@ -150,18 +150,12 @@ document.addEventListener(
                 item.className = "account-item";
 
                 item.innerHTML = `
-            ${createBankIcon()}
-
             <div class="account-content">
                 <div class="account-top">
-                    <div>
-                        <div class="bank-name">
-                            ${escapeHtml(account.bankName)}
-                        </div>
-
-                        <div class="account-name">
-                            ${escapeHtml(account.accountAlias)}
-                        </div>
+                    <div class="account-identity">
+                        <span class="bank-name">${escapeHtml(account.bankName)}</span>
+                        <span class="account-divider">|</span>
+                        <span class="account-number">${escapeHtml(account.maskedAccountNumber)}</span>
                     </div>
 
                     <strong class="account-balance">
@@ -169,9 +163,6 @@ document.addEventListener(
                     </strong>
                 </div>
 
-                <div class="account-number">
-                    ${escapeHtml(account.maskedAccountNumber)}
-                </div>
             </div>
         `;
 
@@ -194,18 +185,6 @@ document.addEventListener(
                 "account-empty";
 
             wrapper.innerHTML = `
-        <div class="account-empty-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m3 10 9-6 9 6"></path>
-                <path d="M5 10v8"></path>
-                <path d="M9 10v8"></path>
-                <path d="M15 10v8"></path>
-                <path d="M19 10v8"></path>
-                <path d="M3 18h18"></path>
-                <path d="M2 21h20"></path>
-            </svg>
-        </div>
-
         <strong class="account-empty-title">
             연결된 계좌가 없습니다
         </strong>
@@ -319,6 +298,11 @@ document.addEventListener(
             );
 
             setText(
+                "member-email-detail",
+                data.email
+            );
+
+            setText(
                 "member-birth-date",
                 data.birthDate
             );
@@ -362,6 +346,16 @@ document.addEventListener(
             setText(
                 "marketing-consent",
                 data.marketingConsent ?? ""
+            );
+
+            setText(
+                "user-token",
+                data.userToken ?? ""
+            );
+
+            setText(
+                "last-login-at",
+                formatDateTime(data.lastLoginAt ?? data.lastLogin)
             );
 
             setProfileImage(

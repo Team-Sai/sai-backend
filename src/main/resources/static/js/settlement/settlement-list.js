@@ -5,11 +5,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const searchInput = document.getElementById("settlement-search");
     const typeFilter = document.getElementById("type-filter");
-    const splitFilter = document.getElementById("split-filter");
     const statusFilter = document.getElementById("status-filter");
+    const sortFilter = document.getElementById("sort-filter");
     const syncButton = document.getElementById("sync-button");
 
     let settlements = [];
+
+    statusFilter.previousElementSibling.textContent = "진행 상태";
+    statusFilter.innerHTML = '<option value="ALL">전체</option><option value="IN_PROGRESS">진행 중</option><option value="CLOSED">완료</option>';
+    sortFilter.previousElementSibling.textContent = "정렬";
+    sortFilter.innerHTML = '<option value="LATEST">최신순</option><option value="AMOUNT_DESC">금액순</option><option value="DEADLINE">마감일순</option>';
 
     document.getElementById("sync-time").textContent =
         new Intl.DateTimeFormat("ko-KR", {
@@ -64,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function bindFilters() {
-        [searchInput, typeFilter, splitFilter, statusFilter].forEach((element) => {
+        [searchInput, typeFilter, statusFilter, sortFilter].forEach((element) => {
             element.addEventListener("input", applyFilters);
             element.addEventListener("change", applyFilters);
         });
@@ -73,8 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function applyFilters() {
         const keyword = searchInput.value.trim().toLowerCase();
         const type = typeFilter.value;
-        const split = splitFilter.value;
         const status = statusFilter.value;
+        const sort = sortFilter.value;
 
         const filtered = settlements.filter((settlement) => {
             const matchesKeyword =
@@ -84,14 +89,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const matchesType =
                 type === "ALL" || settlement.settlementType === type;
 
-            const matchesSplit =
-                split === "ALL" || settlement.splitType === split;
-
             const matchesStatus =
                 status === "ALL" || settlement.settlementStatus === status;
 
-            return matchesKeyword && matchesType && matchesSplit && matchesStatus;
+            return matchesKeyword && matchesType && matchesStatus;
         });
+
+        if (sort === "LATEST") filtered.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+        if (sort === "AMOUNT_DESC") filtered.sort((a, b) => Number(b.totalAmount || 0) - Number(a.totalAmount || 0));
+        if (sort === "DEADLINE") filtered.sort((a, b) => String(a.dueDate || "").localeCompare(String(b.dueDate || "")));
 
         render(filtered);
     }
@@ -135,13 +141,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 : formatDate(settlement.dueDate);
         row.innerHTML = `
             <div class="settlement-name">
-                <span class="type-badge">${escapeHtml(typeText)}</span>
                 <span>${escapeHtml(settlement.title || "이름 없는 정산")}</span>
             </div>
-            <span>${escapeHtml(roleText)}</span>
+            <span class="type-badge ${settlement.settlementType === "RECURRING" ? "badge-recurring" : "badge-role"}">${escapeHtml(typeText)}</span>
+            <span class="status-badge ${settlement.role === "OWNER" ? "badge-role" : "badge-debtor"}">${escapeHtml(roleText)}</span>
             <span>${escapeHtml(settlement.settlementCategory || "-")}</span>
-            <span class="split-badge">${escapeHtml(splitText)}</span>
-            <span class="status-badge">${escapeHtml(statusText)}</span>
+            <span class="split-badge ${settlement.splitType === "CUSTOM" ? "badge-custom" : "badge-split"}">${escapeHtml(splitText)}</span>
+            <span class="status-badge ${settlement.settlementStatus === "CLOSED" ? "badge-completed" : "badge-progress"}">${escapeHtml(statusText)}</span>
             <span>${escapeHtml(scheduleText)}</span>
             <a
                 class="detail-link"
@@ -162,6 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `${summary.receivableCount ?? 0}건`;
         document.getElementById("payable-count").textContent =
             `${summary.payableCount ?? 0}건`;
+        document.getElementById("settlement-total-count").textContent = settlements.length;
     }
 
     async function loadSettlements() {
@@ -184,6 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             settlements = await response.json();
+            document.getElementById("settlement-total-count").textContent = settlements.length;
             render(settlements);
         } catch (error) {
             console.error("정산 목록 조회 실패:", error);

@@ -5,8 +5,8 @@
     --blue-600: #1478d4;
     --blue-100: #e9f3ff;
     --blue-050: #f4f8fc;
-    --green-600: #0d8b55;
-    --red-600: #d83b40;
+    --green-600: #0f8a5f;
+    --red-600: #d94c4c;
     --gray-950: #18212b;
     --gray-800: #34404d;
     --gray-650: #65717f;
@@ -176,11 +176,13 @@ a {
 
 .button-primary {
     color: var(--white);
-    background: var(--navy-950);
+    background: #0f8a5f;
+    border-color: #0f8a5f;
 }
 
 .button-primary:hover {
-    background: var(--navy-800);
+    background: #0f8a5f;
+    border-color: #0f8a5f;
 }
 
 .button-secondary {

@@ -29,6 +29,7 @@ class DashboardControllerTest {
         Long userId = 1L;
         String keyword = "생활비";
         String roleFilter = "LENT";
+        String statusFilter = "ONGOING";
         String sortType = "AMOUNT_DESC";
         int page = 2;
 
@@ -39,13 +40,13 @@ class DashboardControllerTest {
                 .pageSize(5)
                 .build();
 
-        when(dashboardService.getDashboard(userId, keyword, roleFilter, sortType, page))
+        when(dashboardService.getDashboard(userId, keyword, roleFilter, statusFilter, sortType, page))
                 .thenReturn(expected);
 
-        DashboardResponse actual = dashboardController.getDashboard(userId, keyword, roleFilter, sortType, page);
+        DashboardResponse actual = dashboardController.getDashboard(userId, keyword, roleFilter, statusFilter, sortType, page);
 
         assertThat(actual).isEqualTo(expected);
-        verify(dashboardService).getDashboard(userId, keyword, roleFilter, sortType, page);
+        verify(dashboardService).getDashboard(userId, keyword, roleFilter, statusFilter, sortType, page);
     }
 
     @Test
@@ -53,10 +54,10 @@ class DashboardControllerTest {
     void getDashboard_defaultPageIsOne() {
         Long userId = 1L;
 
-        when(dashboardService.getDashboard(userId, null, null, null, 1))
+        when(dashboardService.getDashboard(userId, null, null, null, null, 1))
                 .thenReturn(DashboardResponse.builder().currentPage(1).build());
 
-        DashboardResponse actual = dashboardController.getDashboard(userId, null, null, null, 1);
+        DashboardResponse actual = dashboardController.getDashboard(userId, null, null, null, null, 1);
 
         assertThat(actual.getCurrentPage()).isEqualTo(1);
     }
