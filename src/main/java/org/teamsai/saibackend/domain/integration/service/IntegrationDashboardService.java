@@ -440,8 +440,8 @@ public class IntegrationDashboardService {
                 .count();
 
         List<SettlementContext> monthlySettlements = settlements.stream()
-                .filter(context -> context.settlement().dueDate() != null)
-                .filter(context -> YearMonth.from(context.settlement().dueDate()).equals(yearMonth))
+                .filter(context -> effectiveDueDate(context.settlement()) != null)
+                .filter(context -> YearMonth.from(effectiveDueDate(context.settlement())).equals(yearMonth))
                 .toList();
         int completedSettlementCount = (int) monthlySettlements.stream()
                 .filter(context -> isClosed(context.settlement()))

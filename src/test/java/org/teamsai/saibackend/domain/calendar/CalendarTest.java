@@ -460,7 +460,7 @@ public class CalendarTest {
 
         SettlementListResponse settlement = new SettlementListResponse(
                 106L, "여행 정산", "OWNER", "TRAVEL", "RECURRING", "CUSTOM",
-                "OPEN", TARGET_DATE, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31),
+                "OPEN", null, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31),
                 TARGET_DATE,
                 LocalDateTime.now()
         );
