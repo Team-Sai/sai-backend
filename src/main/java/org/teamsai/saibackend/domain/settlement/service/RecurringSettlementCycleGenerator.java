@@ -87,13 +87,18 @@ public class RecurringSettlementCycleGenerator {
     private void copyParticipantsWithEqualSplit(
             List<SettlementParticipantDTO> activeParticipants, SettlementDTO newSettlement, BigDecimal totalAmount
     ) {
-        List<BigDecimal> distributedAmounts = settlementAmountCalculator.distributeEqualAmounts(
-                totalAmount, activeParticipants.size());
+        BigDecimal perPersonAmount =
+                settlementAmountCalculator.calculateEqualAmount(
+                        totalAmount,
+                        activeParticipants.size()
+                );
 
-        for (int i = 0; i < activeParticipants.size(); i++) {
-            SettlementParticipantDTO oldParticipant = activeParticipants.get(i);
-            BigDecimal expectedAmount = distributedAmounts.get(i);
-            copyParticipantWithObligation(oldParticipant, newSettlement.getSettlementId(), expectedAmount);
+        for (SettlementParticipantDTO oldParticipant : activeParticipants) {
+            copyParticipantWithObligation(
+                    oldParticipant,
+                    newSettlement.getSettlementId(),
+                    perPersonAmount
+            );
         }
     }
 
