@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.account.service.LinkedBankAccountService;
 import org.teamsai.saibackend.domain.user.exception.UserErrorCode;
 import org.teamsai.saibackend.domain.user.mapper.UserMapper;
-import org.teamsai.saibackend.global.client.UserKeyRevoker;
 
 import java.util.List;
 
@@ -18,7 +17,6 @@ public class AccountLinkService {
 
     private final UserMapper userMapper;
     private final LinkedBankAccountService linkedBankAccountService;
-    private final UserKeyRevoker userKeyRevoker;
 
     @Transactional
     public void completeLink(Long userId, String userKey, List<Long> accountIds) {
