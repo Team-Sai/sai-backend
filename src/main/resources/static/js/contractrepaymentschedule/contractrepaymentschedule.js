@@ -18,8 +18,6 @@ const CONTRACT_STATUS_LABELS = {
     COMPLETED: '진행중'
 };
 
-initializeContractSync();
-
 async function initializeContractSync() {
     try {
         const response = await authFetch(`/api/contracts/${contractId}/account`);
@@ -46,14 +44,26 @@ async function syncContractTransactions() {
         syncTransactionButton.disabled = true;
         syncTransactionButton.textContent = '동기화 중...';
 
+        const params = new URLSearchParams({
+            targetType: 'LOAN',
+            aggregateId: contractId
+        });
         const response = await authFetch(
-            `/api/linked-accounts/${currentLinkedAccountId}/sync`,
+            `/api/linked-accounts/${currentLinkedAccountId}/sync?${params}`,
             { method: 'POST' }
         );
         const result = await readJsonSafely(response);
         if (!response.ok) {
             throw new Error(result?.message || '거래내역 동기화에 실패했습니다.');
         }
+
+        window.alert(
+            `동기화 완료: 자동반영 ${result?.appliedCount ?? 0}건, ` +
+            `확인필요 ${result?.needsCheckCount ?? 0}건, ` +
+            `미매칭 ${result?.unmatchedCount ?? 0}건`
+        );
+
+        await new Promise(resolve => window.setTimeout(resolve, 1250));
 
         await MatchingReviewModal.open({
             reviewChannel: 'TRANSACTION_HISTORY',
@@ -97,6 +107,11 @@ Promise.all([
     })
     .then(([scheduleData, contractData]) => {
         const contract = contractData.contract;
+
+        syncTransactionButton.hidden = !contractData.isCreditor;
+        if (contractData.isCreditor) {
+            initializeContractSync();
+        }
 
         document.getElementById('statusBadge').textContent =
             CONTRACT_STATUS_LABELS[contract.status] || contract.status;
