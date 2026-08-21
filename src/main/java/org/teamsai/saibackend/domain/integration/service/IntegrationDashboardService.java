@@ -257,11 +257,11 @@ public class IntegrationDashboardService {
         settlements.stream()
                 .filter(context -> !isClosed(context.settlement()))
                 .filter(context -> context.roleRemainingAmount().compareTo(BigDecimal.ZERO) > 0)
-                .filter(context -> context.settlement().dueDate() != null)
-                .filter(context -> YearMonth.from(context.settlement().dueDate()).equals(yearMonth))
+                .filter(context -> effectiveDueDate(context.settlement()) != null)
+                .filter(context -> YearMonth.from(effectiveDueDate(context.settlement())).equals(yearMonth))
                 .forEach(context -> {
                     CalendarDirection direction = directionsByDate.computeIfAbsent(
-                            context.settlement().dueDate(), ignored -> new CalendarDirection()
+                            effectiveDueDate(context.settlement()), ignored -> new CalendarDirection()
                     );
                     direction.inbound |= context.isOwner();
                     direction.outbound |= !context.isOwner();
@@ -324,8 +324,8 @@ public class IntegrationDashboardService {
         return settlements.stream()
                 .filter(context -> !isClosed(context.settlement()))
                 .filter(context -> context.roleRemainingAmount().compareTo(BigDecimal.ZERO) > 0)
-                .filter(context -> context.settlement().dueDate() != null)
-                .filter(context -> context.settlement().dueDate().equals(date))
+                .filter(context -> effectiveDueDate(context.settlement()) != null)
+                .filter(context -> effectiveDueDate(context.settlement()).equals(date))
                 .map(context -> DashboardCalendarItemResponse.builder()
                         .targetId(context.settlement().settlementId())
                         .type(PaymentTargetType.SETTLEMENT)
@@ -407,13 +407,13 @@ public class IntegrationDashboardService {
                 .filter(context -> !isClosed(context.settlement()))
                 .filter(context -> context.isOwner()
                         || context.roleRemainingAmount().compareTo(BigDecimal.ZERO) > 0)
-                .filter(context -> context.settlement().dueDate() != null)
-                .filter(context -> !context.settlement().dueDate().isBefore(today))
-                .filter(context -> !context.settlement().dueDate().isAfter(attentionLimit))
+                .filter(context -> effectiveDueDate(context.settlement()) != null)
+                .filter(context -> !effectiveDueDate(context.settlement()).isBefore(today))
+                .filter(context -> !effectiveDueDate(context.settlement()).isAfter(attentionLimit))
                 .map(context -> DashboardAttentionItemResponse.builder()
                         .id(context.settlement().settlementId())
                         .type(DashboardAttentionType.SETTLEMENT_DUE_SOON)
-                        .remainingDays(ChronoUnit.DAYS.between(today, context.settlement().dueDate()))
+                        .remainingDays(ChronoUnit.DAYS.between(today, effectiveDueDate(context.settlement())))
                         .actionUrl("/settlements/" + context.settlement().settlementId())
                         .build())
                 .forEach(items::add);
@@ -440,8 +440,8 @@ public class IntegrationDashboardService {
                 .count();
 
         List<SettlementContext> monthlySettlements = settlements.stream()
-                .filter(context -> context.settlement().dueDate() != null)
-                .filter(context -> YearMonth.from(context.settlement().dueDate()).equals(yearMonth))
+                .filter(context -> effectiveDueDate(context.settlement()) != null)
+                .filter(context -> YearMonth.from(effectiveDueDate(context.settlement())).equals(yearMonth))
                 .toList();
         int completedSettlementCount = (int) monthlySettlements.stream()
                 .filter(context -> isClosed(context.settlement()))
@@ -472,6 +472,12 @@ public class IntegrationDashboardService {
 
     private boolean isClosed(SettlementListResponse settlement) {
         return "CLOSED".equals(settlement.settlementStatus());
+    }
+
+    private LocalDate effectiveDueDate(SettlementListResponse settlement) {
+        return "RECURRING".equals(settlement.settlementType())
+                ? settlement.cycleDate()
+                : settlement.dueDate();
     }
 
     private record SettlementContext(
