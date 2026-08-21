@@ -15,6 +15,7 @@
         u.name AS participantName,
         po.expected_amount AS expectedAmount,
         COALESCE(SUM(pr.amount), 0) AS paidAmount,
+        MAX(pr.recorded_at) AS latestPaymentAt,
         GREATEST(
         po.expected_amount - COALESCE(SUM(pr.amount), 0),
         0

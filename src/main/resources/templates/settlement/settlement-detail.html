@@ -155,6 +155,17 @@
   </div>
 </main>
 
+<div id="close-confirm-modal" class="close-confirm-modal" hidden>
+  <div class="close-confirm-card" role="dialog" aria-modal="true" aria-labelledby="close-confirm-title">
+    <h2 id="close-confirm-title">정산을 마감할까요?</h2>
+    <p>마감 후에는 정산 상태가 완료로 변경됩니다.</p>
+    <div class="close-confirm-actions">
+      <button type="button" id="close-cancel-button" class="button button-secondary">취소</button>
+      <button type="button" id="close-confirm-button" class="button button-primary">완료</button>
+    </div>
+  </div>
+</div>
+
 <footer
         th:replace="~{fragments/app-shell :: appFooter}">
 </footer>

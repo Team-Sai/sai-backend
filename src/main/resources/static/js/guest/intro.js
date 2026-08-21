@@ -53,13 +53,30 @@ function wrapTextNodes(element) {
     if (!node.textContent.trim()) return;
 
     const fragment = document.createDocumentFragment();
+    let whitespace = "";
+
     [...node.textContent].forEach((character) => {
+      if (/\s/.test(character)) {
+        whitespace += character;
+        return;
+      }
+
+      if (whitespace) {
+        fragment.appendChild(document.createTextNode(whitespace));
+        whitespace = "";
+      }
+
       const span = document.createElement("span");
       span.className = "typing-character";
       span.textContent = character;
       span.style.transitionDelay = `${characterIndex++ * 0.018}s`;
       fragment.appendChild(span);
     });
+
+    if (whitespace) {
+      fragment.appendChild(document.createTextNode(whitespace));
+    }
+
     node.parentNode.replaceChild(fragment, node);
   });
 }

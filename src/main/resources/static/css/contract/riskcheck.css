@@ -4,8 +4,8 @@
   --text: #17191D;
   --muted: #697080;
   --line: #CFD5E2;
-  --primary: #006E2A;
-  --primary-bright: #00C853;
+  --primary: #0f8a5f;
+  --primary-bright: #0f8a5f;
   --error: #BA1A1A;
 
   --font-ui: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -100,8 +100,8 @@ button { font-family: inherit; }
 
 .notice__intro {
   text-align: center;
-  padding-bottom: 24px;
-  margin-bottom: 24px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
   border-bottom: 1px dashed var(--line);
 }
 
@@ -123,16 +123,15 @@ button { font-family: inherit; }
 .relation-options {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .relation-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
   width: 100%;
-  padding: 24px;
+  padding: 32px;
   border: 1.5px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--page);
@@ -150,22 +149,22 @@ button { font-family: inherit; }
 }
 
 .relation-option[aria-checked="true"] {
-  border-color: var(--primary);
+  border-color: #0f8a5f;
   background: rgba(0, 110, 42, 0.06);
-  box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.12);
-}
-
-.relation-option__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 44px;
+  box-shadow: none;
+  outline: none;
 }
 
 .relation-option__label {
   font-size: 18px;
   font-weight: 600;
   color: var(--text);
+}
+
+.relation-option__detail {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
 }
 
 .notice__footer {

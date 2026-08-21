@@ -1,6 +1,17 @@
 const contractId = document.getElementById('contractId').value;
 let fullTerms = '';
 
+function showChangeRequestToast(message, type = 'error') {
+    const toast = document.getElementById('change-request-toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className = `change-request-toast visible ${type}`;
+    window.clearTimeout(showChangeRequestToast.timer);
+    showChangeRequestToast.timer = window.setTimeout(() => toast.classList.remove('visible'), 4000);
+}
+
+window.alert = (message) => showChangeRequestToast(message, 'error');
+
 const REPAYMENT_TYPE_LABELS = {
     EQUAL_PRINCIPAL_AND_INTEREST: '원리금균등상환',
     EQUAL_PRINCIPAL: '원금균등상환',
@@ -70,10 +81,7 @@ function validate() {
     const hasAnyChange = newMaturityDate || newInterestRate || newRepaymentType || newRepaymentDate || newTerms;
 
     if (!hasAnyChange) {
-        const wantsToCancel = confirm('변경하려는 내용이 없습니다. 계약 조건 변경을 취소하시겠습니까?');
-        if (wantsToCancel) {
-            document.getElementById('changeRequestForm').reset();
-        }
+        showChangeRequestToast('변경할 계약 조건을 입력해주세요.');
         return false;
     }
 
@@ -134,7 +142,7 @@ document.getElementById('changeRequestForm').addEventListener('submit', function
                 `/contracts/${contractId}/change-requests/${changeDTO.changeRequestId}/signature`;
         })
         .catch(err => {
-            alert(err.message || '변경 요청 중 오류가 발생했습니다.');
+            showChangeRequestToast(err.message || '변경 요청 중 오류가 발생했습니다.');
         });
 });
 

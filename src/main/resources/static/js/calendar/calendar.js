@@ -66,7 +66,8 @@
 
     async function loadMonth() {
         monthTitle.textContent = `${viewYear}년 ${viewMonth + 1}월`;
-        daysGrid.innerHTML = '<p class="empty-state">달력을 불러오는 중이에요...</p>';
+        // API 응답을 기다리는 동안에도 날짜 칸을 먼저 그려 레이아웃이 흔들리지 않게 한다.
+        renderGrid({});
 
         const yearMonth = toYearMonth(viewYear, viewMonth);
 
@@ -76,12 +77,10 @@
                 method: "GET"
             });
         } catch (e) {
-            daysGrid.innerHTML = '<p class="empty-state">달력을 불러오지 못했어요.</p>';
             return;
         }
 
         if (!res.ok) {
-            daysGrid.innerHTML = '<p class="empty-state">달력을 불러오지 못했어요.</p>';
             return;
         }
 
@@ -101,10 +100,16 @@
         const startWeekday = firstDayOfMonth.getDay();
         const totalDays = new Date(viewYear, viewMonth + 1, 0).getDate();
 
+        const previousMonthTotalDays = new Date(viewYear, viewMonth, 0).getDate();
         for (let i = 0; i < startWeekday; i++) {
-            const empty = document.createElement('div');
-            empty.className = 'day-cell empty';
-            daysGrid.appendChild(empty);
+            const cell = document.createElement('div');
+            cell.className = 'day-cell empty adjacent-month';
+
+            const num = document.createElement('span');
+            num.className = 'day-num';
+            num.textContent = String(previousMonthTotalDays - startWeekday + i + 1);
+            cell.appendChild(num);
+            daysGrid.appendChild(cell);
         }
 
         for (let day = 1; day <= totalDays; day++) {
@@ -142,6 +147,20 @@
             }
 
             cell.addEventListener('click', () => onDateClick(dateStr));
+            daysGrid.appendChild(cell);
+        }
+
+        // 모든 달의 높이를 동일하게 유지하고, 월말 뒤 다음 달 날짜를 흐리게 표시한다.
+        const renderedCells = startWeekday + totalDays;
+        const trailingDays = 42 - renderedCells;
+        for (let day = 1; day <= trailingDays; day++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-cell empty adjacent-month';
+
+            const num = document.createElement('span');
+            num.className = 'day-num';
+            num.textContent = String(day);
+            cell.appendChild(num);
             daysGrid.appendChild(cell);
         }
     }
@@ -229,8 +248,6 @@
         }
 
         detailList.innerHTML = items.map((item, index) => {
-            const badgeClass = item.type === 'LOAN' ? 'badge-loan' : 'badge-settlement';
-            const badgeLabel = item.type === 'LOAN' ? '대여' : '정산';
             const amount = Number(item.amount).toLocaleString(undefined, { maximumFractionDigits: 0 });
             const isReceivable = item.subLabel === '수취예정' || item.subLabel === '받을 돈';
             const directionClass = isReceivable ? 'is-receivable' : 'is-payable';
@@ -246,6 +263,7 @@
                 metaParts.push(escapeHtml(item.categoryLabel));
             }
             const metaText = metaParts.join(' · ');
+            const displayMetaText = metaText.replaceAll(' · ', ' / ');
 
             const expandRows = [];
             if (item.type === 'LOAN') {
@@ -274,12 +292,12 @@
                     <button type="button" class="detail-item-header" aria-expanded="false">
                         <div class="detail-item-main">
                              <div class="detail-item-top">
-                                 <span class="badge ${badgeClass}">${badgeLabel}</span>
+                                 <span class="badge ${item.type === 'LOAN' ? 'badge-loan' : (String(item.settlementTypeLabel || '').includes('정기') ? 'badge-recurring' : 'badge-shared')}">${item.type === 'LOAN' ? '차용증' : (item.settlementTypeLabel || '공동정산')}</span>
                                  <span class="detail-title">${escapeHtml(item.title)}</span>
                                  ${item.overdue ? '<span class="badge badge-overdue">연체</span>' : ''}
                              </div>
                          <div class="detail-item-meta">
-                            <span class="direction-label">${escapeHtml(item.subLabel)}</span>${metaText ? ' · ' + metaText : ''}
+                            <span class="direction-label">${escapeHtml(item.subLabel)}</span>${displayMetaText ? ' / ' + displayMetaText : ''}
                          </div>
                         </div>
                         <span class="detail-amount">${amount}원</span>

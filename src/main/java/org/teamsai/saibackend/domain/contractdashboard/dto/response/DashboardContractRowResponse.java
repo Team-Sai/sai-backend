@@ -24,6 +24,7 @@ public class DashboardContractRowResponse {
     private BigDecimal totalRemainingAmount;
     private BigDecimal thisMonthDueAmount;
     private DashboardContractStatus contractStatus;
+    private String repaymentStatus;
     private DashboardPaymentStatus paymentStatus;
     private LocalDate maturityDate;
     private LocalDate nearestScheduleDueDate;

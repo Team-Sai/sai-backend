@@ -527,15 +527,16 @@ body.integration-loading > footer {
 .filter-tabs {
     display: inline-flex;
     padding: 2px 4px;
-    border-radius: 999px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
     background: var(--surface-soft);
 }
 
 .filter-tab {
-    width: 53px;
-    height: 26px;
+    min-width: 56px;
+    height: 28px;
     border: 0;
-    border-radius: 999px;
+    border-radius: 3px;
     background: transparent;
     color: var(--muted);
     font-size: 12px;
@@ -543,9 +544,9 @@ body.integration-loading > footer {
 }
 
 .filter-tab.is-active {
-    background: var(--surface);
-    color: var(--green);
-    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.12);
+    background: var(--green);
+    color: #fff;
+    box-shadow: none;
 }
 
 .transaction-table {
