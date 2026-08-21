@@ -24,7 +24,7 @@ public class LoanPaymentService {
     private final RepaymentScheduleService repaymentScheduleService;
     private final PaymentRecordService paymentRecordService;
 
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void applyAutoMatchedPayment(Long targetId, Long bankTransactionId, BigDecimal amount) {
         applyPayment(
                 targetId,
@@ -35,7 +35,7 @@ public class LoanPaymentService {
         );
     }
 
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void applyManuallyMatchedPayment(
             Long targetId,
             Long bankTransactionId,

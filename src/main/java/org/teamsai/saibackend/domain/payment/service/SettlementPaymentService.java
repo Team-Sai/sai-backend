@@ -20,7 +20,7 @@ public class SettlementPaymentService {
     private final PaymentObligationMapper paymentObligationMapper;
     private final PaymentRecordService paymentRecordService;
 
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void applyAutoMatchedPayment(
             Long paymentObligationId,
             Long bankTransactionId,
@@ -35,7 +35,7 @@ public class SettlementPaymentService {
         );
     }
 
-    @Transactional(propagation = Propagation.NESTED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void applyManuallyMatchedPayment(
             Long paymentObligationId,
             Long bankTransactionId,
