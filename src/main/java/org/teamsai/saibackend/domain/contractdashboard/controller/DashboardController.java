@@ -58,6 +58,7 @@ public class DashboardController  {
 
             @Parameter(description = "역할 필터 (ALL, LENT, BORROWED", example = "ALL")
             @RequestParam(required = false) String roleFilter,
+            @RequestParam(required = false) String statusFilter,
 
             @Parameter(description = "정렬 기준 (ALPHABET, ROLE, CATEGORY, AMOUNT_DESC, AMOUNT_ASC, STATUS, DEADLINE")
             @RequestParam(required = false) String sortType,
@@ -65,6 +66,7 @@ public class DashboardController  {
             @Parameter(description = "페이지 번호 (1부터 시작)", example = "1")
             @RequestParam(defaultValue = "1") int page
     ) {
-        return dashboardService.getDashboard(userId, keyword, roleFilter,sortType, page);
+        return dashboardService.getDashboard(userId, keyword, roleFilter, statusFilter, sortType, page);
     }
+
 }

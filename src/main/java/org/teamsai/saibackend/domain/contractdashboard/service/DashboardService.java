@@ -246,6 +246,15 @@ public class DashboardService {
         throw DashboardErrorCode.INVALID_ROLE_FILTER.toException();
     }
 
+    private List<DashboardContractRowResponse> filterByStatus(List<DashboardContractRowResponse> rows, String statusFilter) {
+        if (statusFilter == null || statusFilter.isBlank() || statusFilter.equals("ALL")) return rows;
+        if (statusFilter.equals("ONGOING") || statusFilter.equals("COMPLETED")) {
+            DashboardContractStatus status = DashboardContractStatus.valueOf(statusFilter);
+            return rows.stream().filter(row -> row.getContractStatus() == status).toList();
+        }
+        throw DashboardErrorCode.INVALID_STATUS_FILTER.toException();
+    }
+
     private List<DashboardContractRowResponse> sortRows(List<DashboardContractRowResponse> rows, String sortType) {
         List<DashboardContractRowResponse> sorted = new ArrayList<>(rows);
 
@@ -306,6 +315,7 @@ public class DashboardService {
             Long userId,
             String keyword,
             String roleFilter,
+            String statusFilter,
             String sortType,
             int page
     ) {
@@ -321,7 +331,7 @@ public class DashboardService {
         DashboardSummaryResponse summary = buildSummary(allRows, scheduleMap);
         List<DashboardContractRowResponse> filtered = filterByKeyword(allRows, keyword);
         List<DashboardContractRowResponse> roleFiltered = filterByRole(filtered, roleFilter);
-        List<DashboardContractRowResponse> sorted = sortRows(roleFiltered, sortType);
+        List<DashboardContractRowResponse> sorted = sortRows(filterByStatus(roleFiltered, statusFilter), sortType);
         long totalCount = sorted.size();
         List<DashboardContractRowResponse> pagedRows = paginate(sorted, page, 5);
         int totalPages = (int) Math.ceil((double) totalCount / 5);
@@ -342,12 +352,13 @@ public class DashboardService {
                 .min(Comparator.comparing(RepaymentScheduleDTO::getDueDate));
     }
 
-    public DashboardResponse getDashboard(Long userId, String keyword, String roleFilter, String sortType, int page) {
+    public DashboardResponse getDashboard(Long userId, String keyword, String roleFilter, String statusFilter, String sortType, int page) {
         return buildDashboard(
                 getContractScheduleContexts(userId),
                 userId,
                 keyword,
                 roleFilter,
+                statusFilter,
                 sortType,
                 page
         );
@@ -359,6 +370,7 @@ public class DashboardService {
                 contexts,
                 userId,
                 null,
+                "ALL",
                 "ALL",
                 "CREATED_DESC",
                 1

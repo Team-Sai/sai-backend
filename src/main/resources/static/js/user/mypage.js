@@ -350,7 +350,7 @@ document.addEventListener(
 
             setText(
                 "user-token",
-                data.userToken ?? "SAI-LCQWZGJC"
+                data.userToken ?? ""
             );
 
             setText(
