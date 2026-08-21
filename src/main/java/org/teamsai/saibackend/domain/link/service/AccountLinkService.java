@@ -18,7 +18,6 @@ public class AccountLinkService {
 
     private final UserMapper userMapper;
     private final LinkedBankAccountService linkedBankAccountService;
-    private final UserKeyRevoker userKeyRevoker;
 
     @Transactional
     public void completeLink(Long userId, String userKey, List<Long> accountIds) {
