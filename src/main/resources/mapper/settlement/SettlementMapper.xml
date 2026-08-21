@@ -129,6 +129,7 @@
         s.due_date AS dueDate,
         rs.start_date AS startDate,
         rs.end_date AS endDate,
+        s.cycle_date AS cycleDate,
         s.created_at AS createdAt
 
         FROM settlement s

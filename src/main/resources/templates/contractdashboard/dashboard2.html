@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="/css/settlement/settlement-common.css">
     <link rel="stylesheet" href="/css/settlement/settlement-list.css">
     <link rel="stylesheet" href="/css/matching/matching-review-modal.css">
+    <link rel="stylesheet" href="/css/contractdashboard/contract-dashboard.css">
+    <link rel="stylesheet" href="/css/contract/contract-form.css">
 </head>
 <body class="app-shell-page">
 <header th:replace="~{fragments/app-shell :: appHeader('contract')}"></header>
@@ -42,7 +44,13 @@
         <div class="settlement-table settlement-table-head contract2-table-head contract2-table-head-wide"><span>계약명</span><span>역할</span><span>거래 금액(원금/잔액)</span><span>다음 상환 예정금액</span><span>다음 상환일</span><span>계약 상태</span><span>만기일</span><span>상세</span></div>
         <div id="contract-list" class="settlement-list"></div>
         <div id="contract-empty-state" class="empty-state" hidden><h2>표시할 계약 없습니다.</h2><p>계약을 만들면 이곳에서 확인할 수 있어요.</p><button id="empty-create-button" class="button button-primary" type="button">첫 계약 만들기</button></div>
+        <div id="pagination" class="pagination"></div>
     </section>
+
+    <p class="disclaimer">
+        * 본 화면에 표시되는 금액과 일정은 각 계약의 내용을 요약하여 참고용으로 안내하는 정보이며, 실제 입금/처리 시점에 따라 표시된 상태와 차이가 있을 수 있습니다. 금액은 원 단위 미만은 반올림하여 표시됩니다.
+    </p>
+
 </main>
 
 <footer th:replace="~{fragments/app-shell :: appFooter}"></footer>
