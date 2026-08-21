@@ -240,11 +240,9 @@
 
     <update id="updateCreditorSignatureOnly">
         UPDATE loan_contract
-        SET
-        creditor_signature = #{creditorSignature},
-        status = #{status},
-        updated_at = NOW()
+        SET creditor_signature = #{creditorSignature}, status = #{status}, updated_at = NOW()
         WHERE contract_id = #{contractId}
+        AND creditor_signature IS NULL
     </update>
 
     <update id="updateDebtorSignatureOnly">
@@ -254,6 +252,7 @@
         status = #{status},
         updated_at = NOW()
         WHERE contract_id = #{contractId}
+        AND debtor_signature IS NULL
     </update>
 
 </mapper>

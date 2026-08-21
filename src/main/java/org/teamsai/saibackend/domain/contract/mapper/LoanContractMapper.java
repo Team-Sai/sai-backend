@@ -51,13 +51,13 @@ public interface LoanContractMapper {
 
     void insertChangedContract(ChangeLoanContractResponse contract);
 
-    void updateCreditorSignatureOnly(
+    int updateCreditorSignatureOnly(
             @Param("contractId") Long contractId,
             @Param("creditorSignature") String creditorSignature,
             @Param("status") ContractStatus status
     );
 
-    void updateDebtorSignatureOnly(
+    int updateDebtorSignatureOnly(
             @Param("contractId") Long contractId,
             @Param("debtorSignature") String debtorSignature,
             @Param("status") ContractStatus status

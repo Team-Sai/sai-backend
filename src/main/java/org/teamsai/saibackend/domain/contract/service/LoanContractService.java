@@ -203,12 +203,18 @@ public class LoanContractService {
 
     @Transactional
     public void updateCreditorSignatureOnly(Long contractId, String signaturePath) {
-        contractMapper.updateCreditorSignatureOnly(contractId, signaturePath, ContractStatus.COMPLETED);
+        int rows = contractMapper.updateCreditorSignatureOnly(contractId, signaturePath, ContractStatus.COMPLETED);
+        if (rows == 0) {
+            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
+        }
     }
 
     @Transactional
     public void updateDebtorSignatureOnly(Long contractId, String signaturePath) {
-        contractMapper.updateDebtorSignatureOnly(contractId, signaturePath, ContractStatus.COMPLETED);
+        int rows = contractMapper.updateDebtorSignatureOnly(contractId, signaturePath, ContractStatus.COMPLETED);
+        if (rows == 0) {
+            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
+        }
     }
 
     public LoanContractResponse buildCompletedSnapshot(LoanContractResponse contract, boolean isCreditor, String signaturePath) {
