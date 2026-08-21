@@ -26,14 +26,7 @@ public class DashboardController  {
     private final DashboardService dashboardService;
 
     @Hidden
-    @GetMapping("/dashboard")
-    public String dashboardPage(){
-
-        return "contractdashboard/dashboard";
-    }
-
-    @Hidden
-    @GetMapping("/dashboard2")
+    @GetMapping("/contract")
     public String dashboard2Page(){
         return "contractdashboard/dashboard2";
     }

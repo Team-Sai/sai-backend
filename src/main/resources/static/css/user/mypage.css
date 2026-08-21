@@ -343,6 +343,11 @@ svg {
     justify-content: space-between;
 }
 
+.info-card > .card-header {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+}
+
 .card-header h2 {
     margin: 0;
     font-size: 17px;
@@ -408,6 +413,38 @@ svg {
     flex-direction: column;
     gap: 11px;
     padding-right: 4px;
+}
+
+/* 연결 계좌는 하나의 카드 안에서 행과 구분선으로 표시한다. */
+.account-list {
+    min-height: 0;
+    max-height: 260px;
+    margin-top: 8px;
+    padding: 0 0 8px;
+    gap: 0;
+    overflow-y: auto;
+    border-bottom: 0;
+}
+
+.account-item {
+    min-height: 56px;
+    padding: 12px 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+}
+
+.account-item:last-child {
+    border-bottom: 1px solid var(--line);
+}
+
+.account-top {
+    align-items: center;
+}
+
+.account-identity {
+    gap: 8px;
 }
 
 .account-list::-webkit-scrollbar {

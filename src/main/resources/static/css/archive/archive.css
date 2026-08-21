@@ -137,6 +137,12 @@ h1 {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
+.archive-card-title .status-pill { margin-left: 8px; }
+.archive-card-main { flex-direction: row; align-items: center; gap: 8px; }
+.archive-card-title { display: flex; align-items: center; gap: 8px; line-height: 26px; }
+.archive-card-sub { margin-left: 8px; white-space: nowrap; line-height: 26px; }
+.archive-card-title .role-badge,
+.archive-card-title .status-pill { line-height: 1; }
 
 .archive-card-sub {
     color: #888;
@@ -402,3 +408,70 @@ h1 {
         z-index: auto;
     }
 }
+
+/* Shared dashboard list treatment */
+body.app-shell-page {
+    background: #f5f7fb;
+    color: #151922;
+    font-family: Pretendard, "Apple SD Gothic Neo", Arial, sans-serif;
+}
+
+.archive-container {
+    width: min(1344px, calc(100% - 96px));
+    max-width: none;
+    padding: 36px 0 96px;
+}
+
+.archive-heading { margin-bottom: 16px; }
+.archive-heading .subtitle { color: #667085; font-size: 14px; }
+.archive-tabs {
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.tab-btn {
+    min-height: 44px;
+    padding: 0 20px;
+    border: 1px solid #c8d0d8;
+    border-radius: 8px;
+    background: #fff;
+    color: #34404d;
+    font-size: 16px;
+    font-weight: 700;
+}
+.tab-btn.active { border-color: #0f8a5f; background: #0f8a5f; }
+.archive-list {
+    gap: 0;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #d9dee8;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(28,39,60,.08);
+}
+.archive-card {
+    min-height: 78px;
+    padding: 16px 20px;
+    border-radius: 0;
+    border-bottom: 1px solid #d9dee8;
+    box-shadow: none;
+    transform: none;
+}
+.archive-card:last-child { border-bottom: 0; }
+.archive-card:hover { background: #f9fafc; box-shadow: none; transform: none; }
+.role-badge, .status-pill { border-radius: 6px; }
+.role-badge.creditor { background: #e9f7f0; color: #0f8a5f; }
+.role-badge.debtor { background: #eef4ff; color: #275dc7; }
+.role-badge.shared, .role-badge.recurring { background: #eef4ff; color: #275dc7; }
+.status-pill.ongoing { background: #eef4ff; color: #275dc7; }
+.status-pill.completed { background: #edf0f5; color: #667085; }
+.btn-pdf-download, .pager button {
+    min-height: 44px;
+    padding: 0 20px;
+    border: 1px solid #c8d0d8;
+    border-radius: 8px;
+    background: #fff;
+    color: #34404d;
+    font-size: 16px;
+    font-weight: 700;
+}
+.btn-pdf-download:hover { background: #e9f7f0; border-color: #0f8a5f; }
+.empty-state, .error-state { padding: 64px 20px; color: #667085; }

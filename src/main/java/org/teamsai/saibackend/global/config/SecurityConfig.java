@@ -73,8 +73,7 @@ public class SecurityConfig {
 
                                         "/accounts/**",
 
-                                        "/dashboard",
-                                        "/dashboard2",
+                                        "/contract",
                                         "/settlements",
                                         "/settlements/**",
                                         "/contracts/**",
@@ -93,6 +92,7 @@ public class SecurityConfig {
                                         "/css/**",
                                         "/js/**",
                                         "/images/**",
+                                        "/font/**",
                                         "/favicon.ico",
                                         "/error"
                                 )

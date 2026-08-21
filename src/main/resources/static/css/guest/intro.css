@@ -95,7 +95,7 @@ a {
   margin: 0;
   font-size: 65px;
   line-height: 1.18;
-  letter-spacing: -1.28px;
+  letter-spacing: normal;
   font-weight: 700;
   color: #131b2e
 }
@@ -354,7 +354,7 @@ a {
 .split-section .section-copy h2,.calendar-section h2,.cta h2 {
   font-size: 55px;
   line-height: 1.38;
-  letter-spacing: -1.8px;
+  letter-spacing: normal;
   margin: 28px 0 26px;
   font-weight: 700
 }

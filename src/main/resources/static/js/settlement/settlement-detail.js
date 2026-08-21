@@ -3,9 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const toast = document.getElementById("toast");
     const closeButton = document.getElementById("close-button");
     const syncButton = document.getElementById("sync-button");
-    const refreshButton = document.getElementById("refresh-button");
-    const changeAccountButton =
-        document.getElementById("change-account-button");
     let currentLinkedAccountId = null;
 
     if (!settlementId) {
@@ -15,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadPage();
 
-    if (refreshButton) refreshButton.addEventListener("click", loadPage);
     if (closeButton) closeButton.addEventListener("click", closeSettlement);
     if (syncButton) syncButton.addEventListener("click", syncTransactions);
 
@@ -276,7 +272,12 @@ document.addEventListener("DOMContentLoaded", () => {
             item.className = "participant-avatar";
 
             item.innerHTML = `
-                <div class="avatar-circle">◎</div>
+                <div class="avatar-circle" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="img">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M4 21a8 8 0 0 1 16 0"></path>
+                    </svg>
+                </div>
                 <strong>${escapeHtml(obligation.participantName || `참여자 #${obligation.participantId}`)}</strong>
                 <small>${escapeHtml(getPaymentStatusText(obligation.paymentStatus))}</small>
             `;
@@ -397,9 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function setLoading(loading) {
-        if (!refreshButton) return;
-        refreshButton.disabled = loading;
-        refreshButton.textContent = loading ? "불러오는 중..." : "↻ 새로고침";
+        document.body.classList.toggle("is-loading", loading);
     }
 
     function showToast(message, isError = false) {

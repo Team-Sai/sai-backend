@@ -7,6 +7,7 @@ import org.teamsai.saibackend.domain.account.dto.LinkedBankAccountDTO;
 
 import java.util.List;
 import java.util.Optional;
+import java.math.BigDecimal;
 
 @Mapper
 public interface LinkedBankAccountMapper {
@@ -26,5 +27,10 @@ public interface LinkedBankAccountMapper {
     int updateLastSyncedTransactionId(
             @Param("linkedAccountId") Long linkedAccountId,
             @Param("transactionId") Long transactionId
+    );
+
+    int updateBalance(
+            @Param("linkedAccountId") Long linkedAccountId,
+            @Param("balance") BigDecimal balance
     );
 }

@@ -83,4 +83,11 @@
         WHERE linked_account_id = #{linkedAccountId}
         AND (last_synced_transaction_id IS NULL OR last_synced_transaction_id &lt; #{transactionId})
     </update>
+
+    <update id="updateBalance">
+        UPDATE linked_bank_account
+        SET balance = #{balance},
+            updated_at = NOW()
+        WHERE linked_account_id = #{linkedAccountId}
+    </update>
 </mapper>

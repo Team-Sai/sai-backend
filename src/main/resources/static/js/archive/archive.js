@@ -23,6 +23,14 @@
             .replaceAll(">", "&gt;");
     }
 
+    function setArchiveMetadata(element, text) {
+        if (element) element.textContent = text;
+    }
+
+    function removeDuplicateStatusBadges(listEl) {
+        listEl.querySelectorAll(".card-actions .status-pill").forEach((badge) => badge.remove());
+    }
+
     function renderList(contracts) {
         const listEl = document.getElementById("archiveList");
 
@@ -39,8 +47,9 @@
                 <div class="archive-card" data-contract-id="${c.contractId}">
                     <div class="archive-card-main">
                         <div class="archive-card-title">
-                            <span class="role-badge ${roleClass}">${ROLE_LABELS[c.role] || c.role}</span>
                             ${escapeHtml(c.contractAlias)}
+                            <span class="role-badge ${roleClass}">${ROLE_LABELS[c.role] || c.role}</span>
+                            <span class="status-pill ${statusClass}">${STATUS_LABELS[c.contractStatus] || c.contractStatus}</span>
                         </div>
                         <div class="archive-card-sub">
                             원금 ${Number(c.principalAmount).toLocaleString()}원 · 만기 ${c.maturityDate}
@@ -53,6 +62,15 @@
                 </div>
             `;
         }).join("");
+
+        removeDuplicateStatusBadges(listEl);
+        listEl.querySelectorAll(".archive-card").forEach((card, index) => {
+            const contract = contracts[index];
+            setArchiveMetadata(
+                card.querySelector(".archive-card-sub"),
+                `\uC6D0\uAE08: ${Number(contract.principalAmount || 0).toLocaleString()}\uC6D0 / \uB9CC\uAE30: ${contract.maturityDate || "-"}`
+            );
+        });
 
         listEl.querySelectorAll(".archive-card").forEach((card) => {
             card.addEventListener("click", () => {
@@ -119,11 +137,14 @@
                 <div class="archive-card" data-settlement-id="${s.settlementId}">
                     <div class="archive-card-main">
                         <div class="archive-card-title">
-                            <span class="role-badge ${typeClass}">${SETTLEMENT_TYPE_LABELS[s.settlementType] || s.settlementType}</span>
                             ${escapeHtml(s.title)}
+                            <span class="role-badge ${typeClass}">${SETTLEMENT_TYPE_LABELS[s.settlementType] || s.settlementType}</span>
+                            <span class="status-pill ${statusClass}">${SETTLEMENT_STATUS_LABELS[s.settlementStatus] || s.settlementStatus}</span>
                         </div>
                         <div class="archive-card-sub">
-                            마감일 ${s.dueDate || "-"}
+                            ${s.settlementType === "RECURRING" && s.startDate && s.endDate
+                                ? `기간 ${escapeHtml(s.startDate)} ~ ${escapeHtml(s.endDate)}`
+                                : `마감일 ${escapeHtml(s.dueDate || s.endDate || "-")}`}
                         </div>
                     </div>
                     <div class="card-actions">
@@ -133,6 +154,21 @@
                 </div>
             `;
         }).join("");
+
+        removeDuplicateStatusBadges(listEl);
+        listEl.querySelectorAll(".archive-card").forEach((card, index) => {
+            const settlement = settlements[index];
+            const amountLabel = settlement.settlementType === "RECURRING"
+                ? "\uD68C\uCC28\uBCC4 \uAE08\uC561"
+                : "\uC815\uC0B0\uAE08\uC561";
+            const deadline = settlement.settlementType === "RECURRING"
+                ? `\uAE30\uAC04: ${settlement.startDate || "-"} ~ ${settlement.endDate || "-"}`
+                : `\uB9C8\uAC10\uC77C: ${settlement.dueDate || settlement.endDate || "-"}`;
+            setArchiveMetadata(
+                card.querySelector(".archive-card-sub"),
+                `${amountLabel}: ${Number(settlement.totalAmount || 0).toLocaleString()}\uC6D0 / ${deadline}`
+            );
+        });
 
         listEl.querySelectorAll(".archive-card").forEach((card) => {
             card.addEventListener("click", () => {
