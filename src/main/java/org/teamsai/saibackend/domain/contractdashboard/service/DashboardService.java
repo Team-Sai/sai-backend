@@ -91,7 +91,7 @@ public class DashboardService {
 
     private String determineRepaymentStatus(LoanContractResponse contract, List<RepaymentScheduleDTO> schedules) {
         if (schedules.isEmpty() || contract.getStatus() != ContractStatus.COMPLETED) return "ONGOING";
-        return schedules.stream().allMatch(s -> s.getStatus() == RepaymentScheduleStatus.PAID)
+        return schedules.stream().allMatch(s -> s.getStatus().isSettled())
                 ? "COMPLETED" : "REPAYING";
     }
 

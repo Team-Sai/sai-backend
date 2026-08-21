@@ -1,11 +1,3 @@
-function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-}
-
 document.addEventListener("DOMContentLoaded", () => {
 
     const btnFamily = document.getElementById("btnFamily");

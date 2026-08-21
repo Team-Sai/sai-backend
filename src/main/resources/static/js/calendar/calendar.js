@@ -248,8 +248,6 @@
         }
 
         detailList.innerHTML = items.map((item, index) => {
-            const badgeClass = item.type === 'LOAN' ? 'badge-loan' : 'badge-settlement';
-            const badgeLabel = item.type === 'LOAN' ? '대여' : '정산';
             const amount = Number(item.amount).toLocaleString(undefined, { maximumFractionDigits: 0 });
             const isReceivable = item.subLabel === '수취예정' || item.subLabel === '받을 돈';
             const directionClass = isReceivable ? 'is-receivable' : 'is-payable';
