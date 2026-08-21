@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/settlement/settlement-common.css">
     <link rel="stylesheet" href="/css/settlement/settlement-list.css">
     <link rel="stylesheet" href="/css/matching/matching-review-modal.css">
+    <link rel="stylesheet" href="/css/contract/riskcheck.css">
     <link rel="stylesheet" href="/css/contract/contract-form.css">
 </head>
 <body class="app-shell-page">
@@ -23,7 +24,7 @@
         <div class="heading-actions">
             <p class="updated-text">최근 동기화 <span id="sync-time">-</span></p>
             <button id="sync-button" class="button button-secondary" type="button">↻ 거래내역 동기화</button>
-            <button id="create-contract-button" class="button button-primary" type="button">계약 만들기</button>
+            <button id="create-contract-button" class="button button-primary" type="button">계약 생성</button>
         </div>
     </section>
 
@@ -52,11 +53,40 @@
 
 </main>
 
+<div class="modal-overlay" id="relationModalOverlay" style="display:none;">
+    <div class="notice" role="dialog" aria-modal="true" aria-labelledby="relationNoticeTitle">
+        <header class="notice__header">
+            <span class="notice__eyebrow" id="relationNoticeTitle">안내문</span>
+            <button type="button" class="notice__close" id="relationCloseBtn" aria-label="닫기">×</button>
+        </header>
+        <div class="notice__body">
+            <div class="notice__intro">
+                <h2 class="notice__question">거래 당사자와의 관계를<br>선택해 주세요</h2>
+                <p class="notice__desc">관계에 따라 세법상 적용되는 이자 기준이 달라집니다.</p>
+            </div>
+            <div class="relation-options" role="radiogroup" aria-label="거래 당사자와의 관계">
+                <button type="button" id="btnFamily" class="relation-option" role="radio" aria-checked="false">
+                    <span class="relation-option__label">가족·친인척</span>
+                    <span class="relation-option__detail">배우자, 직계가족, 형제자매</span>
+                </button>
+                <button type="button" id="btnAcquaintance" class="relation-option" role="radio" aria-checked="false">
+                    <span class="relation-option__label">지인·기타</span>
+                    <span class="relation-option__detail">친구, 지인, 기타관계</span>
+                </button>
+            </div>
+        </div>
+        <footer class="notice__footer">
+            <button type="button" class="btn btn--primary btn--block" id="relationConfirmBtn" disabled>확인</button>
+        </footer>
+    </div>
+</div>
+
 <footer th:replace="~{fragments/app-shell :: appFooter}"></footer>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <th:block th:replace="~{fragments/matching-review-modal :: matchingReviewModal}"></th:block>
 <th:block th:replace="~{fragments/app-shell :: commonScripts}"></th:block>
 <script src="/js/matching/matching-review-modal.js"></script>
+<script src="/js/contract/riskcheck.js"></script>
 <script th:src="@{/js/contractdashboard/dashboard2.js}"></script>
 </body>
 </html>

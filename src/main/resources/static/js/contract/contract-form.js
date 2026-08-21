@@ -215,7 +215,7 @@
 
     if (isSafe) {
       taxResultArea.innerHTML = `
-        <p class="result-badge result-badge--safe">🟢 세금 안전 범위</p>
+        <p class="result-badge result-badge--safe">세금 안전 범위</p>
         <p class="result-safe-line">안전 이자선: 연 ${safeRate}% 이상</p>
         <p class="result-desc">연간 이자로 아낀 금액이 <strong>${formatWon(savedInterest)}</strong>으로 1,000만 원 미만이라 채무자(돈을 빌리는 분)에게 증여세가 발생하지 않아요!</p>
       `;
@@ -223,9 +223,9 @@
       modalMode = "proceed";
     } else {
       taxResultArea.innerHTML = `
-        <p class="result-badge result-badge--danger">⚠️ 증여세 과세 위험</p>
+        <p class="result-badge result-badge--danger">증여세 과세 위험</p>
         <p class="result-safe-line">증여세를 피하려면 연 ${safeRate}% 이상으로 설정해야 해요.</p>
-        <p class="result-desc">⚠️ 연간 이자로 아낀 금액이 <strong>${formatWon(savedInterest)}</strong>으로 1,000만 원을 초과하여 채무자(돈을 빌리는 분)가 증여세 대상이 될 수 있어요!</p>
+        <p class="result-desc">연간 이자로 아낀 금액이 <strong>${formatWon(savedInterest)}</strong>으로 1,000만 원을 초과하여 채무자(돈을 빌리는 분)가 증여세 대상이 될 수 있어요!</p>
       `;
       btnModalAction.textContent = `안전 이자율(${safeRate}%) 적용하기`;
       modalMode = "apply-safe-rate";

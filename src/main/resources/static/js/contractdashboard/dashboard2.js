@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${Number(c.principalAmount || 0).toLocaleString()}원 / ${Number(c.totalRemainingAmount || 0).toLocaleString()}원</span>
                 <span>${Number(c.nextDueAmount || 0).toLocaleString()}원</span>
                 <span>${escapeHtml(c.nearestScheduleDueDate || '-')}</span>
-                <span class="status-badge ${c.contractStatus === 'COMPLETED' ? 'badge-completed' : 'badge-progress'}">${c.contractStatus === 'COMPLETED' ? '완료' : '진행 중'}</span>
+                <span class="status-badge ${c.repaymentStatus === 'COMPLETED' ? 'badge-completed' : 'badge-progress'}">${c.repaymentStatus === 'COMPLETED' ? '완료' : '진행 중'}</span>
                 <span>${escapeHtml(c.maturityDate || '-')}</span>
                 <a class="detail-link" href="/contracts/${encodeURIComponent(c.contractId)}/schedule" aria-label="계약 상세 보기">›</a>`;
             list.appendChild(row);
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function apply() {
         const keyword = search.value.trim().toLowerCase();
         render(rows.filter(c => (!keyword || String(c.contractAlias || '').toLowerCase().includes(keyword))
-            && (status.value === 'ALL' || c.contractStatus === status.value)));
+            && (status.value === 'ALL' || (status.value === 'COMPLETED' ? c.repaymentStatus === 'COMPLETED' : c.repaymentStatus !== 'COMPLETED'))));
     }
 
     async function load() {
@@ -72,13 +72,19 @@ document.addEventListener('DOMContentLoaded', () => {
     search.addEventListener('input', apply);
     status.addEventListener('change', () => { currentPage = 1; load(); });
     sort.addEventListener('change', () => { currentPage = 1; load(); });
-    document.getElementById('create-contract-button').addEventListener('click', () => location.href = '/contracts/new');
-    document.getElementById('empty-create-button').addEventListener('click', () => location.href = '/contracts/new');
+    const openRelationModal = () => {
+        const overlay = document.getElementById('relationModalOverlay');
+        if (overlay) overlay.style.display = 'flex';
+    };
+    document.getElementById('create-contract-button').addEventListener('click', openRelationModal);
+    document.getElementById('empty-create-button').addEventListener('click', openRelationModal);
     document.getElementById('sync-button').addEventListener('click', syncTransactions);
 
     function renderPagination(currentPageNum, totalPages) {
         const pagination = document.getElementById('pagination');
         pagination.innerHTML = '';
+        pagination.hidden = totalPages <= 1;
+        if (totalPages <= 1) return;
 
         for (let i = 1; i <= totalPages; i++) {
             const btn = document.createElement('button');

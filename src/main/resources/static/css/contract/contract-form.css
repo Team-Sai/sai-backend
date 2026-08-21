@@ -1,12 +1,12 @@
 :root {
-  --page: #F7F8FB;
+  --page: #f5f7fb;
   --surface: #FFFFFF;
   --text: #17191D;
   --muted: #697080;
-  --line: #CFD5E2;
-  --primary: #006E2A;
-  --primary-bright: #00C853;
-  --error: #BA1A1A;
+  --line: #d9dee8;
+  --primary: #0f8a5f;
+  --primary-bright: #0f8a5f;
+  --error: #d94c4c;
 
   --font-ui: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
 
@@ -829,7 +829,7 @@ button { font-family: inherit; }
 }
 
 .notice__body {
-  padding: 24px;
+  padding: 16px;
 }
 
 .notice__intro {
@@ -858,13 +858,13 @@ button { font-family: inherit; }
   background: var(--page);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  padding: 16px 18px;
+  padding: 16px;
   font-size: 13.5px;
   color: var(--text);
 }
 
 .summary-box p {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   display: flex;
   justify-content: space-between;
 }
@@ -888,7 +888,7 @@ button { font-family: inherit; }
 }
 
 .result-area {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .result-badge {
@@ -896,7 +896,7 @@ button { font-family: inherit; }
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 9999px;
+  border-radius: 3px;
   font-size: 13.5px;
   font-weight: 700;
   margin: 0 0 8px;

@@ -89,6 +89,12 @@ public class DashboardService {
                 : DashboardContractStatus.ONGOING;
     }
 
+    private String determineRepaymentStatus(LoanContractResponse contract, List<RepaymentScheduleDTO> schedules) {
+        if (schedules.isEmpty() || contract.getStatus() != ContractStatus.COMPLETED) return "ONGOING";
+        return schedules.stream().allMatch(s -> s.getStatus().isSettled())
+                ? "COMPLETED" : "REPAYING";
+    }
+
     private ContractRole determineRole(LoanContractResponse contract, Long userId) {
         return contract.getCreditorId().equals(userId)
                 ? ContractRole.CREDITOR
@@ -131,6 +137,7 @@ public class DashboardService {
                 .totalRemainingAmount(totalRemaining)
                 .thisMonthDueAmount(thisMonthDue)
                 .contractStatus(contractStatus)
+                .repaymentStatus(determineRepaymentStatus(contract, schedules))
                 .paymentStatus(paymentStatus)
                 .maturityDate(contract.getMaturityDate())
                 .nearestScheduleDueDate(nearestDueDate)
@@ -248,10 +255,10 @@ public class DashboardService {
 
     private List<DashboardContractRowResponse> filterByStatus(List<DashboardContractRowResponse> rows, String statusFilter) {
         if (statusFilter == null || statusFilter.isBlank() || statusFilter.equals("ALL")) return rows;
-        if (statusFilter.equals("ONGOING") || statusFilter.equals("COMPLETED")) {
-            DashboardContractStatus status = DashboardContractStatus.valueOf(statusFilter);
-            return rows.stream().filter(row -> row.getContractStatus() == status).toList();
-        }
+        if (statusFilter.equals("ONGOING")) return rows.stream()
+                .filter(row -> !"COMPLETED".equals(row.getRepaymentStatus())).toList();
+        if (statusFilter.equals("COMPLETED")) return rows.stream()
+                .filter(row -> "COMPLETED".equals(row.getRepaymentStatus())).toList();
         throw DashboardErrorCode.INVALID_STATUS_FILTER.toException();
     }
 

@@ -153,7 +153,7 @@ function renderSchedulePage() {
     const pageItems = allSchedules.slice(startIndex, startIndex + PAGE_SIZE);
 
     pageItems.forEach(s => {
-        const statusClass = s.status === 'PAID' ? 'status-paid' : 'status-pending';
+        const statusClass = s.status === 'PAID' ? 'status-badge badge-completed' : 'status-badge badge-progress';
         const statusText = s.status === 'PAID' ? '납부완료' : '납부예정';
 
         tbody.innerHTML += `
@@ -161,7 +161,7 @@ function renderSchedulePage() {
                 <td>${s.sequence}회차</td>
                 <td>${s.dueDate}</td>
                 <td>${s.totalPaymentDue.toLocaleString(undefined, {maximumFractionDigits: 0})}원</td>
-                <td>${s.paidAt ? formatDateTimeKorean(s.paidAt) : '-'}</td>
+                <td>${s.paidAt ? formatDateTimeWithoutSeconds(s.paidAt) : '-'}</td>
                 <td><span class="${statusClass}">${statusText}</span></td>
             </tr>
         `;
@@ -198,6 +198,15 @@ function formatDateTimeKorean(dateString) {
     const minutes = dated.getMinutes();
     const seconds = dated.getSeconds();
     return `${year}년 ${month}월 ${date}일  ${hours}시 ${minutes}분 ${seconds}초`;
+}
+
+function formatDateTimeWithoutSeconds(dateString) {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return '-';
+    return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+    }).format(date);
 }
 
 document.getElementById('btnViewContract').addEventListener('click', function () {

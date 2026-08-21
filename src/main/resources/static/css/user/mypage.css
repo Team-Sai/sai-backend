@@ -719,4 +719,6 @@ body { background: #f5f7fb; }
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(28, 39, 60, 0.08);
 }
-.account-item { background: #e9f7f0; }
+.account-list { background: transparent; border-bottom: 1px solid #d9dee8; }
+.account-item { background: transparent; border: 0; border-bottom: 1px solid #d9dee8; border-radius: 0; box-shadow: none; }
+.account-item:last-child { border-bottom: 0; }

@@ -68,6 +68,11 @@ button,a{font:inherit}
 .manage-button{border:0;border-radius:5px;padding:6px 9px;background:var(--blue);color:#fff;font-size:11px;font-weight:800}.manage-button[disabled]{background:#e5e7eb;color:#7b8490}
 .empty-state{padding:70px 20px;text-align:center;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);min-width:260px;padding:13px 18px;border-radius:8px;background:#17212b;color:#fff;opacity:0;pointer-events:none;transition:.2s;z-index:50;text-align:center}
+.close-confirm-modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(21,25,34,.35);z-index:100}
+.close-confirm-modal[hidden]{display:none}
+.close-confirm-card{width:min(420px,calc(100% - 32px));padding:28px;border:1px solid #d9dee8;border-radius:8px;background:#fff;box-shadow:0 10px 30px rgba(28,39,60,.12);text-align:center}
+.close-confirm-card h2{margin:0 0 8px;font-size:20px}.close-confirm-card p{margin:0;color:#667085}
+.close-confirm-actions{display:flex;justify-content:center;gap:8px;margin-top:24px}.close-confirm-actions .button{min-width:110px;min-height:48px}
 .toast.visible{transform:translate(-50%,0);opacity:1}.toast.error{background:#a72222}
 @media(max-width:980px){.detail-grid{grid-template-columns:1fr}.side-column{grid-template-columns:repeat(2,1fr)}.summary-card{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:720px){.header-inner{padding:16px 20px;flex-wrap:wrap;height:auto}.site-header{height:auto}.main-nav{order:3;width:100%;overflow:auto}.detail-heading{flex-direction:column;align-items:flex-start}.heading-actions{position:static}.summary-card{grid-template-columns:1fr}.summary-item+.summary-item,.summary-progress{border-left:0;border-top:1px solid #edf0f2}.meta-card{padding:16px 18px;flex-direction:column;align-items:flex-start}.meta-divider{width:100%;height:1px}.side-column{grid-template-columns:1fr}}
