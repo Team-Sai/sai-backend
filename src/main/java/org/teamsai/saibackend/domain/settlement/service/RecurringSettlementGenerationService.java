@@ -53,7 +53,7 @@ public class RecurringSettlementGenerationService {
      */
     private boolean catchUpCycles(RecurringSettlementDTO recurring, LocalDate baseDate) {
         SettlementDTO cursorSettlement =
-                settlementMapper.findLatestByRecurringIdForUpdate(recurring.getRecurringSettlementId());
+                settlementMapper.findLatestByRecurringId(recurring.getRecurringSettlementId());
 
         if (cursorSettlement == null) {
             log.warn("직전 회차 없음, 생성 스킵 recurringId={}", recurring.getRecurringSettlementId());
