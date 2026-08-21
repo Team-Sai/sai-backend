@@ -1,7 +1,12 @@
 .schedule-container {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 24px 16px 60px;
+    width: min(1344px, calc(100% - 96px));
+    max-width: none;
+    margin: 36px auto 80px;
+    padding: 0;
+}
+
+body.app-shell-page {
+    background: #f5f7fb;
 }
 
 /* 상단 — 계약명 + 버튼들 */
@@ -18,6 +23,9 @@
     gap: 10px;
 }
 
+.schedule-header__info .contract-alias { order: 1; }
+.schedule-header__info .status-badge { order: 2; }
+
 .schedule-header__actions {
     display: flex;
     align-items: center;
@@ -32,6 +40,16 @@
     font-weight: 600;
     background: #e6f4ec;
     color: #0b3d2e;
+}
+
+.status-badge.badge-progress {
+    background: #edf6ff;
+    color: #2563a8;
+}
+
+.status-badge.badge-completed {
+    background: #edf1f4;
+    color: #65717f;
 }
 
 .contract-alias {
@@ -75,10 +93,11 @@
 /* 카드 공통 */
 .schedule-card {
     background: #fff;
-    border-radius: 12px;
+    border: 1px solid #d9dee8;
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     padding: 20px;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
 }
 
 /* 요약 카드 — 총 상환예정액 / 누적 납부액 / 잔여 상환액 / 진행률 */

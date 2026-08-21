@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (selectedRelation === "FAMILY") {
             window.location.href = "/contracts/new?relation=FAMILY";
         } else if (selectedRelation === "ACQUAINTANCE") {
-            window.location.href = "/contracts/new";
+            window.location.href = "/contracts/new?relation=ACQUAINTANCE";
         }
     });
 

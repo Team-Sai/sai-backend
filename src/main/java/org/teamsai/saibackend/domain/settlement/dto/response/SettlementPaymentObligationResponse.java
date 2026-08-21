@@ -9,6 +9,7 @@ import org.teamsai.saibackend.domain.payment.type.ObligationStatus;
 import org.teamsai.saibackend.domain.payment.type.PaymentStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -24,6 +25,7 @@ public class SettlementPaymentObligationResponse {
     private BigDecimal expectedAmount;
     private BigDecimal paidAmount;
     private BigDecimal remainingAmount;
+    private LocalDateTime latestPaymentAt;
 
     private PaymentStatus paymentStatus;
     private ObligationStatus obligationStatus;

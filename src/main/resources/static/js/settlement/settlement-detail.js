@@ -12,7 +12,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadPage();
 
-    if (closeButton) closeButton.addEventListener("click", closeSettlement);
+    if (closeButton) closeButton.addEventListener("click", () => {
+        document.getElementById("close-confirm-modal")?.removeAttribute("hidden");
+    });
+    document.getElementById("close-cancel-button")?.addEventListener("click", () => {
+        document.getElementById("close-confirm-modal")?.setAttribute("hidden", "");
+    });
+    document.getElementById("close-confirm-button")?.addEventListener("click", () => {
+        document.getElementById("close-confirm-modal")?.setAttribute("hidden", "");
+        closeSettlement();
+    });
     if (syncButton) syncButton.addEventListener("click", syncTransactions);
 
     async function syncTransactions() {
@@ -241,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${formatMoney(obligation.expectedAmount)}원</td>
                 <td>${formatMoney(obligation.paidAmount)}원</td>
                 <td>${formatMoney(obligation.remainingAmount)}원</td>
-                <td>-</td>
+                <td>${obligation.latestPaymentAt ? formatDateTime(obligation.latestPaymentAt) : '-'}</td>
                 <td>${createPaymentStatusChip(obligation.paymentStatus)}</td>
                 <td>
                     <button class="manage-button" type="button" disabled>-</button>
@@ -287,8 +296,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function closeSettlement() {
-        if (!window.confirm("이 정산을 마감하시겠습니까?")) return;
-
         try {
             if (closeButton) closeButton.disabled = true;
             await requestJson(`/api/settlements/${settlementId}/close`, { method: "POST" });
