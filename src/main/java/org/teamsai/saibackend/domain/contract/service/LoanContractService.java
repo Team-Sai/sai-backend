@@ -11,7 +11,6 @@ import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.ChangeLoanContractResponse;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contract.event.ContractChangeApprovedEvent;
 import org.teamsai.saibackend.domain.contract.event.ContractCompletedEvent;
 import org.teamsai.saibackend.domain.contract.event.ContractCreatedEvent;
 import org.teamsai.saibackend.domain.contract.exception.LoanContractErrorCode;
@@ -133,10 +132,6 @@ public class LoanContractService {
         String savedPath = fileService.saveSignatureFile(contractId, signature);
         contractMapper.updateDebtorSignature(contractId, debtorAddress, savedPath, ContractStatus.COMPLETED);
 
-        if (contract.getPreviousContractId() != null) {
-            eventPublisher.publishEvent(new ContractChangeApprovedEvent(contractId));
-        }
-
         LoanContractResponse completedContract = withPartyInfo(
                 contract.toBuilder()
                         .debtorAddress(debtorAddress)
@@ -204,6 +199,32 @@ public class LoanContractService {
     @Transactional
     public void supersedeContract(Long contractId) {
         contractMapper.updateChangeStatus(contractId, ContractStatus.SUPERSEDED);
+    }
+
+    @Transactional
+    public void updateCreditorSignatureOnly(Long contractId, String signaturePath) {
+        int rows = contractMapper.updateCreditorSignatureOnly(contractId, signaturePath, ContractStatus.COMPLETED);
+        if (rows == 0) {
+            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
+        }
+    }
+
+    @Transactional
+    public void updateDebtorSignatureOnly(Long contractId, String signaturePath) {
+        int rows = contractMapper.updateDebtorSignatureOnly(contractId, signaturePath, ContractStatus.COMPLETED);
+        if (rows == 0) {
+            throw LoanContractErrorCode.CONTRACT_ALREADY_COMPLETED.toException();
+        }
+    }
+
+    public LoanContractResponse buildCompletedSnapshot(LoanContractResponse contract, boolean isCreditor, String signaturePath) {
+        return withPartyInfo(
+                contract.toBuilder()
+                        .creditorSignature(isCreditor ? signaturePath : contract.getCreditorSignature())
+                        .debtorSignature(!isCreditor ? signaturePath : contract.getDebtorSignature())
+                        .status(ContractStatus.COMPLETED)
+                        .build()
+        );
     }
 
 }

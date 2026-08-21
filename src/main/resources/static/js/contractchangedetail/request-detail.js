@@ -85,7 +85,7 @@ document.getElementById('approveButton').addEventListener('click', function () {
         alert('변경된 계약 정보를 아직 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
         return;
     }
-    window.location.href = `/contracts/${newContractId}/approve`;
+    window.location.href = `/contracts/${newContractId}/change-approval`;
 });
 
 const rejectButton = document.getElementById('rejectButton');

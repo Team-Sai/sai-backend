@@ -18,6 +18,7 @@ import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
+import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 @Tag(
@@ -30,6 +31,7 @@ import org.teamsai.saibackend.global.security.CustomUserDetails;
 public class LoanContractController {
 
     private final LoanContractService contractService;
+    private final ContractChangeService contractChangeService;
 
     @Operation(hidden = true)
     @GetMapping("/contracts/new")
@@ -149,7 +151,7 @@ public class LoanContractController {
             description = "로그인이 된 사용자가 차용증 ID로 차용증 상세 내용을 조회합니다."
     )
     @ResponseBody
-    @GetMapping("/api/contracts/{contractId}/listdetails")
+    @GetMapping(value = "/api/contracts/{contractId}/listdetails")
     public LoanContractResponse getContractDetails(
             @PathVariable Long contractId,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -164,5 +166,41 @@ public class LoanContractController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         return contractService.findContract(contractId, userDetails.getUserId());
+    }
+
+    @Operation(hidden = true)
+    @GetMapping("/contracts/{contractId}/change-approval")
+    public String contractChangeApprovalPage(
+            @PathVariable Long contractId,
+            Model model
+    ) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-approval-form";
+    }
+
+    @Operation(hidden = true)
+    @GetMapping("/contracts/{contractId}/change-approval/signature")
+    public String contractChangeApprovalSignaturePage(
+            @PathVariable Long contractId,
+            Model model
+    ) {
+        model.addAttribute("contractId", contractId);
+        return "contract/contract-approval-signature";
+    }
+
+    @Operation(
+            summary = "계약 변경 승인 및 전자서명 제출",
+            description = "계약 변경 요청받은 상대방(요청자 본인은 불가)이 본인인증 완료 후 서명을 제출하면, 역할(채권자/채무자)에 맞는 서명란에 반영하고 계약을 완료 처리합니다."
+    )
+    @ResponseBody
+    @PatchMapping(value = "/api/contracts/{contractId}/change-approval", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ContractStatus approveChange(
+            @PathVariable Long contractId,
+            @Parameter(description = "전자서명 이미지 파일") @RequestParam("signature") MultipartFile signature,
+            @Parameter(description = "본인인증 요청 식별값", example = "identity-verification-a1b2c3d4")
+            @RequestParam String identityVerificationId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return contractChangeService.approveChange(contractId, userDetails.getUserId(), signature, identityVerificationId);
     }
 }
