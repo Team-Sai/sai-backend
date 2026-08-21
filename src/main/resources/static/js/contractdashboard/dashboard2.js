@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sort = document.getElementById('contract-sort');
     const toast = document.getElementById('toast');
     let rows = [];
+    let currentPage = 1;
 
     const escapeHtml = value => String(value ?? '')
         .replaceAll('&', '&amp;')
@@ -54,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function load() {
-        const url = `/api/dashboard?keyword=${encodeURIComponent(search.value)}&roleFilter=ALL&statusFilter=${status.value}&sortType=${sort.value}&page=1`;
+        const url = `/api/dashboard?keyword=${encodeURIComponent(search.value)}&roleFilter=ALL&statusFilter=${status.value}&sortType=${sort.value}&page=${currentPage}`;
         const response = await authFetch(url);
         if (!response.ok) throw new Error('차용증 조회에 실패했습니다.');
         const data = await response.json();
@@ -64,15 +65,32 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('borrowed-amount').textContent = Number(data.summary?.totalBorrowedAmount || 0).toLocaleString();
         document.getElementById('receivable-count').textContent = `${data.summary?.receivableCount ?? 0}건`;
         document.getElementById('payable-count').textContent = `${data.summary?.payableCount ?? 0}건`;
+        renderPagination(data.currentPage || 1, data.totalPages || 1);
         apply();
     }
 
     search.addEventListener('input', apply);
-    status.addEventListener('change', load);
-    sort.addEventListener('change', load);
+    status.addEventListener('change', () => { currentPage = 1; load(); });
+    sort.addEventListener('change', () => { currentPage = 1; load(); });
     document.getElementById('create-contract-button').addEventListener('click', () => location.href = '/contracts/new');
     document.getElementById('empty-create-button').addEventListener('click', () => location.href = '/contracts/new');
     document.getElementById('sync-button').addEventListener('click', syncTransactions);
+
+    function renderPagination(currentPageNum, totalPages) {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            if (i === currentPageNum) btn.classList.add('is-active');
+            btn.addEventListener('click', () => {
+                currentPage = i;
+                load();
+            });
+            pagination.appendChild(btn);
+        }
+    }
 
     async function syncTransactions() {
         const button = document.getElementById('sync-button');

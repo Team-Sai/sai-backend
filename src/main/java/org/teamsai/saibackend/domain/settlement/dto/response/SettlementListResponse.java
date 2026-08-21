@@ -15,6 +15,7 @@ public record SettlementListResponse(
         LocalDate dueDate,
         LocalDate startDate,
         LocalDate endDate,
+        LocalDate cycleDate,
         @JsonIgnore LocalDateTime createdAt
 ) {
 }
