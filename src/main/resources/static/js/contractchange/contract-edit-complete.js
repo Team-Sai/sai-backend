@@ -16,6 +16,6 @@
   }
 
   btnGoDashboard?.addEventListener("click", () => {
-    window.location.href = "/dashboard";
+    window.location.href = "/contract";
   });
 })();

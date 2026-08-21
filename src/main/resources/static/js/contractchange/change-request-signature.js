@@ -43,7 +43,7 @@
 
   if (!contractId || !changeRequestId) {
     alert("잘못된 접근입니다. 변경 요청 화면으로 돌아갑니다.");
-    window.location.href = "/dashboard";
+    window.location.href = "/contract";
     return;
   }
 

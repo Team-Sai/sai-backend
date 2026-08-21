@@ -137,7 +137,7 @@ rejectConfirmButton.addEventListener('click', function () {
                 throw new Error('반려 처리 실패');
             }
             alert('변경 요청을 반려했습니다.');
-            window.location.href = '/dashboard';
+            window.location.href = '/contract';
         })
         .catch(() => {
             rejectError.textContent = '반려 처리에 실패했습니다. 다시 시도해주세요.';

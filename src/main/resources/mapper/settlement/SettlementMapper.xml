@@ -125,9 +125,11 @@
         s.settlement_type AS settlementType,
         s.split_type AS splitType,
         s.settlement_status AS settlementStatus,
+        s.total_amount AS totalAmount,
         s.due_date AS dueDate,
         rs.start_date AS startDate,
         rs.end_date AS endDate,
+        s.cycle_date AS cycleDate,
         s.created_at AS createdAt
 
         FROM settlement s

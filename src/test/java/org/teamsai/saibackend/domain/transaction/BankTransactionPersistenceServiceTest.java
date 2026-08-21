@@ -53,13 +53,21 @@ class BankTransactionPersistenceServiceTest {
     private BankTransactionResponse createTransactionResponse(
             Long transactionId, String transactionKey, String transactionType
     ) {
+        return createTransactionResponse(transactionId, transactionKey, transactionType,
+                BigDecimal.valueOf(150_000));
+    }
+
+    private BankTransactionResponse createTransactionResponse(
+            Long transactionId, String transactionKey, String transactionType,
+            BigDecimal balanceAfter
+    ) {
         return new BankTransactionResponse(
                 transactionId,
                 transactionKey,
                 BANK_ACCOUNT_ID,
                 transactionType,
                 BigDecimal.valueOf(50_000),
-                BigDecimal.valueOf(150_000),
+                balanceAfter,
                 "홍길동",
                 "110-***-1234",
                 "테스트 입금",
@@ -105,6 +113,42 @@ class BankTransactionPersistenceServiceTest {
 
         // 마지막 원소(12)가 아니라 실제 최댓값(13)으로 갱신되어야 한다.
         verify(linkedBankAccountMapper).updateLastSyncedTransactionId(eq(LINKED_ACCOUNT_ID), eq(13L));
+        verify(linkedBankAccountMapper).updateBalance(
+                eq(LINKED_ACCOUNT_ID), eq(BigDecimal.valueOf(150_000)));
+    }
+
+    @Test
+    @DisplayName("가장 최근 거래의 balanceAfter를 연결 계좌 잔액으로 갱신한다")
+    void updatesBalanceFromLatestTransaction() {
+        List<BankTransactionResponse> transactions = List.of(
+                createTransactionResponse(11L, "MOCK-TX-A", "DEPOSIT",
+                        BigDecimal.valueOf(120_000)),
+                createTransactionResponse(13L, "MOCK-TX-B", "DEPOSIT",
+                        BigDecimal.valueOf(180_000)),
+                createTransactionResponse(12L, "MOCK-TX-C", "WITHDRAWAL",
+                        BigDecimal.valueOf(150_000))
+        );
+
+        bankTransactionPersistenceService.saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions);
+
+        verify(linkedBankAccountMapper).updateBalance(
+                eq(LINKED_ACCOUNT_ID), eq(BigDecimal.valueOf(180_000)));
+    }
+
+    @Test
+    @DisplayName("가장 최근 거래의 balanceAfter가 null이면 잔액을 갱신하지 않는다")
+    void skipsBalanceUpdateWhenLatestBalanceIsNull() {
+        List<BankTransactionResponse> transactions = List.of(
+                createTransactionResponse(11L, "MOCK-TX-A", "DEPOSIT",
+                        BigDecimal.valueOf(120_000)),
+                createTransactionResponse(13L, "MOCK-TX-B", "DEPOSIT", null)
+        );
+
+        bankTransactionPersistenceService.saveAndAdvanceCursor(LINKED_ACCOUNT_ID, transactions);
+
+        verify(linkedBankAccountMapper, never()).updateBalance(any(), any());
+        verify(linkedBankAccountMapper).updateLastSyncedTransactionId(
+                eq(LINKED_ACCOUNT_ID), eq(13L));
     }
 
     @Test
