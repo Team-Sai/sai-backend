@@ -66,9 +66,12 @@ class RepaymentDueReminderJobIntegrationTest {
 
     @AfterEach
     void cleanUp() {
-        jdbcTemplate.update("DELETE FROM notification WHERE user_id >= 90000");
-        jdbcTemplate.update("DELETE FROM repayment_schedule WHERE schedule_id >= 90000");
+        jdbcTemplate.update("DELETE FROM repayment_schedule WHERE contract_id >= 90000");
+        jdbcTemplate.update("DELETE FROM contract_account WHERE contract_id >= 90000");
+        jdbcTemplate.update("DELETE FROM loan_contract_change_request WHERE contract_id >= 90000");
+        jdbcTemplate.update("UPDATE loan_contract SET previous_contract_id = NULL WHERE contract_id >= 90000"); // 자기참조 끊기
         jdbcTemplate.update("DELETE FROM loan_contract WHERE contract_id >= 90000");
+        jdbcTemplate.update("DELETE FROM notification WHERE user_id >= 90000");
         jdbcTemplate.update("DELETE FROM users WHERE user_id >= 90000");
     }
 

@@ -141,7 +141,6 @@ public class AccountLinkFlowController {
                 );
                 return errorView(model, "계좌 연동에 실패했습니다.");
             }
-            // 스택트레이스가 필요한 ERROR 로그는 GlobalExceptionHandler가 남기므로 여기서는 중복 로깅하지 않는다.
             log.warn(
                     "[AccountLinkFlowController] 계좌 연동 처리 중 예상치 못한 오류 발생 - userId: {}, accountIds: {}, message: {}",
                     userId, ids, e.getMessage()
