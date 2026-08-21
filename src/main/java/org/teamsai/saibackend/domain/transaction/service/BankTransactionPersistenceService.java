@@ -43,11 +43,6 @@ public class BankTransactionPersistenceService {
             bankTransactionMapper.insertOrGetId(toDto(linkedAccountId, tx, now));
         }
 
-        Long latestTransactionId = transactions.stream()
-                .map(BankTransactionResponse::transactionId)
-                .max(Long::compareTo)
-                .orElseThrow();
-
         BankTransactionResponse latestTransaction = transactions.stream()
                 .max(Comparator.comparing(BankTransactionResponse::transactionId))
                 .orElseThrow();
@@ -59,7 +54,10 @@ public class BankTransactionPersistenceService {
             );
         }
 
-        linkedBankAccountMapper.updateLastSyncedTransactionId(linkedAccountId, latestTransactionId);
+        linkedBankAccountMapper.updateLastSyncedTransactionId(
+                linkedAccountId,
+                latestTransaction.transactionId()
+        );
 
         return transactions.size();
     }

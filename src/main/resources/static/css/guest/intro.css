@@ -2,6 +2,10 @@
   box-sizing: border-box
 }
 
+:root {
+  --intro-edge: max(48px, calc((100vw - 1344px) / 2));
+}
+
 html {
   scroll-behavior: smooth
 }
@@ -95,7 +99,7 @@ a {
   margin: 0;
   font-size: 65px;
   line-height: 1.18;
-  letter-spacing: normal;
+  letter-spacing: -1.28px;
   font-weight: 700;
   color: #131b2e
 }
@@ -258,7 +262,7 @@ a {
 
 .hero.is-open .hero-card {
   opacity: 1;
-  transform: scale(1);
+  transform: scale(.9);
   animation: hero-card-float 6s ease-in-out 1.2s infinite;
 }
 
@@ -344,17 +348,17 @@ a {
 }
 
 .one-place .section-copy {
-  left: 330px;
+  left: var(--intro-edge);
   top: 115px;
   width: 500px;
-  transform: scale(1.08);
+  transform: scale(1);
   transform-origin: left top
 }
 
 .split-section .section-copy h2,.calendar-section h2,.cta h2 {
   font-size: 55px;
   line-height: 1.38;
-  letter-spacing: normal;
+  letter-spacing: -1.8px;
   margin: 28px 0 26px;
   font-weight: 700
 }
@@ -395,7 +399,7 @@ a {
 .summary-card {
   position: absolute;
   left: auto;
-  right: 330px;
+  right: var(--intro-edge);
   top: 96px;
   width: 450px;
   height: 620px;
@@ -456,7 +460,7 @@ a {
 }
 
 .person-one {
-  left: 330px;
+  left: var(--intro-edge);
   top: 440px;
   width: 540px;
   height: 450px;
@@ -471,7 +475,7 @@ a {
 
 .iou-card {
   position: absolute;
-  left: 330px;
+  left: var(--intro-edge);
   top: 108px;
   width: 500px;
   height: 660px;
@@ -524,7 +528,7 @@ a {
 
 .iou-card+.section-copy {
   left: auto;
-  right: 330px;
+  right: var(--intro-edge);
   top: 210px;
   width: 500px
 }
@@ -537,7 +541,7 @@ a {
 .diagnosis-card {
   position: absolute;
   left: auto;
-  right: 330px;
+  right: var(--intro-edge);
   top: 100px;
   width: 520px;
   height: 760px;
@@ -608,7 +612,7 @@ a {
 }
 
 .diagnosis-section .section-copy {
-  left: 330px;
+  left: var(--intro-edge);
   top: 150px;
   width: 500px
 }
@@ -628,7 +632,7 @@ a {
 }
 
 .auto-match .section-copy {
-  left: 330px;
+  left: var(--intro-edge);
   top: 210px;
   width: 500px;
   text-align: left
@@ -636,7 +640,7 @@ a {
 
 .auto-match .activity-card {
   left: auto;
-  right: 330px;
+  right: var(--intro-edge);
   top: 150px
 }
 

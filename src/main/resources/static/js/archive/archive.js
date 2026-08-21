@@ -27,10 +27,6 @@
         if (element) element.textContent = text;
     }
 
-    function removeDuplicateStatusBadges(listEl) {
-        listEl.querySelectorAll(".card-actions .status-pill").forEach((badge) => badge.remove());
-    }
-
     function renderList(contracts) {
         const listEl = document.getElementById("archiveList");
 
@@ -56,14 +52,12 @@
                         </div>
                     </div>
                     <div class="card-actions">
-                        <span class="status-pill ${statusClass}">${STATUS_LABELS[c.contractStatus] || c.contractStatus}</span>
                         <button type="button" class="btn-pdf-download" data-contract-id="${c.contractId}">PDF 다운로드</button>
                     </div>
                 </div>
             `;
         }).join("");
 
-        removeDuplicateStatusBadges(listEl);
         listEl.querySelectorAll(".archive-card").forEach((card, index) => {
             const contract = contracts[index];
             setArchiveMetadata(
@@ -148,14 +142,12 @@
                         </div>
                     </div>
                     <div class="card-actions">
-                        <span class="status-pill ${statusClass}">${SETTLEMENT_STATUS_LABELS[s.settlementStatus] || s.settlementStatus}</span>
                         <button type="button" class="btn-pdf-download" data-settlement-id="${s.settlementId}">PDF 다운로드</button>
                     </div>
                 </div>
             `;
         }).join("");
 
-        removeDuplicateStatusBadges(listEl);
         listEl.querySelectorAll(".archive-card").forEach((card, index) => {
             const settlement = settlements[index];
             const amountLabel = settlement.settlementType === "RECURRING"
