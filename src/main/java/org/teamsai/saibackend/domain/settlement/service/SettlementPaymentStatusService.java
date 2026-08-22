@@ -1,6 +1,7 @@
 package org.teamsai.saibackend.domain.settlement.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.payment.type.ObligationStatus;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SettlementPaymentStatusService {
@@ -115,7 +117,7 @@ public class SettlementPaymentStatusService {
     public boolean areAllObligationsResolved(Long settlementId) {
         List<SettlementObligationStatusResponse> obligations =
                 paymentStatusMapper.findAllObligationStatusesBySettlementId(settlementId);
-
+        log.info("areAllObligationsResolved 조회 settlementId={}, obligations={}", settlementId, obligations);
         return !obligations.isEmpty()
                 && obligations.stream().allMatch(o ->
                 isResolved(o.obligationStatus())

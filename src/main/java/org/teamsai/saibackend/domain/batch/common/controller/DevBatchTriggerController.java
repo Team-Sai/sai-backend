@@ -10,6 +10,7 @@ import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.teamsai.saibackend.domain.settlement.service.SettlementCloseService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,6 +25,7 @@ public class DevBatchTriggerController {
 
     private final JobOperator jobOperator;
     private final Map<String, Job> jobs; // Spring이 등록된 모든 Job 빈을 이름→빈으로 자동 주입
+    private final SettlementCloseService settlementCloseService;
 
     private static final Map<String, String> DISPLAY_NAMES = Map.of(
             "repaymentScheduleOverdueJob", "상환 연체 처리",
@@ -37,6 +39,12 @@ public class DevBatchTriggerController {
             "settlementWriteOffJob", "결제의무 상각 처리(정산)",
             "repaymentWriteOffJob", "결제의무 상각 처리(상환)"
     );
+
+    @PostMapping("/close-check/{settlementId}")
+    public ResponseEntity<?> checkAutoClose(@PathVariable Long settlementId) {
+        boolean closed = settlementCloseService.autoCloseIfAllResolved(settlementId);
+        return ResponseEntity.ok(Map.of("settlementId", settlementId, "closed", closed));
+    }
 
     @GetMapping
     public List<Map<String, Object>> list() {

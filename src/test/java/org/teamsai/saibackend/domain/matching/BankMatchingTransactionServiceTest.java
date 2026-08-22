@@ -384,7 +384,10 @@ class BankMatchingTransactionServiceTest {
                         1L,
                         MatchingTargetType.SETTLEMENT
                 )));
-        given(settlementPaymentStatusService.areAllObligationsResolved(10L))
+        // candidateDto(1L, SETTLEMENT)의 targetId는 10L(obligationId) → settlementId 20L로 변환된다고 가정
+        given(paymentObligationMapper.findSettlementIdsByObligationIds(List.of(10L)))
+                .willReturn(List.of(20L));
+        given(settlementPaymentStatusService.areAllObligationsResolved(20L))
                 .willReturn(false);
 
         transactionService.process(
@@ -398,7 +401,7 @@ class BankMatchingTransactionServiceTest {
                 USER_ID,
                 NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
                 "정산이 완납되지 않았습니다.",
-                "Hong Gil Dong님의 10000.00원 입금에 정산과 차용증 후보가 모두 발견되었습니다.",
+                "Hong Gil Dong님의 10000.00원 입금이 정산 금액과 일치하지 않아 확인이 필요합니다.",
                 101L,
                 LINKED_ACCOUNT_ID
         );
@@ -426,7 +429,9 @@ class BankMatchingTransactionServiceTest {
                         1L,
                         MatchingTargetType.SETTLEMENT
                 )));
-        given(settlementPaymentStatusService.areAllObligationsResolved(10L))
+        given(paymentObligationMapper.findSettlementIdsByObligationIds(List.of(10L)))
+                .willReturn(List.of(20L));
+        given(settlementPaymentStatusService.areAllObligationsResolved(20L))
                 .willReturn(true);
 
         transactionService.process(
