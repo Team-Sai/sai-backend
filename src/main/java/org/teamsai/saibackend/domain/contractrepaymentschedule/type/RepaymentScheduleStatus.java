@@ -11,6 +11,6 @@ public enum RepaymentScheduleStatus {
     }
 
     public boolean isSettled() {
-        return this == PAID;
+        return this == PAID || this == WRITTEN_OFF;
     }
 }

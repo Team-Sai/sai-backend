@@ -28,6 +28,7 @@ import org.teamsai.saibackend.domain.user.dto.response.UserResponse;
 import org.teamsai.saibackend.domain.user.service.UserService;
 
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.List;
 import java.util.Objects;
 
@@ -91,6 +92,12 @@ public class ContractChangeService {
 
         if (contract.getStatus() != ContractStatus.COMPLETED) {
             throw ContractChangeErrorCode.CONTRACT_NOT_COMPLETED.toException();
+        }
+
+        if (contract.getStartDate() != null
+                && request.getNewMaturityDate() != null
+                && Period.between(contract.getStartDate(), request.getNewMaturityDate()).toTotalMonths() <= 0) {
+            throw ContractChangeErrorCode.INVALID_MATURITY_DATE.toException();
         }
 
         List<LoanContractChangeDTO> existingRequests = contractChangeMapper.findByContractId(contractId);

@@ -82,6 +82,26 @@ class DashboardServiceTest {
     }
 
     @Test
+    @DisplayName("상각된 상환 회차는 상환 완료로 표시된다")
+    void getDashboard_treatsWrittenOffSchedulesAsCompletedRepayment() {
+        LoanContractResponse contract = buildContract(
+                22L, null, ContractStatus.COMPLETED, "상각 계약", 1L, 2L
+        );
+
+        when(loanContractService.findContractsByUser(USER_ID)).thenReturn(List.of(contract));
+        when(repaymentScheduleService.getSchedulesByContractIds(List.of(22L)))
+                .thenReturn(Map.of(22L, List.of(
+                        buildSchedule(RepaymentScheduleStatus.WRITTEN_OFF, 500_000, LocalDate.now())
+                )));
+
+        DashboardResponse response = dashboardService.getDashboard(
+                USER_ID, null, "ALL", null, null, 1
+        );
+
+        assertThat(response.getContracts().get(0).getRepaymentStatus()).isEqualTo("COMPLETED");
+    }
+
+    @Test
     @DisplayName("부분 납부된 회차는 실제 잔여 납부금액으로 대시보드에 표시된다")
     void getDashboard_usesRemainingPaymentAmountAfterPartialPayment() {
         LoanContractResponse contract = buildContract(

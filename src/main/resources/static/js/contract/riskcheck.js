@@ -1,11 +1,3 @@
-function authHeaders(extra) {
-    const token = sessionStorage.getItem("accessToken");
-    return Object.assign(
-        token ? { Authorization: `Bearer ${token}` } : {},
-        extra || {}
-    );
-}
-
 document.addEventListener("DOMContentLoaded", () => {
 
     const btnFamily = document.getElementById("btnFamily");
@@ -42,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (selectedRelation === "FAMILY") {
             window.location.href = "/contracts/new?relation=FAMILY";
         } else if (selectedRelation === "ACQUAINTANCE") {
-            window.location.href = "/contracts/new";
+            window.location.href = "/contracts/new?relation=ACQUAINTANCE";
         }
     });
 

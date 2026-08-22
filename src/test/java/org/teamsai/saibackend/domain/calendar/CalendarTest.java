@@ -140,7 +140,7 @@ public class CalendarTest {
         assertThat(result).hasSize(1);
         DashboardCalendarItemResponse item = result.get(0);
         assertThat(item.getType()).isEqualTo(PaymentTargetType.SETTLEMENT);
-        assertThat(item.getSubLabel()).isEqualTo("낼 돈");
+        assertThat(item.getSubLabel()).isEqualTo("보낼 돈");
         assertThat(item.getAmount()).isEqualByComparingTo("35000");
         assertThat(item.getDetailUrl()).isEqualTo("/settlements/100");
     }

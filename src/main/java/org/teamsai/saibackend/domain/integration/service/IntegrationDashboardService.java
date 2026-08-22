@@ -330,7 +330,7 @@ public class IntegrationDashboardService {
                         .targetId(context.settlement().settlementId())
                         .type(PaymentTargetType.SETTLEMENT)
                         .title(context.settlement().title())
-                        .subLabel(context.isOwner() ? "받을 돈" : "낼 돈")
+                        .subLabel(context.isOwner() ? "받을 돈" : "보낼 돈")
                         .amount(context.roleRemainingAmount())
                         .detailUrl("/settlements/" + context.settlement().settlementId())
                         .categoryLabel(context.settlement().settlementCategory())

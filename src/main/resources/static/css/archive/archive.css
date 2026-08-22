@@ -6,7 +6,7 @@ body {
     margin: 0;
     padding: 0;
 
-    background: #f7f7f8;
+    background: #f5f7fb;
 
     font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif;
 }
@@ -448,8 +448,8 @@ body.app-shell-page {
     box-shadow: 0 10px 30px rgba(28,39,60,.08);
 }
 .archive-card {
-    min-height: 78px;
-    padding: 16px 20px;
+    min-height: 0;
+    padding: 12px 20px;
     border-radius: 0;
     border-bottom: 1px solid #d9dee8;
     box-shadow: none;
@@ -463,15 +463,21 @@ body.app-shell-page {
 .role-badge.shared, .role-badge.recurring { background: #eef4ff; color: #275dc7; }
 .status-pill.ongoing { background: #eef4ff; color: #275dc7; }
 .status-pill.completed { background: #edf0f5; color: #667085; }
-.btn-pdf-download, .pager button {
-    min-height: 44px;
-    padding: 0 20px;
+.btn-pdf-download {
+    min-height: 36px;
+    padding: 0 12px;
     border: 1px solid #c8d0d8;
-    border-radius: 8px;
+    border-radius: 3px;
     background: #fff;
     color: #34404d;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
+}
+.pager button {
+    min-height: 44px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-size: 16px;
 }
 .btn-pdf-download:hover { background: #e9f7f0; border-color: #0f8a5f; }
 .empty-state, .error-state { padding: 64px 20px; color: #667085; }

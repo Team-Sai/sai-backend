@@ -25,6 +25,7 @@ public class SettlementPaymentObligationResponse {
     private BigDecimal expectedAmount;
     private BigDecimal paidAmount;
     private BigDecimal remainingAmount;
+    private LocalDateTime latestPaymentAt;
 
     private PaymentStatus paymentStatus;
     private ObligationStatus obligationStatus;

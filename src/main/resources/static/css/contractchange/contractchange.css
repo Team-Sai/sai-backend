@@ -26,6 +26,11 @@ body {
     margin: 0 auto;
 }
 
+.change-request-toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); z-index: 100; min-width: 280px; max-width: calc(100% - 32px); padding: 13px 18px; border-radius: 8px; background: #17212b; color: #fff; text-align: center; opacity: 0; pointer-events: none; transition: .2s; }
+.change-request-toast.visible { transform: translate(-50%, 0); opacity: 1; }
+.change-request-toast.error { background: #d94c4c; }
+.change-request-toast.success { background: #0f8a5f; }
+
 .page h1 {
     font-size: 28px;
     margin-bottom: 8px;
