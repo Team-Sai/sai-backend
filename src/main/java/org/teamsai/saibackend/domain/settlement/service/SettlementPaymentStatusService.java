@@ -117,7 +117,6 @@ public class SettlementPaymentStatusService {
     public boolean areAllObligationsResolved(Long settlementId) {
         List<SettlementObligationStatusResponse> obligations =
                 paymentStatusMapper.findAllObligationStatusesBySettlementId(settlementId);
-        log.info("areAllObligationsResolved 조회 settlementId={}, obligations={}", settlementId, obligations);
         return !obligations.isEmpty()
                 && obligations.stream().allMatch(o ->
                 isResolved(o.obligationStatus())
