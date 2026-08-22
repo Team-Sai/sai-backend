@@ -26,7 +26,8 @@
         THEN 'PARTIALLY_PAID'
         ELSE 'PAID'
         END AS paymentStatus,
-        po.obligation_status AS obligationStatus
+        po.obligation_status AS obligationStatus,
+        po.overdue_since AS overdueSince
         FROM payment_obligation po
         JOIN settlement_participant sp
         ON sp.participant_id = po.participant_id
@@ -45,7 +46,8 @@
         sp.user_id,
         u.name,
         po.expected_amount,
-        po.obligation_status
+        po.obligation_status,
+        po.overdue_since
         ORDER BY po.payment_obligation_id
     </select>
 

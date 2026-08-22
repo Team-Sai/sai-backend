@@ -15,6 +15,7 @@ import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
 import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
+import org.teamsai.saibackend.domain.settlement.service.SettlementPaymentStatusService;
 import org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO;
 import org.teamsai.saibackend.domain.transaction.service.BankTransactionService;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionProcessingStatus;
@@ -31,14 +32,16 @@ public class BankMatchingTransactionService {
     private final BankTransactionService bankTransactionService;
     private final BankTransactionMatchCandidateService candidateService;
     private final NotificationService notificationService;
+    private final SettlementPaymentStatusService settlementPaymentStatusService;
 
     @Transactional
     public AutoMatchingTransactionResult process(
             Long userId,
             Long linkedAccountId,
-            BankTransactionDTO bankTransaction
+            BankTransactionDTO bankTransaction,
+            boolean isBatch
     ) {
-        return process(userId, linkedAccountId, bankTransaction, null, null);
+        return process(userId, linkedAccountId, bankTransaction, null, null, isBatch);
     }
 
     @Transactional
@@ -47,7 +50,8 @@ public class BankMatchingTransactionService {
             Long linkedAccountId,
             BankTransactionDTO bankTransaction,
             MatchingTargetType targetType,
-            Long aggregateId
+            Long aggregateId,
+            boolean isBatch
     ) {
         BankTransactionDTO lockedTransaction =
                 bankTransactionService
@@ -80,7 +84,8 @@ public class BankMatchingTransactionService {
                 userId,
                 linkedAccountId,
                 lockedTransaction,
-                result
+                result,
+                isBatch
         );
 
         bankTransactionService.updateStatus(
@@ -96,7 +101,8 @@ public class BankMatchingTransactionService {
             Long userId,
             Long linkedAccountId,
             BankTransactionDTO bankTransaction,
-            AutoMatchingTransactionResult result
+            AutoMatchingTransactionResult result,
+            boolean isBatch
     ) {
         if (result.processStatus()
                 != AutoMatchingProcessStatus.NEEDS_CHECK) {
@@ -115,18 +121,34 @@ public class BankMatchingTransactionService {
                 .anyMatch(candidate -> candidate.getTargetType()
                         == MatchingTargetType.LOAN);
 
-        if (!hasSettlement || !hasLoan) {
+        // 정산+차용증 후보가 동시에 발견된 경우가 최우선 — 수동/배치 관계없이 항상 적용
+        if (hasSettlement && hasLoan) {
+            notificationService.createIfAbsent(
+                    userId,
+                    NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
+                    "입금 거래 확인이 필요합니다.",
+                    createNotificationContent(bankTransaction),
+                    bankTransaction.getBankTransactionId(),
+                    linkedAccountId
+            );
             return;
         }
 
-        notificationService.createIfAbsent(
-                userId,
-                NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
-                "입금 거래 확인이 필요합니다.",
-                createNotificationContent(bankTransaction),
-                bankTransaction.getBankTransactionId(),
-                linkedAccountId
-        );
+        // 그 외에는 배치 실행일 때만, 정산 후보가 완납되지 않았으면 알림
+        if (isBatch) {
+            boolean hasUnresolvedSettlement = candidates.stream()
+                    .filter(c -> c.getTargetType() == MatchingTargetType.SETTLEMENT)
+                    .anyMatch(c -> !settlementPaymentStatusService.areAllObligationsResolved(c.getTargetId()));
+
+            if (hasUnresolvedSettlement) {
+                notificationService.createIfAbsent(
+                        userId, NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
+                        "정산이 완납되지 않았습니다.",
+                        createNotificationContent(bankTransaction),
+                        bankTransaction.getBankTransactionId(), linkedAccountId
+                );
+            }
+        }
     }
 
     private String createNotificationContent(

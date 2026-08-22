@@ -38,7 +38,7 @@ public class BankTransactionRetryService {
         }
 
         AutoMatchingExecutionResult result =
-                bankMatchingService.execute(userId, linkedAccountId);
+                bankMatchingService.execute(userId, linkedAccountId, true);
 
         log.info("[bankTransactionRetry] linkedAccountId={}, 재시도 {}건 중 성공 {}건",
                 linkedAccountId, candidates.size(), result.appliedCount());

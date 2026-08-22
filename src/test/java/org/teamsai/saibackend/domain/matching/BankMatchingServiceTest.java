@@ -54,14 +54,15 @@ class BankMatchingServiceTest {
                 .willReturn(List.of());
 
         AutoMatchingExecutionResult result =
-                bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID);
+                bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID, false);
 
         assertThat(result.totalTransactionCount()).isZero();
         assertThat(result.transactionResults()).isEmpty();
         verify(transactionService, never()).process(
                 org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.any()
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyBoolean()
         );
     }
 
@@ -75,15 +76,15 @@ class BankMatchingServiceTest {
         given(bankTransactionService
                 .findPendingDepositsByLinkedAccountId(LINKED_ACCOUNT_ID))
                 .willReturn(List.of(first, second, third));
-        given(transactionService.process(USER_ID, LINKED_ACCOUNT_ID, first))
+        given(transactionService.process(USER_ID, LINKED_ACCOUNT_ID, first, false))
                 .willReturn(result(101L, AutoMatchingProcessStatus.APPLIED));
-        given(transactionService.process(USER_ID, LINKED_ACCOUNT_ID, second))
+        given(transactionService.process(USER_ID, LINKED_ACCOUNT_ID, second, false))
                 .willReturn(result(102L, AutoMatchingProcessStatus.NEEDS_CHECK));
-        given(transactionService.process(USER_ID, LINKED_ACCOUNT_ID, third))
+        given(transactionService.process(USER_ID, LINKED_ACCOUNT_ID, third, false))
                 .willReturn(result(103L, AutoMatchingProcessStatus.UNMATCHED));
 
         AutoMatchingExecutionResult result =
-                bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID);
+                bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID, false);
 
         assertThat(result.totalTransactionCount()).isEqualTo(3);
         assertThat(result.appliedCount()).isEqualTo(1);
@@ -102,6 +103,22 @@ class BankMatchingServiceTest {
     }
 
     @Test
+    @DisplayName("배치 실행 여부를 거래 처리 단계까지 그대로 전달한다")
+    void passesBatchFlagDownToTransactionProcessing() {
+        BankTransactionDTO transaction = bankTransaction(101L);
+
+        given(bankTransactionService
+                .findPendingDepositsByLinkedAccountId(LINKED_ACCOUNT_ID))
+                .willReturn(List.of(transaction));
+        given(transactionService.process(USER_ID, LINKED_ACCOUNT_ID, transaction, true))
+                .willReturn(result(101L, AutoMatchingProcessStatus.NEEDS_CHECK));
+
+        bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID, true);
+
+        verify(transactionService).process(USER_ID, LINKED_ACCOUNT_ID, transaction, true);
+    }
+
+    @Test
     @DisplayName("단건 처리 실패를 그대로 전파한다")
     void propagatesTransactionProcessingFailure() {
         BankTransactionDTO transaction = bankTransaction(101L);
@@ -114,17 +131,17 @@ class BankMatchingServiceTest {
                 .willReturn(List.of(transaction));
         willThrow(exception)
                 .given(transactionService)
-                .process(USER_ID, LINKED_ACCOUNT_ID, transaction);
+                .process(USER_ID, LINKED_ACCOUNT_ID, transaction, false);
 
         assertThatThrownBy(
-                () -> bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID)
+                () -> bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID, false)
         ).isSameAs(exception);
     }
 
     @Test
     @DisplayName("연결 계좌 ID가 유효하지 않으면 예외가 발생한다")
     void throwsExceptionWhenLinkedAccountIdIsInvalid() {
-        assertThatThrownBy(() -> bankMatchingService.execute(USER_ID, 0L))
+        assertThatThrownBy(() -> bankMatchingService.execute(USER_ID, 0L, false))
                 .isInstanceOfSatisfying(
                         DomainException.class,
                         exception -> assertThat(exception.getErrorCode())

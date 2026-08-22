@@ -25,6 +25,7 @@ public class WriteOffBatchService {
     private final RepaymentScheduleMapper repaymentScheduleMapper;
     private final SettlementCloseService settlementCloseService;
 
+    @Transactional
     public WriteOffResult writeOffSettlementObligations(LocalDate baseDate) {
         LocalDateTime cutoff = baseDate.minusDays(WRITE_OFF_DAYS_AFTER_OVERDUE).atStartOfDay();
 
@@ -64,6 +65,7 @@ public class WriteOffBatchService {
         return total;
     }
 
+    @Transactional
     public int writeOffRepaymentSchedules(LocalDate baseDate) {
         LocalDate cutoffDate = baseDate.minusDays(WRITE_OFF_DAYS_AFTER_OVERDUE);
         List<Long> candidateIds = repaymentScheduleMapper.findWriteOffCandidateIds(cutoffDate);
