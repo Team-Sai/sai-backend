@@ -4,7 +4,8 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper">
 
-    <select id="findOverdueCandidates" resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
+    <select id="findOverdueCandidates"
+            resultType="org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO">
         SELECT *
         FROM repayment_schedule
         WHERE due_date &lt; #{baseDate}

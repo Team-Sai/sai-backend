@@ -68,7 +68,7 @@ public class TransactionSyncJobConfig {
             TransactionSyncFacade transactionSyncFacade) {
 
         return target -> {
-            transactionSyncFacade.syncAndMatch(target.userId(), target.linkedAccountId());
+            transactionSyncFacade.syncAndMatch(target.userId(), target.linkedAccountId(), true);
             return target; // 성공한 건만 여기까지 도달, 실패는 예외로 전파되어 skip 처리됨
         };
     }

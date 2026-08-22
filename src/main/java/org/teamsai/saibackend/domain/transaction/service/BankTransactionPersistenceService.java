@@ -31,8 +31,11 @@ public class BankTransactionPersistenceService {
      * 새로 INSERT하지 않고 기존 row를 재사용하는 멱등 upsert
      * 반환값은 "이번 요청에서 처리 대상이었던 거래 건수"를 의미한다.
      */
+
     @Transactional
-    public int saveAndAdvanceCursor(Long linkedAccountId, List<BankTransactionResponse> transactions) {
+    public int saveAndAdvanceCursor(
+            Long linkedAccountId,
+            List<BankTransactionResponse> transactions) {
         if (transactions.isEmpty()) {
             return 0;
         }
@@ -40,11 +43,14 @@ public class BankTransactionPersistenceService {
         LocalDateTime now = LocalDateTime.now();
 
         for (BankTransactionResponse tx : transactions) {
-            bankTransactionMapper.insertOrGetId(toDto(linkedAccountId, tx, now));
+            bankTransactionMapper.
+                    insertOrGetId(toDto(linkedAccountId, tx, now));
         }
 
-        BankTransactionResponse latestTransaction = transactions.stream()
-                .max(Comparator.comparing(BankTransactionResponse::transactionId))
+        BankTransactionResponse latestTransaction =
+                transactions.stream()
+                .max(Comparator.comparing(
+                        BankTransactionResponse::transactionId))
                 .orElseThrow();
 
         if (latestTransaction.balanceAfter() != null) {

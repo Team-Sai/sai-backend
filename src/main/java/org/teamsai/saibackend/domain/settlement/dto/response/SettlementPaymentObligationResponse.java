@@ -29,4 +29,5 @@ public class SettlementPaymentObligationResponse {
 
     private PaymentStatus paymentStatus;
     private ObligationStatus obligationStatus;
+    private LocalDateTime overdueSince;
 }

@@ -64,7 +64,8 @@ class RecurringSettlementGenerationServiceIntegrationTest {
     class NormalGeneration {
 
         @Test
-        @DisplayName("참여자 2명이 있는 1회차에서 다음 회차를 생성하면, 동일한 참여자 2명이 복사되고 동일 금액이 유지된다")
+        @DisplayName("참여자 2명이 있는 1회차에서 다음 회차를 생성하면, 동일한 참여자 2명이 복사되고 " +
+                "calculateEqualAmount(총액, 참여자수)로 재계산된 동일 금액이 배정된다")
         void generatesNextCycleWithSameParticipantsAndAmounts() {
             Long ownerId = 71001L;
             Long userA = 71002L;
@@ -77,16 +78,17 @@ class RecurringSettlementGenerationServiceIntegrationTest {
             insertUser(ownerId, "월세 관리자");
             insertUser(userA, "참여자 A");
             insertUser(userB, "참여자 B");
+
             insertRecurringSettlement(recurringId, ownerId, LocalDate.of(2026, 1, 31));
             insertSettlementInstance(settlement1Id, recurringId, ownerId, LocalDate.of(2026, 1, 31));
             insertParticipant(participant1Id, settlement1Id, userA, "ACTIVE");
             insertParticipant(participant2Id, settlement1Id, userB, "ACTIVE");
-            insertObligation(81001L, participant1Id, "150000.00");
-            insertObligation(81002L, participant2Id, "150000.00");
+            insertObligation(81001L, participant1Id, "100000.00");
+            insertObligation(81002L, participant2Id, "100000.00");
 
             generationService.generateTodaySettlements(LocalDate.of(2026, 2, 28));
 
-            var latest = settlementMapper.findLatestByRecurringIdForUpdate(recurringId);
+            var latest = settlementMapper.findLatestByRecurringId(recurringId);
             assertThat(latest).isNotNull();
             assertThat(latest.getSettlementId()).isNotEqualTo(settlement1Id);
             assertThat(latest.getCycleDate()).isEqualTo(LocalDate.of(2026, 2, 28));
@@ -95,8 +97,9 @@ class RecurringSettlementGenerationServiceIntegrationTest {
             assertThat(newParticipants).hasSize(2);
 
             Map<Long, BigDecimal> obligationByUserId = fetchObligationAmountsByUser(latest.getSettlementId());
-            assertThat(obligationByUserId.get(userA)).isEqualByComparingTo(new BigDecimal("150000"));
-            assertThat(obligationByUserId.get(userB)).isEqualByComparingTo(new BigDecimal("150000"));
+            // calculateEqualAmount(300000, 참여자 2명) = 300000 / (2 + 1) = 100000
+            assertThat(obligationByUserId.get(userA)).isEqualByComparingTo(new BigDecimal("100000"));
+            assertThat(obligationByUserId.get(userB)).isEqualByComparingTo(new BigDecimal("100000"));
         }
     }
 
@@ -105,7 +108,8 @@ class RecurringSettlementGenerationServiceIntegrationTest {
     class EqualRecalculationOnParticipantLeft {
 
         @Test
-        @DisplayName("2명 중 1명이 REMOVED되면, 새 회차엔 남은 1명만 복사되고 전액(30만원)으로 재계산된다")
+        @DisplayName("2명 중 1명이 REMOVED되면, 새 회차엔 남은 1명만 복사되고 " +
+                "calculateEqualAmount(총액, 1명)로 재계산된다")
         void recalculatesFullAmountWhenOneParticipantRemoved() {
             Long ownerId = 72001L;
             Long userA = 72002L;
@@ -118,6 +122,7 @@ class RecurringSettlementGenerationServiceIntegrationTest {
             insertUser(ownerId, "월세 관리자");
             insertUser(userA, "남는 참여자");
             insertUser(userB, "탈퇴한 참여자");
+
             insertRecurringSettlement(recurringId, ownerId, LocalDate.of(2026, 1, 31));
             insertSettlementInstance(settlement1Id, recurringId, ownerId, LocalDate.of(2026, 1, 31));
             insertParticipant(participant1Id, settlement1Id, userA, "ACTIVE");
@@ -127,13 +132,13 @@ class RecurringSettlementGenerationServiceIntegrationTest {
 
             generationService.generateTodaySettlements(LocalDate.of(2026, 2, 28));
 
-            var latest = settlementMapper.findLatestByRecurringIdForUpdate(recurringId);
+            var latest = settlementMapper.findLatestByRecurringId(recurringId);
             var newParticipants = participantMapper.findActiveBySettlementId(latest.getSettlementId());
-
             assertThat(newParticipants).hasSize(1);
 
             Map<Long, BigDecimal> obligationByUserId = fetchObligationAmountsByUser(latest.getSettlementId());
-            assertThat(obligationByUserId.get(userA)).isEqualByComparingTo(new BigDecimal("300000"));
+            // calculateEqualAmount(300000, 참여자 1명) = 300000 / (1 + 1) = 150000
+            assertThat(obligationByUserId.get(userA)).isEqualByComparingTo(new BigDecimal("150000"));
             assertThat(obligationByUserId).doesNotContainKey(userB);
         }
     }
@@ -153,17 +158,17 @@ class RecurringSettlementGenerationServiceIntegrationTest {
 
             insertUser(ownerId, "채무자 관리자");
             insertUser(userA, "참여자 A");
+
             insertRecurringSettlement(recurringId, ownerId, LocalDate.of(2026, 1, 31), SplitType.CUSTOM);
             insertSettlementInstance(settlement1Id, recurringId, ownerId, LocalDate.of(2026, 1, 31), SplitType.CUSTOM);
             insertParticipant(participant1Id, settlement1Id, userA, "ACTIVE");
-
             // 재청구 이력: 오래된 obligation(취소/제외 처리됐다고 가정)과 최신 obligation이 공존
             insertObligation(85001L, participant1Id, "100000.00", "EXCLUDED");
             insertObligation(85002L, participant1Id, "150000.00", "ACTIVE"); // 더 최근에 생성된, ID가 더 큰 것
 
             generationService.generateTodaySettlements(LocalDate.of(2026, 2, 28));
 
-            var latest = settlementMapper.findLatestByRecurringIdForUpdate(recurringId);
+            var latest = settlementMapper.findLatestByRecurringId(recurringId);
             assertThat(latest).isNotNull();
             assertThat(latest.getSettlementId()).isNotEqualTo(settlement1Id);
 
@@ -182,16 +187,16 @@ class RecurringSettlementGenerationServiceIntegrationTest {
 
             insertUser(ownerId, "채무자 관리자");
             insertUser(userA, "참여자 A");
+
             insertRecurringSettlement(recurringId, ownerId, LocalDate.of(2026, 1, 31), SplitType.CUSTOM);
             insertSettlementInstance(settlement1Id, recurringId, ownerId, LocalDate.of(2026, 1, 31), SplitType.CUSTOM);
             insertParticipant(participant1Id, settlement1Id, userA, "ACTIVE");
-
             insertObligation(86001L, participant1Id, "80000.00", "ACTIVE");
             insertObligation(86002L, participant1Id, "200000.00", "ACTIVE"); // ID가 더 큼
 
             generationService.generateTodaySettlements(LocalDate.of(2026, 2, 28));
 
-            var latest = settlementMapper.findLatestByRecurringIdForUpdate(recurringId);
+            var latest = settlementMapper.findLatestByRecurringId(recurringId);
             Map<Long, BigDecimal> obligationByUserId = fetchObligationAmountsByUser(latest.getSettlementId());
             assertThat(obligationByUserId.get(userA)).isEqualByComparingTo(new BigDecimal("200000"));
         }
@@ -212,6 +217,7 @@ class RecurringSettlementGenerationServiceIntegrationTest {
 
             insertUser(ownerId, "월세 관리자");
             insertUser(userA, "참여자 A");
+
             insertRecurringSettlement(recurringId, ownerId, LocalDate.of(2026, 1, 31));
             insertSettlementInstance(settlement1Id, recurringId, ownerId, LocalDate.of(2026, 1, 31));
             insertParticipant(participant1Id, settlement1Id, userA, "ACTIVE");
@@ -248,6 +254,7 @@ class RecurringSettlementGenerationServiceIntegrationTest {
 
             insertUser(ownerId, "월세 관리자");
             insertUser(userA, "참여자 A");
+
             insertRecurringSettlement(recurringId, ownerId, LocalDate.of(2026, 1, 31));
             insertSettlementInstance(settlement1Id, recurringId, ownerId, LocalDate.of(2026, 1, 31));
             insertParticipant(participant1Id, settlement1Id, userA, "ACTIVE");
