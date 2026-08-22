@@ -76,7 +76,7 @@
         }
 
         state.options = {
-            reviewChannel: "NOTIFICATION",
+            reviewChannel: "TRANSACTION_HISTORY",
             targetType: null,
             aggregateId: null,
             transaction: {

@@ -49,6 +49,17 @@ class MatchingReviewSearchConditionTest {
         ));
     }
 
+    @Test
+    void rejectsNotificationChannel() {
+        assertInvalid(() -> new MatchingReviewSearchCondition(
+                MatchingReviewChannel.NOTIFICATION,
+                null,
+                null,
+                0,
+                20
+        ));
+    }
+
     private void assertInvalid(Runnable action) {
         assertThatThrownBy(action::run)
                 .isInstanceOfSatisfying(

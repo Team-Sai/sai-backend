@@ -21,7 +21,6 @@ import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
-import org.teamsai.saibackend.domain.notification.type.NotificationType;
 import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
 import org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO;
 import org.teamsai.saibackend.domain.transaction.exception.BankTransactionErrorCode;
@@ -272,7 +271,7 @@ class BankMatchingTransactionServiceTest {
 
     @Test
     @DisplayName("정산과 차용증 후보가 모두 있으면 매칭 검토 알림을 생성한다")
-    void createsNotificationForCrossDomainCandidates() {
+    void doesNotCreateNotificationForCrossDomainCandidates() {
         BankTransactionDTO transaction = bankTransaction(
                 101L,
                 "Hong Gil Dong"
@@ -287,29 +286,22 @@ class BankMatchingTransactionServiceTest {
                         101L,
                         AutoMatchingProcessStatus.NEEDS_CHECK
                 )));
-        given(candidateService.findAllByBankTransactionId(101L))
-                .willReturn(List.of(
-                        candidateDto(
-                                1L,
-                                MatchingTargetType.SETTLEMENT
-                        ),
-                        candidateDto(2L, MatchingTargetType.LOAN)
-                ));
-
         transactionService.process(
                 USER_ID,
                 LINKED_ACCOUNT_ID,
                 transaction
         );
 
-        verify(notificationService).createIfAbsent(
-                USER_ID,
-                NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
+        verify(notificationService, never()).createIfAbsent(
+                any(), any(), any(), any(), any(), any()
+        ); /*
+                any(),
+                any(),
                 "입금 거래 확인이 필요합니다.",
                 "Hong Gil Dong님의 10000.00원 입금에 정산과 차용증 후보가 모두 발견되었습니다.",
-                101L,
-                LINKED_ACCOUNT_ID
-        );
+                any(),
+                any()
+        ); */
     }
 
     @Test
@@ -329,12 +321,6 @@ class BankMatchingTransactionServiceTest {
                         101L,
                         AutoMatchingProcessStatus.NEEDS_CHECK
                 )));
-        given(candidateService.findAllByBankTransactionId(101L))
-                .willReturn(List.of(candidateDto(
-                        1L,
-                        MatchingTargetType.SETTLEMENT
-                )));
-
         transactionService.process(
                 USER_ID,
                 LINKED_ACCOUNT_ID,
@@ -426,21 +412,6 @@ class BankMatchingTransactionServiceTest {
                 "Hong Gil Dong",
                 new BigDecimal("10000.00")
         );
-    }
-
-    private BankTransactionMatchCandidateDTO candidateDto(
-            Long matchCandidateId,
-            MatchingTargetType targetType
-    ) {
-        return BankTransactionMatchCandidateDTO.builder()
-                .matchCandidateId(matchCandidateId)
-                .bankTransactionId(101L)
-                .targetType(targetType)
-                .targetId(matchCandidateId * 10)
-                .expectedRemainingAmount(new BigDecimal("10000.00"))
-                .amountMatchType(MatchingAmountType.EXACT)
-                .createdAt(LocalDateTime.of(2026, 8, 5, 10, 5))
-                .build();
     }
 
     private AutoMatchingTransactionResult result(

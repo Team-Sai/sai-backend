@@ -129,7 +129,7 @@ class BankTransactionMatchingReviewQueryServiceTest {
                 );
 
         assertThat(response.reviewChannel())
-                .isEqualTo(MatchingReviewChannel.NOTIFICATION);
+                .isEqualTo(MatchingReviewChannel.TRANSACTION_HISTORY);
         assertThat(response.candidates()).hasSize(2);
         verify(bankTransactionQueryService).getTransactionDetail(
                 USER_ID,
