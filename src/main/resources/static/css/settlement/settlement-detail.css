@@ -64,6 +64,8 @@ button,a{font:inherit}
 .payment-table{width:100%;min-width:820px;border-collapse:collapse}.payment-table th{padding:15px 18px;background:#f2f4f6;border-bottom:1px solid var(--line);font-size:12px;color:#4b5563}
 .payment-table td{padding:19px 18px;border-bottom:1px solid #edf0f2;text-align:center;font-size:13px}.name-cell{font-weight:800}
 .status-chip{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}
+.status-chip.status-overdue {background-color: #ffe0e0;color: #c0392b;}
+.status-chip.status-written-off {background-color: #e8e8e8;color: #555;}
 .status-unpaid{background:#f0f2f4;color:#626b74}.status-partial{background:#fff4d6;color:#9a6500}.status-paid{background:var(--green-soft);color:#0f8a5f}.status-review{background:var(--red-soft);color:var(--red)}
 .manage-button{border:0;border-radius:5px;padding:6px 9px;background:var(--blue);color:#fff;font-size:11px;font-weight:800}.manage-button[disabled]{background:#e5e7eb;color:#7b8490}
 .empty-state{padding:70px 20px;text-align:center;color:var(--muted)}

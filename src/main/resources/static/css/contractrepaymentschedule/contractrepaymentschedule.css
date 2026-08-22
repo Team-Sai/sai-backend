@@ -49,7 +49,17 @@ body.app-shell-page {
 
 .status-badge.badge-completed {
     background: #edf1f4;
-    color: #65717f;
+    color: #5a33c1;
+}
+
+.status-badge.badge-overdue {
+    background-color: #ffe0e0;
+    color: #c0392b;
+}
+
+.status-badge.badge-written-off {
+    background-color: #e8e8e8;
+    color: #555;
 }
 
 .contract-alias {
