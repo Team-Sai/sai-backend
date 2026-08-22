@@ -25,7 +25,8 @@ public class OverdueSettlementUpdater {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateOverdueForSettlement(SettlementDTO settlement, LocalDate referenceDate) {
-        List<Long> activeParticipantIds = participantMapper.findActiveBySettlementId(settlement.getSettlementId())
+        List<Long> activeParticipantIds = participantMapper.
+                findActiveBySettlementId(settlement.getSettlementId())
                 .stream()
                 .map(SettlementParticipantDTO::getParticipantId)
                 .toList();

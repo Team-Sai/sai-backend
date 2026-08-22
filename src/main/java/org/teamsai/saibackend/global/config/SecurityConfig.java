@@ -82,7 +82,8 @@ public class SecurityConfig {
                                         "/archive/**",
                                         "/calendar",
 
-                                        "/integration/dashboard"
+                                        "/integration/dashboard",
+                                        "/dev/**"
 
 
                                 )

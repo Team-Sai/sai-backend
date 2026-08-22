@@ -59,15 +59,30 @@ class TransactionSyncFacadeTest {
         );
 
         given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(1);
-        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID)).willReturn(expectedResult);
+        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID, false)).willReturn(expectedResult);
 
-        AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID);
+        AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID, false);
 
         assertThat(result).isEqualTo(expectedResult);
 
         InOrder inOrder = inOrder(transactionSyncService, bankMatchingService);
         inOrder.verify(transactionSyncService).syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
-        inOrder.verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID);
+        inOrder.verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID, false);
+    }
+
+    @Test
+    @DisplayName("배치로 호출되면 매칭 단계에도 배치 여부를 그대로 전달한다")
+    void passesBatchFlagToMatchingWhenTriggeredByBatch() {
+        AutoMatchingExecutionResult expectedResult = new AutoMatchingExecutionResult(
+                0, 0, 0, 0, 0, 0, List.of()
+        );
+
+        given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(0);
+        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID, true)).willReturn(expectedResult);
+
+        transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID, true);
+
+        verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID, true);
     }
 
     @Test
@@ -78,12 +93,12 @@ class TransactionSyncFacadeTest {
         );
 
         given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(0);
-        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID)).willReturn(emptyResult);
+        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID, false)).willReturn(emptyResult);
 
-        AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID);
+        AutoMatchingExecutionResult result = transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID, false);
 
         assertThat(result.totalTransactionCount()).isZero();
-        verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID);
+        verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID, false);
     }
 
     @Test
@@ -94,10 +109,10 @@ class TransactionSyncFacadeTest {
         willThrow(syncFailure)
                 .given(transactionSyncService).syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
 
-        assertThatThrownBy(() -> transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID))
+        assertThatThrownBy(() -> transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID, false))
                 .isSameAs(syncFailure);
 
-        verify(bankMatchingService, never()).execute(any(), any());
+        verify(bankMatchingService, never()).execute(any(), any(), anyBoolean());
     }
 
     @Test
@@ -107,11 +122,11 @@ class TransactionSyncFacadeTest {
 
         given(transactionSyncService.syncTransactions(USER_ID, LINKED_ACCOUNT_ID)).willReturn(2);
         willThrow(matchingFailure)
-                .given(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID);
+                .given(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID, false);
 
-        assertThatThrownBy(() -> transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID))
+        assertThatThrownBy(() -> transactionSyncFacade.syncAndMatch(USER_ID, LINKED_ACCOUNT_ID, false))
                 .isSameAs(matchingFailure);
-        
+
         verify(transactionSyncService).syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
     }
 
@@ -172,9 +187,9 @@ class TransactionSyncFacadeTest {
                 .willReturn(2);
         given(transactionSyncService.syncTransactions(USER_ID, SECOND_LINKED_ACCOUNT_ID))
                 .willReturn(3);
-        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID))
+        given(bankMatchingService.execute(USER_ID, LINKED_ACCOUNT_ID, false))
                 .willReturn(firstResult);
-        given(bankMatchingService.execute(USER_ID, SECOND_LINKED_ACCOUNT_ID))
+        given(bankMatchingService.execute(USER_ID, SECOND_LINKED_ACCOUNT_ID, false))
                 .willReturn(secondResult);
 
         TransactionSyncAllResponse result =
@@ -196,12 +211,13 @@ class TransactionSyncFacadeTest {
         inOrder.verify(linkedBankAccountService).getLinkedAccounts(USER_ID);
         inOrder.verify(transactionSyncService)
                 .syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
-        inOrder.verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID);
+        inOrder.verify(bankMatchingService).execute(USER_ID, LINKED_ACCOUNT_ID, false);
         inOrder.verify(transactionSyncService)
                 .syncTransactions(USER_ID, SECOND_LINKED_ACCOUNT_ID);
         inOrder.verify(bankMatchingService).execute(
                 USER_ID,
-                SECOND_LINKED_ACCOUNT_ID
+                SECOND_LINKED_ACCOUNT_ID,
+                false
         );
     }
 
@@ -230,7 +246,7 @@ class TransactionSyncFacadeTest {
                 .syncTransactions(USER_ID, LINKED_ACCOUNT_ID);
         given(transactionSyncService.syncTransactions(USER_ID, SECOND_LINKED_ACCOUNT_ID))
                 .willReturn(1);
-        given(bankMatchingService.execute(USER_ID, SECOND_LINKED_ACCOUNT_ID))
+        given(bankMatchingService.execute(USER_ID, SECOND_LINKED_ACCOUNT_ID, false))
                 .willReturn(successResult);
 
         TransactionSyncAllResponse result = transactionSyncFacade.syncAll(USER_ID);
@@ -263,7 +279,7 @@ class TransactionSyncFacadeTest {
         assertThat(result.failedCount()).isZero();
 
         verify(transactionSyncService, never()).syncTransactions(any(), any());
-        verify(bankMatchingService, never()).execute(any(), any());
+        verify(bankMatchingService, never()).execute(any(), any(), anyBoolean());
     }
 
     private LinkedBankAccountResponse linkedAccount(Long linkedAccountId) {

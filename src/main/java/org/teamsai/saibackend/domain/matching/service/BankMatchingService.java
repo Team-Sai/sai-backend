@@ -21,16 +21,18 @@ public class BankMatchingService {
 
     public AutoMatchingExecutionResult execute(
             Long userId,
-            Long linkedAccountId
+            Long linkedAccountId,
+            boolean isBatch
     ) {
-        return execute(userId, linkedAccountId, null, null);
+        return execute(userId, linkedAccountId, null, null, isBatch);
     }
 
     public AutoMatchingExecutionResult execute(
             Long userId,
             Long linkedAccountId,
             MatchingTargetType targetType,
-            Long aggregateId
+            Long aggregateId,
+            boolean isBatch
     ) {
         validateLinkedAccountId(linkedAccountId);
         validateMatchingScope(targetType, aggregateId);
@@ -50,7 +52,8 @@ public class BankMatchingService {
                         linkedAccountId,
                         bankTransactions,
                         targetType,
-                        aggregateId
+                        aggregateId,
+                        isBatch
                 )
         );
     }
@@ -88,21 +91,24 @@ public class BankMatchingService {
             Long linkedAccountId,
             List<BankTransactionDTO> bankTransactions,
             MatchingTargetType targetType,
-            Long aggregateId
+            Long aggregateId,
+            boolean isBatch
     ) {
         return bankTransactions.stream()
                 .map(bankTransaction -> targetType == null
                         ? transactionService.process(
                                 userId,
                                 linkedAccountId,
-                                bankTransaction
+                                bankTransaction,
+                                isBatch
                         )
                         : transactionService.process(
                                 userId,
                                 linkedAccountId,
                                 bankTransaction,
                                 targetType,
-                                aggregateId
+                                aggregateId,
+                                isBatch
                         ))
                 .filter(java.util.Objects::nonNull)
                 .toList();
