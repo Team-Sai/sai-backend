@@ -76,13 +76,6 @@ public class BankMatchingTransactionService {
             return null;
         }
 
-        createMatchingReviewNotificationIfRequired(
-                userId,
-                linkedAccountId,
-                lockedTransaction,
-                result
-        );
-
         bankTransactionService.updateStatus(
                 lockedTransaction.getBankTransactionId(),
                 BankTransactionProcessingStatus.PENDING,

@@ -91,15 +91,6 @@ public class BankTransactionMatchingReviewListQueryService {
     private MatchingReviewChannel determineReviewChannel(
             List<BankTransactionMatchCandidateQueryDTO> candidates
     ) {
-        boolean hasSettlement = candidates.stream()
-                .anyMatch(candidate -> candidate.getTargetType()
-                        == MatchingTargetType.SETTLEMENT);
-        boolean hasLoan = candidates.stream()
-                .anyMatch(candidate -> candidate.getTargetType()
-                        == MatchingTargetType.LOAN);
-
-        return hasSettlement && hasLoan
-                ? MatchingReviewChannel.NOTIFICATION
-                : MatchingReviewChannel.TRANSACTION_HISTORY;
+        return MatchingReviewChannel.TRANSACTION_HISTORY;
     }
 }
