@@ -79,7 +79,7 @@ class BankTransactionRetryServiceTest {
 
             AutoMatchingExecutionResult result = mock(AutoMatchingExecutionResult.class);
             when(result.appliedCount()).thenReturn(1);
-            when(bankMatchingService.execute(userId, linkedAccountId)).thenReturn(result);
+            when(bankMatchingService.execute(userId, linkedAccountId, true)).thenReturn(result);
 
             // checkAndNotifyExhausted 쪽에서 재조회 - 성공 처리된 것으로 가정해 알림 없게
             when(bankTransactionMapper.findById(100L))
@@ -93,7 +93,7 @@ class BankTransactionRetryServiceTest {
             verify(candidateMapper).deleteAllByBankTransactionId(200L);
             verify(bankTransactionMapper).resetToPendingForRetry(100L, BankTransactionProcessingStatus.UNMATCHED);
             verify(bankTransactionMapper).resetToPendingForRetry(200L, BankTransactionProcessingStatus.UNMATCHED);
-            verify(bankMatchingService).execute(userId, linkedAccountId);
+            verify(bankMatchingService).execute(userId, linkedAccountId, true);
             verifyNoInteractions(slackNotifier);
         }
     }
@@ -107,7 +107,7 @@ class BankTransactionRetryServiceTest {
             when(bankTransactionMapper.findRetryCandidates(linkedAccountId)).thenReturn(List.of(original));
 
             AutoMatchingExecutionResult result = mock(AutoMatchingExecutionResult.class);
-            when(bankMatchingService.execute(userId, linkedAccountId)).thenReturn(result);
+            when(bankMatchingService.execute(userId, linkedAccountId, true)).thenReturn(result);
 
             when(bankTransactionMapper.findById(100L))
                     .thenReturn(Optional.of(tx(100L, BankTransactionProcessingStatus.APPLIED, 3)));
@@ -123,7 +123,7 @@ class BankTransactionRetryServiceTest {
             when(bankTransactionMapper.findRetryCandidates(linkedAccountId)).thenReturn(List.of(original));
 
             AutoMatchingExecutionResult result = mock(AutoMatchingExecutionResult.class);
-            when(bankMatchingService.execute(userId, linkedAccountId)).thenReturn(result);
+            when(bankMatchingService.execute(userId, linkedAccountId, true)).thenReturn(result);
 
             when(bankTransactionMapper.findById(100L)).thenReturn(Optional.empty());
 
@@ -138,7 +138,7 @@ class BankTransactionRetryServiceTest {
             when(bankTransactionMapper.findRetryCandidates(linkedAccountId)).thenReturn(List.of(original));
 
             AutoMatchingExecutionResult result = mock(AutoMatchingExecutionResult.class);
-            when(bankMatchingService.execute(userId, linkedAccountId)).thenReturn(result);
+            when(bankMatchingService.execute(userId, linkedAccountId, true)).thenReturn(result);
 
             BankTransactionDTO stillUnmatched = tx(100L, BankTransactionProcessingStatus.UNMATCHED, 5);
             when(bankTransactionMapper.findById(100L)).thenReturn(Optional.of(stillUnmatched));
@@ -159,7 +159,7 @@ class BankTransactionRetryServiceTest {
             when(bankTransactionMapper.findRetryCandidates(linkedAccountId)).thenReturn(List.of(original));
 
             AutoMatchingExecutionResult result = mock(AutoMatchingExecutionResult.class);
-            when(bankMatchingService.execute(userId, linkedAccountId)).thenReturn(result);
+            when(bankMatchingService.execute(userId, linkedAccountId, true)).thenReturn(result);
 
             BankTransactionDTO stillUnmatched = tx(100L, BankTransactionProcessingStatus.UNMATCHED, 2);
             when(bankTransactionMapper.findById(100L)).thenReturn(Optional.of(stillUnmatched));
@@ -181,7 +181,7 @@ class BankTransactionRetryServiceTest {
             when(bankTransactionMapper.findRetryCandidates(linkedAccountId)).thenReturn(List.of(tx1, tx2));
 
             AutoMatchingExecutionResult result = mock(AutoMatchingExecutionResult.class);
-            when(bankMatchingService.execute(userId, linkedAccountId)).thenReturn(result);
+            when(bankMatchingService.execute(userId, linkedAccountId, true)).thenReturn(result);
 
             when(bankTransactionMapper.findById(100L))
                     .thenReturn(Optional.of(tx(100L, BankTransactionProcessingStatus.UNMATCHED, 5)));

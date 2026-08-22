@@ -24,9 +24,9 @@ public class TransactionSyncFacade {
     private final BankMatchingService bankMatchingService;
     private final LinkedBankAccountService linkedBankAccountService;
 
-    public AutoMatchingExecutionResult syncAndMatch(Long userId, Long linkedAccountId) {
+    public AutoMatchingExecutionResult syncAndMatch(Long userId, Long linkedAccountId, boolean isBatch) {
         transactionSyncService.syncTransactions(userId, linkedAccountId);
-        return bankMatchingService.execute(userId, linkedAccountId);
+        return bankMatchingService.execute(userId, linkedAccountId, isBatch);
     }
 
     public AutoMatchingExecutionResult syncAndMatch(
@@ -40,7 +40,8 @@ public class TransactionSyncFacade {
                 userId,
                 linkedAccountId,
                 targetType,
-                aggregateId
+                aggregateId,
+                false
         );
     }
 
@@ -60,7 +61,7 @@ public class TransactionSyncFacade {
         for(LinkedBankAccountResponse account : accounts){
             try {
                 AutoMatchingExecutionResult result =
-                        syncAndMatch(userId, account.linkedAccountId());
+                        syncAndMatch(userId, account.linkedAccountId(), false);
 
                 syncedAccountCount++;
                 totalTransactionCount += result.totalTransactionCount();

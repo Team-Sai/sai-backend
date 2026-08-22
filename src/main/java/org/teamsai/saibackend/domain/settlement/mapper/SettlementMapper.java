@@ -40,4 +40,6 @@ public interface SettlementMapper {
     int countInProgressSettlements();
 
     List<SettlementDTO> findInProgressSettlements(@Param("offset") int offset, @Param("limit") int limit);
+
+    SettlementDTO findLatestByRecurringId(@Param("recurringId") Long recurringId);
 }

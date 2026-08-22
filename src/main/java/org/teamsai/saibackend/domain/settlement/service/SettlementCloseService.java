@@ -1,5 +1,4 @@
 package org.teamsai.saibackend.domain.settlement.service;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -10,14 +9,12 @@ import org.teamsai.saibackend.domain.settlement.exception.SettlementErrorCode;
 import org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper;
 import org.teamsai.saibackend.domain.settlement.type.SettlementStatus;
 import java.time.LocalDateTime;
-
 @Service
 @RequiredArgsConstructor
 public class SettlementCloseService {
     private final SettlementMapper settlementMapper;
     private final SettlementPaymentStatusService paymentStatusService;
     private final SettlementValidator settlementValidator;
-
     @Transactional
     public SettlementCloseResponse close(Long settlementId, Long userId){
         SettlementDTO settlement =
@@ -34,7 +31,7 @@ public class SettlementCloseService {
                     .ALREADY_CLOSED_SETTLEMENT
                     .toException();
         }
-        if(!paymentStatusService.areAllObligationsResolved(settlementId)){  // areAllObligationsPaid → areAllObligationsResolved
+        if(!paymentStatusService.areAllObligationsResolved(settlementId)){
             throw SettlementErrorCode.SETTLEMENT_NOT_CLOSABLE.toException();
         }
         LocalDateTime closedAt = LocalDateTime.now();
@@ -53,7 +50,6 @@ public class SettlementCloseService {
                 .closedAt(closedAt)
                 .build();
     }
-
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean autoCloseIfAllResolved(Long settlementId) {
         SettlementDTO settlement = settlementMapper.findByIdForUpdate(settlementId)
