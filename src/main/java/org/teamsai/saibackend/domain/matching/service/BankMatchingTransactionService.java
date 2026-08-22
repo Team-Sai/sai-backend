@@ -20,7 +20,6 @@ import org.teamsai.saibackend.domain.transaction.service.BankTransactionService;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionProcessingStatus;
 import org.teamsai.saibackend.domain.transaction.type.BankTransactionType;
 import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class BankMatchingTransactionService {
@@ -30,7 +29,6 @@ public class BankMatchingTransactionService {
     private final BankTransactionMatchCandidateService candidateService;
     private final NotificationService notificationService;
     private final SettlementPaymentStatusService settlementPaymentStatusService;
-
     @Transactional
     public AutoMatchingTransactionResult process(
             Long userId,
@@ -40,7 +38,6 @@ public class BankMatchingTransactionService {
     ) {
         return process(userId, linkedAccountId, bankTransaction, null, null, isBatch);
     }
-
     @Transactional
     public AutoMatchingTransactionResult process(
             Long userId,
@@ -73,13 +70,15 @@ public class BankMatchingTransactionService {
         if (result == null) {
             return null;
         }
-        createMatchingReviewNotificationIfRequired(
-                userId,
-                linkedAccountId,
-                lockedTransaction,
-                result,
-                isBatch
-        );
+        if (isBatch) {
+            createMatchingReviewNotificationIfRequired(
+                    userId,
+                    linkedAccountId,
+                    lockedTransaction,
+                    result,
+                    isBatch
+            );
+        }
         bankTransactionService.updateStatus(
                 lockedTransaction.getBankTransactionId(),
                 BankTransactionProcessingStatus.PENDING,
@@ -87,7 +86,6 @@ public class BankMatchingTransactionService {
         );
         return result;
     }
-
     private void createMatchingReviewNotificationIfRequired(
             Long userId,
             Long linkedAccountId,
@@ -121,21 +119,18 @@ public class BankMatchingTransactionService {
             );
             return;
         }
-        // 그 외에는 배치 실행일 때만, 정산 후보가 완납되지 않았으면 알림
+        //정산 후보가 완납되지 않았으면 알림
         if (isBatch) {
             List<Long> settlementObligationIds = candidates.stream()
                     .filter(c -> c.getTargetType() == MatchingTargetType.SETTLEMENT)
                     .map(BankTransactionMatchCandidateDTO::getTargetId)
                     .toList();
-
             if (!settlementObligationIds.isEmpty()) {
                 List<Long> settlementIds =
                         paymentObligationMapper.findSettlementIdsByObligationIds(settlementObligationIds);
-
                 boolean hasUnresolvedSettlement = settlementIds.stream()
                         .anyMatch(settlementId ->
                                 !settlementPaymentStatusService.areAllObligationsResolved(settlementId));
-
                 if (hasUnresolvedSettlement) {
                     notificationService.createIfAbsent(
                             userId, NotificationType.BANK_TRANSACTION_MATCHING_REVIEW,
@@ -147,7 +142,6 @@ public class BankMatchingTransactionService {
             }
         }
     }
-
     private String createBothFoundContent(
             BankTransactionDTO bankTransaction
     ) {
@@ -157,7 +151,6 @@ public class BankMatchingTransactionService {
                 + bankTransaction.getAmount().toPlainString()
                 + "원 입금에 정산과 차용증 후보가 모두 발견되었습니다.";
     }
-
     private String createUnresolvedSettlementContent(
             BankTransactionDTO bankTransaction
     ) {
@@ -167,7 +160,6 @@ public class BankMatchingTransactionService {
                 + bankTransaction.getAmount().toPlainString()
                 + "원 입금이 정산 금액과 일치하지 않아 확인이 필요합니다.";
     }
-
     private String resolveCounterpartyName(
             BankTransactionDTO bankTransaction
     ) {
@@ -177,7 +169,6 @@ public class BankMatchingTransactionService {
         }
         return counterpartyName;
     }
-
     private AutoMatchingTransactionResult processMatching(
             Long linkedAccountId,
             BankTransactionDTO bankTransaction,
@@ -214,7 +205,6 @@ public class BankMatchingTransactionService {
         }
         return matchingResult.transactionResults().get(0);
     }
-
     private List<MatchingCandidate> findCandidates(
             Long linkedAccountId,
             MatchingTransaction transaction,
@@ -234,14 +224,12 @@ public class BankMatchingTransactionService {
                 aggregateId
         );
     }
-
     private boolean hasMatchableCounterpartyName(
             BankTransactionDTO bankTransaction
     ) {
         String counterpartyName = bankTransaction.getCounterpartyName();
         return counterpartyName != null && !counterpartyName.isBlank();
     }
-
     private MatchingTransaction toMatchingTransaction(
             BankTransactionDTO bankTransaction
     ) {
@@ -253,7 +241,6 @@ public class BankMatchingTransactionService {
                 bankTransaction.getTransactionAt()
         );
     }
-
     private AutoMatchingTransactionType toMatchingTransactionType(
             BankTransactionType transactionType
     ) {
@@ -262,7 +249,6 @@ public class BankMatchingTransactionService {
             case WITHDRAWAL -> AutoMatchingTransactionType.WITHDRAWAL;
         };
     }
-
     private BankTransactionProcessingStatus toBankTransactionProcessingStatus(
             AutoMatchingProcessStatus processStatus
     ) {

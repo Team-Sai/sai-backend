@@ -113,45 +113,7 @@
             AND available_candidate.candidate_status = 'AVAILABLE'
             <include refid="ReviewCandidateValidity"/>
         )
-        <choose>
-            <when test="condition.notificationChannel">
-                AND EXISTS (
-                    SELECT 1
-                    FROM bank_transaction_match_candidate available_candidate
-                    WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
-                    AND available_candidate.candidate_status = 'AVAILABLE'
-                    AND available_candidate.target_type = 'SETTLEMENT'
-                    <include refid="ReviewCandidateValidity"/>
-                )
-                AND EXISTS (
-                    SELECT 1
-                    FROM bank_transaction_match_candidate available_candidate
-                    WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
-                    AND available_candidate.candidate_status = 'AVAILABLE'
-                    AND available_candidate.target_type = 'LOAN'
-                    <include refid="ReviewCandidateValidity"/>
-                )
-            </when>
-            <otherwise>
-                AND NOT (
-                    EXISTS (
-                        SELECT 1
-                        FROM bank_transaction_match_candidate available_candidate
-                        WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
-                        AND available_candidate.candidate_status = 'AVAILABLE'
-                        AND available_candidate.target_type = 'SETTLEMENT'
-                        <include refid="ReviewCandidateValidity"/>
-                    )
-                    AND EXISTS (
-                        SELECT 1
-                        FROM bank_transaction_match_candidate available_candidate
-                        WHERE available_candidate.bank_transaction_id = bt.bank_transaction_id
-                        AND available_candidate.candidate_status = 'AVAILABLE'
-                        AND available_candidate.target_type = 'LOAN'
-                        <include refid="ReviewCandidateValidity"/>
-                    )
-                )
-                <if test="condition.targetType != null">
+        <if test="condition.targetType != null">
                     AND EXISTS (
                         SELECT 1
                         FROM bank_transaction_match_candidate available_candidate
@@ -160,8 +122,8 @@
                         AND available_candidate.target_type = #{condition.targetType}
                         <include refid="ReviewCandidateValidity"/>
                     )
-                </if>
-                <if test="condition.aggregateId != null">
+        </if>
+        <if test="condition.aggregateId != null">
                     AND EXISTS (
                         SELECT 1
                         FROM bank_transaction_match_candidate available_candidate
@@ -184,9 +146,7 @@
                                 THEN schedule.contract_id
                             END = #{condition.aggregateId}
                     )
-                </if>
-            </otherwise>
-        </choose>
+        </if>
     </sql>
 
     <select id="search" resultMap="BankTransactionResultMap">
