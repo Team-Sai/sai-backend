@@ -414,21 +414,6 @@ class BankMatchingTransactionServiceTest {
         );
     }
 
-    private BankTransactionMatchCandidateDTO candidateDto(
-            Long matchCandidateId,
-            MatchingTargetType targetType
-    ) {
-        return BankTransactionMatchCandidateDTO.builder()
-                .matchCandidateId(matchCandidateId)
-                .bankTransactionId(101L)
-                .targetType(targetType)
-                .targetId(matchCandidateId * 10)
-                .expectedRemainingAmount(new BigDecimal("10000.00"))
-                .amountMatchType(MatchingAmountType.EXACT)
-                .createdAt(LocalDateTime.of(2026, 8, 5, 10, 5))
-                .build();
-    }
-
     private AutoMatchingTransactionResult result(
             Long transactionId,
             AutoMatchingProcessStatus processStatus

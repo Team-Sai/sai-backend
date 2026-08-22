@@ -15,8 +15,7 @@ public record MatchingReviewSearchCondition(
     public MatchingReviewSearchCondition {
         if (reviewChannel == null
                 || aggregateId != null && (aggregateId <= 0 || targetType == null)
-                || reviewChannel == MatchingReviewChannel.NOTIFICATION
-                && (targetType != null || aggregateId != null)) {
+                || reviewChannel == MatchingReviewChannel.NOTIFICATION) {
             throw MatchingErrorCode.INVALID_MATCHING_REQUEST.toException();
         }
 
@@ -32,7 +31,4 @@ public record MatchingReviewSearchCondition(
         return page * size;
     }
 
-    public boolean isNotificationChannel() {
-        return reviewChannel == MatchingReviewChannel.NOTIFICATION;
-    }
 }
