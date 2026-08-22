@@ -121,8 +121,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateFormByType() {
         const shared = settlementType === "SHARED";
         updateTotalAmountLabel(shared
-            ? "\uD68C\uCC28\uBCC4 \uCD1D\uAE08\uC561 (\uD544\uC218)"
-            : "\uCD1D \uAE08\uC561 (\uD544\uC218)");
+            ? "\uCD1D \uAE08\uC561 (\uD544\uC218)"
+            : "\uD68C\uCC28\uBCC4 \uCD1D\uAE08\uC561 (\uD544\uC218)");
 
         categorySelect.innerHTML = categoryOptions[settlementType]
             .map(([value, label]) => `<option value="${value}">${label}</option>`)
@@ -160,8 +160,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function updateTotalAmountLabel(labelText) {
         const amountInput = document.getElementById("total-amount");
+        const cardTitle = amountInput?.closest("section")
+            ?.querySelector(".card-title h2");
         const label = amountInput?.closest("label")?.querySelector("span")
             || amountInput?.parentElement?.querySelector("span");
+        if (cardTitle) {
+            cardTitle.textContent = labelText.replace(" (필수)", "");
+        }
         if (label) label.textContent = labelText;
     }
 

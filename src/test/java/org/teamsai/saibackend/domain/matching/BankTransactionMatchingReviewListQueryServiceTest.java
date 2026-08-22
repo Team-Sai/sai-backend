@@ -107,6 +107,35 @@ class BankTransactionMatchingReviewListQueryServiceTest {
                 );
     }
 
+    @Test
+    void keepsCrossDomainCandidatesInTransactionHistoryChannel() {
+        MatchingReviewSearchCondition condition =
+                new MatchingReviewSearchCondition(
+                        MatchingReviewChannel.TRANSACTION_HISTORY,
+                        null,
+                        null,
+                        0,
+                        20
+                );
+        BankTransactionDTO transaction = transaction(11L);
+        given(reviewQueryMapper.search(1L, condition))
+                .willReturn(List.of(transaction));
+        given(reviewQueryMapper.count(1L, condition)).willReturn(1L);
+        given(candidateService.findAllForReviewByBankTransactionIds(
+                List.of(11L), null, null
+        )).willReturn(List.of(
+                candidate(11L),
+                candidateWithTarget(11L, MatchingTargetType.LOAN)
+        ));
+
+        var result = service.getReviews(1L, condition);
+
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().get(0).reviewChannel())
+                .isEqualTo(MatchingReviewChannel.TRANSACTION_HISTORY);
+        assertThat(result.content().get(0).candidates()).hasSize(2);
+    }
+
     private BankTransactionDTO transaction(Long id) {
         return BankTransactionDTO.builder()
                 .bankTransactionId(id)
@@ -128,6 +157,24 @@ class BankTransactionMatchingReviewListQueryServiceTest {
                 .targetId(30L)
                 .aggregateId(100L)
                 .targetName("8월 회식비 정산")
+                .participantName("participant")
+                .expectedRemainingAmount(new BigDecimal("10000"))
+                .amountMatchType(MatchingAmountType.PARTIAL)
+                .createdAt(LocalDateTime.of(2026, 8, 17, 10, 1))
+                .build();
+    }
+
+    private BankTransactionMatchCandidateQueryDTO candidateWithTarget(
+            Long transactionId,
+            MatchingTargetType targetType
+    ) {
+        return BankTransactionMatchCandidateQueryDTO.builder()
+                .matchCandidateId(21L)
+                .bankTransactionId(transactionId)
+                .targetType(targetType)
+                .targetId(31L)
+                .aggregateId(101L)
+                .targetName("loan")
                 .participantName("participant")
                 .expectedRemainingAmount(new BigDecimal("10000"))
                 .amountMatchType(MatchingAmountType.PARTIAL)
