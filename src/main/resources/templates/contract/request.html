@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>계약 조건 변경 요청</title>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link rel="stylesheet" th:href="@{/css/contract/contractchange.css}">
+    <link rel="stylesheet" href="/css/contract/site-common.css" />
+</head>
+<body class="app-shell-page">
+
+<header
+        th:replace="~{fragments/app-shell :: appHeader('contract')}">
+</header>
+
+<input type="hidden" id="contractId" th:value="${contractId}">
+
+<div class="page">
+    <h1>계약 조건 변경 요청</h1>
+    <p>협의된 새로운 계약 조건들을 입력해주세요. 제출 시 상대방에게 알림이 전송됩니다.</p>
+
+    <div class="content">
+        <form id="changeRequestForm">
+            <label for="changeReason">변경 사유</label>
+            <textarea id="changeReason" placeholder="변경 내용을 변경하고자 하는 구체적인 사유를 입력해주세요."></textarea>
+
+            <label for="newMaturityDate">변경 만기일</label>
+            <input type="date" id="newMaturityDate">
+
+            <label for="newInterestRate">변경 이율</label>
+            <input type="number" step="0.5" min="0.5" max="20" id="newInterestRate">
+
+            <label for="newRepaymentType">상환 방식</label>
+            <select id="newRepaymentType">
+                <option value="">선택해주세요</option>
+                <option value="EQUAL_PRINCIPAL_AND_INTEREST">원리금균등상환</option>
+                <option value="EQUAL_PRINCIPAL">원금균등상환</option>
+                <option value="BULLET_REPAYMENT">만기일시상환</option>
+            </select>
+
+            <label for="newRepaymentDate">상환일 변경</label>
+            <input type="number" id="newRepaymentDate" min="1" max="31" placeholder="예: 15">
+            <label for="newTerms">특약사항 변경</label>
+            <textarea id="newTerms" placeholder="변경할 특약사항을 입력해주세요."></textarea>
+
+
+            <button type="button" id="cancelButton">변경 취소</button>
+            <button type="submit" id="submitButton">변경 요청 보내기</button>
+        </form>
+
+        <div class="current-contract">
+            <h2>현재 계약조건</h2>
+            <dl>
+                <dt>계약 금액</dt><dd id="principalAmount">-</dd>
+                <dt>현재 이율</dt><dd id="interestRate">-</dd>
+                <dt>만기일</dt><dd id="maturityDate">-</dd>
+                <dt>상환 방식</dt><dd id="repaymentType">-</dd>
+                <dt>상환일</dt><dd id="repaymentDay">-</dd>
+                <dt>특약사항</dt>
+                <dd>
+                    <span id="currentTermsPreview">-</span>
+                    <button type="button" id="termsToggleBtn" class="terms-toggle" hidden>더보기</button>
+                </dd>
+            </dl>
+        </div>
+    </div>
+    <p class="disclaimer">
+        * 본 변경 요청서에 기재된 내용(특약사항 포함)은 당사자 간 입력 정보를 기반으로 기록되는 것으로,
+        서명 및 본인확인 절차의 방식에 따라 그 법적 효력의 범위나 효력 발생 요건에 관한 해석이
+        달라질 수 있어 구체적인 법적 효력 여부는 별도 확인이 필요할 수 있습니다.
+    </p>
+</div>
+
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+<div id="change-request-toast" class="change-request-toast" role="status" aria-live="polite"></div>
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+
+<script th:src="@{/js/contract/contractchange.js}"></script>
+
+</body>
+</html>

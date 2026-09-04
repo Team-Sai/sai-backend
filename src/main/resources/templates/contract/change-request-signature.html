@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>계약 변경 요청 서명 | 사이원장</title>
+    <link rel="stylesheet" as="style" crossorigin
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="../../static/css/contract/contract-form.css" />
+    <link rel="stylesheet" th:href="@{/css/contract/contract-debtor-approve.css}" href="../../static/css/contract/contract-debtor-approve.css" />
+    <link rel="stylesheet" href="/css/contract/site-common.css" />
+</head>
+<body>
+
+<header class="site-header">
+    <div class="header-inner">
+        <a class="brand" href="/">사이원장</a>
+        <nav class="main-nav" aria-label="주요 메뉴">
+            <a href="#">서비스 소개</a>
+            <a class="active" href="/contract">금전거래대차</a>
+            <a href="/settlements">정산</a>
+            <a href="#">거래 일정</a>
+        </nav>
+        <div class="header-actions">
+            <button class="icon-button" type="button" aria-label="알림">♧</button>
+            <a class="profile-link" href="/mypage" aria-label="마이페이지">
+                <span class="profile-avatar">사</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+
+    <div class="stepper-card">
+        <ol class="stepper">
+            <li class="stepper__step is-done">
+        <span class="stepper__circle">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
+            <path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+                <span class="stepper__label">변경 내용 작성</span>
+            </li>
+            <li class="stepper__step is-active">
+                <span class="stepper__circle">2</span>
+                <span class="stepper__label">전자서명</span>
+            </li>
+            <li class="stepper__step">
+                <span class="stepper__circle">3</span>
+                <span class="stepper__label">상대방 승인</span>
+            </li>
+        </ol>
+    </div>
+
+    <div class="doc" id="signatureCard">
+
+        <h1 class="doc__title">계 약 변 경 요 청 서 명</h1>
+
+        <div id="contractFields">
+
+            <section class="doc__article">
+                <span class="doc__clause">안내</span>
+                <div class="doc__body">
+          <span class="doc__text">
+            서명을 제출하면 변경 요청이 상대방에게 전송되고, 상대방의 승인을 거쳐 계약에 반영됩니다.
+          </span>
+                </div>
+            </section>
+
+            <section class="sign">
+                <h2 class="sign__title">서명 (Signature)</h2>
+                <p class="doc__hint">서명 패드에 수기 서명을 남겨주세요.</p>
+                <div class="sign__pad-wrap">
+                    <div class="sign__placeholder" id="signPlaceholder">SIGN HERE</div>
+                    <canvas id="signatureCanvas" class="sign__canvas" width="590" height="220"></canvas>
+                    <button type="button" class="sign__clear" id="clearSignature">지우기</button>
+                </div>
+            </section>
+
+            <div class="agreement">
+                <input type="checkbox" class="agreement__checkbox" id="agreeCheckbox" />
+                <label class="agreement__label" for="agreeCheckbox">
+                    위 변경 내용을 모두 확인하였으며, 전자 서명을 통한 변경 요청 의사를 기록합니다.
+                </label>
+            </div>
+
+            <div class="doc__actions">
+                <button type="button" class="btn btn--ghost" id="btnCancel">취소</button>
+                <button type="button" class="btn btn--primary" id="btnSubmit">전송</button>
+            </div>
+
+        </div>
+
+        <p class="doc__status" id="formStatus" role="status" aria-live="polite"></p>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div>
+            <strong>사이원장</strong>
+            <p>© Sai-Wonjang. All rights reserved.</p>
+        </div>
+        <nav>
+            <a href="#">이용약관</a>
+            <a href="#">개인정보처리방침</a>
+            <a href="#">고객센터</a>
+        </nav>
+    </div>
+</footer>
+
+<input type="hidden" id="contractId" th:value="${contractId}" />
+<input type="hidden" id="changeRequestId" th:value="${changeRequestId}" />
+
+<script th:src="@{/js/contract/change-request-signature.js}" src="../../static/js/contract/change-request-signature.js"></script>
+</body>
+</html>

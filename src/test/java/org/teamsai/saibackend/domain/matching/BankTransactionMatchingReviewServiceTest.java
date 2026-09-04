@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
+import org.teamsai.saibackend.domain.contract.exception.RepaymentScheduleErrorCode;
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateDTO;
 import org.teamsai.saibackend.domain.matching.dto.response.MatchingReviewProcessResponse;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
