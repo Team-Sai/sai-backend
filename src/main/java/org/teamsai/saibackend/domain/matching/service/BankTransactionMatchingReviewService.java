@@ -7,7 +7,7 @@ import org.teamsai.saibackend.domain.contract.exception.RepaymentScheduleErrorCo
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateDTO;
 import org.teamsai.saibackend.domain.matching.dto.response.MatchingReviewProcessResponse;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
-import org.teamsai.saibackend.domain.matching.policy.MatchingReviewValidator;
+import org.teamsai.saibackend.domain.matching.service.MatchingReviewValidator;
 import org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason;
 import org.teamsai.saibackend.domain.matching.type.MatchingReviewResult;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;

@@ -16,7 +16,7 @@
         <result property="overdueSince" column="overdue_since"/>
     </resultMap>
     <resultMap id="MatchingCandidateResultMap"
-               type="org.teamsai.saibackend.domain.matching.model.MatchingCandidate">
+               type="org.teamsai.saibackend.domain.matching.service.MatchingCandidate">
         <constructor>
             <arg column="target_type"
                  javaType="org.teamsai.saibackend.domain.matching.type.MatchingTargetType"/>
