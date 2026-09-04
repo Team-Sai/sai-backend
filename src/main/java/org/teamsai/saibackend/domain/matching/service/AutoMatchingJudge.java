@@ -1,11 +1,11 @@
-package org.teamsai.saibackend.domain.matching.policy;
+package org.teamsai.saibackend.domain.matching.service;
 
 import org.springframework.stereotype.Component;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
-import org.teamsai.saibackend.domain.matching.model.AutoMatchingResult;
-import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
-import org.teamsai.saibackend.domain.matching.model.MatchingCandidate;
-import org.teamsai.saibackend.domain.matching.model.MatchingTransaction;
+import org.teamsai.saibackend.domain.matching.service.AutoMatchingResult;
+import org.teamsai.saibackend.domain.matching.service.EvaluatedMatchingCandidate;
+import org.teamsai.saibackend.domain.matching.service.MatchingCandidate;
+import org.teamsai.saibackend.domain.matching.service.MatchingTransaction;
 import org.teamsai.saibackend.domain.matching.type.AutoMatchingTransactionType;
 import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;
 

@@ -7,7 +7,7 @@ import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateD
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateQueryDTO;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
 import org.teamsai.saibackend.domain.matching.mapper.BankTransactionMatchCandidateMapper;
-import org.teamsai.saibackend.domain.matching.model.EvaluatedMatchingCandidate;
+import org.teamsai.saibackend.domain.matching.service.EvaluatedMatchingCandidate;
 import org.teamsai.saibackend.domain.matching.type.MatchingCandidateInvalidationReason;
 import org.teamsai.saibackend.domain.matching.type.MatchingCandidateStatus;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;

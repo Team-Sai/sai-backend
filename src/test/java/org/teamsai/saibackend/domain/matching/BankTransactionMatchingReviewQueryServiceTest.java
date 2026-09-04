@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateQueryDTO;
 import org.teamsai.saibackend.domain.matching.dto.response.BankTransactionMatchingReviewResponse;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;
-import org.teamsai.saibackend.domain.matching.policy.MatchingReviewValidator;
+import org.teamsai.saibackend.domain.matching.service.MatchingReviewValidator;
 import org.teamsai.saibackend.domain.matching.service.BankTransactionMatchCandidateService;
 import org.teamsai.saibackend.domain.matching.service.BankTransactionMatchingReviewQueryService;
 import org.teamsai.saibackend.domain.matching.type.MatchingAmountType;

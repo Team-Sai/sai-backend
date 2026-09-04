@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateQueryDTO;
 import org.teamsai.saibackend.domain.matching.dto.response.BankTransactionMatchCandidateResponse;
 import org.teamsai.saibackend.domain.matching.dto.response.BankTransactionMatchingReviewResponse;
-import org.teamsai.saibackend.domain.matching.policy.MatchingReviewValidator;
+import org.teamsai.saibackend.domain.matching.service.MatchingReviewValidator;
 import org.teamsai.saibackend.domain.matching.type.MatchingReviewChannel;
 import org.teamsai.saibackend.domain.matching.type.MatchingTargetType;
 import org.teamsai.saibackend.domain.transaction.dto.response.BankTransactionDetailResponse;
