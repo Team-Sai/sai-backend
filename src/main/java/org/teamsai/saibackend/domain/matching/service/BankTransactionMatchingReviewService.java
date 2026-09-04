@@ -3,7 +3,7 @@ package org.teamsai.saibackend.domain.matching.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.exception.RepaymentScheduleErrorCode;
+import org.teamsai.saibackend.domain.contract.exception.RepaymentScheduleErrorCode;
 import org.teamsai.saibackend.domain.matching.dto.BankTransactionMatchCandidateDTO;
 import org.teamsai.saibackend.domain.matching.dto.response.MatchingReviewProcessResponse;
 import org.teamsai.saibackend.domain.matching.exception.MatchingErrorCode;

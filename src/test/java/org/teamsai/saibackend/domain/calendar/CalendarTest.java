@@ -9,11 +9,11 @@ import org.teamsai.saibackend.domain.calendar.response.DashboardCalendarItemResp
 import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.RepaymentMethod;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
-import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardResponse;
-import org.teamsai.saibackend.domain.contractdashboard.dto.response.DashboardSummaryResponse;
-import org.teamsai.saibackend.domain.contractdashboard.service.DashboardService;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus;
+import org.teamsai.saibackend.domain.contract.dto.response.DashboardResponse;
+import org.teamsai.saibackend.domain.contract.dto.response.DashboardSummaryResponse;
+import org.teamsai.saibackend.domain.contract.service.DashboardService;
+import org.teamsai.saibackend.domain.contract.dto.RepaymentScheduleDTO;
+import org.teamsai.saibackend.domain.contract.type.RepaymentScheduleStatus;
 import org.teamsai.saibackend.domain.integration.service.IntegrationDashboardService;
 import org.teamsai.saibackend.domain.payment.type.PaymentTargetType;
 import org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse;

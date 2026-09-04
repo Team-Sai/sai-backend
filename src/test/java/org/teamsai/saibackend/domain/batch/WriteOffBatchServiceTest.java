@@ -8,7 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.batch.service.WriteOffBatchService;
 import org.teamsai.saibackend.domain.batch.service.WriteOffResult;
 import org.teamsai.saibackend.domain.batch.service.WriteOffTransactionExecutor;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
+import org.teamsai.saibackend.domain.contract.mapper.RepaymentScheduleMapper;
 import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 import org.teamsai.saibackend.domain.settlement.service.SettlementCloseService;
 import java.time.LocalDate;

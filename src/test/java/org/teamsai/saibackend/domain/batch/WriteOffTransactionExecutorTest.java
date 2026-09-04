@@ -7,7 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.teamsai.saibackend.domain.batch.service.WriteOffTransactionExecutor;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
+import org.teamsai.saibackend.domain.contract.mapper.RepaymentScheduleMapper;
 import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 
 import java.util.List;

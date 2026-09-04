@@ -18,8 +18,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.teamsai.saibackend.domain.batch.common.listener.BaseSkipListener;
 import org.teamsai.saibackend.domain.batch.common.listener.LoggingJobExecutionListener;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
+import org.teamsai.saibackend.domain.contract.dto.RepaymentScheduleDTO;
+import org.teamsai.saibackend.domain.contract.mapper.RepaymentScheduleMapper;
 import org.teamsai.saibackend.domain.notification.service.NotificationService;
 import org.teamsai.saibackend.domain.notification.type.NotificationType;
 
@@ -83,7 +83,7 @@ public class RepaymentDueReminderJobConfig {
 
         return new MyBatisCursorItemReaderBuilder<RepaymentScheduleDTO>()
                 .sqlSessionFactory(sqlSessionFactory)
-                .queryId("org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper.findDueOnDates")
+                .queryId("org.teamsai.saibackend.domain.contract.mapper.RepaymentScheduleMapper.findDueOnDates")
                 .parameterValues(params)
                 .build();
     }

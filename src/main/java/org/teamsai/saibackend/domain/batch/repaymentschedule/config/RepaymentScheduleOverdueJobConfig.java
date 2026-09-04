@@ -20,13 +20,13 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.teamsai.saibackend.domain.batch.common.listener.BaseSkipListener;
 import org.teamsai.saibackend.domain.batch.common.listener.LoggingJobExecutionListener;
 import org.teamsai.saibackend.domain.batch.repaymentschedule.dto.OverdueUpdateCommand;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.dto.RepaymentScheduleDTO;
+import org.teamsai.saibackend.domain.contract.dto.RepaymentScheduleDTO;
 
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.teamsai.saibackend.domain.contractrepaymentschedule.type.RepaymentScheduleStatus.OVERDUE;
+import static org.teamsai.saibackend.domain.contract.type.RepaymentScheduleStatus.OVERDUE;
 
 @Configuration
 @RequiredArgsConstructor
@@ -74,7 +74,7 @@ public class RepaymentScheduleOverdueJobConfig {
 
         return new MyBatisPagingItemReaderBuilder<RepaymentScheduleDTO>()
                 .sqlSessionFactory(sqlSessionFactory)
-                .queryId("org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper.findOverdueCandidates")
+                .queryId("org.teamsai.saibackend.domain.contract.mapper.RepaymentScheduleMapper.findOverdueCandidates")
                 .parameterValues(params)
                 .pageSize(100)
                 .build();
@@ -87,7 +87,7 @@ public class RepaymentScheduleOverdueJobConfig {
     private MyBatisBatchItemWriter<OverdueUpdateCommand> writer() {
         return new MyBatisBatchItemWriterBuilder<OverdueUpdateCommand>()
                 .sqlSessionFactory(sqlSessionFactory)
-                .statementId("org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper.updateStatusToOverdue")
+                .statementId("org.teamsai.saibackend.domain.contract.mapper.RepaymentScheduleMapper.updateStatusToOverdue")
                 .build();
     }
 }

@@ -18,7 +18,7 @@ import org.teamsai.saibackend.domain.contract.dto.request.ContractStatus;
 import org.teamsai.saibackend.domain.contract.dto.request.LoanContractRequest;
 import org.teamsai.saibackend.domain.contract.dto.response.LoanContractResponse;
 import org.teamsai.saibackend.domain.contract.service.LoanContractService;
-import org.teamsai.saibackend.domain.contractchange.service.ContractChangeService;
+import org.teamsai.saibackend.domain.contract.service.ContractChangeService;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 @Tag(

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.teamsai.saibackend.domain.contractrepaymentschedule.mapper.RepaymentScheduleMapper;
+import org.teamsai.saibackend.domain.contract.mapper.RepaymentScheduleMapper;
 import org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper;
 import org.teamsai.saibackend.domain.settlement.service.SettlementCloseService;
 
