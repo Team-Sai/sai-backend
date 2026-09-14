@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사이원장 | 내 정보</title>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link rel="stylesheet"
+          th:href="@{/css/user/mypage.css}"
+          href="/css/user/mypage.css">
+</head>
+<body class="app-shell-page">
+<header
+        th:replace="~{fragments/app-shell :: appHeader('mypage')}">
+</header>
+
+<main class="mypage-main">
+    <section class="page-title unified-page-header">
+        <h1 class="unified-page-title">내 정보</h1>
+        <p>회원 정보와 연결 계좌를 관리할 수 있습니다.</p>
+    </section>
+
+    <div id="mypage-error" class="mypage-error" hidden></div>
+
+    <section class="profile-card">
+        <div class="profile-image-wrap">
+            <div class="profile-image">
+                <img id="profile-image" alt="프로필 이미지" hidden>
+                <svg id="profile-placeholder"
+                     viewBox="0 0 24 24"
+                     aria-hidden="true">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21a8 8 0 0 1 16 0"></path>
+                </svg>
+            </div>
+
+        </div>
+
+        <div class="profile-content">
+            <div class="profile-name-row">
+                <strong id="member-name" class="empty-value profile-name"></strong>
+                <span id="verification-status"
+                      class="empty-value verification-status" hidden></span>
+            </div>
+
+            <div class="profile-actions">
+                <button type="button">프로필 수정</button>
+                <button type="button">비밀번호 변경</button>
+                <button id="logout-button" type="button">로그아웃</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="info-grid">
+        <article class="info-card">
+            <div class="card-header">
+                <h2>상세 정보</h2>
+
+                <button class="icon-button"
+                        type="button"
+                        aria-label="상세 정보 안내">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 11v5"></path>
+                        <path d="M12 8h.01"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="detail-list">
+                <div class="detail-row">
+                    <span>이메일</span>
+                    <strong id="member-email-detail" class="empty-value"></strong>
+                </div>
+
+                <div class="detail-row">
+                    <span>사용자 토큰</span>
+                    <strong id="user-token" class="empty-value"></strong>
+                </div>
+
+                <div class="detail-row">
+                    <span>가입일</span>
+                    <strong id="joined-at" class="empty-value"></strong>
+                </div>
+
+                <div class="detail-row">
+                    <span>마지막 로그인</span>
+                    <strong id="last-login-at"
+                            class="empty-value"></strong>
+                </div>
+            </div>
+        </article>
+
+        <article class="info-card">
+            <div class="card-header">
+                <h2>연결된 계좌</h2>
+
+                <button class="add-account-button" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 8v8"></path>
+                        <path d="M8 12h8"></path>
+                    </svg>
+                    계좌 추가
+                </button>
+            </div>
+
+            <div id="account-list" class="account-list"></div>
+        </article>
+    </section>
+
+    <section class="security-banner">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+            <path d="m9 12 2 2 4-4"></path>
+        </svg>
+        <span>사용자의 금융 정보는 암호화되어 안전하게 보호됩니다.</span>
+    </section>
+</main>
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+
+
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+
+
+<script
+        th:src="@{/js/user/mypage.js}"
+        src="/js/user/mypage.js">
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preload" href="/font/pretendard/Pretendard-Regular.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="/font/pretendard/Pretendard-Bold.ttf" as="font" type="font/ttf" crossorigin>
+    <title>내 정산 | 사이원장</title>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link rel="stylesheet" href="/css/settlement/settlement-common.css">
+    <link rel="stylesheet" href="/css/settlement/settlement-list.css">
+    <link rel="stylesheet" href="/css/matching/matching-review-modal.css">
+</head>
+<body class="app-shell-page">
+<header th:replace="~{fragments/app-shell :: appHeader('settlement')}"></header>
+
+<main class="page-shell">
+    <section class="page-heading unified-page-header">
+        <div>
+            <h1 class="unified-page-title">내 정산</h1>
+        </div>
+
+        <div class="heading-actions">
+            <p class="updated-text">최근 동기화 <span id="sync-time">-</span></p>
+            <button id="sync-button" class="button button-secondary" type="button">
+                ↻ 거래내역 동기화
+            </button>
+            <a class="button button-primary" href="/settlements/new">정산 생성</a>
+        </div>
+    </section>
+
+    <section class="summary-grid" aria-label="정산 요약">
+        <article class="summary-card">
+            <div>
+                <p class="summary-label">전체 정산 수</p>
+                <p class="summary-value"><strong id="settlement-total-count">0</strong><span>건</span></p>
+            </div>
+            <p class="summary-foot">전체 정산 내역</p>
+        </article>
+
+        <article class="summary-card">
+            <div>
+                <p class="summary-label">받을 금액</p>
+                <p class="summary-value"><strong id="receivable-amount">0</strong><span>원</span></p>
+            </div>
+            <span class="summary-arrow">↙</span>
+            <p class="summary-foot"><span id="receivable-count">0건</span> 받아야하는 정산</p>
+        </article>
+
+        <article class="summary-card">
+            <div>
+                <p class="summary-label">보낼 금액</p>
+                <p class="summary-value"><strong id="payable-amount">0</strong><span>원</span></p>
+            </div>
+            <span class="summary-arrow positive">↗</span>
+            <p class="summary-foot"><span id="payable-count">0건</span> 보내해야하는 정산</p>
+        </article>
+
+    </section>
+
+    <section class="filter-panel">
+        <label class="search-box">
+            <span>⌕</span>
+            <input id="settlement-search" type="search" placeholder="정산명 검색">
+        </label>
+
+        <label class="filter-field">
+            <span>정산 유형</span>
+            <select id="type-filter">
+                <option value="ALL">전체</option>
+                <option value="SHARED">공동정산</option>
+                <option value="RECURRING">정기정산</option>
+            </select>
+        </label>
+
+        <label class="filter-field">
+            <span>분배 방식</span>
+            <select id="status-filter">
+                <option value="ALL">전체</option>
+                <option value="EQUAL">균등</option>
+                <option value="CUSTOM">직접 설정</option>
+            </select>
+        </label>
+
+        <label class="filter-field">
+            <span>진행 상태</span>
+            <select id="sort-filter">
+                <option value="ALL">전체</option>
+                <option value="IN_PROGRESS">진행 중</option>
+                <option value="CLOSED">완료</option>
+            </select>
+        </label>
+    </section>
+
+    <section class="table-card" aria-label="정산 목록">
+        <div class="settlement-table settlement-table-head">
+            <span>정산명</span>
+            <span>정산 유형</span>
+            <span>역할</span>
+            <span>구분</span>
+            <span>분배 방식</span>
+            <span>상태</span>
+            <span>일정</span>
+            <span>상세</span>
+        </div>
+
+        <div id="settlement-list" class="settlement-list"></div>
+
+        <div id="empty-state" class="empty-state" hidden>
+            <div class="empty-icon">₩</div>
+            <h2>아직 생성된 정산이 없습니다.</h2>
+            <p>공동정산을 생성하면 최근 생성 결과가 이 화면에 표시됩니다.</p>
+            <a class="button button-primary" href="/settlements/new">첫 정산 만들기</a>
+        </div>
+    </section>
+
+    <p class="local-data-note">
+        현재 정산 목록 조회 API가 없으므로 이 화면은 같은 브라우저에서 방금 생성한 정산만 임시로 표시합니다.
+    </p>
+</main>
+
+<footer th:replace="~{fragments/app-shell :: appFooter}"></footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<th:block th:replace="~{fragments/matching-review-modal :: matchingReviewModal}"></th:block>
+
+<th:block th:replace="~{fragments/app-shell :: commonScripts}"></th:block>
+<script src="/js/matching/matching-review-modal.js"></script>
+<script th:src="@{/js/settlement/settlement-list.js}" src="/js/settlement/settlement-list.js"></script>
+</body>
+</html>

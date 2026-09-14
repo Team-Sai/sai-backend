@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementAccountMapper">
+
+    <resultMap
+            id="SettlementAccountResultMap"
+            type="org.teamsai.saibackend.domain.settlement.dto.SettlementAccountDTO">
+
+        <id
+                property="settlementAccountId"
+                column="settlement_account_id"
+        />
+
+        <result
+                property="settlementId"
+                column="settlement_id"
+        />
+
+        <result
+                property="linkedAccountId"
+                column="linked_account_id"
+        />
+
+        <result
+                property="accountStatus"
+                column="account_status"
+        />
+
+        <result
+                property="selectedAt"
+                column="selected_at"
+        />
+
+        <result
+                property="endedAt"
+                column="ended_at"
+        />
+
+    </resultMap>
+
+
+    <insert
+            id="insert"
+            useGeneratedKeys="true"
+            keyProperty="settlementAccountId">
+
+        INSERT INTO settlement_account (
+        settlement_id,
+        linked_account_id,
+        account_status,
+        selected_at,
+        ended_at
+        )
+        VALUES (
+        #{settlementId},
+        #{linkedAccountId},
+        #{accountStatus},
+        #{selectedAt},
+        #{endedAt}
+        )
+
+    </insert>
+
+
+    <select
+            id="findActiveBySettlementId"
+            resultMap="SettlementAccountResultMap">
+
+        SELECT
+        settlement_account_id,
+        settlement_id,
+        linked_account_id,
+        account_status,
+        selected_at,
+        ended_at
+        FROM settlement_account
+        WHERE settlement_id = #{settlementId}
+        AND account_status = 'ACTIVE'
+        AND ended_at IS NULL
+
+    </select>
+
+
+    <select
+            id="findActiveBySettlementIdForUpdate"
+            resultMap="SettlementAccountResultMap">
+
+        SELECT
+        settlement_account_id,
+        settlement_id,
+        linked_account_id,
+        account_status,
+        selected_at,
+        ended_at
+        FROM settlement_account
+        WHERE settlement_id = #{settlementId}
+        AND account_status = 'ACTIVE'
+        AND ended_at IS NULL
+        FOR UPDATE
+
+    </select>
+
+
+    <update id="updateStatus">
+
+        UPDATE settlement_account
+        SET
+        account_status = #{accountStatus},
+        ended_at = #{endedAt}
+        WHERE settlement_account_id =
+        #{settlementAccountId}
+        AND account_status = 'ACTIVE'
+
+    </update>
+
+</mapper>

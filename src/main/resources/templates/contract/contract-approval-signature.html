@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>계약 변경 승인 전자서명</title>
+    <link rel="stylesheet" as="style" crossorigin
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link rel="stylesheet" th:href="@{/css/contract/contract-form.css}" href="../../static/css/contract/contract-form.css" />
+    <link rel="stylesheet" th:href="@{/css/contract/contract-debtor-approve.css}" href="../../static/css/contract/contract-debtor-approve.css" />
+</head>
+<body class="app-shell-page">
+<header
+        th:replace="~{fragments/app-shell :: appHeader('contract')}">
+</header>
+
+<main class="page">
+
+    <div class="stepper-card">
+        <ol class="stepper">
+            <li class="stepper__step is-done">
+                <span class="stepper__circle"><svg viewBox="0 0 16 16" width="12" height="12" fill="none"><path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="stepper__label">변경 요청 접수</span>
+            </li>
+            <li class="stepper__step is-done">
+                <span class="stepper__circle"><svg viewBox="0 0 16 16" width="12" height="12" fill="none"><path d="M3 8.5 6.2 12 13 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="stepper__label">변경 내용 확인</span>
+            </li>
+            <li class="stepper__step is-active">
+                <span class="stepper__circle">3</span>
+                <span class="stepper__label">본인인증 · 서명날인</span>
+            </li>
+        </ol>
+    </div>
+
+    <div class="doc" id="signatureCard" data-contract-id="" th:attr="data-contract-id=${contractId}">
+
+        <h1 class="doc__title">전 자 서 명</h1>
+
+        <p class="doc__hint">서명 패드에 수기 서명을 남기고, 아래 내용에 동의한 뒤 제출해 주세요.</p>
+
+        <div id="contractFields">
+
+            <section class="sign">
+                <h2 class="sign__title">서명 (Signature)</h2>
+                <div class="sign__pad-wrap">
+                    <div class="sign__placeholder" id="signPlaceholder">SIGN HERE</div>
+                    <canvas id="signatureCanvas" class="sign__canvas" width="590" height="220"></canvas>
+                    <button type="button" class="sign__clear" id="clearSignature">지우기</button>
+                </div>
+            </section>
+
+            <div class="agreement">
+                <input type="checkbox" class="agreement__checkbox" id="agreeCheckbox" />
+                <label class="agreement__label" for="agreeCheckbox">
+                    위 변경된 계약 내용을 모두 확인하였으며, 전자서명을 통해 상기 계약 조건에 대한 최종 승인 의사를 기록합니다.
+                </label>
+            </div>
+
+            <div class="doc__actions">
+                <button type="button" class="btn btn--primary" id="btnSubmit">서명 제출</button>
+            </div>
+
+        </div>
+
+        <p class="doc__status" id="formStatus" role="status" aria-live="polite"></p>
+    </div>
+</main>
+
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+
+<script th:src="@{/js/contract/contract-approval-signature.js}" src="../../static/js/contract/contract-approval-signature.js"></script>
+</body>
+</html>

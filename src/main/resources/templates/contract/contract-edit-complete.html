@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>금전소비대차계약 수정 완료</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link rel="stylesheet" th:href="@{/css/contract/contract-edit-complete.css}" href="../../static/css/contract/contract-edit-complete.css" />
+    <link rel="stylesheet" href="/css/contract/site-common.css" />
+</head>
+<body class="app-shell-page">
+
+<header
+        th:replace="~{fragments/app-shell :: appHeader('contract')}">
+</header>
+
+<main class="success-container">
+    <header class="success-header">
+        <h1 class="success-title">계약 변경 요청이 전송되었습니다.</h1>
+        <div class="success-icon" aria-hidden="true">📨</div>
+        <p class="success-description">
+            상대방이 승인하면 변경된 조건으로 계약이 적용됩니다.<br>
+            승인 전까지는 기존 계약 내용이 그대로 유지됩니다.
+        </p>
+    </header>
+
+    <section class="contract-card">
+        <h2 class="contract-card__title">금 전 소 비 대 차 계 약 서</h2>
+
+        <div class="contract-card__decorations" aria-hidden="true">
+            <span class="decor-line"></span>
+            <span class="decor-line"></span>
+            <span class="decor-line"></span>
+            <span class="decor-line"></span>
+            <span class="decor-line"></span>
+        </div>
+
+        <div class="stamp-seal stamp-seal--pending" aria-label="승인대기">
+            <span class="stamp-seal__text">승인대기</span>
+        </div>
+    </section>
+
+    <footer class="action-group">
+        <button type="button" id="btnViewContract" class="btn btn--primary">
+            <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>현재 계약 확인</span>
+        </button>
+        <button type="button" class="btn btn--secondary" id="btnGoDashboard">
+            <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="9"></rect>
+                <rect x="14" y="3" width="7" height="5"></rect>
+                <rect x="14" y="12" width="7" height="9"></rect>
+                <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>대시보드로 이동</span>
+        </button>
+    </footer>
+</main>
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+
+<script th:src="@{/js/contract/contract-edit-complete.js}" src="../../static/js/contract/contract-edit-complete.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+package org.teamsai.saibackend.domain.settlement.exception;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.teamsai.saibackend.global.exception.BaseErrorCode;
+import org.teamsai.saibackend.global.exception.DomainException;
+@Getter
+@RequiredArgsConstructor
+public enum SettlementErrorCode implements BaseErrorCode<DomainException> {
+
+    SETTLEMENT_CREATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 생성에 실패했습니다."
+    ),
+    SETTLEMENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "존재하지 않는 정산입니다."
+    ),
+
+    SETTLEMENT_ACCESS_DENIED(
+            HttpStatus.FORBIDDEN,
+            "해당 정산에 대한 접근 권한이 없습니다."
+    ),
+
+    ALREADY_CLOSED_SETTLEMENT(
+            HttpStatus.BAD_REQUEST,
+            "이미 종료된 정산입니다."
+    ),
+
+    SETTLEMENT_CLOSE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 종료 처리에 실패했습니다."
+    ),
+
+    SETTLEMENT_NOT_CLOSABLE(
+            HttpStatus.CONFLICT,
+            "모든 납부의무가 완료되지 않아 정산을 종료할 수 없습니다."
+    ),
+
+    ALREADY_SETTLEMENT_PARTICIPANT(
+            HttpStatus.CONFLICT,
+            "이미 참여 중인 회원입니다."
+    ),
+
+    SETTLEMENT_PARTICIPANT_CREATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 참여자 등록에 실패했습니다."
+    ),
+    INVALID_SETTLEMENT_AMOUNT(
+            HttpStatus.BAD_REQUEST,
+            "정산 금액은 1원 이상이어야 합니다."
+    ),
+    SETTLEMENT_PARTICIPANT_STATUS_UPDATE_FAILED(
+            HttpStatus.BAD_REQUEST,
+            "참여자 상태 변경에 실패했습니다."
+    ),SETTLEMENT_ACCOUNT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "정산 수취 계좌가 설정되어 있지 않습니다."
+    ),
+
+    INVALID_SETTLEMENT_ACCOUNT(
+            HttpStatus.BAD_REQUEST,
+            "본인에게 연동된 계좌만 정산 수취 계좌로 설정할 수 있습니다."
+    ),
+
+    SETTLEMENT_ACCOUNT_CREATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 수취 계좌 설정에 실패했습니다."
+    ),
+
+    SETTLEMENT_ACCOUNT_UPDATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "정산 수취 계좌 변경에 실패했습니다."
+    ),
+    INVALID_SETTLEMENT_REQUEST(
+            HttpStatus.BAD_REQUEST,
+            "타당하지 않은 정산 요청입니다."
+    ),
+    SETTLEMENT_PARTICIPANT_REQUIRED(
+            HttpStatus.BAD_REQUEST,
+            "정산 참여자를 한 명 이상 선택해야 합니다."
+    ),
+
+    INVALID_SETTLEMENT_PARTICIPANT(
+            HttpStatus.BAD_REQUEST,
+            "정산 참여자 정보가 올바르지 않습니다."
+    ),
+
+    DUPLICATE_SETTLEMENT_PARTICIPANT(
+            HttpStatus.CONFLICT,
+            "동일한 참여자를 중복으로 선택할 수 없습니다."
+    );
+
+
+    private final HttpStatus httpStatus;
+    private final String message;
+
+    @Override
+    public DomainException toException() {
+        return new DomainException(httpStatus, this);
+    }
+}

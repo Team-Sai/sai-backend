@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0">
+    <title>새로운 정산 만들기 | 사이원장</title>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link
+            rel="stylesheet"
+            href="/css/settlement/settlement-common.css">
+
+    <link
+            rel="stylesheet"
+            href="/css/settlement/settlement-create.css">
+
+    <link
+            rel="stylesheet"
+            href="/css/settlement/settlement-create-payer.css">
+
+</head>
+<body class="app-shell-page">
+<header
+        th:replace="~{fragments/app-shell :: appHeader('settlement')}">
+</header>
+
+<main class="create-shell">
+    <div class="breadcrumb">
+        <a href="/settlements">정산 서비스</a>
+        <span>/</span>
+        <strong>정산 생성</strong>
+    </div>
+
+    <div class="create-heading unified-page-header">
+        <h1 class="unified-page-title">새로운 정산 만들기</h1>
+        <p>총 금액과 참여자를 선택하면 참여자별 납부 예정 금액을 균등하게 계산합니다.</p>
+    </div>
+
+    <div class="settlement-type-tabs" role="tablist">
+        <button class="type-tab active" type="button" role="tab" aria-selected="true">공동정산</button>
+        <button class="type-tab active" type="button" role="tab" aria-selected="false">정기정산</button>
+    </div>
+
+    <div class="create-layout">
+        <form id="shared-settlement-form" class="form-column" novalidate>
+            <section class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">▤</span>
+                    <h2>정산 기본 정보</h2>
+                </div>
+
+                <div class="field-grid two-column">
+                    <label class="form-field">
+                        <span>정산명 <em>(필수)</em></span>
+                        <input
+                                id="title"
+                                name="title"
+                                type="text"
+                                maxlength="200"
+                                placeholder="예: 제주 여행 경비"
+                                required
+                        >
+                        <small class="field-error" data-error-for="title"></small>
+                    </label>
+
+                    <label class="form-field">
+                        <span>정산 성격 <em>(필수)</em></span>
+                        <select id="settlement-category" name="settlementCategory" required>
+                            <option value="">선택해 주세요</option>
+                            <option value="여행">여행</option>
+                            <option value="생활비">생활비</option>
+                            <option value="회식">회식</option>
+                            <option value="공동구매">공동구매</option>
+                            <option value="모임">모임</option>
+                            <option value="기타">기타</option>
+                        </select>
+                        <small class="field-error" data-error-for="settlementCategory"></small>
+                    </label>
+                </div>
+            </section>
+
+            <section id="shared-date-section" class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">□</span>
+                    <h2>정산 마감일</h2>
+                </div>
+
+                <label class="form-field date-field">
+                    <span>납부 마감일 <em>(필수)</em></span>
+                    <input id="due-date" name="dueDate" type="date" required>
+                    <small class="field-error" data-error-for="dueDate"></small>
+                </label>
+            </section>
+            <section
+                    id="recurring-setting-section"
+                    class="form-card"
+                    hidden>
+
+                <div class="card-title">
+                    <span class="card-icon">↻</span>
+                    <h2>정기정산 설정</h2>
+                </div>
+
+                <div class="field-grid two-column">
+
+                    <label class="form-field">
+                        <span>반복 주기 <em>(필수)</em></span>
+
+                        <select
+                                id="cycle-rule"
+                                name="cycleRule">
+
+                            <option value="">선택해 주세요</option>
+                            <option value="DAILY">매일</option>
+                            <option value="WEEKLY">매주</option>
+                            <option value="MONTHLY">매월</option>
+                            <option value="YEARLY">매년</option>
+
+                        </select>
+
+                        <small
+                                class="field-error"
+                                data-error-for="cycleRule">
+                        </small>
+                    </label>
+
+                    <label class="form-field">
+                        <span>시작일 <em>(필수)</em></span>
+
+                        <input
+                                id="recurring-start-date"
+                                name="startDate"
+                                type="date">
+
+                        <small
+                                class="field-error"
+                                data-error-for="startDate">
+                        </small>
+                    </label>
+
+                    <label class="form-field">
+                        <span>종료일</span>
+
+                        <input
+                                id="recurring-end-date"
+                                name="endDate"
+                                type="date">
+
+                        <small
+                                class="field-error"
+                                data-error-for="endDate">
+                        </small>
+                    </label>
+
+                </div>
+
+            </section>
+
+            <section class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">≋</span>
+                    <h2>분배 방식</h2>
+                </div>
+
+                <div class="choice-grid">
+                    <label class="choice-card selected">
+                        <input type="radio" name="splitType" value="EQUAL" checked>
+                        <span class="choice-title">균등 분배</span>
+                        <span class="choice-description">총 금액을 생성자와 참여자 수로 균등하게 나눕니다.</span>
+                    </label>
+
+                    <label class="choice-card disabled" aria-disabled="true">
+                        <input type="radio" name="splitType" value="CUSTOM" disabled>
+                        <span class="choice-title">직접 설정</span>
+                        <span class="choice-description">참여자별 금액 설정은 추후 지원할 예정입니다.</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">▣</span>
+                    <h2>총 금액</h2>
+                </div>
+
+                <label class="form-field">
+                    <span>총 금액 <em>(필수)</em></span>
+                    <input
+                            id="total-amount"
+                            name="totalAmount"
+                            type="text"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            maxlength="17"
+                            placeholder="예: 450,000"
+                            required
+                    >
+                    <small>원 단위로 입력해 주세요.</small>
+                    <small class="field-error" data-error-for="totalAmount"></small>
+                </label>
+            </section>
+
+            <section class="form-card payer-card">
+                <div class="card-title">
+                    <span class="card-icon">♙</span>
+                    <h2>참여자</h2>
+                </div>
+
+                <div class="participant-lookup">
+                    <label class="form-field participant-token-field" for="participant-token">
+                        <span>회원 코드로 참여자 조회</span>
+                        <input
+                                id="participant-token"
+                                type="text"
+                                maxlength="100"
+                                autocomplete="off"
+                                placeholder="예: SAI_ABCD1234"
+                        >
+                    </label>
+                    <button
+                            id="lookup-participant-button"
+                            type="button"
+                            class="button button-primary participant-lookup-button"
+                    >
+                        조회 후 추가
+                    </button>
+                </div>
+
+                <small class="field-error" data-error-for="participantLookup"></small>
+
+                <div id="participant-chips" class="participant-chips" aria-live="polite">
+                    <span id="owner-chip" class="participant-chip owner">나 (생성자)</span>
+                </div>
+
+                <p id="participant-empty-message" class="participant-help">
+                    생성자를 제외하고 참여자를 한 명 이상 추가해 주세요.
+                </p>
+                <small class="field-error" data-error-for="participants"></small>
+            </section>
+
+            <section class="form-card">
+                <div class="card-title">
+                    <span class="card-icon">▥</span>
+                    <h2>정산 수취 계좌</h2>
+                </div>
+
+                <label class="form-field">
+                    <span>수취 계좌 <em>(필수)</em></span>
+
+                    <select
+                        id="settlement-account"
+                        name="linkedAccountId"
+                        required
+                    >
+                        <option value="">계좌를 선택해 주세요</option>
+                    </select>
+
+                    <small>
+                        사이원장에 연동한 본인 계좌 중 정산금을 받을 계좌를 선택해 주세요.
+                    </small>
+
+                    <small
+                        class="field-error"
+                        data-error-for="linkedAccountId"
+                    ></small>
+                </label>
+            </section>
+        </form>
+
+        <aside class="summary-panel">
+            <div class="summary-header">공동 정산 요약</div>
+
+            <div class="summary-body">
+                <dl class="summary-list">
+                    <div>
+                        <dt>정산명</dt>
+                        <dd id="summary-title">입력 전</dd>
+                    </div>
+                    <div>
+                        <dt>정산 성격</dt>
+                        <dd id="summary-category">선택 전</dd>
+                    </div>
+                    <div>
+                        <dt>참여자 수</dt>
+                        <dd id="summary-participant-count">1명 (본인)</dd>
+                    </div>
+                    <div>
+                        <dt>분배 방식</dt>
+                        <dd id="summary-split-type">균등 분배</dd>
+                    </div>
+                    <div>
+                        <dt>총 금액</dt>
+                        <dd id="summary-total-amount">입력 전</dd>
+                    </div>
+                    <div>
+                        <dt>예상 1인당 금액</dt>
+                        <dd id="summary-per-person-amount">계산 전</dd>
+                    </div>
+                </dl>
+
+                <div class="summary-divider"></div>
+
+                <div class="account-summary">
+                    <span>정산 계좌</span>
+                    <strong id="summary-account">
+                        아직 설정되지 않음
+                    </strong>
+                </div>
+
+                <dl class="summary-list compact">
+                    <div>
+                        <dt>정산 마감일</dt>
+                        <dd id="summary-due-date">선택 전</dd>
+                    </div>
+                    <div>
+                        <dt>생성 후 상태</dt>
+                        <dd>진행 중</dd>
+                    </div>
+                </dl>
+
+                <button
+                        id="submit-button"
+                        class="button button-primary submit-button"
+                        type="submit"
+                        form="shared-settlement-form"
+                >
+                    공동정산 생성
+                </button>
+
+                <p class="submit-description">
+                    생성이 완료되면 선택한 참여자에게 정산 요청이 전송됩니다.
+                </p>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+<div
+        id="toast"
+        class="toast"
+        role="status"
+        aria-live="polite">
+</div>
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+
+<script
+        th:src="@{/js/settlement/settlement-create.js}"
+        src="/js/settlement/settlement-create.js">
+</script>
+</body>
+</html>

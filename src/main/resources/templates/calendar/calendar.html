@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일정 캘린더</title>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link rel="stylesheet" th:href="@{/css/calendar/calendar.css}" href="../../static/css/calendar/calendar.css" />
+</head>
+<body class="app-shell-page">
+
+<header
+        th:replace="~{fragments/app-shell :: appHeader('calendar')}">
+</header>
+
+<main class="calendar-page">
+
+    <div class="calendar-main">
+        <div class="calendar-card">
+            <div class="calendar-header">
+                <button id="prevMonthBtn" class="nav-btn" type="button" aria-label="이전 달">‹</button>
+                <div class="month-picker">
+                    <button id="monthTitle" class="month-title-btn" type="button">2026년 8월</button>
+                    <div id="monthPickerPopup" class="month-picker-popup" hidden>
+                        <select id="yearSelect"></select>
+                        <select id="monthSelect">
+                            <option value="0">1월</option>
+                            <option value="1">2월</option>
+                            <option value="2">3월</option>
+                            <option value="3">4월</option>
+                            <option value="4">5월</option>
+                            <option value="5">6월</option>
+                            <option value="6">7월</option>
+                            <option value="7">8월</option>
+                            <option value="8">9월</option>
+                            <option value="9">10월</option>
+                            <option value="10">11월</option>
+                            <option value="11">12월</option>
+                        </select>
+                        <button id="monthPickerGoBtn" class="month-picker-go" type="button">이동</button>
+                    </div>
+                </div>
+                <button id="nextMonthBtn" class="nav-btn" type="button" aria-label="다음 달">›</button>
+            </div>
+
+            <div class="calendar-grid">
+                <div class="weekday-row">
+                    <span>일</span><span>월</span><span>화</span><span>수</span>
+                    <span>목</span><span>금</span><span>토</span>
+                </div>
+                <div id="daysGrid" class="days-grid"></div>
+            </div>
+
+            <div class="calendar-legend">
+                <span class="legend-item"><span class="dot dot-inbound"></span>받을 돈</span>
+                <span class="legend-item"><span class="dot dot-outbound"></span>보낼 돈</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-panel">
+        <div class="detail-header">
+            <span id="detailDate">날짜를 선택하세요</span>
+            <div id="typeTabs" class="type-tabs">
+                <button class="tab-btn active" data-type="ALL" type="button">전체</button>
+                <button class="tab-btn" data-type="LOAN" type="button">계약</button>
+                <button class="tab-btn" data-type="SETTLEMENT" type="button">정산</button>
+            </div>
+        </div>
+        <div id="detailList" class="detail-list">
+            <p class="empty-state">달력에서 날짜를 선택하면 해당 날짜의 일정이 보여요.</p>
+        </div>
+    </div>
+
+</main>
+
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+<script th:src="@{/js/calendar/calendar.js}" src="../../static/js/calendar/calendar.js"></script>
+</body>
+</html>

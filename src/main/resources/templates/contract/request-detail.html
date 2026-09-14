@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>변경 요청 수신 화면</title>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link rel="stylesheet" th:href="@{/css/contract/request-detail.css}">
+    <link rel="stylesheet" href="/css/contract/site-common.css" />
+</head>
+<body class="app-shell-page">
+
+<header
+        th:replace="~{fragments/app-shell :: appHeader('contract')}">
+</header>
+
+
+<input type="hidden" id="contractId" th:value="${contractId}">
+<input type="hidden" id="changeRequestId" th:value="${changeRequestId}">
+
+<div class="page">
+    <div class="banner">
+        <p class="banner-title" id="bannerTitle">
+            <span id="requesterName">-</span>님이 계약 조건 변경을 요청했습니다.
+        </p>
+        <div class="banner-sub">
+            요청일자: <span id="requestedAt">-</span> | 현재 상태: <span id="status">-</span>
+        </div>
+        <div class="banner-return-reason" id="returnReasonBlock" hidden>
+            반려 사유: <span id="returnReasonText">-</span>
+        </div>
+    </div>
+
+
+
+    <div class="content">
+        <div class="detail-card">
+            <h2>변경 사항 상세</h2>
+
+            <div class="row">
+                <span class="label">항목</span>
+                <span class="label">현재 조건</span>
+                <span class="label">변경 요청 조건</span>
+            </div>
+
+            <div class="row">
+                <span>만기일</span>
+                <span id="currentMaturityDate">-</span>
+                <span id="newMaturityDate">-</span>
+            </div>
+
+            <div class="row">
+                <span>연 이율</span>
+                <span id="currentInterestRate">-</span>
+                <span id="newInterestRate">-</span>
+            </div>
+
+            <div class="row">
+                <span>예상 월 상환액</span>
+                <span id="currentMonthlyPayment">-</span>
+                <span id="newMonthlyPayment">-</span>
+            </div>
+
+            <div class="row">
+                <span>상환 방식</span>
+                <span id="currentRepaymentType">-</span>
+                <span id="newRepaymentType">-</span>
+            </div>
+
+            <div class="row">
+                <span>특약사항</span>
+                <span id="currentTerms">-</span>
+                <span id="newTerms">-</span>
+            </div>
+
+            <p class="disclaimer">
+                * 본 화면에 표시된 예상 월 상환액은 참고용 안내이며,
+                실제 상환 금액은 변경 승인 및 정산 시점에 별도로 산정될 예정입니다.
+            </p>
+        </div>
+
+        <div class="side">
+            <div class="reason-card">
+                <h3>변경 요청 사유</h3>
+                <p id="changeReason">-</p>
+                <p class="return-reason" id="returnReasonBlockSide" hidden>
+                    <strong>반려사유</strong> · <span id="returnReasonTextSide">-</span>
+                </p>
+
+            </div>
+
+            <div class="period-card">
+                <h3>총 상환 기간 변화</h3>
+                <p id="extendedMonths">-</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-group">
+        <button id="approveButton">변경 승인</button>
+        <button id="rejectButton" class="btn-reject">변경 반려</button>
+    </div>
+
+    <div class="modal-overlay" id="rejectModal" hidden>
+        <div class="modal-card">
+            <h3>변경 요청 반려</h3>
+            <p class="modal-sub">반려 사유를 입력해주세요.</p>
+            <textarea id="returnReasonInput" rows="4" placeholder="반려 사유를 입력하세요"></textarea>
+            <p class="modal-error" id="rejectError" hidden></p>
+            <div class="modal-actions">
+                <button type="button" id="rejectCancelButton" class="btn-ghost">취소</button>
+                <button type="button" id="rejectConfirmButton" class="btn-reject-confirm">반려 확정</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+
+<script th:src="@{/js/contract/request-detail.js}"></script>
+
+</body>
+</html>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.user.mapper.UserMapper">
+
+    <resultMap id="userResultMap"
+               type="org.teamsai.saibackend.domain.user.dto.UserDTO">
+
+        <id property="userId" column="user_id"/>
+        <result property="userToken" column="user_token"/>
+        <result property="userKey" column="user_key"/>
+        <result property="email" column="email"/>
+        <result property="password" column="password"/>
+        <result property="name" column="name"/>
+        <result property="birthDate" column="birth_date"/>
+        <result property="createdAt" column="created_at"/>
+
+    </resultMap>
+
+    <update id="updateUserKeyByUserId">
+        UPDATE users
+        SET user_key = #{userKey}
+        WHERE user_id = #{userId}
+        AND user_key &lt;=&gt; #{expectedPreviousKey}
+    </update>
+
+    <select id="existsByEmail"
+            resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM users
+        WHERE email = #{email}
+        )
+    </select>
+
+    <insert id="insert"
+            parameterType="org.teamsai.saibackend.domain.user.dto.UserDTO"
+            useGeneratedKeys="true"
+            keyProperty="userId"
+            keyColumn="user_id">
+
+        INSERT INTO users (
+        user_token,
+        email,
+        password,
+        name,
+        birth_date
+        )
+        VALUES (
+        #{userToken},
+        #{email},
+        #{password},
+        #{name},
+        #{birthDate}
+        )
+
+    </insert>
+
+    <select id="findByEmail"
+            resultMap="userResultMap">
+
+        SELECT
+        user_id,
+        user_token,
+        email,
+        password,
+        name,
+        birth_date,
+        created_at
+        FROM users
+        WHERE email = #{email}
+
+    </select>
+
+    <select id="findById"
+            resultMap="userResultMap">
+
+        SELECT
+        user_id,
+        user_token,
+        user_key,
+        email,
+        password,
+        name,
+        birth_date,
+        created_at
+        FROM users
+        WHERE user_id = #{userId}
+
+    </select>
+
+    <!-- 초대 코드 기반 회원 조회 -->
+    <select id="findByUserToken"
+            resultMap="userResultMap">
+
+        SELECT
+        user_id,
+        user_token,
+        user_key,
+        email,
+        password,
+        name,
+        birth_date
+        FROM users
+        WHERE user_token = #{userToken}
+
+    </select>
+
+    <select id="findUserKeyByUserId" resultType="java.lang.String">
+        SELECT user_key
+        FROM users
+        WHERE user_id = #{userId}
+    </select>
+
+    <delete id="deleteById">
+
+        DELETE FROM users
+        WHERE user_id = #{userId}
+
+    </delete>
+
+    <delete id="deleteByUserToken">
+        DELETE FROM users
+        WHERE user_token = #{userToken}
+    </delete>
+
+    <select id="existsByUserToken"
+            resultType="boolean">
+
+        SELECT EXISTS (
+        SELECT 1
+        FROM users
+        WHERE user_token = #{userToken}
+        )
+
+    </select>
+
+</mapper>

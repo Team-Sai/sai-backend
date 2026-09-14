@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementParticipantMapper">
+
+    <resultMap id="SettlementParticipantResultMap" type="org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO">
+        <id property="participantId" column="participant_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="settlementId" column="settlement_id"/>
+        <result property="participantRole" column="participant_role"/>
+        <result property="participantStatus" column="participant_status"/>
+        <result property="joinedAt" column="joined_at"/>
+    </resultMap>
+
+    <insert id="insert"
+            parameterType="org.teamsai.saibackend.domain.settlement.dto.SettlementParticipantDTO"
+            useGeneratedKeys="true"
+            keyProperty="participantId">
+
+        INSERT INTO settlement_participant (
+        settlement_id,
+        user_id,
+        participant_role,
+        participant_status,
+        joined_at
+        )
+        VALUES (
+        #{settlementId},
+        #{userId},
+        #{participantRole},
+        #{participantStatus},
+        #{joinedAt}
+        )
+
+    </insert>
+
+    <select id="existsActiveParticipant"
+            resultType="boolean">
+
+        SELECT EXISTS (
+        SELECT 1
+        FROM settlement_participant sp
+        WHERE sp.settlement_id = #{settlementId}
+        AND sp.user_id = #{userId}
+        AND sp.participant_status = 'ACTIVE'
+        )
+
+    </select>
+
+    <select id="findActiveBySettlementId" resultMap="SettlementParticipantResultMap">
+        SELECT participant_id, user_id, settlement_id, participant_role, participant_status, joined_at
+        FROM settlement_participant
+        WHERE settlement_id = #{settlementId}
+        AND participant_status = 'ACTIVE'
+    </select>
+</mapper>

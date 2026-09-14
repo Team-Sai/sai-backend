@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="matchingReviewModal">
+    <div id="matching-review-overlay"
+         class="matching-review-overlay"
+         hidden>
+        <section class="matching-review-modal"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="matching-review-title">
+            <header class="matching-review-modal__header">
+                <div>
+                    <h2 id="matching-review-title">확인이 필요한 거래</h2>
+                    <p id="matching-review-progress"></p>
+                </div>
+                <button type="button"
+                        id="matching-review-close"
+                        class="matching-review-icon-button"
+                        aria-label="닫기">×</button>
+            </header>
+
+            <div id="matching-review-message"
+                 class="matching-review-message"
+                 role="status"
+                 aria-live="polite"
+                 hidden></div>
+
+            <div id="matching-review-list"
+                 class="matching-review-modal__body"></div>
+
+            <footer id="matching-review-footer"
+                    class="matching-review-modal__footer"
+                    hidden>
+                <button type="button"
+                        id="matching-review-more"
+                        class="matching-review-button matching-review-button--secondary">
+                    더 보기
+                </button>
+            </footer>
+        </section>
+    </div>
+
+    <div id="matching-review-confirm-overlay"
+         class="matching-review-confirm-overlay"
+         hidden>
+        <section class="matching-review-confirm"
+                 role="alertdialog"
+                 aria-modal="true"
+                 aria-labelledby="matching-review-confirm-title">
+            <h3 id="matching-review-confirm-title">어느 후보도 아닌가요?</h3>
+            <p>이 거래를 어느 정산이나 차용증에도 반영하지 않으시겠어요?</p>
+            <small>미매칭 처리하면 현재 확인 목록에서 제외됩니다.</small>
+            <div class="matching-review-confirm__actions">
+                <button type="button"
+                        id="matching-review-confirm-cancel"
+                        class="matching-review-button matching-review-button--secondary">
+                    취소
+                </button>
+                <button type="button"
+                        id="matching-review-confirm-submit"
+                        class="matching-review-button matching-review-button--danger">
+                    미매칭 처리
+                </button>
+            </div>
+        </section>
+    </div>
+</th:block>
+</body>
+</html>

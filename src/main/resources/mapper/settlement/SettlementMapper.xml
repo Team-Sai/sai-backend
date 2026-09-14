@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.settlement.mapper.SettlementMapper">
+
+    <resultMap id="settlementResultMap" type="org.teamsai.saibackend.domain.settlement.dto.SettlementDTO">
+        <id property="settlementId" column="settlement_id"/>
+        <result property="ownerId" column="owner_id"/>
+        <result property="settlementType" column="settlement_type"/>
+        <result property="settlementStatus" column="settlement_status"/>
+        <result property="settlementCategory" column="settlement_category"/>
+        <result property="title" column="title"/>
+        <result property="splitType" column="split_type"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="dueDate" column="due_date"/>
+        <result property="recurringSettlementId" column="recurring_settlement_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="closedAt" column="closed_at"/>
+        <result property="status" column="status"/>
+        <result property="cycleDate" column="cycle_date"/>
+    </resultMap>
+
+    <insert id="insertSettlement"
+            parameterType="org.teamsai.saibackend.domain.settlement.dto.SettlementDTO"
+            useGeneratedKeys="true"
+            keyProperty="settlementId"
+            keyColumn="settlement_id">
+
+        INSERT INTO settlement (
+        recurring_settlement_id,
+        owner_id,
+        settlement_type,
+        settlement_status,
+        settlement_category,
+        title,
+        split_type,
+        total_amount,
+        due_date,
+        cycle_date,
+        created_at
+        )
+        VALUES (
+        #{recurringSettlementId},
+        #{ownerId},
+        #{settlementType},
+        #{settlementStatus},
+        #{settlementCategory},
+        #{title},
+        #{splitType},
+        #{totalAmount},
+        #{dueDate},
+        #{cycleDate},
+        #{createdAt}
+        )
+    </insert>
+
+    <select id="findById" resultMap="settlementResultMap">
+        SELECT
+        settlement_id,
+        recurring_settlement_id,
+        owner_id,
+        settlement_type,
+        settlement_status,
+        settlement_category,
+        title,
+        split_type,
+        total_amount,
+        due_date,
+        created_at,
+        closed_at,
+        status,
+        cycle_date
+        FROM settlement
+        WHERE settlement_id = #{settlementId}
+    </select>
+
+    <select id="findByIdForUpdate"
+            resultMap="settlementResultMap">
+
+        SELECT
+        settlement_id,
+        recurring_settlement_id,
+        owner_id,
+        settlement_type,
+        settlement_status,
+        settlement_category,
+        title,
+        split_type,
+        total_amount,
+        due_date,
+        created_at,
+        closed_at,
+        status,
+        cycle_date
+        FROM settlement
+        WHERE settlement_id = #{settlementId}
+        FOR UPDATE
+
+    </select>
+
+    <update id="closeSettlement">
+        UPDATE settlement
+        SET
+        settlement_status = 'CLOSED',
+        closed_at = #{closedAt}
+        WHERE settlement_id = #{settlementId}
+        AND settlement_status = 'IN_PROGRESS'
+    </update>
+    <select id="findAllByUserId"
+            resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementListResponse">
+
+        SELECT
+        s.settlement_id AS settlementId,
+        s.title AS title,
+
+        CASE
+        WHEN s.owner_id = #{userId}
+        THEN 'OWNER'
+        ELSE 'MEMBER'
+        END AS role,
+
+        s.settlement_category AS settlementCategory,
+        s.settlement_type AS settlementType,
+        s.split_type AS splitType,
+        s.settlement_status AS settlementStatus,
+        s.total_amount AS totalAmount,
+        s.due_date AS dueDate,
+        rs.start_date AS startDate,
+        rs.end_date AS endDate,
+        s.cycle_date AS cycleDate,
+        s.created_at AS createdAt
+
+        FROM settlement s
+
+        LEFT JOIN settlement_participant sp
+        ON sp.settlement_id = s.settlement_id
+        AND sp.user_id = #{userId}
+        AND sp.participant_status = 'ACTIVE'
+
+        LEFT JOIN recurring_settlement rs
+        ON rs.recurring_settlement_id = s.recurring_settlement_id
+
+        WHERE
+        s.owner_id = #{userId}
+        OR sp.participant_id IS NOT NULL
+
+        ORDER BY s.created_at DESC
+
+    </select>
+    <select id="findDetailById"
+            resultType="org.teamsai.saibackend.domain.settlement.dto.response.SettlementDetailResponse">
+
+        SELECT
+        s.settlement_id AS settlementId,
+        s.title AS title,
+        owner.name AS ownerName,
+        s.settlement_category AS settlementCategory,
+        s.settlement_type AS settlementType,
+        s.settlement_status AS settlementStatus,
+        s.split_type AS splitType,
+        s.due_date AS dueDate,
+        rs.start_date AS startDate,
+        rs.end_date AS endDate,
+        s.created_at AS createdAt,
+
+        CASE
+        WHEN s.owner_id = #{userId}
+        THEN 'OWNER'
+
+        WHEN sp.participant_id IS NOT NULL
+        THEN 'MEMBER'
+
+        ELSE 'NONE'
+        END AS role
+
+        FROM settlement s
+
+        LEFT JOIN users owner
+        ON owner.user_id = s.owner_id
+
+        LEFT JOIN settlement_participant sp
+        ON sp.settlement_id = s.settlement_id
+        AND sp.user_id = #{userId}
+        AND sp.participant_status = 'ACTIVE'
+
+        LEFT JOIN recurring_settlement rs
+        ON rs.recurring_settlement_id = s.recurring_settlement_id
+
+        WHERE s.settlement_id = #{settlementId}
+
+    </select>
+
+    <select id="countInProgressSettlements" resultType="int">
+        SELECT COUNT(*)
+        FROM settlement
+        WHERE settlement_status = 'IN_PROGRESS'
+    </select>
+
+    <select id="findInProgressSettlements" resultMap="settlementResultMap">
+        SELECT settlement_id, recurring_settlement_id, owner_id, settlement_type, settlement_status,
+        settlement_category, title, split_type, total_amount, due_date, cycle_date, created_at, closed_at
+        FROM settlement
+        WHERE settlement_status = 'IN_PROGRESS'
+        ORDER BY settlement_id
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByRecurringId" resultType="int">
+        SELECT COUNT(*)
+        FROM settlement
+        WHERE recurring_settlement_id = #{recurringSettlementId}
+    </select>
+    
+    <select id="findLatestByRecurringIdForUpdate" resultMap="settlementResultMap">
+        SELECT settlement_id, recurring_settlement_id, owner_id, settlement_type, settlement_status,
+        settlement_category, title, split_type, total_amount, due_date, cycle_date, created_at, closed_at, status
+        FROM settlement
+        WHERE recurring_settlement_id = #{recurringSettlementId}
+        ORDER BY cycle_date DESC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <select id="findLatestByRecurringId" resultMap="settlementResultMap">
+        SELECT settlement_id, recurring_settlement_id, owner_id, settlement_type, settlement_status,
+        settlement_category, title, split_type, total_amount, due_date, cycle_date, created_at, closed_at, status
+        FROM settlement
+        WHERE recurring_settlement_id = #{recurringId}
+        ORDER BY cycle_date DESC
+        LIMIT 1
+    </select>
+</mapper>

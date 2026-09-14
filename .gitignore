@@ -39,3 +39,5 @@ out/
 application-dev.yml
 application-prod.yml
 .env
+
+C?*scratchpad*

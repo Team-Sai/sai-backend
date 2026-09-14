@@ -1,0 +1,92 @@
+.payer-card {
+    overflow: visible;
+}
+
+.participant-lookup {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.participant-token-field {
+    margin: 0;
+}
+
+.participant-lookup-button {
+    min-width: 126px;
+    height: 44px;
+    white-space: nowrap;
+}
+
+.participant-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.participant-chip.removable {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 100%;
+}
+
+.participant-chip-name {
+    font-weight: 700;
+}
+
+.participant-chip-token {
+    max-width: 180px;
+    overflow: hidden;
+    color: #6b7280;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.participant-remove-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.08);
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.participant-remove-button:hover {
+    background: rgba(15, 23, 42, 0.14);
+}
+
+.participant-help {
+    margin: 12px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.choice-card.disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+@media (max-width: 640px) {
+    .participant-lookup {
+        grid-template-columns: 1fr;
+    }
+
+    .participant-lookup-button {
+        width: 100%;
+    }
+
+    .participant-chip-token {
+        max-width: 120px;
+    }
+}

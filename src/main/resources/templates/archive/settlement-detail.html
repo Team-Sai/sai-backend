@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>정산 내역서 미리보기 | 사이원장</title>
+    <th:block th:replace="~{fragments/app-shell :: commonStyles}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/archive/settlement-pdf.css}" href="/css/archive/settlement-pdf.css">
+    <link rel="stylesheet" th:href="@{/css/archive/settlement-detail.css}" href="/css/archive/settlement-detail.css">
+</head>
+<body class="app-shell-page">
+<input type="hidden" id="settlementId" th:value="${settlementId}">
+
+<header th:replace="~{fragments/app-shell :: appHeader('settlement')}"></header>
+
+<main class="preview-page">
+    <div class="preview-toolbar">
+        <a class="btn btn--ghost" href="/archive">목록으로</a>
+        <button type="button" class="btn btn--primary" id="downloadPdfButton">PDF 다운로드</button>
+    </div>
+
+    <div class="doc" id="docRoot">
+
+        <div class="doc__header">
+            <h1 class="doc__title">정 산 내 역 서</h1>
+            <div class="doc__ref">
+                <span id="settlementDisplayId">ST-0</span>
+                <span class="doc__ref-sep">·</span>
+                <span id="documentVersion">v1</span>
+            </div>
+        </div>
+
+        <section class="doc__article">
+            <span class="doc__clause">정산 기본정보</span>
+            <table class="info-table">
+                <colgroup>
+                    <col style="width: 20%" />
+                    <col style="width: 30%" />
+                    <col style="width: 20%" />
+                    <col style="width: 30%" />
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th class="info-table__label">정산 ID</th>
+                    <td class="info-table__value" id="settlementId-cell">-</td>
+                    <th class="info-table__label">정산명</th>
+                    <td class="info-table__value" id="title">-</td>
+                </tr>
+                <tr>
+                    <th class="info-table__label">생성자</th>
+                    <td class="info-table__value" id="ownerName">-</td>
+                    <th class="info-table__label">생성일</th>
+                    <td class="info-table__value" id="createdAt">-</td>
+                </tr>
+                <tr>
+                    <th class="info-table__label">유형</th>
+                    <td class="info-table__value" id="settlementType">-</td>
+                    <th class="info-table__label">분담방식</th>
+                    <td class="info-table__value" id="splitType">-</td>
+                </tr>
+                <tr>
+                    <th class="info-table__label">정산상태</th>
+                    <td class="info-table__value" id="settlementStatus">-</td>
+                    <th class="info-table__label">마감일</th>
+                    <td class="info-table__value" id="dueDate">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">정산 금액 및 이행현황</span>
+            <table class="info-table">
+                <colgroup>
+                    <col style="width: 20%" />
+                    <col style="width: 30%" />
+                    <col style="width: 20%" />
+                    <col style="width: 30%" />
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th class="info-table__label">총 정산금액</th>
+                    <td class="info-table__value doc__readonly" id="totalExpectedAmount">-</td>
+                    <th class="info-table__label">확인된 납부금</th>
+                    <td class="info-table__value doc__readonly" id="totalPaidAmount">-</td>
+                </tr>
+                <tr>
+                    <th class="info-table__label">미납금</th>
+                    <td class="info-table__value doc__readonly" id="totalRemainingAmount">-</td>
+                    <th class="info-table__label">진행률</th>
+                    <td class="info-table__value" id="progressRate">-</td>
+                </tr>
+                <tr>
+                    <th class="info-table__label">완납</th>
+                    <td class="info-table__value" id="paidCount">-</td>
+                    <th class="info-table__label">부분납부 / 미납</th>
+                    <td class="info-table__value" id="partialAndUnpaidCount">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">수취 계좌</span>
+            <table class="info-table" id="accountTable" hidden>
+                <colgroup>
+                    <col style="width: 20%" />
+                    <col style="width: 30%" />
+                    <col style="width: 20%" />
+                    <col style="width: 30%" />
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th class="info-table__label">은행</th>
+                    <td class="info-table__value" id="bankName">-</td>
+                    <th class="info-table__label">예금주</th>
+                    <td class="info-table__value" id="accountHolderName">-</td>
+                </tr>
+                <tr>
+                    <th class="info-table__label">계좌번호</th>
+                    <td class="info-table__value" colspan="3" id="maskedAccountNumber">-</td>
+                </tr>
+                </tbody>
+            </table>
+            <p class="doc__notice" id="noAccountNotice">설정된 정산 수취 계좌가 없습니다.</p>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">참여자별 납부 현황</span>
+            <table class="data-table">
+                <colgroup>
+                    <col style="width: 25%" />
+                    <col style="width: 25%" />
+                    <col style="width: 25%" />
+                    <col style="width: 25%" />
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>참여자</th>
+                    <th>최초 부담금</th>
+                    <th>현재 납부금</th>
+                    <th>진행상태</th>
+                </tr>
+                </thead>
+                <tbody id="obligationTableBody"></tbody>
+            </table>
+        </section>
+
+        <section class="doc__article">
+            <span class="doc__clause">상세 납부 및 계좌 거래 내역</span>
+            <table class="data-table">
+                <colgroup>
+                    <col style="width: 18%" />
+                    <col style="width: 16%" />
+                    <col style="width: 16%" />
+                    <col style="width: 16%" />
+                    <col style="width: 34%" />
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>일시</th>
+                    <th>납부자</th>
+                    <th>승인 금액</th>
+                    <th>처리방식</th>
+                    <th>거래 상대방</th>
+                </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </section>
+
+        <section class="doc__article doc__article--notice">
+            <span class="doc__clause">[기록 검증 및 유의사항]</span>
+            <p class="doc__notice">
+                이 미리보기는 지금 시점의 정산 이행현황을 기준으로 조회한 화면입니다.
+                PDF로 다운로드하면 다운로드 시점의 데이터로 기록이 고정되어 저장됩니다.
+            </p>
+        </section>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/app-shell :: appFooter}"></footer>
+<th:block th:replace="~{fragments/app-shell :: commonScripts}"></th:block>
+<script th:src="@{/js/archive/settlement-detail.js}" src="/js/archive/settlement-detail.js"></script>
+</body>
+</html>

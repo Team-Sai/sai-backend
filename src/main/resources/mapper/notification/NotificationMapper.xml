@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.notification.mapper.NotificationMapper">
+
+    <insert id="insert"
+            parameterType="org.teamsai.saibackend.domain.notification.dto.NotificationDTO"
+            useGeneratedKeys="true"
+            keyProperty="notificationId"
+            keyColumn="notification_id">
+
+        INSERT INTO notification (
+        user_id,
+        notification_type,
+        title,
+        content,
+        reference_id,
+        secondary_reference_id,
+        created_at
+        )
+        VALUES (
+        #{userId},
+        #{notificationType},
+        #{title},
+        #{content},
+        #{referenceId},
+        #{secondaryReferenceId},
+        #{createdAt}
+        )
+
+    </insert>
+
+
+    <select id="findAllByUserId"
+            resultType="org.teamsai.saibackend.domain.notification.dto.response.NotificationResponse">
+
+        SELECT
+        n.notification_id AS notificationId,
+        n.notification_type AS notificationType,
+        n.title,
+        n.content,
+        n.reference_id AS referenceId,
+        n.secondary_reference_id AS secondaryReferenceId,
+        COALESCE(s.title, lc.contract_alias, lc_schedule.contract_alias) AS referenceTitle,
+        CASE
+            WHEN s.settlement_id IS NOT NULL THEN 'SETTLEMENT'
+            WHEN lc.contract_id IS NOT NULL OR lc_schedule.contract_id IS NOT NULL THEN 'CONTRACT'
+            ELSE NULL
+        END AS referenceType,
+        s.settlement_type AS settlementType,
+        bt.processing_status AS relatedTransactionStatus,
+        CASE
+            WHEN n.notification_type =
+                 'BANK_TRANSACTION_MATCHING_REVIEW'
+             AND bt.processing_status IS NOT NULL
+             AND bt.processing_status != 'NEEDS_CHECK'
+            THEN TRUE
+            ELSE FALSE
+        END AS resolved,
+        n.created_at AS createdAt
+
+        FROM notification n
+        LEFT JOIN bank_transaction bt
+            ON n.notification_type =
+               'BANK_TRANSACTION_MATCHING_REVIEW'
+            AND bt.bank_transaction_id = n.reference_id
+            AND bt.linked_account_id = n.secondary_reference_id
+        LEFT JOIN settlement s
+            ON (
+                n.notification_type = 'SETTLEMENT_PARTICIPANT_ADDED'
+                AND s.settlement_id = n.reference_id
+            )
+            OR (
+                n.notification_type IN (
+                    'SETTLEMENT_DUE_REMINDER_D3',
+                    'SETTLEMENT_DUE_REMINDER_D1',
+                    'SETTLEMENT_DUE_REMINDER_DDAY'
+                )
+                AND s.settlement_id = n.secondary_reference_id
+            )
+        LEFT JOIN loan_contract lc
+            ON n.notification_type IN ('CONTRACT_REQUESTED', 'CONTRACT_CHANGE')
+            AND lc.contract_id = n.reference_id
+        LEFT JOIN repayment_schedule rs
+            ON n.notification_type IN (
+                'REPAYMENT_DUE_REMINDER_D3',
+                'REPAYMENT_DUE_REMINDER_D1',
+                'REPAYMENT_DUE_REMINDER_DDAY'
+            )
+            AND rs.schedule_id = n.reference_id
+        LEFT JOIN loan_contract lc_schedule
+            ON lc_schedule.contract_id = rs.contract_id
+
+        WHERE n.user_id = #{userId}
+
+        ORDER BY
+        n.created_at DESC,
+        n.notification_id DESC
+
+    </select>
+
+    <select id="existsByUserIdAndTypeAndReferenceId"
+            resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM notification
+            WHERE user_id = #{userId}
+            AND notification_type = #{notificationType}
+            AND reference_id = #{referenceId}
+        )
+    </select>
+
+</mapper>

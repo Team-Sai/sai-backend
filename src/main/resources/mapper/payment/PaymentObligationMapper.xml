@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+        namespace="org.teamsai.saibackend.domain.payment.mapper.PaymentObligationMapper">
+    <resultMap id="PaymentObligationResultMap"
+               type="org.teamsai.saibackend.domain.payment.dto.PaymentObligationDTO">
+        <id property="paymentObligationId" column="payment_obligation_id"/>
+        <result property="participantId" column="participant_id"/>
+        <result property="expectedAmount" column="expected_amount"/>
+        <result property="paymentStatus" column="payment_status"/>
+        <result property="reviewStatus" column="review_status"/>
+        <result property="obligationStatus" column="obligation_status"/>
+        <result property="overdueSince" column="overdue_since"/>
+    </resultMap>
+    <resultMap id="MatchingCandidateResultMap"
+               type="org.teamsai.saibackend.domain.matching.service.MatchingCandidate">
+        <constructor>
+            <arg column="target_type"
+                 javaType="org.teamsai.saibackend.domain.matching.type.MatchingTargetType"/>
+            <arg column="target_id"
+                 javaType="java.lang.Long"/>
+            <arg column="participant_id"
+                 javaType="java.lang.Long"/>
+            <arg column="participant_name"
+                 javaType="java.lang.String"/>
+            <arg column="remaining_amount"
+                 javaType="java.math.BigDecimal"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findByIdForUpdate"
+            resultMap="PaymentObligationResultMap">
+        SELECT
+        payment_obligation_id,
+        participant_id,
+        expected_amount,
+        payment_status,
+        review_status,
+        obligation_status,
+        overdue_since
+        FROM payment_obligation
+        WHERE payment_obligation_id = #{paymentObligationId}
+        FOR UPDATE
+    </select>
+
+    <update id="updatePaymentStatus">
+        UPDATE payment_obligation
+        SET
+        payment_status = #{paymentStatus}
+        WHERE payment_obligation_id = #{paymentObligationId}
+    </update>
+
+    <select id="findMatchCandidatesByLinkedAccountIdAndTarget"
+            resultMap="MatchingCandidateResultMap">
+        <include refid="findMatchCandidatesQuery"/>
+    </select>
+
+    <sql id="findMatchCandidatesQuery">
+        SELECT
+        'SETTLEMENT' AS target_type,
+        po.payment_obligation_id AS target_id,
+        po.participant_id AS participant_id,
+        u.name AS participant_name,
+        po.expected_amount - COALESCE(SUM(pr.amount), 0)
+        AS remaining_amount
+        FROM payment_obligation po
+        JOIN settlement_participant sp
+        ON sp.participant_id = po.participant_id
+        JOIN settlement s
+        ON s.settlement_id = sp.settlement_id
+        JOIN settlement_account sa
+        ON sa.settlement_id = s.settlement_id
+        JOIN users u
+        ON u.user_id = sp.user_id
+        LEFT JOIN payment_record pr
+        ON pr.payment_target_type = 'SETTLEMENT'
+        AND pr.target_id = po.payment_obligation_id
+        AND pr.record_status = 'CONFIRMED'
+        WHERE sa.linked_account_id = #{linkedAccountId}
+        AND sa.selected_at &lt;= #{transactionAt}
+        AND (
+        sa.ended_at IS NULL
+        OR sa.ended_at &gt; #{transactionAt}
+        )
+        AND s.created_at &lt;= #{transactionAt}
+        AND s.settlement_status = 'IN_PROGRESS'
+        AND po.obligation_status = 'ACTIVE'
+        AND po.payment_status != 'PAID'
+        AND sp.participant_status = 'ACTIVE'
+        <if test="targetType != null and aggregateId != null">
+            AND #{targetType} = 'SETTLEMENT'
+            AND s.settlement_id = #{aggregateId}
+        </if>
+        GROUP BY
+        po.payment_obligation_id,
+        po.participant_id,
+        u.name,
+        po.expected_amount
+        HAVING
+        po.expected_amount - COALESCE(SUM(pr.amount), 0) &gt; 0
+
+        UNION ALL
+
+        SELECT
+        'LOAN' AS target_type,
+        rs.schedule_id AS target_id,
+        lc.debtor_id AS participant_id,
+        debtor.name AS participant_name,
+        rs.total_payment_due - COALESCE(SUM(pr.amount), 0)
+        AS remaining_amount
+        FROM repayment_schedule rs
+        JOIN loan_contract lc
+        ON lc.contract_id = rs.contract_id
+        JOIN contract_account ca
+        ON ca.contract_id = lc.contract_id
+        JOIN users debtor
+        ON debtor.user_id = lc.debtor_id
+        LEFT JOIN payment_record pr
+        ON pr.payment_target_type = 'LOAN'
+        AND pr.target_id = rs.schedule_id
+        AND pr.record_status = 'CONFIRMED'
+        WHERE ca.linked_account_id = #{linkedAccountId}
+        AND ca.selected_at &lt;= #{transactionAt}
+        AND (
+        ca.ended_at IS NULL
+        OR ca.ended_at &gt; #{transactionAt}
+        )
+        AND ca.account_status = 'ACTIVE'
+        AND lc.status = 'COMPLETED'
+        AND lc.created_at &lt;= #{transactionAt}
+        AND rs.created_at &lt;= #{transactionAt}
+        AND rs.status = 'PENDING'
+        <if test="targetType != null and aggregateId != null">
+            AND #{targetType} = 'LOAN'
+            AND lc.contract_id = #{aggregateId}
+        </if>
+        AND NOT EXISTS (
+        SELECT 1
+        FROM repayment_schedule earlier
+        WHERE earlier.contract_id = rs.contract_id
+        AND earlier.status = 'PENDING'
+        AND earlier.sequence &lt; rs.sequence
+        )
+        GROUP BY
+        rs.schedule_id,
+        lc.debtor_id,
+        debtor.name,
+        rs.total_payment_due
+        HAVING
+        rs.total_payment_due - COALESCE(SUM(pr.amount), 0) &gt; 0
+
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="paymentObligationId">
+        INSERT INTO payment_obligation (
+        participant_id,
+        expected_amount,
+        payment_status,
+        review_status,
+        obligation_status
+        )
+        VALUES (
+        #{participantId},
+        #{expectedAmount},
+        #{paymentStatus},
+        #{reviewStatus},
+        #{obligationStatus}
+        )
+    </insert>
+
+    <!-- 주의: obligation_status='ACTIVE'는 "정산이 진행 중"이 아니라 "이 obligation이 취소/제외되지 않음"을 의미.
+ 정산 종료 여부는 상위 settlement.settlement_status로 별도 판단해야 함. -->
+    <select id="findByParticipantIds" resultMap="PaymentObligationResultMap">
+        SELECT po.payment_obligation_id, po.participant_id, po.expected_amount,
+        po.payment_status, po.review_status, po.obligation_status
+        FROM payment_obligation po
+        INNER JOIN (
+        SELECT participant_id, MAX(payment_obligation_id) AS latest_id
+        FROM payment_obligation
+        WHERE participant_id IN
+        <foreach item="id" collection="participantIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND obligation_status = 'ACTIVE'
+        GROUP BY participant_id
+        ) latest ON latest.participant_id = po.participant_id
+        AND latest.latest_id = po.payment_obligation_id
+    </select>
+
+    <!-- 정기정산 회차 생성 전용: 상각(WRITTEN_OFF)된 직전 obligation도 금액 복사 대상에 포함 -->
+    <select id="findLatestByParticipantIdsIncludingWrittenOff" resultMap="PaymentObligationResultMap">
+        SELECT po.payment_obligation_id, po.participant_id, po.expected_amount,
+        po.payment_status, po.review_status, po.obligation_status
+        FROM payment_obligation po
+        INNER JOIN (
+        SELECT participant_id, MAX(payment_obligation_id) AS latest_id
+        FROM payment_obligation
+        WHERE participant_id IN
+        <foreach item="id" collection="participantIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND obligation_status IN ('ACTIVE', 'WRITTEN_OFF')
+        GROUP BY participant_id
+        ) latest ON latest.participant_id = po.participant_id
+        AND latest.latest_id = po.payment_obligation_id
+    </select>
+
+    <select id="findUnpaidByParticipantIds" resultMap="PaymentObligationResultMap">
+        SELECT payment_obligation_id, participant_id, expected_amount,
+        payment_status, review_status, obligation_status, overdue_since
+        FROM payment_obligation
+        WHERE participant_id IN
+        <foreach item="id" collection="participantIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND payment_status != 'PAID'
+        AND obligation_status = 'ACTIVE'
+        AND overdue_since IS NULL
+    </select>
+
+    <update id="clearOverdueSince">
+        UPDATE payment_obligation
+        SET overdue_since = NULL
+        WHERE payment_obligation_id = #{paymentObligationId}
+    </update>
+
+    <update id="updateOverdueSinceBulk">
+        UPDATE payment_obligation
+        SET overdue_since = #{overdueSince}
+        WHERE payment_obligation_id IN
+        <foreach item="id" collection="paymentObligationIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND payment_status != 'PAID'
+        AND overdue_since IS NULL
+        AND obligation_status = 'ACTIVE'
+    </update>
+
+    <select id="findWriteOffCandidateIds" resultType="long">
+        SELECT payment_obligation_id
+        FROM payment_obligation
+        WHERE obligation_status = 'ACTIVE'
+        AND payment_status IN ('UNPAID', 'PARTIALLY_PAID')
+        AND overdue_since IS NOT NULL
+        AND overdue_since &lt;= #{cutoffDateTime}
+    </select>
+
+    <update id="writeOffBulk">
+        UPDATE payment_obligation
+        SET obligation_status = 'WRITTEN_OFF'
+        WHERE payment_obligation_id IN
+        <foreach collection="paymentObligationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND obligation_status = 'ACTIVE'
+        AND payment_status IN ('UNPAID', 'PARTIALLY_PAID')
+    </update>
+
+    <select id="findSettlementIdsByObligationIds" resultType="long">
+        SELECT DISTINCT sp.settlement_id
+        FROM payment_obligation po
+        JOIN settlement_participant sp ON sp.participant_id = po.participant_id
+        WHERE po.payment_obligation_id IN
+        <foreach collection="obligationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+</mapper>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html
+        lang="ko"
+        xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0">
+
+    <title>보관함 | 사이원장</title>
+    <th:block
+            th:replace="~{fragments/app-shell :: commonStyles}">
+    </th:block>
+    <link
+            rel="stylesheet"
+            th:href="@{/css/archive/archive.css}"
+            href="/css/archive/archive.css">
+
+</head>
+<body class="app-shell-page">
+<header
+        th:replace="~{fragments/app-shell :: appHeader('contract')}">
+</header>
+<main class="archive-container">
+
+    <div class="archive-heading unified-page-header">
+        <h1 class="unified-page-title">보관함</h1>
+
+        <p class="subtitle">
+            저장된 차용증과 정산 기록을 눌러 상세 화면을 확인하세요.
+        </p>
+    </div>
+
+    <div class="archive-tabs" id="archiveTabs">
+        <button type="button" class="tab-btn active" data-type="contract">차용증</button>
+        <button type="button" class="tab-btn" data-type="settlement">정산</button>
+    </div>
+
+
+    <div
+            class="archive-list"
+            id="archiveList">
+    </div>
+
+
+    <div
+            class="pager"
+            id="pager"
+            style="display: none;">
+
+        <button
+                id="prevPageBtn"
+                type="button">
+            이전
+        </button>
+
+        <span
+                id="pageLabel"
+                class="pager-label">
+        </span>
+
+        <button
+                id="nextPageBtn"
+                type="button">
+            다음
+        </button>
+
+    </div>
+
+</main>
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+<script
+        th:src="@{/js/archive/archive.js}"
+        src="/js/archive/archive.js">
+</script>
+
+
+</body>
+</html>

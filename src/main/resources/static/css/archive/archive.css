@@ -1,0 +1,483 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+
+    background: #f5f7fb;
+
+    font-family: "Pretendard", "Apple SD Gothic Neo", Arial, sans-serif;
+}
+
+.archive-container {
+    width: 100%;
+    max-width: 960px;
+
+    margin: 0 auto;
+    padding: 36px 24px 60px;
+}
+
+.archive-heading {
+    margin-bottom: 16px;
+}
+
+h1 {
+    margin: 0 0 4px;
+
+    color: #1a1a1a;
+
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.subtitle {
+    margin: 0;
+
+    color: #888;
+
+    font-size: 13px;
+}
+
+.archive-tabs {
+    display: flex;
+
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+
+    border: 1px solid #ddd;
+    border-radius: 999px;
+
+    background: #ffffff;
+    color: #666;
+
+    font-family:
+            "Pretendard",
+            sans-serif;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+            background-color 0.15s ease,
+            color 0.15s ease,
+            border-color 0.15s ease;
+}
+
+.tab-btn.active {
+    border-color: #0b3d2e;
+
+    background: #0b3d2e;
+    color: #ffffff;
+}
+
+.archive-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+
+.archive-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 16px 18px;
+
+    background: #ffffff;
+
+    border-radius: 12px;
+
+    box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.06);
+
+    cursor: pointer;
+
+    transition:
+            box-shadow 0.15s ease,
+            transform 0.15s ease;
+}
+
+.archive-card:hover {
+    box-shadow:
+            0 4px 14px rgba(0, 0, 0, 0.1);
+
+    transform: translateY(-1px);
+}
+
+.archive-card-main {
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+
+    min-width: 0;
+}
+
+.archive-card-title {
+    overflow: hidden;
+
+    color: #1a1a1a;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.archive-card-title .status-pill { margin-left: 8px; }
+.archive-card-main { flex-direction: row; align-items: center; gap: 8px; }
+.archive-card-title { display: flex; align-items: center; gap: 8px; line-height: 26px; }
+.archive-card-sub { margin-left: 8px; white-space: nowrap; line-height: 26px; }
+.archive-card-title .role-badge,
+.archive-card-title .status-pill { line-height: 1; }
+
+.archive-card-sub {
+    color: #888;
+
+    font-size: 13px;
+}
+
+.role-badge {
+    display: inline-block;
+
+    margin-right: 6px;
+    padding: 2px 8px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.role-badge.creditor {
+    background: #e6f4ec;
+    color: #0b3d2e;
+}
+
+.role-badge.debtor {
+    background: #fdeee6;
+    color: #a63d1a;
+}
+
+.role-badge.shared {
+    background: #eef4ff;
+    color: #1d4ed8;
+}
+
+.role-badge.recurring {
+    background: #f3eefd;
+    color: #6b21a8;
+}
+
+
+.status-pill {
+    flex-shrink: 0;
+
+    padding: 4px 12px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-pill.ongoing {
+    background: #eef4ff;
+    color: #1d4ed8;
+}
+
+.status-pill.completed {
+    background: #f0f0f0;
+    color: #666;
+}
+
+
+.card-actions {
+    display: flex;
+    align-items: center;
+
+    flex-shrink: 0;
+
+    gap: 8px;
+}
+
+.btn-pdf-download {
+    padding: 6px 10px;
+
+    border: 1px solid #0b3d2e;
+    border-radius: 6px;
+
+    background: #ffffff;
+    color: #0b3d2e;
+
+    font-family:
+            "Pretendard",
+            sans-serif;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+            background-color 0.15s ease;
+}
+
+.btn-pdf-download:hover {
+    background: #f0f7f3;
+}
+
+.empty-state,
+.error-state {
+    padding: 60px 0;
+
+    color: #999;
+
+    font-size: 14px;
+
+    text-align: center;
+}
+
+
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 20px;
+}
+
+.pager button {
+    padding: 8px 16px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    font-family:
+            "Pretendard",
+            sans-serif;
+
+    font-size: 13px;
+
+    cursor: pointer;
+}
+
+.pager button:disabled {
+    color: #ccc;
+
+    cursor: not-allowed;
+}
+
+.pager-label {
+    align-self: center;
+
+    margin: 0 12px;
+
+    color: #666;
+
+    font-size: 13px;
+}
+
+.print-only {
+    position: fixed;
+
+    top: 0;
+    left: -10000px;
+
+    width: 210mm;
+
+    background: #ffffff;
+
+    z-index: -9999;
+}
+
+.page {
+    width: 210mm;
+    min-height: 297mm;
+
+    margin: 0 auto 10px;
+    padding: 20mm;
+
+    background: #ffffff;
+    color: #1a1a1a;
+
+    box-sizing: border-box;
+
+    font-family:
+            "Pretendard",
+            sans-serif;
+
+    page-break-after: always;
+    break-after: page;
+}
+
+.page .doc {
+    padding: 0;
+
+    border: none;
+    border-radius: 0;
+
+    box-shadow: none;
+}
+
+@media (max-width: 760px) {
+
+    .archive-container {
+        padding:
+                24px 16px
+                48px;
+    }
+
+    .archive-card {
+        align-items: flex-start;
+
+        padding: 15px 16px;
+    }
+
+    .card-actions {
+        align-items: flex-end;
+        flex-direction: column;
+    }
+}
+
+
+@media (max-width: 520px) {
+
+    .archive-container {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .archive-card {
+        flex-direction: column;
+
+        gap: 14px;
+    }
+
+    .archive-card-main {
+        width: 100%;
+    }
+
+    .card-actions {
+        width: 100%;
+
+        align-items: center;
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+}
+
+@media print {
+
+    body {
+        margin: 0;
+        padding: 0;
+
+        background: #ffffff;
+    }
+
+    .app-header,
+    .app-footer,
+    .archive-container,
+    .pager {
+        display: none !important;
+    }
+
+    .print-only {
+        position: static;
+
+        left: 0;
+
+        width: 100%;
+
+        z-index: auto;
+    }
+}
+
+/* Shared dashboard list treatment */
+body.app-shell-page {
+    background: #f5f7fb;
+    color: #151922;
+    font-family: Pretendard, "Apple SD Gothic Neo", Arial, sans-serif;
+}
+
+.archive-container {
+    width: min(1344px, calc(100% - 96px));
+    max-width: none;
+    padding: 36px 0 96px;
+}
+
+.archive-heading { margin-bottom: 16px; }
+.archive-heading .subtitle { color: #667085; font-size: 14px; }
+.archive-tabs {
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.tab-btn {
+    min-height: 44px;
+    padding: 0 20px;
+    border: 1px solid #c8d0d8;
+    border-radius: 8px;
+    background: #fff;
+    color: #34404d;
+    font-size: 16px;
+    font-weight: 700;
+}
+.tab-btn.active { border-color: #0f8a5f; background: #0f8a5f; }
+.archive-list {
+    gap: 0;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #d9dee8;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(28,39,60,.08);
+}
+.archive-card {
+    min-height: 0;
+    padding: 12px 20px;
+    border-radius: 0;
+    border-bottom: 1px solid #d9dee8;
+    box-shadow: none;
+    transform: none;
+}
+.archive-card:last-child { border-bottom: 0; }
+.archive-card:hover { background: #f9fafc; box-shadow: none; transform: none; }
+.role-badge, .status-pill { border-radius: 6px; }
+.role-badge.creditor { background: #e9f7f0; color: #0f8a5f; }
+.role-badge.debtor { background: #eef4ff; color: #275dc7; }
+.role-badge.shared, .role-badge.recurring { background: #eef4ff; color: #275dc7; }
+.status-pill.ongoing { background: #eef4ff; color: #275dc7; }
+.status-pill.completed { background: #edf0f5; color: #667085; }
+.btn-pdf-download {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid #c8d0d8;
+    border-radius: 3px;
+    background: #fff;
+    color: #34404d;
+    font-size: 14px;
+    font-weight: 700;
+}
+.pager button {
+    min-height: 44px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-size: 16px;
+}
+.btn-pdf-download:hover { background: #e9f7f0; border-color: #0f8a5f; }
+.empty-state, .error-state { padding: 64px 20px; color: #667085; }

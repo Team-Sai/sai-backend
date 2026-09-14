@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.transaction.mapper.BankTransactionMapper">
+
+    <resultMap id="BankTransactionResultMap"
+               type="org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO">
+        <id property="bankTransactionId" column="bank_transaction_id"/>
+        <result property="linkedAccountId" column="linked_account_id"/>
+        <result property="externalTransactionId" column="external_transaction_id"/>
+        <result property="amount" column="amount"/>
+        <result property="transactionType" column="transaction_type"/>
+        <result property="processingStatus" column="processing_status"/>
+        <result property="transactionAt" column="transaction_at"/>
+        <result property="counterpartyName" column="counterparty_name"/>
+        <result property="memo" column="memo"/>
+        <result property="syncedAt" column="synced_at"/>
+        <result property="retryCount" column="retry_count"/>
+    </resultMap>
+
+    <sql id="BankTransactionColumns">
+        bank_transaction_id,
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at,
+        retry_count
+    </sql>
+
+    <insert id="insertOrGetId"
+            parameterType="org.teamsai.saibackend.domain.transaction.dto.BankTransactionDTO"
+            useGeneratedKeys="true"
+            keyProperty="bankTransactionId"
+            keyColumn="bank_transaction_id">
+        INSERT INTO bank_transaction (
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at
+        )
+        VALUES (
+        #{linkedAccountId},
+        #{externalTransactionId},
+        #{amount},
+        #{transactionType},
+        'PENDING',
+        #{transactionAt},
+        #{counterpartyName},
+        #{memo},
+        #{syncedAt}
+        )
+        ON DUPLICATE KEY UPDATE
+        bank_transaction_id = LAST_INSERT_ID(bank_transaction_id)
+    </insert>
+
+    <select id="findById" resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction
+        WHERE bank_transaction_id = #{bankTransactionId}
+    </select>
+
+    <select id="findByExternalKey"
+            resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction
+        WHERE linked_account_id = #{linkedAccountId}
+        AND external_transaction_id = #{externalTransactionId}
+    </select>
+
+    <select id="findPendingDeposits"
+            resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction
+        WHERE processing_status = 'PENDING'
+        AND transaction_type = 'DEPOSIT'
+        ORDER BY transaction_at ASC, bank_transaction_id ASC
+    </select>
+
+    <select id="findPendingDepositsByLinkedAccountId"
+            resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction
+        WHERE linked_account_id = #{linkedAccountId}
+        AND processing_status = 'PENDING'
+        AND transaction_type = 'DEPOSIT'
+        ORDER BY transaction_at ASC, bank_transaction_id ASC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE bank_transaction
+        SET processing_status = #{nextStatus}
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND processing_status = #{currentStatus}
+    </update>
+
+    <sql id="searchCondition">
+        WHERE linked_account_id = #{linkedAccountId}
+        <if test="condition.processingStatus != null">
+            AND processing_status = #{condition.processingStatus}
+        </if>
+        <if test="condition.transactionType != null">
+            AND transaction_type = #{condition.transactionType}
+        </if>
+        <if test="condition.keyword != null and condition.keyword != ''">
+            AND (
+            counterparty_name LIKE CONCAT('%', #{condition.keyword}, '%')
+            OR memo LIKE CONCAT('%', #{condition.keyword}, '%')
+            )
+        </if>
+        <if test="condition.fromDate != null">
+            AND transaction_at &gt;= #{condition.fromDate}
+        </if>
+        <if test="condition.toDate != null">
+            AND transaction_at &lt; DATE_ADD(#{condition.toDate}, INTERVAL 1 DAY)
+        </if>
+    </sql>
+
+    <select id="search" resultMap="BankTransactionResultMap">
+        SELECT
+        bank_transaction_id,
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at
+        FROM bank_transaction
+        <include refid="searchCondition"/>
+        ORDER BY transaction_at DESC, bank_transaction_id DESC
+        LIMIT #{condition.size} OFFSET #{condition.offset}
+    </select>
+
+    <select id="countBySearch" resultType="long">
+        SELECT COUNT(*)
+        FROM bank_transaction
+        <include refid="searchCondition"/>
+    </select>
+
+    <select id="findByIdAndLinkedAccountId" resultMap="BankTransactionResultMap">
+        SELECT
+        bank_transaction_id,
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at
+        FROM bank_transaction
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND linked_account_id = #{linkedAccountId}
+    </select>
+
+    <select id="findByIdAndLinkedAccountIdForUpdate"
+            resultMap="BankTransactionResultMap">
+        SELECT
+        bank_transaction_id,
+        linked_account_id,
+        external_transaction_id,
+        amount,
+        transaction_type,
+        processing_status,
+        transaction_at,
+        counterparty_name,
+        memo,
+        synced_at
+        FROM bank_transaction
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND linked_account_id = #{linkedAccountId}
+        FOR UPDATE
+    </select>
+
+    <!-- 재시도 대상 조회: NEEDS_CHECK/UNMATCHED/FAILED 중, 재시도 횟수 남아있고,
+     NEEDS_CHECK인 경우 정산+차용증 혼재(=이미 사용자 알림 간 것)는 제외 -->
+    <select id="findRetryCandidates" resultMap="BankTransactionResultMap">
+        SELECT
+        <include refid="BankTransactionColumns"/>
+        FROM bank_transaction bt
+        WHERE bt.linked_account_id = #{linkedAccountId}
+        AND bt.processing_status IN ('NEEDS_CHECK', 'UNMATCHED', 'FAILED')
+        AND (
+        (bt.processing_status = 'FAILED' AND bt.retry_count &lt; 5)
+        OR (bt.processing_status IN ('UNMATCHED') AND bt.retry_count &lt; 14)
+        OR (
+        bt.processing_status = 'NEEDS_CHECK'
+        AND bt.retry_count &lt; 14
+        AND NOT EXISTS (
+        SELECT 1
+        FROM bank_transaction_match_candidate c1
+        JOIN bank_transaction_match_candidate c2
+        ON c1.bank_transaction_id = c2.bank_transaction_id
+        WHERE c1.bank_transaction_id = bt.bank_transaction_id
+        AND c1.target_type = 'SETTLEMENT'
+        AND c2.target_type = 'LOAN'
+        )
+        )
+        )
+        ORDER BY bt.transaction_at ASC, bt.bank_transaction_id ASC
+    </select>
+
+    <update id="resetToPendingForRetry">
+        UPDATE bank_transaction
+        SET processing_status = 'PENDING',
+        retry_count = retry_count + 1
+        WHERE bank_transaction_id = #{bankTransactionId}
+        AND processing_status = #{currentStatus}
+    </update>
+</mapper>
+

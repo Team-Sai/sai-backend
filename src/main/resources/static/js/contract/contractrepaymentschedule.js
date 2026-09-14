@@ -1,0 +1,198 @@
+const contractId = document.getElementById('contractId').value;
+const syncTransactionButton = document.getElementById('btnSyncTransaction');
+let allSchedules = [];
+let currentPage = 1;
+let currentLinkedAccountId = null;
+const PAGE_SIZE = 5;
+const REPAYMENT_TYPE_LABELS = {
+    EQUAL_PRINCIPAL_AND_INTEREST: '원리금균등상환',
+    EQUAL_PRINCIPAL: '원금균등상환',
+    BULLET_REPAYMENT: '만기일시상환'
+};
+const CONTRACT_STATUS_LABELS = {
+    DRAFT: '작성중',
+    PENDING: '서명대기',
+    COMPLETED: '진행중'
+};
+async function initializeContractSync() {
+    try {
+        const response = await authFetch(`/api/contracts/${contractId}/account`);
+        if (!response.ok) {
+            return;
+        }
+        const account = await response.json();
+        currentLinkedAccountId = account.linkedAccountId;
+        syncTransactionButton.disabled = !currentLinkedAccountId;
+    } catch (error) {
+        console.error('차용증 연동계좌 조회 실패:', error);
+    }
+}
+syncTransactionButton.addEventListener('click', syncContractTransactions);
+async function syncContractTransactions() {
+    if (!currentLinkedAccountId) {
+        return;
+    }
+    const originalText = syncTransactionButton.textContent;
+    try {
+        syncTransactionButton.disabled = true;
+        syncTransactionButton.textContent = '동기화 중...';
+        const params = new URLSearchParams({
+            targetType: 'LOAN',
+            aggregateId: contractId
+        });
+        const response = await authFetch(
+            `/api/linked-accounts/${currentLinkedAccountId}/sync?${params}`,
+            { method: 'POST' }
+        );
+        const result = await readJsonSafely(response);
+        if (!response.ok) {
+            throw new Error(result?.message || '거래내역 동기화에 실패했습니다.');
+        }
+        window.alert(
+            `동기화 완료: 자동반영 ${result?.appliedCount ?? 0}건, ` +
+            `확인필요 ${result?.needsCheckCount ?? 0}건, ` +
+            `미매칭 ${result?.unmatchedCount ?? 0}건`
+        );
+        await new Promise(resolve => window.setTimeout(resolve, 1250));
+        await MatchingReviewModal.open({
+            reviewChannel: 'TRANSACTION_HISTORY',
+            targetType: 'LOAN',
+            aggregateId: contractId
+        });
+    } catch (error) {
+        console.error('차용증 거래 동기화 실패:', error);
+        alert(error.message || '거래내역 동기화에 실패했습니다.');
+    } finally {
+        syncTransactionButton.disabled = false;
+        syncTransactionButton.textContent = originalText;
+    }
+}
+async function readJsonSafely(response) {
+    const text = await response.text();
+    if (!text) {
+        return null;
+    }
+    try {
+        return JSON.parse(text);
+    } catch {
+        return null;
+    }
+}
+Promise.all([
+    authFetch(
+        `/api/contracts/${contractId}/schedules`
+    ),
+    authFetch(
+        `/api/contracts/${contractId}/contract-detail`
+    )
+])
+    .then(([scheduleRes, contractRes]) => {
+        if (!scheduleRes.ok || !contractRes.ok) {
+            throw new Error('조회 실패');
+        }
+        return Promise.all([scheduleRes.json(), contractRes.json()]);
+    })
+    .then(([scheduleData, contractData]) => {
+        const contract = contractData.contract;
+        syncTransactionButton.hidden = !contractData.isCreditor;
+        if (contractData.isCreditor) {
+            initializeContractSync();
+        }
+        document.getElementById('statusBadge').textContent =
+            CONTRACT_STATUS_LABELS[contract.status] || contract.status;
+        document.getElementById('contractAlias').textContent = contract.contractAlias;
+        document.getElementById('totalScheduledAmount').textContent =
+            scheduleData.totalScheduledAmount.toLocaleString(undefined, {maximumFractionDigits: 0}) + '원';
+        document.getElementById('paidAmount').textContent =
+            scheduleData.paidAmount.toLocaleString(undefined, {maximumFractionDigits: 0}) + '원';
+        document.getElementById('remainingAmount').textContent =
+            scheduleData.remainingAmount.toLocaleString(undefined, {maximumFractionDigits: 0}) + '원';
+        document.getElementById('progressLabel').textContent =
+            `${scheduleData.paidCount} / ${scheduleData.totalCount}회차`;
+        const progressPercent = scheduleData.totalCount === 0
+            ? 0
+            : (scheduleData.paidCount / scheduleData.totalCount) * 100;
+        document.getElementById('progressBarFill').style.width = `${progressPercent}%`;
+        document.getElementById('createdAt').textContent = formatDateTimeKorean(contract.createdAt);
+        document.getElementById('interestRate').textContent = contract.interestRate + '%';
+        document.getElementById('maturityDate').textContent = contract.maturityDate;
+        document.getElementById('nextDueDate').textContent = scheduleData.nextDueDate || '없음';
+        document.getElementById('repaymentType').textContent =
+            REPAYMENT_TYPE_LABELS[contract.repaymentType] || contract.repaymentType;
+        allSchedules = scheduleData.schedules;
+        renderSchedulePage();
+    })
+    .catch(() => {
+        alert('정보를 불러오는 데 실패했습니다.');
+    });
+function getScheduleStatusInfo(status) {
+    switch (status) {
+        case 'PAID':
+            return { badgeClass: 'status-badge badge-completed', text: '납부완료' };
+        case 'OVERDUE':
+            return { badgeClass: 'status-badge badge-overdue', text: '연체' };
+        case 'WRITTEN_OFF':
+            return { badgeClass: 'status-badge badge-written-off', text: '상각 처리' };
+        default: // PENDING
+            return { badgeClass: 'status-badge badge-progress', text: '납부예정' };
+    }
+}
+function renderSchedulePage() {
+    const tbody = document.getElementById('scheduleTableBody');
+    tbody.innerHTML = '';
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = allSchedules.slice(startIndex, startIndex + PAGE_SIZE);
+    pageItems.forEach(s => {
+        const { badgeClass, text } = getScheduleStatusInfo(s.status);
+        tbody.innerHTML += `
+            <tr>
+                <td>${s.sequence}회차</td>
+                <td>${s.dueDate}</td>
+                <td>${s.totalPaymentDue.toLocaleString(undefined, {maximumFractionDigits: 0})}원</td>
+                <td>${s.paidAt ? formatDateTimeWithoutSeconds(s.paidAt) : '-'}</td>
+                <td><span class="${badgeClass}">${text}</span></td>
+            </tr>
+        `;
+    });
+    renderPagination();
+}
+function renderPagination() {
+    const pagination = document.getElementById('schedulePagination');
+    pagination.innerHTML = '';
+    const totalPages = Math.ceil(allSchedules.length / PAGE_SIZE);
+    if (totalPages <= 1) return;
+    for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('is-active');
+        btn.addEventListener('click', () => {
+            currentPage = i;
+            renderSchedulePage();
+        });
+        pagination.appendChild(btn);
+    }
+}
+function formatDateTimeKorean(dateString) {
+    const dated = new Date(dateString);
+    const year = dated.getFullYear();
+    const month = dated.getMonth() + 1;
+    const date = dated.getDate();
+    const hours = dated.getHours();
+    const minutes = dated.getMinutes();
+    const seconds = dated.getSeconds();
+    return `${year}년 ${month}월 ${date}일  ${hours}시 ${minutes}분 ${seconds}초`;
+}
+function formatDateTimeWithoutSeconds(dateString) {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return '-';
+    return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+    }).format(date);
+}
+document.getElementById('btnViewContract').addEventListener('click', function () {
+    window.location.href = `/contracts/${contractId}/contract-detail`;
+});
+document.addEventListener('matching-review:closed', () => {
+    window.location.reload();
+});

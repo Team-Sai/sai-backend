@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+  <title>알림 | 사이원장</title>
+  <th:block
+          th:replace="~{fragments/app-shell :: commonStyles}">
+  </th:block>
+  <link
+          rel="stylesheet"
+          href="/css/notification/notification-center.css">
+  <link rel="stylesheet" href="/css/matching/matching-review-modal.css">
+
+</head>
+
+<body class="app-shell-page">
+
+<header
+        th:replace="~{fragments/app-shell :: appHeader('notification')}">
+</header>
+
+
+<main class="page">
+
+  <div class="page-head unified-page-header">
+    <h1 class="page-title unified-page-title">알림센터</h1>
+    <p class="page-subtitle">
+      계약과 정산 등 최근 발생한 중요 소식을 한눈에 확인하세요.
+    </p>
+  </div>
+
+
+  <div class="toolbar">
+
+    <div class="filter-tabs">
+      <button
+          type="button"
+          class="filter-tab active"
+          data-category="ALL"
+      >
+        전체
+      </button>
+
+      <button
+          type="button"
+          class="filter-tab"
+          data-category="SIGN"
+      >
+        서명·계약
+      </button>
+
+      <button
+          type="button"
+          class="filter-tab"
+          data-category="SETTLEMENT"
+      >
+        정산
+      </button>
+
+      <button
+          type="button"
+          class="filter-tab"
+          data-category="SYSTEM"
+      >
+        시스템
+      </button>
+    </div>
+
+  </div>
+
+
+  <ul
+      id="notifList"
+      class="notif-list"
+      aria-live="polite"
+  ></ul>
+
+</main>
+
+<footer
+        th:replace="~{fragments/app-shell :: appFooter}">
+</footer>
+
+<th:block th:replace="~{fragments/matching-review-modal :: matchingReviewModal}"></th:block>
+
+<th:block
+        th:replace="~{fragments/app-shell :: commonScripts}">
+</th:block>
+<script src="/js/matching/matching-review-modal.js"></script>
+<script
+        th:src="@{/js/notification/notification-center.js}"
+        src="/js/notification/notification-center.js">
+</script>
+
+</body>
+</html>

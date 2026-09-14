@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.teamsai.saibackend.domain.contract.mapper.RiskCheckMapper">
+
+    <select id="sumCompletedPrincipalByCreditor" resultType="java.lang.Long">
+        SELECT COALESCE(SUM(principal_amount), 0)
+        FROM loan_contract
+        WHERE creditor_id = #{userId}
+          AND status = 'COMPLETED'
+          AND relation_type = 'FAMILY'
+    </select>
+
+</mapper>
