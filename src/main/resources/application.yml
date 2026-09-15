@@ -67,6 +67,10 @@ mybatis:
   mapper-locations:
     - classpath*:mapper/**/*.xml
     - classpath*:mappers/**/*.xml
+    - classpath*:/mapper/**/*.xml
+    - classpath*:/mappers/**/*.xml
+    - classpath*:**/mapper/**/*.xml
+    - classpath*:**/mappers/**/*.xml
   type-aliases-package: org.teamsai.saibackend.domain
   configuration:
     map-underscore-to-camel-case: true
