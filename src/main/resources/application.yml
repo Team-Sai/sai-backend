@@ -32,6 +32,24 @@ spring:
   sql:
     init:
       mode: ${SPRING_SQL_INIT_MODE:never}
+      schema-locations:
+        - classpath:db/user.sql
+        - classpath:db/linked_bank_account.sql
+        - classpath:db/bank_transaction.sql
+        - classpath:db/bank_transaction_match_candidate.sql
+        - classpath:db/identity.sql
+        - classpath:db/recurring_settlement.sql
+        - classpath:db/settlement.sql
+        - classpath:db/settlement_account.sql
+        - classpath:db/settlement_invitation.sql
+        - classpath:db/settlement_participant.sql
+        - classpath:db/settlement_abandonment_alert.sql
+        - classpath:db/01_loancontract.sql
+        - classpath:db/02_repayment_schedule.sql
+        - classpath:db/03_contractchange.sql
+        - classpath:db/04_contractaccount.sql
+        - classpath:db/payment.sql
+        - classpath:db/notification.sql
 
   batch:
     job:
@@ -46,7 +64,9 @@ server:
   port: ${SERVER_PORT:8080}
 
 mybatis:
-  mapper-locations: classpath:mapper/**/*.xml
+  mapper-locations:
+    - classpath*:mapper/**/*.xml
+    - classpath*:mappers/**/*.xml
   type-aliases-package: org.teamsai.saibackend.domain
   configuration:
     map-underscore-to-camel-case: true
