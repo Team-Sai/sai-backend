@@ -67,6 +67,16 @@ public class SaiBackendApplication {
                         Map.entry(
                                 "spring.jpa.properties.hibernate.boot.allow_jdbc_metadata_access",
                                 "false"
+                        ),
+
+                        Map.entry(
+                                "spring.datasource.url",
+                                "jdbc:mariadb://127.0.0.1:3306/sai_backend"
+                        ),
+
+                        Map.entry(
+                                "spring.datasource.driver-class-name",
+                                "org.mariadb.jdbc.Driver"
                         )
                 )
         );
