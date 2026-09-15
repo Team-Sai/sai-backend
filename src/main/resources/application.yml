@@ -1,0 +1,95 @@
+spring:
+  application:
+    name: sai-backend
+
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://localhost:3306/sai_backend}
+    username: ${SPRING_DATASOURCE_USERNAME:}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    hikari:
+      initialization-fail-timeout: -1
+
+  jpa:
+    database-platform: org.hibernate.dialect.MariaDBDialect
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        boot:
+          allow_jdbc_metadata_access: false
+    open-in-view: false
+
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+  sql:
+    init:
+      mode: ${SPRING_SQL_INIT_MODE:never}
+
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: ${SPRING_BATCH_JDBC_INITIALIZE_SCHEMA:never}
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:${user.home}/upload/saibackend/}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: org.teamsai.saibackend.domain
+  configuration:
+    map-underscore-to-camel-case: true
+    jdbc-type-for-null: null
+
+sai:
+  mock-bank:
+    base-url: ${MOCK_BANK_BASE_URL:http://localhost:8081}
+  backend:
+    base-url: ${BACKEND_BASE_URL:http://localhost:8080}
+  batch:
+    enabled: ${SAI_BATCH_ENABLED:false}
+
+link-identity:
+  hash-secret: ${LINK_IDENTITY_HASH_SECRET:}
+
+link-state:
+  secret: ${LINK_STATE_SECRET:}
+  allowed-return-urls: ${LINK_STATE_ALLOWED_RETURN_URLS:${sai.backend.base-url}/accounts/link/callback}
+
+link-callback:
+  api-key: ${LINK_CALLBACK_API_KEY:}
+
+slack:
+  batch-notification:
+    webhook-url: ${SLACK_BATCH_WEBHOOK_URL:}
+    enabled: ${SLACK_BATCH_NOTIFICATION_ENABLED:false}
+
+logging:
+  level:
+    org.teamsai.saibackend: debug
+
+jwt:
+  secret: ${JWT_SECRET:}
+  access-token-expiration-ms: ${JWT_ACCESS_TOKEN_EXPIRATION_MS:3600000}
+  refresh-token-expiration-ms: ${JWT_REFRESH_TOKEN_EXPIRATION_MS:1209600000}
+  link-state-expiration-ms: ${JWT_LINK_STATE_EXPIRATION_MS:600000}
+  cookie:
+    secure: ${JWT_COOKIE_SECURE:false}
+
+portone:
+  identity:
+    base-url: ${PORTONE_IDENTITY_BASE_URL:https://api.portone.io}
+    store-id: ${PORTONE_STORE_ID:}
+    channel-key: ${PORTONE_CHANNEL_KEY:}
+    api-secret: ${PORTONE_API_SECRET:}
