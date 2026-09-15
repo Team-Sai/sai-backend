@@ -6,14 +6,19 @@ import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.teamsai.saibackend.domain.batch.common.util.DailyJobParameters;
 
 import java.time.LocalDate;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(
+        name = "sai.batch.enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class DailyBatchPipelineScheduler {
 
     @Autowired

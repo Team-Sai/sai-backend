@@ -23,7 +23,7 @@ public class MockBankClient {
     private final RestClient restClient;
     private final String internalApiKey;
 
-    public MockBankClient(@Value("${sai.mock-bank.base-url}") String baseUrl, @Value("${link-callback.api-key}") String internalApiKey) {
+    public MockBankClient(@Value("${sai.mock-bank.base-url:http://localhost:8081}") String baseUrl, @Value("${link-callback.api-key:}") String internalApiKey) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000);
         requestFactory.setReadTimeout(5000);

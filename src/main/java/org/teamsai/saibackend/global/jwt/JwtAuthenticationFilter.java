@@ -13,12 +13,9 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.teamsai.saibackend.domain.user.dto.UserDTO;
-import org.teamsai.saibackend.domain.user.mapper.UserMapper;
 import org.teamsai.saibackend.global.security.CustomUserDetails;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Optional;
 
 @Component
@@ -28,7 +25,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserMapper userMapper;
 
     @Override
     protected void doFilterInternal(
@@ -58,18 +54,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        Long userId = userIdOptional.get();
-
-        Optional<UserDTO> userOptional =
-                userMapper.findById(userId);
-
-        if (userOptional.isEmpty()) {
-            return;
-        }
-
-        CustomUserDetails userDetails = new CustomUserDetails(
-                userOptional.get()
-        );
+        CustomUserDetails userDetails =
+                new CustomUserDetails(userIdOptional.get());
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
@@ -99,9 +85,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return null;
         }
 
-        String token = authorizationHeader.substring(
-                BEARER_PREFIX.length()
-        );
+        String token =
+                authorizationHeader.substring(BEARER_PREFIX.length());
 
         return StringUtils.hasText(token) ? token : null;
     }

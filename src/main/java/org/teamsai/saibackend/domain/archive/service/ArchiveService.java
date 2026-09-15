@@ -46,7 +46,7 @@ public class ArchiveService {
     private final HtmlToPdfRenderer htmlToPdfRenderer;
 
     @Getter
-    @Value("${file.upload-dir}")
+    @Value("${file.upload-dir:${java.io.tmpdir}/sai-upload}")
     private String uploadDir;
 
     public List<FileDTO> findFilesByReference(String domainType, Long referenceId) {

@@ -17,7 +17,7 @@ public class RefreshTokenService {
 
     private final StringRedisTemplate redisTemplate;
 
-    @Value("${jwt.refresh-token-expiration-ms}")
+    @Value("${jwt.refresh-token-expiration-ms:604800000}")
     private long refreshTokenExpirationMs;
 
     public void save(Long userId, String refreshToken){

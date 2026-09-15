@@ -21,6 +21,12 @@ public class CustomUserDetails implements UserDetails {
         this.userId = user.getUserId();
     }
 
+    public CustomUserDetails(Long userId) {
+        this.userId = userId;
+        this.userToken = null;
+        this.userKey = null;
+    }
+
     @Override
     public String getUsername() {
         return String.valueOf(userId);

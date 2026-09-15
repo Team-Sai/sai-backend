@@ -7,6 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.teamsai.saibackend.global.util.LinkIdentityHasher;
 
 import javax.crypto.SecretKey;
@@ -34,37 +35,41 @@ public class JwtTokenProvider {
     private final String linkIdentityHashSecret;
 
     public JwtTokenProvider(
-            @Value("${jwt.secret}") String accessSecret,
-            @Value("${link-state.secret}") String linkStateSecret,
-            @Value("${jwt.access-token-expiration-ms}") long accessTokenExpirationMs,
-            @Value("${jwt.refresh-token-expiration-ms}") long refreshTokenExpirationMs,
-            @Value("${jwt.link-state-expiration-ms}") long linkStateExpirationMs,
-            @Value("${link-identity.hash-secret}") String linkIdentityHashSecret
+            @Value("${jwt.secret:}") String accessSecret,
+            @Value("${link-state.secret:}") String linkStateSecret,
+            @Value("${jwt.access-token-expiration-ms:3600000}")
+            long accessTokenExpirationMs,
+            @Value("${jwt.refresh-token-expiration-ms:604800000}")
+            long refreshTokenExpirationMs,
+            @Value("${jwt.link-state-expiration-ms:300000}")
+            long linkStateExpirationMs,
+            @Value("${link-identity.hash-secret:}")
+            String linkIdentityHashSecret
     ) {
+
         this.accessSigningKey =
-                Keys.hmacShaKeyFor(
+                StringUtils.hasText(accessSecret)
+                        ? Keys.hmacShaKeyFor(
                         Decoders.BASE64.decode(accessSecret)
-                );
+                )
+                        : null;
 
         this.linkStateSigningKey =
-                Keys.hmacShaKeyFor(
+                StringUtils.hasText(linkStateSecret)
+                        ? Keys.hmacShaKeyFor(
                         Decoders.BASE64.decode(linkStateSecret)
-                );
+                )
+                        : null;
 
-        this.accessTokenExpirationMs =
-                accessTokenExpirationMs;
-
-        this.refreshTokenExpirationMs =
-                refreshTokenExpirationMs;
-
-        this.linkStateExpirationMs =
-                linkStateExpirationMs;
-
-        this.linkIdentityHashSecret =
-                linkIdentityHashSecret;
+        this.accessTokenExpirationMs = accessTokenExpirationMs;
+        this.refreshTokenExpirationMs = refreshTokenExpirationMs;
+        this.linkStateExpirationMs = linkStateExpirationMs;
+        this.linkIdentityHashSecret = linkIdentityHashSecret;
     }
 
     public String createAccessToken(Long userId) {
+
+        requireAccessSigningKey();
         Date issuedAt = new Date();
 
         Date expiration =
@@ -152,9 +157,12 @@ public class JwtTokenProvider {
         );
     }
 
-    public Optional<Long> getUserIdIfValid(
-            String token
-    ) {
+    public Optional<Long> getUserIdIfValid(String token) {
+
+        if (accessSigningKey == null) {
+            return Optional.empty();
+        }
+
         return getUserIdIfPurposeMatches(
                 token,
                 PURPOSE_ACCESS,
@@ -224,5 +232,13 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    private void requireAccessSigningKey() {
+        if (accessSigningKey == null) {
+            throw new IllegalStateException(
+                    "JWT secret이 설정되지 않았습니다."
+            );
+        }
     }
 }

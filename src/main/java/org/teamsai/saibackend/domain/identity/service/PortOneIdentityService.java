@@ -22,7 +22,7 @@ public class PortOneIdentityService {
             @Value("${portone.identity.base-url:https://api.portone.io}")
             String apiBaseUrl,
 
-            @Value("${portone.identity.api-secret}")
+            @Value("${portone.identity.api-secret:}")
             String apiSecret
     ) {
         if (!StringUtils.hasText(apiSecret)) {

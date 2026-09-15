@@ -12,6 +12,7 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.batch.infrastructure.item.ItemWriter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -22,6 +23,10 @@ import org.teamsai.saibackend.domain.matching.service.BankTransactionRetryServic
 
 @Slf4j
 @Configuration
+@ConditionalOnProperty(
+        name = "sai.batch.enabled",
+        havingValue = "true"
+)
 @RequiredArgsConstructor
 public class BankTransactionRetryJobConfig {
 

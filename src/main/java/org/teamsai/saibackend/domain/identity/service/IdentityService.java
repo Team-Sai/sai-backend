@@ -55,10 +55,10 @@ public class IdentityService {
             PortOneIdentityService portOneIdentityService,
             IdentityValidator identityValidator,
 
-            @Value("${portone.identity.store-id}")
+            @Value("${portone.identity.store-id:}")
             String storeId,
 
-            @Value("${portone.identity.channel-key}")
+            @Value("${portone.identity.channel-key:}")
             String channelKey,
 
             @Value("${portone.identity.valid-minutes:10}")

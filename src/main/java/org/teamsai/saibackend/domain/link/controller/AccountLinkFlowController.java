@@ -38,9 +38,9 @@ public class AccountLinkFlowController {
 
     private static final String CALLER = "AccountLinkFlowController";
 
-    @Value("${sai.mock-bank.base-url}")
+    @Value("${sai.mock-bank.base-url:http://localhost:8081}")
     private String mockBankBaseUrl;
-    @Value("${sai.backend.base-url}")
+    @Value("${sai.backend.base-url:http://localhost:8080}")
     private String backendBaseUrl;
 
     private final JwtTokenProvider jwtTokenProvider;
